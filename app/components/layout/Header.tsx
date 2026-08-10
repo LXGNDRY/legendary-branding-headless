@@ -1,6 +1,7 @@
 import {Link} from 'react-router';
 import {useState} from 'react';
 import MobileMenu from './MobileMenu';
+import SearchTypeahead from '~/components/ui/SearchTypeahead';
 
 const NAV_LINKS = [
   {label: 'NEW DROPS', href: '/collections/all-products'},
@@ -86,6 +87,7 @@ interface HeaderProps {
 
 export default function Header({cartCount = 0, isLoggedIn = false, onOpenCart}: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <>
@@ -115,14 +117,15 @@ export default function Header({cartCount = 0, isLoggedIn = false, onOpenCart}: 
 
             {/* Right actions */}
             <div className="flex items-center gap-3 shrink-0">
-              {/* Search */}
-              <Link
-                to="/search"
+              {/* Search toggle */}
+              <button
+                onClick={() => setSearchOpen(!searchOpen)}
                 className="hidden sm:flex p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
-                aria-label="Search"
+                aria-label={searchOpen ? 'Close search' : 'Search'}
+                aria-expanded={searchOpen}
               >
                 <SearchIcon />
-              </Link>
+              </button>
 
               {/* Account */}
               <Link
@@ -162,6 +165,13 @@ export default function Header({cartCount = 0, isLoggedIn = false, onOpenCart}: 
               </button>
             </div>
           </div>
+
+          {/* Search bar (expanded) */}
+          {searchOpen && (
+            <div className="py-3 border-t border-[#e5e5e5]">
+              <SearchTypeahead onClose={() => setSearchOpen(false)} />
+            </div>
+          )}
         </div>
       </header>
 
