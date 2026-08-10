@@ -116,38 +116,34 @@ export default function Homepage() {
   const {featuredCollections, newDrops, bestSellers} =
     useLoaderData<typeof loader>();
 
-  // Use first available product image for hero (placeholder if none)
-  const firstProduct = newDrops?.products?.nodes?.[0] as
-    | ProductCardFragment
+  const newDropsProducts = newDrops?.products?.nodes as
+    | ProductCardFragment[]
     | undefined;
-  const secondProduct = newDrops?.products?.nodes?.[1] as
-    | ProductCardFragment
+  const bestSellerProducts = bestSellers?.products?.nodes as
+    | ProductCardFragment[]
     | undefined;
 
-  // Build lookbook items from best sellers
-  const lookbookItems = (
-    (bestSellers?.products?.nodes as ProductCardFragment[] | undefined) ?? []
-  ).map((product, i) => ({
-    id: product.id,
-    image: product.featuredImage
-      ? product.featuredImage
-      : {
-          url: '',
-          altText: product.title,
-        },
-    product: product.featuredImage
-      ? {
-          handle: product.handle,
-          title: product.title,
-          price: product.priceRange.minVariantPrice,
-          image: product.featuredImage,
-        }
-      : null,
-    hotspotX: 50,
-    hotspotY: 50,
-    spanCols: i === 0 ? 6 : i === 1 ? 3 : i === 2 ? 3 : 6,
-    spanRows: i === 0 ? 3 : i === 1 ? 2 : i === 2 ? 2 : 2,
-  }));
+  // Use first available product image for hero (placeholder if none)
+  const firstProduct = newDropsProducts?.[0];
+  const secondProduct = newDropsProducts?.[1];
+
+  // Build lookbook items from best sellers (only products with images)
+  const lookbookItems = (bestSellerProducts ?? [])
+    .filter((product) => product.featuredImage?.url)
+    .map((product, i) => ({
+      id: product.id,
+      image: product.featuredImage!,
+      product: {
+        handle: product.handle,
+        title: product.title,
+        price: product.priceRange.minVariantPrice,
+        image: product.featuredImage!,
+      },
+      hotspotX: 50,
+      hotspotY: 50,
+      spanCols: i === 0 ? 6 : i === 1 ? 3 : i === 2 ? 3 : 6,
+      spanRows: i === 0 ? 3 : i === 1 ? 2 : i === 2 ? 2 : 2,
+    }));
 
   return (
     <div>
@@ -158,19 +154,9 @@ export default function Homepage() {
         subtext="Limited edition drops every Friday. Only what's essential. No restocks."
         buttonLabel="Shop New Drops"
         buttonLink="/collections/all-products"
-        imageLeft={
-          firstProduct?.featuredImage ?? {
-            url: '',
-            altText: 'Hero campaign image',
-          }
-        }
-        imageRight={
-          secondProduct?.featuredImage ?? {
-            url: '',
-            altText: 'Hero secondary image',
-          }
-        }
-        splitLayout={!!firstProduct?.featuredImage && !!secondProduct?.featuredImage}
+        imageLeft={firstProduct?.featuredImage}
+        imageRight={secondProduct?.featuredImage}
+        splitLayout={!!firstProduct?.featuredImage?.url && !!secondProduct?.featuredImage?.url}
         contentAlignment="bottom-left"
         fullScreen
       />
@@ -184,32 +170,29 @@ export default function Homepage() {
         heading="Shop by Category"
         linkLabel="View all collections"
         linkUrl="/collections"
-        collections={featuredCollections.nodes as CollectionNode[]}
+        collections={(featuredCollections?.nodes as CollectionNode[]) ?? []}
         columns={3}
       />
 
       {/* 4. Best Sellers */}
-      <section className="lb-section bg-[#f5f5f5]">
-        <div className="lb-container">
-          <div className="lb-section-header">
-            <div>
-              <div className="lb-eyebrow mb-2">Best Sellers</div>
-              <h2>Most Wanted</h2>
+      {bestSellerProducts && bestSellerProducts.length > 0 && (
+        <section className="lb-section bg-[#f5f5f5]">
+          <div className="lb-container">
+            <div className="lb-section-header">
+              <div>
+                <div className="lb-eyebrow mb-2">Best Sellers</div>
+                <h2>Most Wanted</h2>
+              </div>
+              <Link
+                to="/collections/all-products"
+                className="lb-section-header__link"
+              >
+                View All
+              </Link>
             </div>
-            <Link
-              to="/collections/all-products"
-              className="lb-section-header__link"
-            >
-              View All
-            </Link>
-          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {(bestSellers?.products?.nodes as
-              | ProductCardFragment[]
-              | undefined)
-              ?.slice(0, 4)
-              .map((product, i) => (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {bestSellerProducts.slice(0, 4).map((product, i) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -218,9 +201,10 @@ export default function Homepage() {
                   showQuickAdd
                 />
               ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 5. Drop Timer */}
       <DropTimer
@@ -233,27 +217,24 @@ export default function Homepage() {
       />
 
       {/* 6. New Drops */}
-      <section className="lb-section">
-        <div className="lb-container">
-          <div className="lb-section-header">
-            <div>
-              <div className="lb-eyebrow mb-2">Just Dropped</div>
-              <h2>New Arrivals</h2>
+      {newDropsProducts && newDropsProducts.length > 0 && (
+        <section className="lb-section">
+          <div className="lb-container">
+            <div className="lb-section-header">
+              <div>
+                <div className="lb-eyebrow mb-2">Just Dropped</div>
+                <h2>New Arrivals</h2>
+              </div>
+              <Link
+                to="/collections/all-products"
+                className="lb-section-header__link"
+              >
+                View All
+              </Link>
             </div>
-            <Link
-              to="/collections/all-products"
-              className="lb-section-header__link"
-            >
-              View All
-            </Link>
-          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {(newDrops?.products?.nodes as
-              | ProductCardFragment[]
-              | undefined)
-              ?.slice(0, 8)
-              .map((product, i) => (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {newDropsProducts.slice(0, 8).map((product, i) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -262,9 +243,10 @@ export default function Homepage() {
                   showQuickAdd
                 />
               ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 7. Lookbook */}
       {lookbookItems.length > 0 && (

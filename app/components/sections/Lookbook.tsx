@@ -46,6 +46,9 @@ export default function Lookbook({
   items,
   gridStyle = 'editorial',
 }: LookbookProps) {
+  // Filter items without real images
+  const validItems = items.filter((item) => item.image && item.image.url);
+
   return (
     <section className="lb-section lb-lookbook">
       <div className="lb-container">
@@ -68,7 +71,7 @@ export default function Lookbook({
               : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
           }`}
         >
-          {items.map((item) => {
+          {validItems.map((item) => {
             const spanCols = item.spanCols ?? 4;
             const spanRows = item.spanRows ?? 2;
             const colClass =

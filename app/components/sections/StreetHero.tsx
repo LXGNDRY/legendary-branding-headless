@@ -15,8 +15,8 @@ interface StreetHeroProps {
   subtext?: string;
   buttonLabel?: string;
   buttonLink?: string;
-  imageLeft: ImageData;
-  imageRight?: ImageData;
+  imageLeft?: ImageData | null;
+  imageRight?: ImageData | null;
   splitLayout?: boolean;
   contentAlignment?: 'bottom-left' | 'center';
   fullScreen?: boolean;
@@ -39,7 +39,8 @@ export default function StreetHero({
   contentAlignment = 'bottom-left',
   fullScreen = false,
 }: StreetHeroProps) {
-  const showRight = splitLayout && imageRight;
+  const showRight = splitLayout && imageRight && imageRight.url;
+  const hasLeftImage = imageLeft && imageLeft.url;
 
   return (
     <section
@@ -58,13 +59,21 @@ export default function StreetHero({
             showRight ? 'md:w-1/2' : 'w-full'
           }`}
         >
-          <Image
-            data={imageLeft}
-            aspectRatio={showRight ? '3/4' : '16/9'}
-            sizes={showRight ? '50vw' : '100vw'}
-            loading="eager"
-            className="w-full h-full object-cover"
-          />
+          {hasLeftImage ? (
+            <Image
+              data={imageLeft!}
+              aspectRatio={showRight ? '3/4' : '16/9'}
+              sizes={showRight ? '50vw' : '100vw'}
+              loading="eager"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-[#f5f5f5]">
+              <span className="text-[0.78rem] tracking-[0.15em] uppercase text-black/40">
+                Hero Image
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Right image (split layout) */}
