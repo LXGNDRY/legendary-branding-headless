@@ -17,6 +17,12 @@ export async function createAppLoadContext(
   if (!env.SESSION_SECRET) {
     throw new Error('SESSION_SECRET environment variable is not set');
   }
+  if (!env.PUBLIC_STORE_DOMAIN) {
+    throw new Error('PUBLIC_STORE_DOMAIN environment variable is not set');
+  }
+  if (!env.PUBLIC_STOREFRONT_API_TOKEN) {
+    throw new Error('PUBLIC_STOREFRONT_API_TOKEN environment variable is not set');
+  }
 
   const waitUntil = executionContext.waitUntil.bind(executionContext);
 
