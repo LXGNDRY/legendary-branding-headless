@@ -12,13 +12,18 @@ Guidelines for Claude Code agents working on this repository.
 
 ---
 
-## Active Development Branch
+## Branch Strategy
 
-All work goes to: `claude/shopify-headless-website-jwq0vj`
+| Branch | Purpose |
+|---|---|
+| `main` | Production — merges here deploy to the live URL. PR + owner review required. |
+| `dev` | Preview / staging — all development work lands here. Linked to Oxygen preview URL. |
 
-- Do **NOT** push to `main` or `master`.
+- All work goes to **`dev`**.
+- Do **NOT** push directly to `main`.
 - Do **NOT** force-push to any branch.
-- Create a PR to `main` after each milestone — ready for review, not draft.
+- Open a PR from `dev` → `main` after each milestone — ready for review, not draft.
+- Owner reviews and merges `dev` → `main` to trigger a production deploy.
 
 ---
 
