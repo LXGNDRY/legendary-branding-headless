@@ -17,18 +17,18 @@ export async function action({request, context}: ActionFunctionArgs) {
   let result;
   switch (action) {
     case CartForm.ACTIONS.LinesAdd:
-      result = await cart.linesAdd(
-        inputs.lines as Parameters<typeof cart.linesAdd>[0],
+      result = await cart.addLines(
+        inputs.lines as Parameters<typeof cart.addLines>[0],
       );
       break;
     case CartForm.ACTIONS.LinesUpdate:
-      result = await cart.linesUpdate(
-        inputs.lines as Parameters<typeof cart.linesUpdate>[0],
+      result = await cart.updateLines(
+        inputs.lines as Parameters<typeof cart.updateLines>[0],
       );
       break;
     case CartForm.ACTIONS.LinesRemove:
-      result = await cart.linesRemove(
-        inputs.lineIds as Parameters<typeof cart.linesRemove>[0],
+      result = await cart.removeLines(
+        inputs.lineIds as Parameters<typeof cart.removeLines>[0],
       );
       break;
     default:
