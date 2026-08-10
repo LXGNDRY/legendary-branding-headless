@@ -61,7 +61,12 @@ function HamburgerIcon() {
   );
 }
 
-export default function Header() {
+interface HeaderProps {
+  cartCount?: number;
+  onOpenCart?: () => void;
+}
+
+export default function Header({cartCount = 0, onOpenCart}: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -102,14 +107,22 @@ export default function Header() {
               </Link>
 
               {/* Cart */}
-              <Link
-                to="/cart"
+              <button
+                type="button"
+                onClick={onOpenCart}
                 className="relative p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
-                aria-label="Cart"
+                aria-label={`Cart${cartCount > 0 ? ` (${cartCount} items)` : ''}`}
               >
                 <CartIcon />
-                {/* Cart count badge — wired up in Milestone 4 */}
-              </Link>
+                {cartCount > 0 && (
+                  <span
+                    className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center bg-[#0a0a0a] text-white text-[9px] font-bold rounded-full px-1 leading-none"
+                    aria-hidden="true"
+                  >
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
+              </button>
 
               {/* Mobile hamburger */}
               <button

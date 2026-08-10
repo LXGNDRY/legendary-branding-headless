@@ -4,6 +4,7 @@ import {getPaginationVariables, Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Placeholder from '~/components/ui/Placeholder';
 import Button from '~/components/ui/Button';
+import JsonLd from '~/components/ui/JsonLd';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -48,13 +49,21 @@ const HOMEPAGE_QUERY = `#graphql
   }
 ` as const;
 
-export const meta: MetaFunction = () => [
-  {title: 'LEGENDARY BRANDING — Premium Editorial Streetwear'},
-  {
-    name: 'description',
-    content: 'Premium editorial streetwear. Bold, minimal, fast.',
-  },
-];
+export const meta: MetaFunction = () => {
+  const description = 'Premium editorial streetwear. Bold, minimal, fast.';
+  return [
+    {title: 'LEGENDARY BRANDING — Premium Editorial Streetwear'},
+    {name: 'description', content: description},
+    {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/'},
+    {property: 'og:type', content: 'website'},
+    {property: 'og:title', content: 'LEGENDARY BRANDING'},
+    {property: 'og:description', content: description},
+    {property: 'og:url', content: 'https://legendary-branding.com/'},
+    {name: 'twitter:card', content: 'summary'},
+    {name: 'twitter:title', content: 'LEGENDARY BRANDING'},
+    {name: 'twitter:description', content: description},
+  ];
+};
 
 export async function loader({context}: LoaderFunctionArgs) {
   const {storefront} = context;
@@ -77,11 +86,21 @@ export async function loader({context}: LoaderFunctionArgs) {
   return {featuredCollections, newDrops};
 }
 
+const ORG_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Legendary Branding',
+  url: 'https://legendary-branding.com',
+  logo: 'https://legendary-branding.com/favicon.ico',
+  sameAs: [],
+};
+
 export default function Homepage() {
   const {featuredCollections, newDrops} = useLoaderData<typeof loader>();
 
   return (
     <div>
+      <JsonLd data={ORG_JSONLD} />
       {/* Hero — full-bleed campaign image placeholder */}
       <section className="relative w-full aspect-[16/9] md:aspect-[21/9] bg-[#f7f7f7] overflow-hidden">
         <Placeholder
