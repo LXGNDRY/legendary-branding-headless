@@ -65,9 +65,9 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export async function loader({context}: LoaderFunctionArgs) {
+export async function loader({context, request}: LoaderFunctionArgs) {
   const {storefront} = context;
-  const paginationVariables = getPaginationVariables(new Request(''), {
+  const paginationVariables = getPaginationVariables(request, {
     pageBy: 4,
   });
 
