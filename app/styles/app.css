@@ -4,6 +4,8 @@
  * LEGENDARY BRANDING — Design System
  * Premium editorial streetwear — strict black & white, brutalist-forward
  * Ported from lb-streetwear.css (Dawn theme) to Tailwind v4 + Hydrogen
+ *
+ * Fonts loaded via root.tsx <link> (Bebas Neue + IBM Plex Mono from Google Fonts)
  */
 @theme {
   /* ── Typography ─────────────────────────────────────────────────────── */
@@ -67,10 +69,6 @@
   --z-modal: 1000;
   --z-toast: 2000;
 }
-
-/* ── Font preloading ────────────────────────────────────────────────────── */
-
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&display=swap');
 
 /* ── Base reset ─────────────────────────────────────────────────────────── */
 
