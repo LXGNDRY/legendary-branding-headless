@@ -2,6 +2,7 @@ import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
+import JsonLd from '~/components/ui/JsonLd';
 
 type ArticleData = {
   id: string;
@@ -45,14 +46,24 @@ const ARTICLE_QUERY = `#graphql
   }
 ` as const;
 
-export const meta: MetaFunction<typeof loader> = ({data}) => {
+export const meta: MetaFunction<typeof loader> = ({data, location}) => {
   const article = data?.article;
+  const description = article?.excerpt ?? `${article?.title ?? 'Article'} — Legendary Branding Journal`;
+  const ogImage = article?.image?.url;
+  const canonical = `https://legendary-branding.com${location.pathname}`;
   return [
     {title: `${article?.title ?? 'Article'} — The Journal — LEGENDARY BRANDING`},
-    {
-      name: 'description',
-      content: article?.excerpt ?? `${article?.title ?? 'Article'} — Legendary Branding Journal`,
-    },
+    {name: 'description', content: description},
+    {tagName: 'link', rel: 'canonical', href: canonical},
+    {property: 'og:type', content: 'article'},
+    {property: 'og:title', content: article?.title ?? 'Article'},
+    {property: 'og:description', content: description},
+    {property: 'og:url', content: canonical},
+    ...(ogImage ? [{property: 'og:image', content: `${ogImage}&width=1200&height=630`}] : []),
+    {name: 'twitter:card', content: 'summary_large_image'},
+    {name: 'twitter:title', content: article?.title ?? 'Article'},
+    {name: 'twitter:description', content: description},
+    ...(ogImage ? [{name: 'twitter:image', content: `${ogImage}&width=1200&height=630`}] : []),
   ];
 };
 
@@ -86,8 +97,26 @@ function formatDate(iso: string) {
 export default function ArticlePage() {
   const {article} = useLoaderData<typeof loader>();
 
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: article.title,
+    datePublished: article.publishedAt,
+    description: article.excerpt ?? '',
+    image: article.image ? [article.image.url] : [],
+    author: article.author
+      ? [{'@type': 'Person', name: article.author.name}]
+      : [{'@type': 'Organization', name: 'Legendary Branding'}],
+    publisher: {
+      '@type': 'Organization',
+      name: 'Legendary Branding',
+      url: 'https://legendary-branding.com',
+    },
+  };
+
   return (
     <article>
+      <JsonLd data={articleJsonLd} />
       {/* Hero image */}
       {article.image && (
         <div className="w-full overflow-hidden bg-[#f7f7f7] max-h-[70vh]">

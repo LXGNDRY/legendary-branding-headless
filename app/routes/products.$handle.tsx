@@ -20,6 +20,7 @@ import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
 import Placeholder from '~/components/ui/Placeholder';
 import ProductGallery from '~/components/ui/ProductGallery';
+import JsonLd from '~/components/ui/JsonLd';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -124,15 +125,29 @@ const PRODUCT_QUERY = `#graphql
   }
 ` as const;
 
-export const meta: MetaFunction<typeof loader> = ({data}) => [
-  {title: `${data?.product?.title ?? 'Product'} — LEGENDARY BRANDING`},
-  {
-    name: 'description',
-    content: data?.product?.descriptionHtml
-      ? data.product.descriptionHtml.replace(/<[^>]+>/g, '').slice(0, 155)
-      : `Shop ${data?.product?.title ?? 'this product'} at Legendary Branding.`,
-  },
-];
+export const meta: MetaFunction<typeof loader> = ({data, location}) => {
+  const product = data?.product;
+  const description = product?.descriptionHtml
+    ? product.descriptionHtml.replace(/<[^>]+>/g, '').slice(0, 155)
+    : `Shop ${product?.title ?? 'this product'} at Legendary Branding.`;
+  const ogImage = product?.images?.nodes?.[0]?.url ?? '';
+  const canonical = `https://legendary-branding.com${location.pathname}`;
+
+  return [
+    {title: `${product?.title ?? 'Product'} — LEGENDARY BRANDING`},
+    {name: 'description', content: description},
+    {tagName: 'link', rel: 'canonical', href: canonical},
+    {property: 'og:type', content: 'product'},
+    {property: 'og:title', content: `${product?.title ?? 'Product'} — LEGENDARY BRANDING`},
+    {property: 'og:description', content: description},
+    ...(ogImage ? [{property: 'og:image', content: `${ogImage}&width=1200&height=1200`}] : []),
+    {property: 'og:url', content: canonical},
+    {name: 'twitter:card', content: 'summary_large_image'},
+    {name: 'twitter:title', content: product?.title ?? 'Product'},
+    {name: 'twitter:description', content: description},
+    ...(ogImage ? [{name: 'twitter:image', content: `${ogImage}&width=1200&height=630`}] : []),
+  ];
+};
 
 export async function action({request, context}: ActionFunctionArgs) {
   const {cart} = context;
@@ -229,8 +244,27 @@ export default function ProductPage() {
 
   const isNew = product.tags.includes('new');
 
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    image: product.images.nodes.map((img) => img.url),
+    description: product.descriptionHtml.replace(/<[^>]+>/g, ''),
+    brand: {'@type': 'Brand', name: product.vendor || 'Legendary Branding'},
+    offers: product.variants.nodes.map((v) => ({
+      '@type': 'Offer',
+      price: v.price.amount,
+      priceCurrency: v.price.currencyCode,
+      availability: v.availableForSale
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      url: `https://legendary-branding.com/products/${product.handle}`,
+    })),
+  };
+
   return (
     <>
+      <JsonLd data={productJsonLd} />
       <Container className="py-12">
         {/* Breadcrumb */}
         <nav

@@ -60,13 +60,13 @@ Guidelines for Claude Code agents working on this repository.
 | # | Milestone | Branch Status |
 |---|---|---|
 | 1 | Foundation — shell, tokens, route stubs, README, CLAUDE.md | ✅ Complete |
-| 2 | Homepage + collection index + PLP with Storefront API | 🔜 |
-| 3 | Product detail page — gallery, variants, add-to-cart UI | 🔜 |
-| 4 | Cart drawer, cart page, checkout redirect | 🔜 |
-| 5 | Search — predictive + full results page | 🔜 |
-| 6 | Journal / Blog — index + article template | 🔜 |
-| 7 | Policy pages, 404, robots.txt, sitemap.xml | 🔜 |
-| 8 | SEO/JSON-LD, image optimization, Oxygen preview deploy | 🔜 |
+| 2 | Homepage + collection index + PLP with Storefront API | ✅ Complete |
+| 3 | Product detail page — gallery, variants, add-to-cart UI | ✅ Complete |
+| 4 | Cart drawer, cart page, checkout redirect | ✅ Complete |
+| 5 | Search — full results page (products, collections, articles) | ✅ Complete |
+| 6 | Journal / Blog — index + article template | ✅ Complete |
+| 7 | Policy pages, 404, robots.txt, sitemap.xml | ✅ Complete |
+| 8 | SEO/JSON-LD, OG meta, canonical URLs, Oxygen preview deploy | ✅ Complete |
 
 ---
 
