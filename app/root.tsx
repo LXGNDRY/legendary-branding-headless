@@ -86,14 +86,20 @@ export default function App() {
 
 export function ErrorBoundary({error}: {error: unknown}) {
   const message = error instanceof Error ? error.message : 'Unknown error';
+  const stack = error instanceof Error ? error.stack : undefined;
 
   return (
     <div className="min-h-dvh flex items-center justify-center p-8">
-      <div className="max-w-md text-center">
+      <div className="max-w-2xl text-center">
         <h1 className="text-2xl font-bold tracking-tight mb-4">
           Something went wrong
         </h1>
-        <p className="text-[#6b6b6b] text-sm mb-8">{message}</p>
+        <p className="text-[#6b6b6b] text-sm mb-4">{message}</p>
+        {stack && (
+          <pre className="text-left text-xs bg-[#f7f7f7] p-4 rounded overflow-auto mb-8 text-red-700">
+            {stack}
+          </pre>
+        )}
         <a
           href="/"
           className="inline-block text-xs font-medium tracking-widest uppercase border border-[#0a0a0a] px-6 py-3 hover:bg-[#0a0a0a] hover:text-white transition-colors"
