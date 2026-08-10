@@ -1,0 +1,21 @@
+node_modules
+.DS_Store
+dist
+build
+.cache
+.react-router
+.shopify
+
+# Environment — never commit real credentials
+.env
+.env.local
+.env.production
+
+# Codegen output — generated at build time
+storefrontapi.generated.d.ts
+customer-accountapi.generated.d.ts
+
+# Editor
+.vscode
+.idea
+*.swp
