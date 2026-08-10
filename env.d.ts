@@ -16,6 +16,12 @@ interface Env {
   PUBLIC_CUSTOMER_ACCOUNT_API_URL: string;
   PUBLIC_CHECKOUT_DOMAIN: string;
   SHOP_ID: string;
+  // Analytics (optional — leave empty to disable)
+  PUBLIC_GA4_MEASUREMENT_ID: string;
+  PUBLIC_META_PIXEL_ID: string;
+  PUBLIC_TIKTOK_PIXEL_ID: string;
+  // Monitoring (optional)
+  PUBLIC_SENTRY_DSN: string;
 }
 
 declare module 'virtual:react-router/server-build' {

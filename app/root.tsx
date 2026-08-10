@@ -10,10 +10,12 @@ import {useState} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
 import {CacheShort} from '~/lib/cache';
+import {initSentry, useWebVitals} from '~/lib/monitoring';
 import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
+import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 
 export const links: LinksFunction = () => [
@@ -101,10 +103,24 @@ export default function App() {
   const {cart, isLoggedIn} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
 
+  // Sentry init + web vitals (guard: only on client)
+  if (typeof window !== 'undefined') {
+    initSentry(import.meta.env.PUBLIC_SENTRY_DSN);
+  }
+  useWebVitals(import.meta.env.PUBLIC_GA4_MEASUREMENT_ID);
+
   const cartCount = cart?.totalQuantity ?? 0;
 
   return (
     <div className="flex flex-col min-h-dvh">
+      {/* Skip to content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-black focus:text-white focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase"
+      >
+        Skip to content
+      </a>
+
       {/* Site-wide SEO schema */}
       <DefaultSeoSchema />
 
@@ -113,10 +129,18 @@ export default function App() {
         isLoggedIn={isLoggedIn}
         onOpenCart={() => setCartOpen(true)}
       />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <Outlet />
       </main>
       <Footer />
+
+      {/* Consent-gated analytics (GA4, Meta, TikTok) */}
+      <Analytics
+        ga4Id={import.meta.env.PUBLIC_GA4_MEASUREMENT_ID}
+        metaPixelId={import.meta.env.PUBLIC_META_PIXEL_ID}
+        tiktokPixelId={import.meta.env.PUBLIC_TIKTOK_PIXEL_ID}
+      />
+
       <CartDrawer
         cart={cart}
         open={cartOpen}
