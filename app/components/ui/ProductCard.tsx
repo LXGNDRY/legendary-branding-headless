@@ -101,6 +101,7 @@ export default function ProductCard({
   showVendor = false,
   showQuickAdd = true,
   hoverFlip = true,
+  layout = 'grid',
   onQuickAdd,
 }: {
   product: ProductCardFragment;
@@ -108,6 +109,7 @@ export default function ProductCard({
   showVendor?: boolean;
   showQuickAdd?: boolean;
   hoverFlip?: boolean;
+  layout?: 'grid' | 'list';
   /** Called when quick add is clicked (first variant by default) */
   onQuickAdd?: (productId: string) => void;
 }) {
@@ -120,6 +122,89 @@ export default function ProductCard({
     product.images.nodes.length > 1 &&
     product.images.nodes[1];
 
+  // List layout
+  if (layout === 'list') {
+    return (
+      <article
+        className={`group flex gap-6 border-b border-black/10 py-6 cursor-pointer ${
+          soldOut ? 'opacity-90' : ''
+        }`}
+        data-product-id={product.id}
+      >
+        {/* Media */}
+        <Link
+          to={`/products/${product.handle}`}
+          prefetch="intent"
+          className="relative overflow-hidden w-28 h-36 md:w-36 md:h-48 shrink-0 bg-[#f5f5f5]"
+        >
+          {product.featuredImage ? (
+            <Image
+              data={product.featuredImage}
+              aspectRatio="3/4"
+              sizes="150px"
+              loading={loading}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Placeholder aspect="aspect-[3/4]" label={product.title} />
+          )}
+          {(soldOut || onSale || isNewTag) && (
+            <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none z-10">
+              {onSale && <Badge variant="sale">Sale</Badge>}
+              {isNewTag && <Badge variant="new">New</Badge>}
+              {soldOut && <Badge variant="soldout">Sold out</Badge>}
+            </div>
+          )}
+        </Link>
+
+        {/* Info */}
+        <div className="flex-1 flex flex-col justify-between py-1">
+          <div>
+            {showVendor && product.vendor && (
+              <div className="text-[10px] tracking-[0.15em] uppercase text-black/50 mb-1">
+                {product.vendor}
+              </div>
+            )}
+            <Link
+              to={`/products/${product.handle}`}
+              prefetch="intent"
+              className="text-base md:text-lg font-medium leading-tight hover:opacity-70 transition-opacity block mb-2"
+            >
+              {product.title}
+            </Link>
+            <p className="text-sm text-black/60 line-clamp-2 hidden md:block">
+              {product.tags.slice(0, 3).join(' · ')}
+            </p>
+          </div>
+
+          <div className="flex items-end justify-between">
+            <div className="flex gap-2 items-baseline">
+              <Money
+                data={product.priceRange.minVariantPrice}
+                className="text-base md:text-lg font-medium text-black"
+              />
+              {onSale && (
+                <Money
+                  data={product.compareAtPriceRange.minVariantPrice}
+                  className="text-black/40 line-through font-normal text-sm"
+                />
+              )}
+            </div>
+            {showQuickAdd && product.availableForSale && (
+              <Link
+                to={`/products/${product.handle}`}
+                className="text-[0.78rem] font-medium tracking-[0.08em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-all duration-300"
+              >
+                View Product
+              </Link>
+            )}
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  // Grid layout (default)
   return (
     <article
       className={`group flex flex-col gap-3 cursor-pointer ${
