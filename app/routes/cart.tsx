@@ -1,4 +1,5 @@
-import type {MetaFunction} from 'react-router';
+import type {MetaFunction, LoaderFunctionArgs, ActionFunctionArgs} from 'react-router';
+import {CartForm} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import Placeholder from '~/components/ui/Placeholder';
@@ -7,8 +8,39 @@ export const meta: MetaFunction = () => [
   {title: 'Cart — LEGENDARY BRANDING'},
 ];
 
-export async function loader() {
-  return {};
+export async function action({request, context}: ActionFunctionArgs) {
+  const {cart} = context;
+  const formData = await request.formData();
+  const {action, inputs} = CartForm.getFormInput(formData);
+
+  let result;
+  switch (action) {
+    case CartForm.ACTIONS.LinesAdd:
+      result = await cart.linesAdd(
+        inputs.lines as Parameters<typeof cart.linesAdd>[0],
+      );
+      break;
+    case CartForm.ACTIONS.LinesUpdate:
+      result = await cart.linesUpdate(
+        inputs.lines as Parameters<typeof cart.linesUpdate>[0],
+      );
+      break;
+    case CartForm.ACTIONS.LinesRemove:
+      result = await cart.linesRemove(
+        inputs.lineIds as Parameters<typeof cart.linesRemove>[0],
+      );
+      break;
+    default:
+      return new Response('Bad request', {status: 400});
+  }
+
+  const headers = cart.setCartId(result.cart.id);
+  return new Response(null, {status: 200, headers});
+}
+
+export async function loader({context}: LoaderFunctionArgs) {
+  const {cart} = context;
+  return {cart: await cart.get()};
 }
 
 export default function CartPage() {
