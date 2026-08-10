@@ -28,6 +28,7 @@ import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
+import {CacheLong} from '~/lib/cache';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -183,6 +184,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
         country: context.storefront.i18n.country,
         language: context.storefront.i18n.language,
       },
+      cache: CacheLong(),
     },
   );
 

@@ -1,6 +1,6 @@
-import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
-import {useLoaderData, Link} from 'react-router';
+import {type LoaderFunctionArgs, type MetaFunction, useLoaderData, Link} from 'react-router';
 import Container from '~/components/ui/Container';
+import {CacheLong} from '~/lib/cache';
 
 const PAGE_TITLES: Record<string, string> = {
   'refund-policy': 'Refund & Return Policy',
@@ -67,6 +67,7 @@ export async function loader({params, context}: LoaderFunctionArgs) {
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
     },
+    cache: CacheLong(),
   });
 
   // Prefer custom page; fall back to shop built-in policies

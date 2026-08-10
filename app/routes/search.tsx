@@ -3,6 +3,7 @@ import {useLoaderData, Form, useNavigation} from 'react-router';
 import {Image, Money} from '@shopify/hydrogen';
 import {Link} from 'react-router';
 import Container from '~/components/ui/Container';
+import {CacheNone} from '~/lib/cache';
 import type {ProductCardFragment} from '~/components/ui/ProductCard';
 import {PRODUCT_CARD_FRAGMENT} from '~/components/ui/ProductCard';
 import ProductCard from '~/components/ui/ProductCard';
@@ -101,6 +102,7 @@ export async function loader({request, context}: LoaderFunctionArgs) {
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
     },
+    cache: CacheNone(),
   });
 
   const totalCount =

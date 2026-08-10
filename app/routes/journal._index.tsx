@@ -2,6 +2,7 @@ import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
+import {CacheLong} from '~/lib/cache';
 
 type ArticleNode = {
   id: string;
@@ -58,6 +59,7 @@ export async function loader({context}: LoaderFunctionArgs) {
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
     },
+    cache: CacheLong(),
   });
 
   return {articles: (blog?.articles?.nodes ?? []) as ArticleNode[]};

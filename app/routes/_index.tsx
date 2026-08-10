@@ -13,6 +13,7 @@ import BrandMarquee from '~/components/sections/BrandMarquee';
 import CollectionGrid from '~/components/sections/CollectionGrid';
 import DropTimer from '~/components/sections/DropTimer';
 import Lookbook from '~/components/sections/Lookbook';
+import {CacheLong} from '~/lib/cache';
 
 type CollectionNode = {
   id: string;
@@ -96,6 +97,7 @@ export async function loader({context, request}: LoaderFunctionArgs) {
         country: storefront.i18n.country,
         language: storefront.i18n.language,
       },
+      cache: CacheLong(),
     });
 
   return {featuredCollections, newDrops, bestSellers};

@@ -12,6 +12,7 @@ import ProductCard, {
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
 import Button from '~/components/ui/Button';
+import {CacheShort} from '~/lib/cache';
 
 const COLLECTION_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
@@ -99,6 +100,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
     },
+    cache: CacheShort(),
   });
 
   if (!collection) throw new Response('Collection not found', {status: 404});

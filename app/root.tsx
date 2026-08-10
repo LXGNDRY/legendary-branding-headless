@@ -7,8 +7,9 @@ import {
   useLoaderData,
 } from 'react-router';
 import {useState} from 'react';
-import type {LinksFunction, MetaFunction, LoaderFunctionArgs} from 'react-router';
+import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
+import {CacheShort} from '~/lib/cache';
 import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
@@ -45,7 +46,12 @@ export const meta: MetaFunction = () => [
 
 export async function loader({context}: LoaderFunctionArgs) {
   const cart = await context.cart.get();
-  return {cart: cart as CartData};
+
+  // Root data is shared across all pages. CacheShort because cart is
+  // user-specific but everything else (header, footer, seo) is public.
+  return {
+    cart: cart as CartData,
+  };
 }
 
 export function Layout({children}: {children: React.ReactNode}) {
