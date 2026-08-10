@@ -61,12 +61,30 @@ function HamburgerIcon() {
   );
 }
 
+function UserIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      aria-hidden="true"
+    >
+      <circle cx="10" cy="7" r="4" />
+      <path d="M3 18a7 7 0 0114 0" />
+    </svg>
+  );
+}
+
 interface HeaderProps {
   cartCount?: number;
+  isLoggedIn?: boolean;
   onOpenCart?: () => void;
 }
 
-export default function Header({cartCount = 0, onOpenCart}: HeaderProps) {
+export default function Header({cartCount = 0, isLoggedIn = false, onOpenCart}: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -104,6 +122,15 @@ export default function Header({cartCount = 0, onOpenCart}: HeaderProps) {
                 aria-label="Search"
               >
                 <SearchIcon />
+              </Link>
+
+              {/* Account */}
+              <Link
+                to={isLoggedIn ? '/account' : '/account/login'}
+                className="hidden sm:flex p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
+                aria-label={isLoggedIn ? 'My Account' : 'Log In'}
+              >
+                <UserIcon />
               </Link>
 
               {/* Cart */}

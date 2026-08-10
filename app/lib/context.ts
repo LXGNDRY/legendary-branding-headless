@@ -31,6 +31,11 @@ export async function createAppLoadContext(
     AppSession.init(request, [env.SESSION_SECRET]),
   ]);
 
+  // Configure customer account if env vars are present
+  const hasCustomerAccount = Boolean(
+    env.PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID,
+  );
+
   return createHydrogenContext({
     env,
     request,
@@ -38,6 +43,12 @@ export async function createAppLoadContext(
     waitUntil,
     session,
     i18n: {language: 'EN', country: 'US'},
+    // Customer Account API is only active when the client ID is configured
+    ...(hasCustomerAccount && {
+      customerAccount: {
+        authUrl: '/account/authorize',
+      },
+    }),
   });
 }
 
