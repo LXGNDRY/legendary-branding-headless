@@ -23,7 +23,7 @@ export function ErrorBoundary() {
         The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Button as="link" to="/" variant="primary">
+        <Button as="link" to="/" variant="solid">
           Back to Home
         </Button>
         <Button as="link" to="/collections/all-products" variant="outline">

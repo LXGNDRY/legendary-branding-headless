@@ -234,7 +234,7 @@ export default function CartPage() {
               </a>
             ) : (
               <Button
-                variant="primary"
+                variant="solid"
                 type="button"
                 className="w-full py-4 text-sm"
                 disabled

@@ -25,6 +25,13 @@ const LEGAL_LINKS = [
   {label: 'Shipping Policy', href: '/policies/shipping-policy'},
 ];
 
+const SOCIAL_LINKS = [
+  {label: 'Instagram', href: 'https://instagram.com/legendarybranding'},
+  {label: 'TikTok', href: 'https://tiktok.com/@legendarybranding'},
+  {label: 'X / Twitter', href: 'https://twitter.com/legendarybrand'},
+  {label: 'YouTube', href: 'https://youtube.com/@legendarybranding'},
+];
+
 function FooterColumn({
   heading,
   links,
@@ -34,15 +41,16 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="text-[10px] font-semibold tracking-widest uppercase text-[#0a0a0a] mb-5">
+      <h4 className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase text-black mb-5">
         {heading}
-      </h3>
+      </h4>
       <ul className="space-y-3">
         {links.map(({label, href}) => (
           <li key={href}>
             <Link
               to={href}
-              className="text-xs text-[#6b6b6b] hover:text-[#0a0a0a] tracking-wide transition-colors"
+              prefetch="intent"
+              className="text-xs text-black/60 hover:text-black tracking-wide transition-colors"
             >
               {label}
             </Link>
@@ -57,61 +65,79 @@ export default function Footer() {
   return (
     <footer className="border-t border-[#e5e5e5] bg-white mt-auto">
       <Container className="py-16">
-        {/* Top: wordmark + tagline */}
-        <div className="mb-14">
-          <Link
-            to="/"
-            className="text-base font-bold tracking-[0.25em] uppercase text-[#0a0a0a] select-none"
-          >
-            LEGENDARY
-          </Link>
-          <p className="mt-2 text-xs text-[#6b6b6b] tracking-wide">
-            Premium editorial streetwear.
-          </p>
+        {/* Top: brand + newsletter */}
+        <div className="grid md:grid-cols-2 gap-12 mb-16">
+          <div className="max-w-sm">
+            <Link
+              to="/"
+              className="inline-block text-base font-bold tracking-[0.25em] uppercase text-black select-none"
+              style={{fontFamily: 'var(--font-display)'}}
+            >
+              LEGENDARY
+            </Link>
+            <p className="mt-3 text-xs text-black/60 tracking-wide">
+              Premium editorial streetwear.
+            </p>
+          </div>
+
+          {/* Newsletter */}
+          <div>
+            <h4 className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase text-black mb-4">
+              Stay Legendary
+            </h4>
+            <p className="text-xs text-black/60 mb-4">
+              Get early access to drops, exclusive offers, and more.
+            </p>
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="flex max-w-sm"
+            >
+              <label htmlFor="footer-email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="footer-email"
+                type="email"
+                placeholder="Enter your email"
+                required
+                className="flex-1 border border-[#e5e5e5] border-r-0 px-4 py-3 text-xs tracking-wide placeholder:text-black/40 outline-none focus:border-black transition-colors bg-white"
+              />
+              <button
+                type="submit"
+                className="px-5 py-3 bg-black text-white text-[0.65rem] font-semibold tracking-[0.15em] uppercase hover:bg-black/80 transition-colors whitespace-nowrap"
+              >
+                Join →
+              </button>
+            </form>
+          </div>
         </div>
 
         {/* Middle: link columns */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-10 mb-14">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-10 mb-16 pt-10 border-t border-[#e5e5e5]">
           <FooterColumn heading="Shop" links={SHOP_LINKS} />
           <FooterColumn heading="Info" links={INFO_LINKS} />
           <FooterColumn heading="Legal" links={LEGAL_LINKS} />
         </div>
 
-        {/* Newsletter (UI only — wired up in later milestone) */}
-        <div className="border-t border-[#e5e5e5] pt-10 mb-10">
-          <p className="text-[10px] font-semibold tracking-widest uppercase text-[#0a0a0a] mb-4">
-            Stay Legendary
-          </p>
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            className="flex max-w-sm gap-0"
-          >
-            <label htmlFor="footer-email" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="footer-email"
-              type="email"
-              placeholder="your@email.com"
-              className="flex-1 border border-[#e5e5e5] border-r-0 px-4 py-3 text-xs tracking-wide placeholder:text-[#999999] outline-none focus:border-[#0a0a0a] transition-colors"
-            />
-            <button
-              type="submit"
-              className="px-5 py-3 bg-[#0a0a0a] text-white text-[10px] font-semibold tracking-widest uppercase hover:bg-[#333333] transition-colors whitespace-nowrap"
-            >
-              Subscribe
-            </button>
-          </form>
-        </div>
-
-        {/* Bottom: copyright */}
-        <div className="border-t border-[#e5e5e5] pt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-[11px] text-[#999999] tracking-wide">
+        {/* Bottom bar */}
+        <div className="border-t border-[#e5e5e5] pt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <p className="text-[0.7rem] text-black/50 tracking-wide">
             © {new Date().getFullYear()} Legendary Branding®. All rights reserved.
           </p>
-          <p className="text-[11px] text-[#999999] tracking-wide">
-            legendary-branding.com
-          </p>
+
+          <div className="flex items-center gap-5">
+            {SOCIAL_LINKS.map(({label, href}) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[0.7rem] text-black/50 hover:text-black tracking-wide transition-colors"
+              >
+                {label}
+              </a>
+            ))}
+          </div>
         </div>
       </Container>
     </footer>

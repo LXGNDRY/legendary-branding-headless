@@ -12,6 +12,7 @@ import styles from '~/styles/app.css?url';
 import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
+import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
 import type {CartData} from '~/lib/cart';
 
 export const links: LinksFunction = () => [
@@ -20,10 +21,6 @@ export const links: LinksFunction = () => [
     rel: 'preconnect',
     href: 'https://fonts.gstatic.com',
     crossOrigin: 'anonymous',
-  },
-  {
-    rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
   },
   {rel: 'stylesheet', href: styles},
 ];
@@ -36,6 +33,10 @@ export const meta: MetaFunction = () => [
     name: 'description',
     content: 'Premium editorial streetwear. Bold, minimal, fast.',
   },
+  {property: 'og:type', content: 'website'},
+  {property: 'og:site_name', content: 'Legendary Branding'},
+  {property: 'og:url', content: 'https://legendary-branding.com'},
+  {name: 'twitter:card', content: 'summary_large_image'},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -67,6 +68,9 @@ export default function App() {
 
   return (
     <div className="flex flex-col min-h-dvh">
+      {/* Site-wide SEO schema */}
+      <DefaultSeoSchema />
+
       <Header
         cartCount={cartCount}
         onOpenCart={() => setCartOpen(true)}
@@ -86,23 +90,26 @@ export default function App() {
 
 export function ErrorBoundary({error}: {error: unknown}) {
   const message = error instanceof Error ? error.message : 'Unknown error';
-  const stack = error instanceof Error ? error.stack : undefined;
+
+  // Never expose stack traces to end users — log server-side only
+  if (typeof window === 'undefined' && error instanceof Error) {
+    console.error(error.stack);
+  }
 
   return (
     <div className="min-h-dvh flex items-center justify-center p-8">
       <div className="max-w-2xl text-center">
-        <h1 className="text-2xl font-bold tracking-tight mb-4">
-          Something went wrong
-        </h1>
-        <p className="text-[#6b6b6b] text-sm mb-4">{message}</p>
-        {stack && (
-          <pre className="text-left text-xs bg-[#f7f7f7] p-4 rounded overflow-auto mb-8 text-red-700">
-            {stack}
-          </pre>
-        )}
+        <p className="text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-black/50 mb-4">
+          ERROR
+        </p>
+        <h1 className="mb-6">Something went wrong</h1>
+        <p className="text-black/60 text-sm mb-10">
+          We&apos;ve been notified and are looking into it. Please try again in
+          a few moments.
+        </p>
         <a
           href="/"
-          className="inline-block text-xs font-medium tracking-widest uppercase border border-[#0a0a0a] px-6 py-3 hover:bg-[#0a0a0a] hover:text-white transition-colors"
+          className="inline-block text-[0.78rem] font-medium tracking-[0.08em] uppercase border border-black px-7 py-3 hover:bg-black hover:text-white transition-all duration-300"
         >
           Back to Home
         </a>

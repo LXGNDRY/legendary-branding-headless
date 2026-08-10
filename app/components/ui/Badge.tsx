@@ -6,12 +6,19 @@ interface BadgeProps {
   className?: string;
 }
 
+/**
+ * Legendary Branding badge — streetwear editorial style
+ * Small pill with tight tracking, B&W palette
+ */
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  default: 'bg-[#f7f7f7] text-[#0a0a0a]',
-  sale: 'bg-[#0a0a0a] text-white',
-  new: 'bg-[#0a0a0a] text-white',
-  soldout: 'bg-[#e5e5e5] text-[#6b6b6b]',
+  default: 'bg-white text-black',
+  sale: 'bg-black text-white',
+  new: 'bg-black text-white',
+  soldout: 'bg-black/80 text-white',
 };
+
+const BASE =
+  'inline-block px-[10px] py-1 text-[0.65rem] font-semibold tracking-[0.1em] uppercase rounded-[2px]';
 
 export default function Badge({
   variant = 'default',
@@ -19,9 +26,7 @@ export default function Badge({
   className = '',
 }: BadgeProps) {
   return (
-    <span
-      className={`inline-block text-[10px] font-semibold tracking-widest uppercase px-2 py-0.5 ${VARIANT_CLASSES[variant]} ${className}`}
-    >
+    <span className={`${BASE} ${VARIANT_CLASSES[variant]} ${className}`}>
       {children}
     </span>
   );
