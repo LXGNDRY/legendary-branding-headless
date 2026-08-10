@@ -1,7 +1,52 @@
-import type {MetaFunction} from 'react-router';
+import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
+import {useLoaderData, Link} from 'react-router';
+import {getPaginationVariables, Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Placeholder from '~/components/ui/Placeholder';
 import Button from '~/components/ui/Button';
+import ProductCard, {
+  PRODUCT_CARD_FRAGMENT,
+  type ProductCardFragment,
+} from '~/components/ui/ProductCard';
+
+type CollectionImageNode = {
+  id: string;
+  title: string;
+  handle: string;
+  image?: {
+    url: string;
+    altText?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
+};
+
+const HOMEPAGE_QUERY = `#graphql
+  ${PRODUCT_CARD_FRAGMENT}
+  query Homepage($country: CountryCode, $language: LanguageCode, $first: Int!)
+    @inContext(country: $country, language: $language) {
+    featuredCollections: collections(first: 4, sortKey: UPDATED_AT) {
+      nodes {
+        id
+        title
+        handle
+        image {
+          url
+          altText
+          width
+          height
+        }
+      }
+    }
+    newDrops: collection(handle: "all-products") {
+      products(first: $first, sortKey: CREATED) {
+        nodes {
+          ...ProductCard
+        }
+      }
+    }
+  }
+` as const;
 
 export const meta: MetaFunction = () => [
   {title: 'LEGENDARY BRANDING — Premium Editorial Streetwear'},
@@ -11,11 +56,30 @@ export const meta: MetaFunction = () => [
   },
 ];
 
-export async function loader() {
-  return {};
+export async function loader({context}: LoaderFunctionArgs) {
+  const {storefront} = context;
+  const paginationVariables = getPaginationVariables(new Request(''), {
+    pageBy: 4,
+  });
+
+  const {featuredCollections, newDrops} = await storefront.query(
+    HOMEPAGE_QUERY,
+    {
+      variables: {
+        ...paginationVariables,
+        first: 4,
+        country: storefront.i18n.country,
+        language: storefront.i18n.language,
+      },
+    },
+  );
+
+  return {featuredCollections, newDrops};
 }
 
 export default function Homepage() {
+  const {featuredCollections, newDrops} = useLoaderData<typeof loader>();
+
   return (
     <div>
       {/* Hero — full-bleed campaign image placeholder */}
@@ -52,29 +116,34 @@ export default function Homepage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            {label: 'T-Shirts', href: '/collections/shirts-tops'},
-            {label: 'Outerwear', href: '/collections/hoodies-jackets'},
-            {label: 'Accessories', href: '/collections/accessories-more'},
-            {label: 'Marque Légendaire', href: '/collections/marque-legendaire-luxury-streetwear'},
-          ].map(({label, href}) => (
-            <a
-              key={href}
-              href={href}
-              className="group block relative overflow-hidden"
+          {(featuredCollections.nodes as CollectionImageNode[]).map((collection) => (
+            <Link
+              key={collection.id}
+              to={`/collections/${collection.handle}`}
+              prefetch="intent"
+              className="group block"
             >
-              <Placeholder aspect="aspect-[3/4]" label={label} />
-              <div className="mt-3">
-                <span className="text-xs font-medium tracking-[0.15em] uppercase text-[#0a0a0a] group-hover:text-[#6b6b6b] transition-colors">
-                  {label}
-                </span>
+              <div className="relative overflow-hidden mb-3">
+                {collection.image ? (
+                  <Image
+                    data={collection.image}
+                    aspectRatio="3/4"
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <Placeholder aspect="aspect-[3/4]" label={collection.title} />
+                )}
               </div>
-            </a>
+              <span className="text-xs font-medium tracking-[0.15em] uppercase text-[#0a0a0a] group-hover:text-[#6b6b6b] transition-colors">
+                {collection.title}
+              </span>
+            </Link>
           ))}
         </div>
       </Container>
 
-      {/* Featured products placeholder */}
+      {/* New Drops */}
       <section className="bg-[#f7f7f7]">
         <Container className="py-20">
           <div className="flex items-baseline justify-between mb-10">
@@ -87,23 +156,18 @@ export default function Homepage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Array.from({length: 4}).map((_, i) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <div key={i} className="group">
-                <div className="relative overflow-hidden mb-3">
-                  <Placeholder aspect="aspect-[3/4]" label="Product" />
-                </div>
-                <div className="space-y-1">
-                  <div className="h-3 w-3/4 bg-[#e5e5e5] rounded-sm" />
-                  <div className="h-3 w-1/4 bg-[#e5e5e5] rounded-sm" />
-                </div>
-              </div>
+            {(newDrops?.products.nodes as ProductCardFragment[] | undefined)?.map((product, i) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                loading={i < 2 ? 'eager' : 'lazy'}
+              />
             ))}
           </div>
         </Container>
       </section>
 
-      {/* Editorial CTA band */}
+      {/* Editorial CTA */}
       <Container className="py-24 text-center">
         <p className="text-[10px] font-semibold tracking-widest uppercase text-[#6b6b6b] mb-4">
           The Journal
