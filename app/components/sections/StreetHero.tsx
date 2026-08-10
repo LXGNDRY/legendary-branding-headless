@@ -1,6 +1,7 @@
 import {Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import Button from '~/components/ui/Button';
+import HeroPlaceholder from '~/components/ui/HeroPlaceholder';
 
 type ImageData = {
   url: string;
@@ -68,11 +69,7 @@ export default function StreetHero({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[#f5f5f5]">
-              <span className="text-[0.78rem] tracking-[0.15em] uppercase text-black/40">
-                Hero Image
-              </span>
-            </div>
+            <HeroPlaceholder className="w-full h-full" />
           )}
         </div>
 
