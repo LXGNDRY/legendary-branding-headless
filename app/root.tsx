@@ -4,26 +4,27 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from 'react-router';
-import type {LinksFunction, MetaFunction} from 'react-router';
+import {useState} from 'react';
+import type {LinksFunction, MetaFunction, LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
 import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
+import CartDrawer from '~/components/layout/CartDrawer';
+import type {CartData} from '~/lib/cart';
 
 export const links: LinksFunction = () => [
-  // Preconnect to Google Fonts
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
   {
     rel: 'preconnect',
     href: 'https://fonts.gstatic.com',
     crossOrigin: 'anonymous',
   },
-  // Inter typeface
   {
     rel: 'stylesheet',
     href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
   },
-  // Global styles + Tailwind
   {rel: 'stylesheet', href: styles},
 ];
 
@@ -36,6 +37,11 @@ export const meta: MetaFunction = () => [
     content: 'Premium editorial streetwear. Bold, minimal, fast.',
   },
 ];
+
+export async function loader({context}: LoaderFunctionArgs) {
+  const cart = await context.cart.get();
+  return {cart: cart as CartData};
+}
 
 export function Layout({children}: {children: React.ReactNode}) {
   return (
@@ -54,13 +60,26 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
+  const {cart} = useLoaderData<typeof loader>();
+  const [cartOpen, setCartOpen] = useState(false);
+
+  const cartCount = cart?.totalQuantity ?? 0;
+
   return (
     <div className="flex flex-col min-h-dvh">
-      <Header />
+      <Header
+        cartCount={cartCount}
+        onOpenCart={() => setCartOpen(true)}
+      />
       <main className="flex-1">
         <Outlet />
       </main>
       <Footer />
+      <CartDrawer
+        cart={cart}
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+      />
     </div>
   );
 }
