@@ -155,8 +155,8 @@ export async function action({request, context}: ActionFunctionArgs) {
   const {action, inputs} = CartForm.getFormInput(formData);
 
   if (action === CartForm.ACTIONS.LinesAdd) {
-    const result = await cart.linesAdd(
-      inputs.lines as Parameters<typeof cart.linesAdd>[0],
+    const result = await cart.addLines(
+      inputs.lines as Parameters<typeof cart.addLines>[0],
     );
     const headers = cart.setCartId(result.cart.id);
     return new Response(null, {status: 200, headers});

@@ -4,6 +4,10 @@ import {AppSession} from '~/lib/session';
 /**
  * Creates all context objects available to route loaders and actions.
  * Called once per request in server.ts.
+ *
+ * Returns the HydrogenRouterContextProvider instance directly — do NOT spread
+ * it into a plain object. React Router v7 with v8_middleware requires the
+ * context passed to handleRequest to be a RouterContextProvider instance.
  */
 export async function createAppLoadContext(
   request: Request,
@@ -21,7 +25,7 @@ export async function createAppLoadContext(
     AppSession.init(request, [env.SESSION_SECRET]),
   ]);
 
-  const hydrogenContext = createHydrogenContext({
+  return createHydrogenContext({
     env,
     request,
     cache,
@@ -29,11 +33,6 @@ export async function createAppLoadContext(
     session,
     i18n: {language: 'EN', country: 'US'},
   });
-
-  return {
-    ...hydrogenContext,
-    session,
-  };
 }
 
 export type AppLoadContext = Awaited<ReturnType<typeof createAppLoadContext>>;

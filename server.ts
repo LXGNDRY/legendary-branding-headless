@@ -1,4 +1,8 @@
-import {createRequestHandler, type ServerBuild} from 'react-router';
+import {
+  createRequestHandler,
+  type RouterContextProvider,
+  type ServerBuild,
+} from 'react-router';
 import * as build from 'virtual:react-router/server-build';
 import {storefrontRedirect} from '@shopify/hydrogen';
 import {createAppLoadContext} from '~/lib/context';
@@ -14,7 +18,10 @@ export default {
 
       const handleRequest = createRequestHandler(build as unknown as ServerBuild);
 
-      const response = await handleRequest(request, appContext);
+      const response = await handleRequest(
+        request,
+        appContext as unknown as RouterContextProvider,
+      );
 
       if (appContext.session.isPending) {
         response.headers.set(
