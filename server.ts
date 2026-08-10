@@ -16,8 +16,7 @@ export default {
     try {
       const appContext = await createAppLoadContext(request, env, ctx);
 
-      // TODO: remove 'development' before final production deploy
-      const handleRequest = createRequestHandler(build as unknown as ServerBuild, 'development');
+      const handleRequest = createRequestHandler(build as unknown as ServerBuild);
 
       const response = await handleRequest(
         request,
