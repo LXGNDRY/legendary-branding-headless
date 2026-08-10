@@ -104,8 +104,7 @@ export function ErrorBoundary({error}: {error: unknown}) {
         </p>
         <h1 className="mb-6">Something went wrong</h1>
         <p className="text-black/60 text-sm mb-10">
-          We&apos;ve been notified and are looking into it. Please try again in
-          a few moments.
+          An unexpected error occurred. Please try again in a few moments.
         </p>
         <a
           href="/"
