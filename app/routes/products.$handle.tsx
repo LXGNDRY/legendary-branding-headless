@@ -1,104 +1,402 @@
-import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
-import {useParams} from 'react-router';
+import {
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+  type MetaFunction,
+  useLoaderData,
+  Link,
+} from 'react-router';
+import {
+  CartForm,
+  Image,
+  Money,
+  VariantSelector,
+  getSelectedProductOptions,
+  useOptimisticVariant,
+  type VariantOption,
+} from '@shopify/hydrogen';
+import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Container from '~/components/ui/Container';
-import Placeholder from '~/components/ui/Placeholder';
 import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
+import Placeholder from '~/components/ui/Placeholder';
+import ProductGallery from '~/components/ui/ProductGallery';
+import ProductCard, {
+  PRODUCT_CARD_FRAGMENT,
+  type ProductCardFragment,
+} from '~/components/ui/ProductCard';
+
+type MoneyData = {amount: string; currencyCode: CurrencyCode};
+
+type ProductVariantFragment = {
+  id: string;
+  availableForSale: boolean;
+  quantityAvailable?: number | null;
+  selectedOptions: {name: string; value: string}[];
+  price: MoneyData;
+  compareAtPrice?: MoneyData | null;
+  image?: {
+    url: string;
+    altText?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
+};
+
+type ProductFull = {
+  id: string;
+  title: string;
+  handle: string;
+  descriptionHtml: string;
+  tags: string[];
+  vendor: string;
+  images: {
+    nodes: {
+      id?: string | null;
+      url: string;
+      altText?: string | null;
+      width?: number | null;
+      height?: number | null;
+    }[];
+  };
+  options: {
+    id?: string;
+    name: string;
+    optionValues: {name: string}[];
+  }[];
+  selectedVariant?: ProductVariantFragment | null;
+  variants: {
+    nodes: ProductVariantFragment[];
+  };
+};
+
+const PRODUCT_VARIANT_FRAGMENT = `#graphql
+  fragment ProductVariant on ProductVariant {
+    id
+    availableForSale
+    quantityAvailable
+    selectedOptions { name value }
+    price { amount currencyCode }
+    compareAtPrice { amount currencyCode }
+    image { url altText width height }
+  }
+` as const;
+
+const PRODUCT_QUERY = `#graphql
+  ${PRODUCT_VARIANT_FRAGMENT}
+  ${PRODUCT_CARD_FRAGMENT}
+  query Product(
+    $handle: String!
+    $selectedOptions: [SelectedOptionInput!]!
+    $country: CountryCode
+    $language: LanguageCode
+  ) @inContext(country: $country, language: $language) {
+    product(handle: $handle) {
+      id
+      title
+      handle
+      descriptionHtml
+      tags
+      vendor
+      images(first: 10) {
+        nodes { id url altText width height }
+      }
+      options {
+        id
+        name
+        optionValues { name }
+      }
+      selectedVariant: variantBySelectedOptions(
+        selectedOptions: $selectedOptions
+        ignoreUnknownOptions: true
+        caseInsensitiveMatch: true
+      ) {
+        ...ProductVariant
+      }
+      variants(first: 100) {
+        nodes { ...ProductVariant }
+      }
+    }
+    relatedProducts: collection(handle: "all-products") {
+      products(first: 4, sortKey: BEST_SELLING) {
+        nodes { ...ProductCard }
+      }
+    }
+  }
+` as const;
 
 export const meta: MetaFunction<typeof loader> = ({data}) => [
-  {title: `${data?.title ?? 'Product'} — LEGENDARY BRANDING`},
+  {title: `${data?.product?.title ?? 'Product'} — LEGENDARY BRANDING`},
+  {
+    name: 'description',
+    content: data?.product?.descriptionHtml
+      ? data.product.descriptionHtml.replace(/<[^>]+>/g, '').slice(0, 155)
+      : `Shop ${data?.product?.title ?? 'this product'} at Legendary Branding.`,
+  },
 ];
 
-export async function loader({params}: LoaderFunctionArgs) {
-  const handle = params.handle ?? '';
-  // Storefront API call wired up in Milestone 3
-  return {
-    handle,
-    title: handle
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase()),
-  };
+export async function action({request, context}: ActionFunctionArgs) {
+  const {cart} = context;
+  const formData = await request.formData();
+  const {action, inputs} = CartForm.getFormInput(formData);
+
+  if (action === CartForm.ACTIONS.LinesAdd) {
+    const result = await cart.linesAdd(
+      inputs.lines as Parameters<typeof cart.linesAdd>[0],
+    );
+    const headers = cart.setCartId(result.cart.id);
+    return new Response(null, {status: 200, headers});
+  }
+
+  return new Response('Bad request', {status: 400});
+}
+
+export async function loader({params, request, context}: LoaderFunctionArgs) {
+  const {handle} = params;
+  if (!handle) throw new Response('Not Found', {status: 404});
+
+  const selectedOptions = getSelectedProductOptions(request);
+
+  const {product, relatedProducts} = await context.storefront.query(
+    PRODUCT_QUERY,
+    {
+      variables: {
+        handle,
+        selectedOptions,
+        country: context.storefront.i18n.country,
+        language: context.storefront.i18n.language,
+      },
+    },
+  );
+
+  if (!product) throw new Response('Product not found', {status: 404});
+
+  return {product: product as ProductFull, relatedProducts};
+}
+
+function AddToCartButton({
+  variant,
+}: {
+  variant?: ProductVariantFragment | null;
+}) {
+  const soldOut = !variant?.availableForSale;
+  const unavailable = !variant;
+
+  if (soldOut || unavailable) {
+    return (
+      <Button
+        variant="outline"
+        type="button"
+        className="w-full py-4 text-sm opacity-60 cursor-not-allowed"
+        disabled
+      >
+        {unavailable ? 'Select Options' : 'Sold Out'}
+      </Button>
+    );
+  }
+
+  return (
+    <CartForm
+      route="/cart"
+      action={CartForm.ACTIONS.LinesAdd}
+      inputs={{
+        lines: [
+          {
+            merchandiseId: variant.id,
+            quantity: 1,
+          },
+        ],
+      }}
+    >
+      <Button variant="primary" type="submit" className="w-full py-4 text-sm">
+        Add to Cart
+      </Button>
+    </CartForm>
+  );
 }
 
 export default function ProductPage() {
-  const {handle} = useParams();
-  const title = handle?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? '';
+  const {product, relatedProducts} = useLoaderData<typeof loader>();
+
+  const selectedVariant = useOptimisticVariant(
+    product.selectedVariant as ProductVariantFragment | undefined,
+    product.variants.nodes as ProductVariantFragment[],
+  );
+
+  const isOnSale =
+    selectedVariant?.compareAtPrice &&
+    parseFloat(selectedVariant.compareAtPrice.amount) >
+      parseFloat(selectedVariant.price.amount);
+
+  const isNew = product.tags.includes('new');
 
   return (
-    <Container className="py-12">
-      {/* Breadcrumb */}
-      <nav className="mb-8 text-[11px] tracking-widest uppercase text-[#6b6b6b]" aria-label="Breadcrumb">
-        <a href="/collections/all-products" className="hover:text-[#0a0a0a] transition-colors">
-          Shop
-        </a>
-        <span className="mx-2">/</span>
-        <span className="text-[#0a0a0a]">{title}</span>
-      </nav>
+    <>
+      <Container className="py-12">
+        {/* Breadcrumb */}
+        <nav
+          className="mb-8 text-[11px] tracking-widest uppercase text-[#6b6b6b]"
+          aria-label="Breadcrumb"
+        >
+          <Link to="/collections/all-products" className="hover:text-[#0a0a0a] transition-colors">
+            Shop
+          </Link>
+          <span className="mx-2">/</span>
+          {product.vendor && (
+            <>
+              <span className="text-[#6b6b6b]">{product.vendor}</span>
+              <span className="mx-2">/</span>
+            </>
+          )}
+          <span className="text-[#0a0a0a]">{product.title}</span>
+        </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
-        {/* Gallery */}
-        <div className="space-y-2">
-          <Placeholder aspect="aspect-[3/4]" label="Product Image" />
-          <div className="grid grid-cols-4 gap-2">
-            {Array.from({length: 4}).map((_, i) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <Placeholder key={i} aspect="aspect-square" label="" />
-            ))}
-          </div>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
+          {/* Gallery */}
+          <ProductGallery images={product.images.nodes} title={product.title} />
 
-        {/* Product info */}
-        <div className="space-y-6">
-          <div>
-            <Badge variant="new" className="mb-3">New</Badge>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
-              {title}
-            </h1>
-            <p className="mt-3 text-xl font-medium">$65.00</p>
-          </div>
-
-          {/* Variant selector placeholder */}
-          <div>
-            <p className="text-[10px] font-semibold tracking-widest uppercase mb-3">
-              Size
-            </p>
-            <div className="flex gap-2 flex-wrap">
-              {['XS', 'S', 'M', 'L', 'XL', '2XL'].map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  className="w-12 h-12 border border-[#e5e5e5] text-xs font-medium hover:border-[#0a0a0a] transition-colors"
-                  aria-label={`Size ${size}`}
-                >
-                  {size}
-                </button>
-              ))}
+          {/* Product info */}
+          <div className="space-y-6">
+            {/* Title + price */}
+            <div>
+              {(isOnSale || isNew || !selectedVariant?.availableForSale) && (
+                <div className="flex gap-2 mb-3">
+                  {!selectedVariant?.availableForSale && (
+                    <Badge variant="soldout">Sold Out</Badge>
+                  )}
+                  {isOnSale && <Badge variant="sale">Sale</Badge>}
+                  {isNew && !isOnSale && <Badge variant="new">New</Badge>}
+                </div>
+              )}
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight mb-3">
+                {product.title}
+              </h1>
+              <div className="flex items-baseline gap-3">
+                {selectedVariant ? (
+                  <>
+                    <Money
+                      data={selectedVariant.price}
+                      className="text-xl font-medium"
+                    />
+                    {isOnSale && selectedVariant.compareAtPrice && (
+                      <Money
+                        data={selectedVariant.compareAtPrice}
+                        className="text-base text-[#999999] line-through"
+                      />
+                    )}
+                  </>
+                ) : (
+                  <span className="text-xl font-medium text-[#6b6b6b]">
+                    Select a variant
+                  </span>
+                )}
+              </div>
             </div>
-            <a
-              href="/policies/size-guide"
-              className="inline-block mt-2 text-[11px] tracking-wide underline underline-offset-2 text-[#6b6b6b] hover:text-[#0a0a0a] transition-colors"
+
+            {/* Variant selector */}
+            <VariantSelector
+              handle={product.handle}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              options={product.options as any}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              variants={product.variants.nodes as any}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              selectedVariant={selectedVariant as any}
             >
-              Size Guide
-            </a>
+              {({option}: {option: VariantOption}) => (
+                <div key={option.name} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] font-semibold tracking-widest uppercase">
+                      {option.name}
+                    </p>
+                    {option.name.toLowerCase() === 'size' && (
+                      <Link
+                        to="/policies/size-guide"
+                        className="text-[10px] tracking-wide underline underline-offset-2 text-[#6b6b6b] hover:text-[#0a0a0a] transition-colors"
+                      >
+                        Size Guide
+                      </Link>
+                    )}
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {option.values.map(({value, isActive, isAvailable, to}) => (
+                      <Link
+                        key={value}
+                        to={to}
+                        replace
+                        preventScrollReset
+                        prefetch="intent"
+                        className={`min-w-[3rem] h-10 px-3 border text-xs font-medium transition-colors flex items-center justify-center ${
+                          isActive
+                            ? 'border-[#0a0a0a] bg-[#0a0a0a] text-white'
+                            : isAvailable
+                              ? 'border-[#e5e5e5] hover:border-[#0a0a0a] text-[#0a0a0a]'
+                              : 'border-[#e5e5e5] text-[#cccccc] cursor-not-allowed line-through'
+                        }`}
+                        aria-disabled={!isAvailable}
+                        aria-label={`${option.name}: ${value}${!isAvailable ? ' (unavailable)' : ''}`}
+                      >
+                        {value}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </VariantSelector>
+
+            {/* Add to cart */}
+            <AddToCartButton variant={selectedVariant as ProductVariantFragment | null | undefined} />
+
+            {/* Description */}
+            {product.descriptionHtml && (
+              <div className="border-t border-[#e5e5e5] pt-6">
+                <p className="text-[10px] font-semibold tracking-widest uppercase mb-4">
+                  Description
+                </p>
+                <div
+                  className="prose prose-sm max-w-none text-[#0a0a0a] [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-[#6b6b6b] [&_ul]:text-sm [&_ul]:text-[#6b6b6b] [&_li]:my-0.5"
+                  // eslint-disable-next-line react/no-danger
+                  dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
+                />
+              </div>
+            )}
+
+            {/* Shipping note */}
+            <div className="border-t border-[#e5e5e5] pt-4">
+              <p className="text-[11px] tracking-wide text-[#6b6b6b]">
+                Free shipping on orders over $100 · Easy returns within 30 days
+              </p>
+            </div>
           </div>
-
-          {/* Add to cart — wired in Milestone 4 */}
-          <Button variant="primary" type="button" className="w-full py-4 text-sm">
-            Add to Cart
-          </Button>
-
-          {/* Description placeholder */}
-          <div className="border-t border-[#e5e5e5] pt-6 space-y-2">
-            <div className="h-3 bg-[#e5e5e5] rounded-sm w-full animate-pulse" />
-            <div className="h-3 bg-[#e5e5e5] rounded-sm w-5/6 animate-pulse" />
-            <div className="h-3 bg-[#e5e5e5] rounded-sm w-4/6 animate-pulse" />
-          </div>
-
-          <p className="text-xs text-[#6b6b6b] tracking-wide">
-            Full product data and add-to-cart wired in Milestone 3.
-          </p>
         </div>
-      </div>
-    </Container>
+      </Container>
+
+      {/* Related products */}
+      {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
+        <section className="bg-[#f7f7f7]">
+          <Container className="py-20">
+            <div className="flex items-baseline justify-between mb-10">
+              <h2 className="text-xs font-semibold tracking-widest uppercase">
+                You May Also Like
+              </h2>
+              <Button as="link" to="/collections/all-products" variant="ghost">
+                View All
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {(relatedProducts.products.nodes as ProductCardFragment[])
+                .filter((p) => p.id !== product.id)
+                .slice(0, 4)
+                .map((p, i) => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    loading={i < 2 ? 'eager' : 'lazy'}
+                  />
+                ))}
+            </div>
+          </Container>
+        </section>
+      )}
+    </>
   );
 }
