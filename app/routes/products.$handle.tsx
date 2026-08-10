@@ -24,6 +24,7 @@ import ProductGallery from '~/components/ui/ProductGallery';
 import JsonLd from '~/components/ui/JsonLd';
 import SizeGuideModal from '~/components/ui/SizeGuideModal';
 import WaitlistForm from '~/components/ui/WaitlistForm';
+import RecentlyViewed from '~/components/ui/RecentlyViewed';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -54,6 +55,13 @@ type ProductFull = {
   descriptionHtml: string;
   tags: string[];
   vendor: string;
+  metafields: {
+    nodes: Array<{
+      key: string;
+      value: string;
+      type: string;
+    }>;
+  };
   images: {
     nodes: {
       id?: string | null;
@@ -102,6 +110,16 @@ const PRODUCT_QUERY = `#graphql
       descriptionHtml
       tags
       vendor
+      metafields(identifiers: [
+        {namespace: "custom", key: "material"}
+        {namespace: "custom", key: "fit"}
+        {namespace: "custom", key: "care"}
+        {namespace: "custom", key: "size_chart"}
+      ]) {
+        key
+        value
+        type
+      }
       images(first: 10) {
         nodes { id url altText width height }
       }
@@ -195,8 +213,12 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
 
 function AddToCartButton({
   variant,
+  quantity = 1,
+  buyNow = false,
 }: {
   variant?: ProductVariantFragment | null;
+  quantity?: number;
+  buyNow?: boolean;
 }) {
   const soldOut = !variant?.availableForSale;
   const unavailable = !variant;
@@ -222,21 +244,64 @@ function AddToCartButton({
         lines: [
           {
             merchandiseId: variant.id,
-            quantity: 1,
+            quantity,
           },
         ],
       }}
     >
-      <Button variant="solid" type="submit" className="w-full py-4 text-sm">
-        Add to Cart
-      </Button>
+      <button
+        type="submit"
+        className={`w-full py-4 text-sm font-semibold tracking-widest uppercase transition-all duration-300 ${
+          buyNow
+            ? 'border-2 border-black bg-white text-black hover:bg-black hover:text-white'
+            : 'bg-black text-white hover:bg-[#333]'
+        }`}
+      >
+        {buyNow ? 'Buy Now' : 'Add to Cart'}
+      </button>
     </CartForm>
+  );
+}
+
+function QuantitySelector({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex items-center border border-black/10">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(1, value - 1))}
+        className="w-10 h-10 flex items-center justify-center hover:bg-[#f7f7f7] transition-colors disabled:opacity-40"
+        aria-label="Decrease quantity"
+        disabled={value <= 1}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M2 7h10" />
+        </svg>
+      </button>
+      <span className="w-10 text-center text-sm font-medium">{value}</span>
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        className="w-10 h-10 flex items-center justify-center hover:bg-[#f7f7f7] transition-colors"
+        aria-label="Increase quantity"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M7 2v10M2 7h10" />
+        </svg>
+      </button>
+    </div>
   );
 }
 
 export default function ProductPage() {
   const {product, relatedProducts} = useLoaderData<typeof loader>();
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const selectedVariant = useOptimisticVariant(
     product.selectedVariant as ProductVariantFragment | undefined,
@@ -386,8 +451,32 @@ export default function ProductPage() {
 
             {/* Sticky add to cart */}
             <div className="sticky bottom-0 pt-2 -mx-1 px-1 pb-1 bg-gradient-to-t from-white via-white/95 to-transparent">
+              {/* Quantity selector */}
+              {selectedVariant?.availableForSale && (
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs tracking-widest uppercase text-black/60">
+                    Quantity
+                  </span>
+                  <QuantitySelector value={quantity} onChange={setQuantity} />
+                </div>
+              )}
+
               {/* Add to cart */}
-              <AddToCartButton variant={selectedVariant as ProductVariantFragment | null | undefined} />
+              <AddToCartButton
+                variant={selectedVariant as ProductVariantFragment | null | undefined}
+                quantity={quantity}
+              />
+
+              {/* Buy Now */}
+              {selectedVariant?.availableForSale && (
+                <div className="mt-3">
+                  <AddToCartButton
+                    variant={selectedVariant as ProductVariantFragment}
+                    quantity={quantity}
+                    buyNow
+                  />
+                </div>
+              )}
 
               {/* Waitlist for sold out */}
               {!selectedVariant?.availableForSale && selectedVariant && (
@@ -404,7 +493,7 @@ export default function ProductPage() {
 
             {/* Description */}
             {product.descriptionHtml && (
-              <div className="border-t border-[#e5e5e5] pt-6">
+              <div className="border-t border-black/10 pt-6">
                 <p className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase mb-4">
                   Description
                 </p>
@@ -413,6 +502,29 @@ export default function ProductPage() {
                   // eslint-disable-next-line react/no-danger
                   dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
                 />
+              </div>
+            )}
+
+            {/* Metafields: Material / Fit / Care */}
+            {product.metafields && product.metafields.nodes && product.metafields.nodes.some((m: {value: string}) => m.value) && (
+              <div className="border-t border-black/10 pt-6 space-y-4">
+                {(product.metafields.nodes as Array<{key: string; value: string}>).map((mf) => {
+                  if (!mf.value) return null;
+                  const labels: Record<string, string> = {
+                    material: 'Material',
+                    fit: 'Fit',
+                    care: 'Care Instructions',
+                    size_chart: 'Size Chart',
+                  };
+                  return (
+                    <div key={mf.key}>
+                      <p className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase mb-2">
+                        {labels[mf.key] ?? mf.key}
+                      </p>
+                      <p className="text-sm text-black/70 leading-relaxed">{mf.value}</p>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -453,6 +565,14 @@ export default function ProductPage() {
           </Container>
         </section>
       )}
+
+      {/* Recently viewed */}
+      <RecentlyViewed
+        currentProductId={product.id}
+        currentProductHandle={product.handle}
+        currentProductTitle={product.title}
+        currentProductImage={product.images?.nodes?.[0]?.url}
+      />
 
       {/* Size guide modal */}
       <SizeGuideModal
