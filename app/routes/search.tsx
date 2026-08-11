@@ -1,293 +1,343 @@
-import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
-import {useLoaderData, Form, useNavigation} from 'react-router';
-import {Image, Money} from '@shopify/hydrogen';
-import {Link} from 'react-router';
-import Container from '~/components/ui/Container';
-import {CacheNone} from '~/lib/cache';
-import type {ProductCardFragment} from '~/components/ui/ProductCard';
-import {PRODUCT_CARD_FRAGMENT} from '~/components/ui/ProductCard';
-import ProductCard from '~/components/ui/ProductCard';
+import {
+  type LoaderFunctionArgs,
+  type MetaFunction,
+  useLoaderData,
+  useNavigate,
+  Link,
+  Form,
+} from 'react-router';
+import {useState} from 'react';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
-
-type ArticleResult = {
-  id: string;
-  title: string;
-  handle: string;
-  publishedAt: string;
-  image?: {
-    url: string;
-    altText?: string | null;
-    width?: number | null;
-    height?: number | null;
-  } | null;
-  blog: {handle: string};
-};
-
-type CollectionResult = {
-  id: string;
-  title: string;
-  handle: string;
-  image?: {
-    url: string;
-    altText?: string | null;
-    width?: number | null;
-    height?: number | null;
-  } | null;
-};
-
-type SearchResults = {
-  products: {nodes: ProductCardFragment[]};
-  articles: {nodes: ArticleResult[]};
-  collections: {nodes: CollectionResult[]};
-} | null;
+import Container from '~/components/ui/Container';
+import ProductCard from '~/components/ui/ProductCard';
+import {CacheShort} from '~/lib/cache';
 
 const SEARCH_QUERY = `#graphql
-  ${PRODUCT_CARD_FRAGMENT}
   query Search(
     $query: String!
+    $first: Int
+    $last: Int
+    $after: String
+    $before: String
+    $sortKey: SearchSortKeys
+    $reverse: Boolean
+    $availableV2: Boolean
+    $productType: String
+    $productVendor: String
+    $minPrice: Money
+    $maxPrice: Money
     $country: CountryCode
     $language: LanguageCode
   ) @inContext(country: $country, language: $language) {
-    products: search(query: $query, types: [PRODUCT], first: 12) {
-      nodes {
-        ... on Product {
-          ...ProductCard
+    search(
+      query: $query
+      first: $first
+      last: $last
+      after: $after
+      before: $before
+      sortKey: $sortKey
+      reverse: $reverse
+      productFilters: [
+        {productVendor: $productVendor}
+        {productType: $productType}
+        {available: $availableV2}
+        {price: {min: $minPrice, max: $maxPrice}}
+      ]
+    ) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      products: edges {
+        cursor
+        node {
+          ... on Product {
+            id
+            title
+            handle
+            vendor
+            productType
+            availableForSale
+            tags
+            description
+            featuredImage {
+              id
+              url
+              altText
+              width
+              height
+            }
+            priceRange {
+              minVariantPrice {
+                amount
+                currencyCode
+              }
+              maxVariantPrice {
+                amount
+                currencyCode
+              }
+            }
+          }
         }
       }
-    }
-    collections: search(query: $query, types: [COLLECTION], first: 4) {
-      nodes {
-        ... on Collection {
-          id
-          title
-          handle
-          image { url altText width height }
-        }
-      }
-    }
-    articles: search(query: $query, types: [ARTICLE], first: 6) {
-      nodes {
-        ... on Article {
-          id
-          title
-          handle
-          publishedAt
-          image { url altText width height }
-          blog { handle }
+      filters {
+        id
+        label
+        type
+        values {
+          label
+          value
+          input
+          count
         }
       }
     }
   }
 ` as const;
 
-export const meta: MetaFunction<typeof loader> = ({data}) => {
-  const q = data?.query;
-  return [
-    {title: q ? `"${q}" — Search — LEGENDARY BRANDING` : 'Search — LEGENDARY BRANDING'},
-    {name: 'description', content: 'Search Legendary Branding products and articles.'},
-  ];
-};
+const SORT_OPTIONS = [
+  {key: 'RELEVANCE', label: 'Relevance', reverse: false},
+  {key: 'PRICE', label: 'Price: Low to High', reverse: false},
+  {key: 'PRICE', label: 'Price: High to Low', reverse: true},
+  {key: 'TITLE', label: 'Alphabetical: A-Z', reverse: false},
+  {key: 'TITLE', label: 'Alphabetical: Z-A', reverse: true},
+  {key: 'CREATED_AT', label: 'Newest First', reverse: true},
+  {key: 'BEST_SELLING', label: 'Best Selling', reverse: false},
+];
+
+interface SearchProduct {
+  id: string;
+  title: string;
+  handle: string;
+  vendor: string;
+  productType: string;
+  availableForSale: boolean;
+  tags: string[];
+  featuredImage: {
+    url: string;
+    altText: string | null;
+    width: number | null;
+    height: number | null;
+  } | null;
+  priceRange: {
+    minVariantPrice: {amount: string; currencyCode: CurrencyCode};
+    maxVariantPrice: {amount: string; currencyCode: CurrencyCode};
+  };
+}
+
+interface SearchResult {
+  totalCount: number;
+  pageInfo: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    startCursor: string;
+    endCursor: string;
+  };
+  products: {cursor: string; node: SearchProduct}[];
+  filters: {
+    id: string;
+    label: string;
+    type: string;
+    values: {label: string; value: string; input: string; count: number}[];
+  }[];
+}
+
+const PAGE_SIZE = 24;
+
+export const meta: MetaFunction<typeof loader> = ({data}) => [
+  {title: `Search: ${data?.query ?? ''} — LEGENDARY BRANDING`},
+  {name: 'description', content: `Search results for "${data?.query ?? ''}" at Legendary Branding.`},
+  {robots: 'noindex, follow'},
+];
 
 export async function loader({request, context}: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const query = url.searchParams.get('q')?.trim() ?? '';
+  const sortKey = url.searchParams.get('sort') ?? 'RELEVANCE';
+  const reverse = url.searchParams.get('reverse') === 'true';
+  const after = url.searchParams.get('after') ?? undefined;
+  const before = url.searchParams.get('before') ?? undefined;
+  const minPrice = url.searchParams.get('min_price') ?? undefined;
+  const maxPrice = url.searchParams.get('max_price') ?? undefined;
+  const inStock = url.searchParams.get('in_stock') === '1';
+  const productType = url.searchParams.get('type') ?? undefined;
+  const vendor = url.searchParams.get('vendor') ?? undefined;
 
   if (!query) {
-    return {query: '', results: null as SearchResults, totalCount: 0};
+    return {
+      query: '',
+      search: null,
+      sortKey,
+      reverse,
+    };
   }
 
-  const {products, collections, articles} = await context.storefront.query(SEARCH_QUERY, {
+  const {search} = await context.storefront.query(SEARCH_QUERY, {
     variables: {
       query,
+      first: !before ? PAGE_SIZE : undefined,
+      last: before ? PAGE_SIZE : undefined,
+      after,
+      before,
+      sortKey,
+      reverse,
+      availableV2: inStock || undefined,
+      productType,
+      productVendor: vendor,
+      minPrice: minPrice ? parseFloat(minPrice) : undefined,
+      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
     },
-    cache: CacheNone(),
+    cache: CacheShort(),
   });
-
-  const totalCount =
-    (products?.nodes?.length ?? 0) +
-    (collections?.nodes?.length ?? 0) +
-    (articles?.nodes?.length ?? 0);
 
   return {
     query,
-    results: {
-      products: products ?? {nodes: []},
-      collections: collections ?? {nodes: []},
-      articles: articles ?? {nodes: []},
-    } as SearchResults,
-    totalCount,
+    search: search as SearchResult,
+    sortKey,
+    reverse,
   };
 }
 
 export default function SearchPage() {
-  const {query, results, totalCount} = useLoaderData<typeof loader>();
-  const navigation = useNavigation();
-  const isSearching = navigation.state === 'loading';
+  const {query, search, sortKey, reverse} = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
+  const [sortValue, setSortValue] = useState(`${sortKey}-${String(reverse)}`);
 
-  const productNodes = (results?.products?.nodes ?? []) as ProductCardFragment[];
-  const collectionNodes = (results?.collections?.nodes ?? []) as CollectionResult[];
-  const articleNodes = (results?.articles?.nodes ?? []) as ArticleResult[];
+  // No query — show search form
+  if (!query) {
+    return (
+      <Container className="py-20">
+        <div className="max-w-xl mx-auto text-center">
+          <p className="lb-eyebrow mb-4">SEARCH</p>
+          <h1 className="text-4xl font-normal tracking-tight mb-8">
+            Find what you're looking for
+          </h1>
+          <Form method="get" action="/search">
+            <input
+              type="search"
+              name="q"
+              placeholder="Search products, collections, and more..."
+              className="w-full bg-transparent border-b border-black/20 py-3 text-lg focus:outline-none focus:border-black transition-colors placeholder:text-black/40"
+              autoFocus
+            />
+          </Form>
+        </div>
+      </Container>
+    );
+  }
+
+  const products = search?.products.map(p => p.node) ?? [];
+  const total = search?.totalCount ?? 0;
+
+  function handleSortChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const [newSortKey, newReverse] = e.target.value.split('-');
+    setSortValue(e.target.value);
+    const params = new URLSearchParams(window.location.search);
+    params.set('sort', newSortKey);
+    params.set('reverse', newReverse);
+    params.delete('after');
+    params.delete('before');
+    navigate(`/search?${params.toString()}`);
+  }
 
   return (
-    <Container className="py-16">
-      <div className="max-w-2xl mx-auto mb-12">
-        <h1 className="text-3xl font-bold tracking-tight mb-8">Search</h1>
+    <Container className="py-12">
+      <header className="mb-10">
+        <p className="lb-eyebrow mb-3">SEARCH RESULTS</p>
+        <h1 className="text-3xl md:text-4xl font-normal tracking-tight mb-2">
+          &ldquo;{query}&rdquo;
+        </h1>
+        <p className="text-sm text-black/50">
+          {total} {total === 1 ? 'result' : 'results'} found
+        </p>
+      </header>
 
-        <Form method="get" action="/search">
-          <div className="flex gap-0 border border-[#0a0a0a]">
-            <label htmlFor="search-q" className="sr-only">Search</label>
-            <input
-              id="search-q"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Search products, collections, articles…"
-              autoFocus
-              className="flex-1 px-5 py-4 text-sm outline-none tracking-wide placeholder:text-[#999999] bg-transparent"
-            />
-            <button
-              type="submit"
-              className="px-6 py-4 bg-[#0a0a0a] text-white text-xs font-semibold tracking-widest uppercase hover:bg-[#333333] transition-colors"
-            >
-              Search
-            </button>
-          </div>
-        </Form>
-      </div>
-
-      {isSearching && (
-        <div className="text-center py-12 text-sm text-[#6b6b6b] tracking-wide">
-          Searching…
-        </div>
-      )}
-
-      {!isSearching && query && results && (
-        <>
-          <p className="text-xs text-[#6b6b6b] tracking-wide mb-10">
-            {totalCount > 0
-              ? `${totalCount} result${totalCount !== 1 ? 's' : ''} for "${query}"`
-              : `No results for "${query}"`}
+      {total === 0 ? (
+        <div className="py-16 text-center">
+          <p className="text-lg text-black/60 mb-6">
+            No products match your search.
           </p>
-
-          {/* Products */}
-          {productNodes.length > 0 && (
-            <section className="mb-14">
-              <h2 className="text-[10px] font-semibold tracking-widest uppercase mb-6 pb-3 border-b border-[#e5e5e5]">
-                Products ({productNodes.length})
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {productNodes.map((product, i) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    loading={i < 4 ? 'eager' : 'lazy'}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Collections */}
-          {collectionNodes.length > 0 && (
-            <section className="mb-14">
-              <h2 className="text-[10px] font-semibold tracking-widest uppercase mb-6 pb-3 border-b border-[#e5e5e5]">
-                Collections ({collectionNodes.length})
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {collectionNodes.map((col) => (
-                  <Link
-                    key={col.id}
-                    to={`/collections/${col.handle}`}
-                    prefetch="intent"
-                    className="group block"
-                  >
-                    <div className="overflow-hidden bg-[#f7f7f7] mb-3">
-                      {col.image ? (
-                        <Image
-                          data={col.image}
-                          aspectRatio="4/3"
-                          sizes="(min-width: 768px) 25vw, 50vw"
-                          className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="aspect-[4/3] bg-[#e5e5e5]" />
-                      )}
-                    </div>
-                    <p className="text-xs font-medium tracking-[0.12em] uppercase group-hover:text-[#6b6b6b] transition-colors">
-                      {col.title}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Articles */}
-          {articleNodes.length > 0 && (
-            <section className="mb-14">
-              <h2 className="text-[10px] font-semibold tracking-widest uppercase mb-6 pb-3 border-b border-[#e5e5e5]">
-                Journal ({articleNodes.length})
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {articleNodes.map((article) => (
-                  <Link
-                    key={article.id}
-                    to={`/journal/${article.handle}`}
-                    prefetch="intent"
-                    className="group block"
-                  >
-                    <div className="overflow-hidden bg-[#f7f7f7] mb-3">
-                      {article.image ? (
-                        <Image
-                          data={article.image}
-                          aspectRatio="3/2"
-                          sizes="(min-width: 768px) 33vw, 100vw"
-                          className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="aspect-[3/2] bg-[#e5e5e5]" />
-                      )}
-                    </div>
-                    <p className="text-xs text-[#999999] tracking-wide mb-1">
-                      {new Date(article.publishedAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </p>
-                    <p className="text-sm font-medium leading-snug group-hover:text-[#6b6b6b] transition-colors">
-                      {article.title}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {totalCount === 0 && (
-            <div className="py-16 text-center">
-              <p className="text-sm text-[#6b6b6b] tracking-wide mb-6">
-                Try a different term, or browse our collections.
-              </p>
-              <Link
-                to="/collections/all-products"
-                className="text-xs font-semibold tracking-widest uppercase underline underline-offset-2 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
+          <p className="text-sm text-black/40 mb-8">
+            Try a different keyword or browse our collections.
+          </p>
+          <Link
+            to="/collections/all-products"
+            className="inline-block text-xs font-semibold tracking-widest uppercase border-2 border-black px-8 py-3 hover:bg-black hover:text-white transition-colors"
+          >
+            Shop All
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* Sort bar */}
+          <div className="flex items-center justify-between mb-8">
+            <p className="text-sm text-black/50">
+              Showing {Math.min(products.length, total)} of {total}
+            </p>
+            <div className="flex items-center gap-3">
+              <label htmlFor="sort" className="text-xs text-black/50 uppercase tracking-wider">
+                Sort
+              </label>
+              <select
+                id="sort"
+                value={sortValue}
+                onChange={handleSortChange}
+                className="text-sm bg-transparent border border-black/20 px-3 py-1.5 focus:outline-none focus:border-black"
               >
-                Shop All Products
-              </Link>
+                {SORT_OPTIONS.map(opt => (
+                  <option key={`${opt.key}-${String(opt.reverse)}`} value={`${opt.key}-${String(opt.reverse)}`}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Product grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+{products.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={{
+                    ...product,
+                    compareAtPriceRange: product.priceRange,
+                  }}
+                />
+              ))}
+          </div>
+
+          {/* Pagination */}
+          {search && (search.pageInfo.hasNextPage || search.pageInfo.hasPreviousPage) && (
+            <div className="flex justify-between items-center mt-12 pt-8 border-t border-black/10">
+              {search.pageInfo.hasPreviousPage ? (
+                <Link
+                  to={`/search?q=${encodeURIComponent(query)}&before=${search.pageInfo.startCursor}&sort=${sortKey}&reverse=${reverse}`}
+                  className="text-xs font-medium tracking-widest uppercase hover:opacity-70 transition-opacity"
+                >
+                  ← Previous
+                </Link>
+              ) : (
+                <span className="text-xs text-black/30">← Previous</span>
+              )}
+
+              {search.pageInfo.hasNextPage ? (
+                <Link
+                  to={`/search?q=${encodeURIComponent(query)}&after=${search.pageInfo.endCursor}&sort=${sortKey}&reverse=${reverse}`}
+                  className="text-xs font-medium tracking-widest uppercase hover:opacity-70 transition-opacity"
+                >
+                  Next →
+                </Link>
+              ) : (
+                <span className="text-xs text-black/30">Next →</span>
+              )}
             </div>
           )}
         </>
-      )}
-
-      {!query && !isSearching && (
-        <div className="text-center py-10">
-          <p className="text-xs text-[#6b6b6b] tracking-wide">
-            Enter a term above to search products, collections, and articles.
-          </p>
-        </div>
       )}
     </Container>
   );

@@ -11,6 +11,7 @@ import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 're
 import styles from '~/styles/app.css?url';
 import {CacheShort} from '~/lib/cache';
 import {initSentry, useWebVitals} from '~/lib/monitoring';
+import {WishlistProvider} from '~/components/ui/Wishlist';
 import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
@@ -112,7 +113,8 @@ export default function App() {
   const cartCount = cart?.totalQuantity ?? 0;
 
   return (
-    <div className="flex flex-col min-h-dvh">
+    <WishlistProvider>
+      <div className="flex flex-col min-h-dvh">
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"
@@ -146,7 +148,8 @@ export default function App() {
         open={cartOpen}
         onClose={() => setCartOpen(false)}
       />
-    </div>
+      </div>
+    </WishlistProvider>
   );
 }
 

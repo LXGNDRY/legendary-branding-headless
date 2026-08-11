@@ -4,6 +4,7 @@ import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Badge from '~/components/ui/Badge';
 import Button from '~/components/ui/Button';
 import Placeholder from '~/components/ui/Placeholder';
+import WishlistButton from '~/components/ui/WishlistButton';
 
 type MoneyFragment = {
   amount: string;
@@ -243,15 +244,26 @@ export default function ProductCard({
         )}
 
         {/* Badge overlays — split layout: left/right */}
-        {(soldOut || onSale || isNewTag) && (
-          <div className="absolute top-3 left-3 right-3 flex justify-between pointer-events-none z-10">
+        <div className="absolute top-3 left-3 right-3 flex justify-between pointer-events-none z-10">
             <div className="flex gap-1.5 flex-wrap">
               {onSale && <Badge variant="sale">Sale</Badge>}
               {isNewTag && <Badge variant="new">New</Badge>}
             </div>
-            {soldOut && <Badge variant="soldout">Sold out</Badge>}
+            <div className="flex items-center gap-1.5 pointer-events-auto">
+              {soldOut && <Badge variant="soldout">Sold out</Badge>}
+              <WishlistButton
+                size="sm"
+                className="text-black/70 hover:text-black"
+                product={{
+                  id: product.id,
+                  handle: product.handle,
+                  title: product.title,
+                  price: product.priceRange.minVariantPrice.amount,
+                  image: product.featuredImage?.url,
+                }}
+              />
+            </div>
           </div>
-        )}
 
         {/* Quick add — slides up on hover */}
         {showQuickAdd && product.availableForSale && (

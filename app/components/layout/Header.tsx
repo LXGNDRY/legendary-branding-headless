@@ -2,6 +2,7 @@ import {Link} from 'react-router';
 import {useState} from 'react';
 import MobileMenu from './MobileMenu';
 import SearchTypeahead from '~/components/ui/SearchTypeahead';
+import {useWishlist} from '~/components/ui/Wishlist';
 
 const NAV_LINKS = [
   {label: 'NEW DROPS', href: '/collections/all-products'},
@@ -79,6 +80,36 @@ function UserIcon() {
   );
 }
 
+function HeartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-5 h-5"
+      aria-hidden="true"
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  );
+}
+
+function WishlistCount() {
+  const {count} = useWishlist();
+  if (count === 0) return null;
+  return (
+    <span
+      className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 flex items-center justify-center bg-[#0a0a0a] text-white text-[8px] font-bold rounded-full px-1 leading-none"
+      aria-hidden="true"
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
+
 interface HeaderProps {
   cartCount?: number;
   isLoggedIn?: boolean;
@@ -134,6 +165,16 @@ export default function Header({cartCount = 0, isLoggedIn = false, onOpenCart}: 
                 aria-label={isLoggedIn ? 'My Account' : 'Log In'}
               >
                 <UserIcon />
+              </Link>
+
+              {/* Wishlist */}
+              <Link
+                to="/wishlist"
+                className="relative hidden sm:flex p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
+                aria-label="Wishlist"
+              >
+                <HeartIcon />
+                <WishlistCount />
               </Link>
 
               {/* Cart */}
