@@ -12,20 +12,20 @@ export const SECURITY_HEADERS: Record<string, string> = {
   // allow necessary third-party origins.
   'Content-Security-Policy': [
     "default-src 'self'",
-    // Scripts: self + shopify CDN + inline (for hydration scripts)
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.shopify.com shop.app *.shopifypay.com",
-    // Styles: inline needed for Tailwind + styled-components/inline styles
+    // Scripts: self + Shopify CDN + inline hydration + consent-gated analytics
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.shopify.com shop.app *.shopifypay.com www.googletagmanager.com connect.facebook.net analytics.tiktok.com",
+    // Styles: inline needed for Tailwind + inline styles
     "style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.shopify.com",
     // Fonts: Google Fonts
     "font-src 'self' fonts.gstatic.com fonts.googleapis.com cdn.shopify.com",
-    // Images: allow everything (product images come from various CDNs)
-    "img-src 'self' data: blob: *.shopify.com cdn.shopify.com",
+    // Images: product CDNs + analytics pixel beacons
+    "img-src 'self' data: blob: *.shopify.com cdn.shopify.com www.facebook.com www.google-analytics.com",
     // Media
     "media-src 'self' data: blob: *.shopify.com",
     // Iframe: Shopify checkout, shop pay
     "frame-src 'self' *.shopify.com shop.app *.shopifypay.com",
-    // Connect: API calls, analytics, WebSocket for HMR in dev
-    "connect-src 'self' *.shopify.com cdn.shopify.com wss: ws:",
+    // Connect: API calls, analytics beacons, WebSocket for HMR in dev
+    "connect-src 'self' *.shopify.com cdn.shopify.com wss: ws: www.google-analytics.com analytics.google.com www.googletagmanager.com graph.facebook.com analytics.tiktok.com",
     // Form actions
     "form-action 'self' *.shopify.com",
     // Base URI
