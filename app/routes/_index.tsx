@@ -2,7 +2,6 @@ import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
 import {getPaginationVariables, Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
-import Placeholder from '~/components/ui/Placeholder';
 import Button from '~/components/ui/Button';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
