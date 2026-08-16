@@ -2,13 +2,13 @@
 #! oxygen_storefront_id: 1000167667
 
 name: Storefront 1000167667
+
 on:
   push:
     branches:
-      - main
-      - dev
-      - 'feature/**'
-      - 'hotfix/**'
+      - main        # production deploy
+      - dev         # preview deploy
+      - 'claude/**' # agent working branches — preview only
 
 permissions:
   contents: read
@@ -47,6 +47,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Storefront API types
+        # Requires Storefront API credentials as repository secrets.
+        # If secrets are absent (e.g. a fork), this step is skipped — typecheck
+        # still passes because routes type against @shopify/hydrogen/storefront-api-types
+        # (a static package) rather than the generated file.
+        if: ${{ secrets.PUBLIC_STORE_DOMAIN != '' && secrets.PUBLIC_STOREFRONT_API_TOKEN != '' }}
+        run: npm run codegen
+        env:
+          PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
+          PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+        continue-on-error: true  # never block CI on a schema introspection failure
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -56,9 +68,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Test
+        run: npm run test
+
   deploy:
     name: Deploy to Oxygen
-    needs: validate
+    needs: validate     # deploy only if quality gate passes
     timeout-minutes: 30
     runs-on: ubuntu-latest
     environment:

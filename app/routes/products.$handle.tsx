@@ -19,7 +19,6 @@ import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
-import Placeholder from '~/components/ui/Placeholder';
 import ProductGallery from '~/components/ui/ProductGallery';
 import JsonLd from '~/components/ui/JsonLd';
 import SizeGuideModal from '~/components/ui/SizeGuideModal';

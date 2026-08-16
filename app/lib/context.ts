@@ -23,6 +23,9 @@ export async function createAppLoadContext(
   if (!env.PUBLIC_STOREFRONT_API_TOKEN) {
     throw new Error('PUBLIC_STOREFRONT_API_TOKEN environment variable is not set');
   }
+  if (!env.PRIVATE_STOREFRONT_API_TOKEN) {
+    throw new Error('PRIVATE_STOREFRONT_API_TOKEN environment variable is not set');
+  }
 
   const waitUntil = executionContext.waitUntil.bind(executionContext);
 
