@@ -3,16 +3,14 @@ import type {LoaderFunctionArgs} from 'react-router';
 const PREDICTIVE_SEARCH_QUERY = `#graphql
   query PredictiveSearch($query: String!, $limit: Int = 6, $country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
-    predictiveSearch(query: $query, limit: $limit, options: {
-      unavailableProducts: HIDE,
-    }) {
+    predictiveSearch(query: $query, limit: $limit, unavailableProducts: HIDE) {
       products {
         id
         title
         handle
         vendor
-        image { url altText width height }
-        price {
+        featuredImage { url altText width height }
+        priceRange {
           minVariantPrice {
             amount
             currencyCode

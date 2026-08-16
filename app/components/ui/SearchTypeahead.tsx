@@ -3,45 +3,14 @@ import {Link, useNavigate} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import type {ProductCardFragment} from './ProductCard';
 
-const PREDICTIVE_SEARCH_QUERY = `#graphql
-  query PredictiveSearch($query: String!, $limit: Int = 6, $country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    predictiveSearch(query: $query, limit: $limit, options: {
-      unavailableProducts: HIDE,
-    }) {
-      products {
-        id
-        title
-        handle
-        vendor
-        image { url altText width height }
-        price {
-          minVariantPrice {
-            amount
-            currencyCode
-          }
-        }
-      }
-      collections {
-        id
-        title
-        handle
-        image { url altText width height }
-      }
-      queries {
-        text
-      }
-    }
-  }
-` as const;
 
 interface PredictiveProduct {
   id: string;
   title: string;
   handle: string;
   vendor?: string | null;
-  image?: {url: string; altText?: string | null} | null;
-  price: {
+  featuredImage?: {url: string; altText?: string | null} | null;
+  priceRange: {
     minVariantPrice: {amount: string; currencyCode: string};
   };
 }
@@ -198,11 +167,11 @@ export default function SearchTypeahead({
                         onClick={handleSelect}
                         className="flex gap-3 hover:bg-[#fafafa] -mx-2 px-2 py-1.5 transition-colors"
                       >
-                        {product.image?.url ? (
+                        {product.featuredImage?.url ? (
                           <div className="w-12 h-14 bg-[#f5f5f5] shrink-0 overflow-hidden">
                             <img
-                              src={product.image.url}
-                              alt={product.image.altText || product.title}
+                              src={product.featuredImage.url}
+                              alt={product.featuredImage.altText || product.title}
                               className="w-full h-full object-cover"
                               loading="lazy"
                             />
@@ -215,7 +184,7 @@ export default function SearchTypeahead({
                             {product.title}
                           </p>
                           <p className="text-xs text-black/50 mt-0.5">
-                            ${product.price.minVariantPrice.amount}
+                            ${product.priceRange.minVariantPrice.amount}
                           </p>
                         </div>
                       </Link>
