@@ -9,9 +9,13 @@ import ProductCard, {
 } from '~/components/ui/ProductCard';
 import StreetHero from '~/components/sections/StreetHero';
 import BrandMarquee from '~/components/sections/BrandMarquee';
+import StatStrip from '~/components/sections/StatStrip';
 import CollectionGrid from '~/components/sections/CollectionGrid';
+import BrandStory from '~/components/sections/BrandStory';
+import Testimonials from '~/components/sections/Testimonials';
 import DropTimer from '~/components/sections/DropTimer';
 import Lookbook from '~/components/sections/Lookbook';
+import NewsletterPopup from '~/components/sections/NewsletterPopup';
 import {CacheLong} from '~/lib/cache';
 
 type CollectionNode = {
@@ -112,6 +116,27 @@ const MARQUEE_ITEMS = [
   'DTG PRINTS',
 ];
 
+const TESTIMONIALS = [
+  {
+    quote: "This is the heaviest tee I've ever owned. The quality is unreal — you can feel the difference the second you put it on.",
+    name: 'Marcus T.',
+    location: 'Atlanta, GA',
+    stars: 5,
+  },
+  {
+    quote: "Made to order means I actually had to wait — but it was worth every day. Fits perfectly, no shrinkage after washing.",
+    name: 'Jordan L.',
+    location: 'London, UK',
+    stars: 5,
+  },
+  {
+    quote: "The DTG print quality blew me away. Sharp edges, no cracking. Other brands can't touch this.",
+    name: 'Aaliyah M.',
+    location: 'Toronto, CA',
+    stars: 5,
+  },
+];
+
 // Next drop date (30 days from build — update for real drops)
 const NEXT_DROP_DATE = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -167,7 +192,10 @@ export default function Homepage() {
       {/* 2. Brand Marquee */}
       <BrandMarquee items={MARQUEE_ITEMS} style="bold" speed={30} />
 
-      {/* 3. Collection Grid */}
+      {/* 3. Stat Strip */}
+      <StatStrip />
+
+      {/* 4. Collection Grid */}
       <CollectionGrid
         eyebrow="Explore"
         heading="Shop by Category"
@@ -177,7 +205,17 @@ export default function Homepage() {
         columns={3}
       />
 
-      {/* 4. Best Sellers */}
+      {/* 5. Brand Story */}
+      <BrandStory
+        eyebrow="Our Craft"
+        heading="Built Different. Made to Last."
+        body="Every piece starts with fabric weight most brands won't touch — 235GSM+ cotton, structured for the streets. Made to order. No shortcuts, no restocks. If you know, you know."
+        buttonLabel="Shop the Collection"
+        buttonLink="/collections/all-products"
+        imagePosition="left"
+      />
+
+      {/* 6. Best Sellers */}
       {bestSellerProducts && bestSellerProducts.length > 0 && (
         <section className="lb-section bg-[#f5f5f5]">
           <div className="lb-container">
@@ -209,7 +247,14 @@ export default function Homepage() {
         </section>
       )}
 
-      {/* 5. Drop Timer */}
+      {/* 8. Testimonials */}
+      <Testimonials
+        eyebrow="Customer Reviews"
+        heading="The Culture Speaks"
+        items={TESTIMONIALS}
+      />
+
+      {/* 9. Drop Timer */}
       <DropTimer
         eyebrow="Coming Soon"
         heading="Next Drop"
@@ -262,6 +307,9 @@ export default function Homepage() {
           gridStyle="editorial"
         />
       )}
+
+      {/* Newsletter Popup */}
+      <NewsletterPopup />
 
       {/* 8. Journal CTA */}
       <section className="lb-section text-center bg-[#f5f5f5]">
