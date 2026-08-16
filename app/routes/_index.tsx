@@ -102,12 +102,14 @@ export async function loader({context, request}: LoaderFunctionArgs) {
   return {featuredCollections, newDrops, bestSellers};
 }
 
-// Marquee items — matches the LB theme defaults
 const MARQUEE_ITEMS = [
+  '235GSM+ HEAVYWEIGHT TEES',
+  'MADE TO ORDER',
   'FREE SHIPPING OVER $150',
   'WORLDWIDE SHIPPING',
   'AUTHENTICITY GUARANTEED',
   'NEW DROPS EVERY FRIDAY',
+  'DTG PRINTS',
 ];
 
 // Next drop date (30 days from build — update for real drops)
@@ -150,10 +152,10 @@ export default function Homepage() {
     <div>
       {/* 1. Street Hero */}
       <StreetHero
-        eyebrow="New Drop — SS25"
-        heading="Stay Legendary"
-        subtext="Limited edition drops every Friday. Only what's essential. No restocks."
-        buttonLabel="Shop New Drops"
+        eyebrow="235GSM+ Tees · Made To Order · DTG Prints"
+        heading="Legendary Branding"
+        subtext="Shop Heavyweight Essentials — premium streetwear built to last."
+        buttonLabel="Shop Heavyweight Essentials"
         buttonLink="/collections/all-products"
         imageLeft={firstProduct?.featuredImage}
         imageRight={secondProduct?.featuredImage}
@@ -209,12 +211,12 @@ export default function Homepage() {
 
       {/* 5. Drop Timer */}
       <DropTimer
-        eyebrow="Limited Drop"
-        heading="SS25 Collection"
-        description="Drops Friday at 10AM EST. Only 200 units produced. Once they're gone, they're gone."
+        eyebrow="Coming Soon"
+        heading="Next Drop"
+        description="New limited edition pieces dropping soon. Made to order — no restocks, no second chances."
         dropDate={NEXT_DROP_DATE}
-        buttonLabel="Set Reminder"
-        buttonLink="#"
+        buttonLabel="Shop Now"
+        buttonLink="/collections/all-products"
       />
 
       {/* 6. New Drops */}
