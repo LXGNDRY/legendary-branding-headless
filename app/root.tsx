@@ -15,6 +15,7 @@ import {WishlistProvider} from '~/components/ui/Wishlist';
 import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
+import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
 import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
@@ -126,6 +127,7 @@ export default function App() {
       {/* Site-wide SEO schema */}
       <DefaultSeoSchema />
 
+      <AnnouncementBar />
       <Header
         cartCount={cartCount}
         isLoggedIn={isLoggedIn}
