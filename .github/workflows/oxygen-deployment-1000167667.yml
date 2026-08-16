@@ -1,14 +1,26 @@
+# Don't change the line below!
+#! oxygen_storefront_id: 1000167667
+
 name: Storefront 1000167667
-on: [push]
+
+on:
+  push:
+    branches:
+      - main        # production deploy
+      - dev         # preview deploy
+      - 'claude/**' # agent working branches — preview only
 
 permissions:
   contents: read
   deployments: write
 
+concurrency:
+  group: ${{ github.ref }}-deployment
+  cancel-in-progress: true
+
 jobs:
-  deploy:
-    name: Deploy to Oxygen
-    timeout-minutes: 30
+  validate:
+    name: Validate (typecheck + lint + build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -35,7 +47,65 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Storefront API types
+        # Requires Storefront API credentials as repository secrets.
+        # If secrets are absent (e.g. a fork), this step is skipped — typecheck
+        # still passes because routes type against @shopify/hydrogen/storefront-api-types
+        # (a static package) rather than the generated file.
+        if: ${{ secrets.PUBLIC_STORE_DOMAIN != '' && secrets.PUBLIC_STOREFRONT_API_TOKEN != '' }}
+        run: npm run codegen
+        env:
+          PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
+          PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+        continue-on-error: true  # never block CI on a schema introspection failure
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test
+
+  deploy:
+    name: Deploy to Oxygen
+    needs: validate     # deploy only if quality gate passes
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "lts/*"
+          check-latest: true
+
+      - name: Cache node modules
+        id: cache-npm-deploy
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Build and Publish to Oxygen
-        run: npx shopify hydrogen deploy
+        id: deploy
+        run: npx shopify hydrogen deploy --force
         env:
           SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000167667 }}

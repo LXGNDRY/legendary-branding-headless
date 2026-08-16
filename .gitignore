@@ -11,9 +11,7 @@ build
 .env.local
 .env.production
 
-# Codegen output — generated at build time
-storefrontapi.generated.d.ts
-customer-accountapi.generated.d.ts
+# Codegen output is committed so CI type-checking works without live API credentials
 
 # Editor
 .vscode

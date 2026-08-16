@@ -5,6 +5,7 @@ import {
   useLoaderData,
   Link,
 } from 'react-router';
+import {useState} from 'react';
 import {
   CartForm,
   Image,
@@ -18,13 +19,16 @@ import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
-import Placeholder from '~/components/ui/Placeholder';
 import ProductGallery from '~/components/ui/ProductGallery';
 import JsonLd from '~/components/ui/JsonLd';
+import SizeGuideModal from '~/components/ui/SizeGuideModal';
+import WaitlistForm from '~/components/ui/WaitlistForm';
+import RecentlyViewed from '~/components/ui/RecentlyViewed';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
+import {CacheLong} from '~/lib/cache';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -50,6 +54,13 @@ type ProductFull = {
   descriptionHtml: string;
   tags: string[];
   vendor: string;
+  metafields: {
+    nodes: Array<{
+      key: string;
+      value: string;
+      type: string;
+    }>;
+  };
   images: {
     nodes: {
       id?: string | null;
@@ -98,6 +109,16 @@ const PRODUCT_QUERY = `#graphql
       descriptionHtml
       tags
       vendor
+      metafields(identifiers: [
+        {namespace: "custom", key: "material"}
+        {namespace: "custom", key: "fit"}
+        {namespace: "custom", key: "care"}
+        {namespace: "custom", key: "size_chart"}
+      ]) {
+        key
+        value
+        type
+      }
       images(first: 10) {
         nodes { id url altText width height }
       }
@@ -180,6 +201,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
         country: context.storefront.i18n.country,
         language: context.storefront.i18n.language,
       },
+      cache: CacheLong(),
     },
   );
 
@@ -190,8 +212,12 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
 
 function AddToCartButton({
   variant,
+  quantity = 1,
+  buyNow = false,
 }: {
   variant?: ProductVariantFragment | null;
+  quantity?: number;
+  buyNow?: boolean;
 }) {
   const soldOut = !variant?.availableForSale;
   const unavailable = !variant;
@@ -217,20 +243,64 @@ function AddToCartButton({
         lines: [
           {
             merchandiseId: variant.id,
-            quantity: 1,
+            quantity,
           },
         ],
       }}
     >
-      <Button variant="primary" type="submit" className="w-full py-4 text-sm">
-        Add to Cart
-      </Button>
+      <button
+        type="submit"
+        className={`w-full py-4 text-sm font-semibold tracking-widest uppercase transition-all duration-300 ${
+          buyNow
+            ? 'border-2 border-black bg-white text-black hover:bg-black hover:text-white'
+            : 'bg-black text-white hover:bg-[#333]'
+        }`}
+      >
+        {buyNow ? 'Buy Now' : 'Add to Cart'}
+      </button>
     </CartForm>
+  );
+}
+
+function QuantitySelector({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex items-center border border-black/10">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(1, value - 1))}
+        className="w-10 h-10 flex items-center justify-center hover:bg-[#f7f7f7] transition-colors disabled:opacity-40"
+        aria-label="Decrease quantity"
+        disabled={value <= 1}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M2 7h10" />
+        </svg>
+      </button>
+      <span className="w-10 text-center text-sm font-medium">{value}</span>
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        className="w-10 h-10 flex items-center justify-center hover:bg-[#f7f7f7] transition-colors"
+        aria-label="Increase quantity"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M7 2v10M2 7h10" />
+        </svg>
+      </button>
+    </div>
   );
 }
 
 export default function ProductPage() {
   const {product, relatedProducts} = useLoaderData<typeof loader>();
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const selectedVariant = useOptimisticVariant(
     product.selectedVariant as ProductVariantFragment | undefined,
@@ -301,7 +371,7 @@ export default function ProductPage() {
                   {isNew && !isOnSale && <Badge variant="new">New</Badge>}
                 </div>
               )}
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight mb-3">
+              <h1 className="!text-[clamp(1.75rem,4vw,3rem)] !font-normal !leading-none mb-3">
                 {product.title}
               </h1>
               <div className="flex items-baseline gap-3">
@@ -309,17 +379,17 @@ export default function ProductPage() {
                   <>
                     <Money
                       data={selectedVariant.price}
-                      className="text-xl font-medium"
+                      className="text-lg font-medium"
                     />
                     {isOnSale && selectedVariant.compareAtPrice && (
                       <Money
                         data={selectedVariant.compareAtPrice}
-                        className="text-base text-[#999999] line-through"
+                        className="text-sm text-black/40 line-through font-normal"
                       />
                     )}
                   </>
                 ) : (
-                  <span className="text-xl font-medium text-[#6b6b6b]">
+                  <span className="text-lg font-medium text-black/50">
                     Select a variant
                   </span>
                 )}
@@ -339,16 +409,17 @@ export default function ProductPage() {
               {({option}: {option: VariantOption}) => (
                 <div key={option.name} className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <p className="text-[10px] font-semibold tracking-widest uppercase">
+                    <p className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase">
                       {option.name}
                     </p>
                     {option.name.toLowerCase() === 'size' && (
-                      <Link
-                        to="/policies/size-guide"
-                        className="text-[10px] tracking-wide underline underline-offset-2 text-[#6b6b6b] hover:text-[#0a0a0a] transition-colors"
+                      <button
+                        type="button"
+                        onClick={() => setSizeGuideOpen(true)}
+                        className="text-[0.65rem] tracking-wide underline underline-offset-2 text-black/60 hover:text-black transition-colors"
                       >
                         Size Guide
-                      </Link>
+                      </button>
                     )}
                   </div>
                   <div className="flex gap-2 flex-wrap">
@@ -361,10 +432,10 @@ export default function ProductPage() {
                         prefetch="intent"
                         className={`min-w-[3rem] h-10 px-3 border text-xs font-medium transition-colors flex items-center justify-center ${
                           isActive
-                            ? 'border-[#0a0a0a] bg-[#0a0a0a] text-white'
+                            ? 'border-black bg-black text-white'
                             : isAvailable
-                              ? 'border-[#e5e5e5] hover:border-[#0a0a0a] text-[#0a0a0a]'
-                              : 'border-[#e5e5e5] text-[#cccccc] cursor-not-allowed line-through'
+                              ? 'border-[#e5e5e5] hover:border-black text-black'
+                              : 'border-[#e5e5e5] text-black/30 cursor-not-allowed line-through'
                         }`}
                         aria-disabled={!isAvailable}
                         aria-label={`${option.name}: ${value}${!isAvailable ? ' (unavailable)' : ''}`}
@@ -377,26 +448,88 @@ export default function ProductPage() {
               )}
             </VariantSelector>
 
-            {/* Add to cart */}
-            <AddToCartButton variant={selectedVariant as ProductVariantFragment | null | undefined} />
+            {/* Sticky add to cart */}
+            <div className="sticky bottom-0 pt-2 -mx-1 px-1 pb-1 bg-gradient-to-t from-white via-white/95 to-transparent">
+              {/* Quantity selector */}
+              {selectedVariant?.availableForSale && (
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs tracking-widest uppercase text-black/60">
+                    Quantity
+                  </span>
+                  <QuantitySelector value={quantity} onChange={setQuantity} />
+                </div>
+              )}
+
+              {/* Add to cart */}
+              <AddToCartButton
+                variant={selectedVariant as ProductVariantFragment | null | undefined}
+                quantity={quantity}
+              />
+
+              {/* Buy Now */}
+              {selectedVariant?.availableForSale && (
+                <div className="mt-3">
+                  <AddToCartButton
+                    variant={selectedVariant as ProductVariantFragment}
+                    quantity={quantity}
+                    buyNow
+                  />
+                </div>
+              )}
+
+              {/* Waitlist for sold out */}
+              {!selectedVariant?.availableForSale && selectedVariant && (
+                <div className="mt-4">
+                  <WaitlistForm
+                    productTitle={product.title}
+                    variantTitle={selectedVariant.selectedOptions
+                      .map((o) => o.value)
+                      .join(' / ')}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Description */}
             {product.descriptionHtml && (
-              <div className="border-t border-[#e5e5e5] pt-6">
-                <p className="text-[10px] font-semibold tracking-widest uppercase mb-4">
+              <div className="border-t border-black/10 pt-6">
+                <p className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase mb-4">
                   Description
                 </p>
                 <div
-                  className="prose prose-sm max-w-none text-[#0a0a0a] [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-[#6b6b6b] [&_ul]:text-sm [&_ul]:text-[#6b6b6b] [&_li]:my-0.5"
+                  className="prose prose-sm max-w-none text-black [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-black/70 [&_ul]:text-sm [&_ul]:text-black/70 [&_li]:my-0.5"
                   // eslint-disable-next-line react/no-danger
                   dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
                 />
               </div>
             )}
 
+            {/* Metafields: Material / Fit / Care */}
+            {product.metafields && product.metafields.nodes && product.metafields.nodes.some((m: {value: string}) => m.value) && (
+              <div className="border-t border-black/10 pt-6 space-y-4">
+                {(product.metafields.nodes as Array<{key: string; value: string}>).map((mf) => {
+                  if (!mf.value) return null;
+                  const labels: Record<string, string> = {
+                    material: 'Material',
+                    fit: 'Fit',
+                    care: 'Care Instructions',
+                    size_chart: 'Size Chart',
+                  };
+                  return (
+                    <div key={mf.key}>
+                      <p className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase mb-2">
+                        {labels[mf.key] ?? mf.key}
+                      </p>
+                      <p className="text-sm text-black/70 leading-relaxed">{mf.value}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Shipping note */}
             <div className="border-t border-[#e5e5e5] pt-4">
-              <p className="text-[11px] tracking-wide text-[#6b6b6b]">
+              <p className="text-[0.78rem] tracking-wide text-black/60">
                 Free shipping on orders over $100 · Easy returns within 30 days
               </p>
             </div>
@@ -406,10 +539,10 @@ export default function ProductPage() {
 
       {/* Related products */}
       {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
-        <section className="bg-[#f7f7f7]">
+        <section className="bg-[#f5f5f5]">
           <Container className="py-20">
             <div className="flex items-baseline justify-between mb-10">
-              <h2 className="text-xs font-semibold tracking-widest uppercase">
+              <h2 className="text-[0.78rem] font-medium tracking-[0.15em] uppercase">
                 You May Also Like
               </h2>
               <Button as="link" to="/collections/all-products" variant="ghost">
@@ -431,6 +564,20 @@ export default function ProductPage() {
           </Container>
         </section>
       )}
+
+      {/* Recently viewed */}
+      <RecentlyViewed
+        currentProductId={product.id}
+        currentProductHandle={product.handle}
+        currentProductTitle={product.title}
+        currentProductImage={product.images?.nodes?.[0]?.url}
+      />
+
+      {/* Size guide modal */}
+      <SizeGuideModal
+        open={sizeGuideOpen}
+        onClose={() => setSizeGuideOpen(false)}
+      />
     </>
   );
 }

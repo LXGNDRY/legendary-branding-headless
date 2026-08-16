@@ -3,6 +3,7 @@ import {useLoaderData, Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Placeholder from '~/components/ui/Placeholder';
+import {CacheLong} from '~/lib/cache';
 
 type CollectionNode = {
   id: string;
@@ -56,6 +57,7 @@ export async function loader({context}: LoaderFunctionArgs) {
       country: storefront.i18n.country,
       language: storefront.i18n.language,
     },
+    cache: CacheLong(),
   });
   return {collections};
 }

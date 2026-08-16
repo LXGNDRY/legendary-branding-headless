@@ -1,9 +1,11 @@
 import {Link} from 'react-router';
 
-type ButtonVariant = 'primary' | 'ghost' | 'outline';
+type ButtonVariant = 'solid' | 'outline' | 'ghost';
+type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonBaseProps {
   variant?: ButtonVariant;
+  size?: ButtonSize;
   className?: string;
   children: React.ReactNode;
   disabled?: boolean;
@@ -25,26 +27,37 @@ interface ButtonAsLinkProps extends ButtonBaseProps {
 
 type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 
+/**
+ * Legendary Branding button — editorial streetwear style
+ * Thin border, fill-on-hover for outline, Bebas Neue aesthetic spacing
+ */
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary:
-    'bg-[#0a0a0a] text-white hover:bg-[#333333] active:bg-[#555555]',
-  ghost:
-    'bg-transparent text-[#0a0a0a] hover:bg-[#f7f7f7] active:bg-[#e5e5e5]',
+  solid:
+    'bg-black text-white border-black hover:opacity-90 hover:-translate-y-px active:translate-y-0',
   outline:
-    'border border-[#0a0a0a] text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-white active:bg-[#333333] active:text-white',
+    'bg-transparent text-black border-black hover:bg-black hover:text-white',
+  ghost:
+    'bg-transparent text-black border-transparent hover:border-black',
+};
+
+const SIZE_CLASSES: Record<ButtonSize, string> = {
+  sm: 'px-[18px] py-[10px] text-[0.78rem]',
+  md: 'px-7 py-[14px] text-[0.85rem]',
+  lg: 'px-9 py-[18px] text-[0.95rem]',
 };
 
 const BASE =
-  'inline-flex items-center justify-center px-6 py-3 text-xs font-medium tracking-widest uppercase transition-colors duration-150 disabled:opacity-40 disabled:pointer-events-none';
+  'inline-flex items-center justify-center gap-2 font-medium tracking-[0.08em] uppercase border transition-all duration-[300ms] ease-[cubic-bezier(0.16,1,0.3,1)] disabled:opacity-40 disabled:pointer-events-none disabled:transform-none select-none';
 
 export default function Button({
-  variant = 'primary',
+  variant = 'solid',
+  size = 'md',
   className = '',
   children,
   disabled,
   ...rest
 }: ButtonProps) {
-  const classes = `${BASE} ${VARIANT_CLASSES[variant]} ${className}`;
+  const classes = `${BASE} ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`;
 
   if (rest.as === 'link') {
     const {to} = rest as ButtonAsLinkProps;

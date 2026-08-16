@@ -2,6 +2,7 @@ import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
+import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 
 type ArticleData = {
@@ -73,11 +74,12 @@ export async function loader({params, context}: LoaderFunctionArgs) {
 
   const {blog} = await context.storefront.query(ARTICLE_QUERY, {
     variables: {
-      blogHandle: 'legendary_blogging',
       articleHandle,
+      blogHandle: 'legendary_blogging',
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
     },
+    cache: CacheLong(),
   });
 
   const article = blog?.articleByHandle;

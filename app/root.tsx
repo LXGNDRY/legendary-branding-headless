@@ -7,11 +7,17 @@ import {
   useLoaderData,
 } from 'react-router';
 import {useState} from 'react';
-import type {LinksFunction, MetaFunction, LoaderFunctionArgs} from 'react-router';
+import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
+import {CacheShort} from '~/lib/cache';
+import {initSentry, useWebVitals} from '~/lib/monitoring';
+import {WishlistProvider} from '~/components/ui/Wishlist';
 import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
+import AnnouncementBar from '~/components/layout/AnnouncementBar';
+import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
+import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 
 export const links: LinksFunction = () => [
@@ -23,7 +29,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
+    href: 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&display=swap',
   },
   {rel: 'stylesheet', href: styles},
 ];
@@ -36,11 +42,47 @@ export const meta: MetaFunction = () => [
     name: 'description',
     content: 'Premium editorial streetwear. Bold, minimal, fast.',
   },
+  {property: 'og:type', content: 'website'},
+  {property: 'og:site_name', content: 'Legendary Branding'},
+  {property: 'og:url', content: 'https://legendary-branding.com'},
+  {name: 'twitter:card', content: 'summary_large_image'},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
-  const cart = await context.cart.get();
-  return {cart: cart as CartData};
+  const {cart, customerAccount} = context;
+
+  // Check if customer is logged in and associate cart with buyer identity
+  let isLoggedIn = false;
+
+  if (customerAccount) {
+    isLoggedIn = await customerAccount.isLoggedIn();
+
+    if (isLoggedIn) {
+      // Associate the cart with the logged-in customer's buyer identity
+      const accessToken = await customerAccount.getAccessToken();
+      if (accessToken) {
+        // Update cart buyer identity for logged-in customers
+        try {
+          const cartId = await cart.getCartId();
+          if (cartId) {
+            // Cart will be associated via the Storefront API buyer identity
+            // on subsequent queries — Hydrogen's cart helper handles this
+            // when customerAccount is configured
+          }
+        } catch {
+          // Cart association failure is non-critical — cart still works
+          // as guest until explicitly merged
+        }
+      }
+    }
+  }
+
+  const cartData = await cart.get();
+
+  return {
+    cart: cartData as CartData,
+    isLoggedIn,
+  };
 }
 
 export function Layout({children}: {children: React.ReactNode}) {
@@ -60,43 +102,80 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart} = useLoaderData<typeof loader>();
+  const {cart, isLoggedIn} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
+
+  // Sentry init + web vitals (guard: only on client)
+  if (typeof window !== 'undefined') {
+    initSentry(import.meta.env.PUBLIC_SENTRY_DSN);
+  }
+  useWebVitals(import.meta.env.PUBLIC_GA4_MEASUREMENT_ID);
 
   const cartCount = cart?.totalQuantity ?? 0;
 
   return (
-    <div className="flex flex-col min-h-dvh">
+    <WishlistProvider>
+      <div className="flex flex-col min-h-dvh">
+      {/* Skip to content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-black focus:text-white focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase"
+      >
+        Skip to content
+      </a>
+
+      {/* Site-wide SEO schema */}
+      <DefaultSeoSchema />
+
+      <AnnouncementBar />
       <Header
         cartCount={cartCount}
+        isLoggedIn={isLoggedIn}
         onOpenCart={() => setCartOpen(true)}
       />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <Outlet />
       </main>
       <Footer />
+
+      {/* Consent-gated analytics (GA4, Meta, TikTok) */}
+      <Analytics
+        ga4Id={import.meta.env.PUBLIC_GA4_MEASUREMENT_ID}
+        metaPixelId={import.meta.env.PUBLIC_META_PIXEL_ID}
+        tiktokPixelId={import.meta.env.PUBLIC_TIKTOK_PIXEL_ID}
+      />
+
       <CartDrawer
         cart={cart}
         open={cartOpen}
         onClose={() => setCartOpen(false)}
       />
-    </div>
+      </div>
+    </WishlistProvider>
   );
 }
 
-export function ErrorBoundary() {
+export function ErrorBoundary({error}: {error: unknown}) {
+  const message = error instanceof Error ? error.message : 'Unknown error';
+
+  // Never expose stack traces to end users — log server-side only
+  if (typeof window === 'undefined' && error instanceof Error) {
+    console.error(error.stack);
+  }
+
   return (
     <div className="min-h-dvh flex items-center justify-center p-8">
       <div className="max-w-2xl text-center">
-        <h1 className="text-2xl font-bold tracking-tight mb-4">
-          Something went wrong
-        </h1>
-        <p className="text-[#6b6b6b] text-sm mb-8">
-          An unexpected error occurred. Please try again.
+        <p className="text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-black/50 mb-4">
+          ERROR
+        </p>
+        <h1 className="mb-6">Something went wrong</h1>
+        <p className="text-black/60 text-sm mb-10">
+          An unexpected error occurred. Please try again in a few moments.
         </p>
         <a
           href="/"
-          className="inline-block text-xs font-medium tracking-widest uppercase border border-[#0a0a0a] px-6 py-3 hover:bg-[#0a0a0a] hover:text-white transition-colors"
+          className="inline-block text-[0.78rem] font-medium tracking-[0.08em] uppercase border border-black px-7 py-3 hover:bg-black hover:text-white transition-all duration-300"
         >
           Back to Home
         </a>

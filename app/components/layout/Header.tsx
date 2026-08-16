@@ -1,6 +1,8 @@
 import {Link} from 'react-router';
 import {useState} from 'react';
 import MobileMenu from './MobileMenu';
+import SearchTypeahead from '~/components/ui/SearchTypeahead';
+import {useWishlist} from '~/components/ui/Wishlist';
 
 const NAV_LINKS = [
   {label: 'NEW DROPS', href: '/collections/all-products'},
@@ -61,13 +63,62 @@ function HamburgerIcon() {
   );
 }
 
+function UserIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      aria-hidden="true"
+    >
+      <circle cx="10" cy="7" r="4" />
+      <path d="M3 18a7 7 0 0114 0" />
+    </svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-5 h-5"
+      aria-hidden="true"
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  );
+}
+
+function WishlistCount() {
+  const {count} = useWishlist();
+  if (count === 0) return null;
+  return (
+    <span
+      className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 flex items-center justify-center bg-[#0a0a0a] text-white text-[8px] font-bold rounded-full px-1 leading-none"
+      aria-hidden="true"
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
+
 interface HeaderProps {
   cartCount?: number;
+  isLoggedIn?: boolean;
   onOpenCart?: () => void;
 }
 
-export default function Header({cartCount = 0, onOpenCart}: HeaderProps) {
+export default function Header({cartCount = 0, isLoggedIn = false, onOpenCart}: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <>
@@ -97,13 +148,33 @@ export default function Header({cartCount = 0, onOpenCart}: HeaderProps) {
 
             {/* Right actions */}
             <div className="flex items-center gap-3 shrink-0">
-              {/* Search */}
-              <Link
-                to="/search"
+              {/* Search toggle */}
+              <button
+                onClick={() => setSearchOpen(!searchOpen)}
                 className="hidden sm:flex p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
-                aria-label="Search"
+                aria-label={searchOpen ? 'Close search' : 'Search'}
+                aria-expanded={searchOpen}
               >
                 <SearchIcon />
+              </button>
+
+              {/* Account */}
+              <Link
+                to={isLoggedIn ? '/account' : '/account/login'}
+                className="hidden sm:flex p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
+                aria-label={isLoggedIn ? 'My Account' : 'Log In'}
+              >
+                <UserIcon />
+              </Link>
+
+              {/* Wishlist */}
+              <Link
+                to="/wishlist"
+                className="relative hidden sm:flex p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
+                aria-label="Wishlist"
+              >
+                <HeartIcon />
+                <WishlistCount />
               </Link>
 
               {/* Cart */}
@@ -135,6 +206,13 @@ export default function Header({cartCount = 0, onOpenCart}: HeaderProps) {
               </button>
             </div>
           </div>
+
+          {/* Search bar (expanded) */}
+          {searchOpen && (
+            <div className="py-3 border-t border-[#e5e5e5]">
+              <SearchTypeahead onClose={() => setSearchOpen(false)} />
+            </div>
+          )}
         </div>
       </header>
 

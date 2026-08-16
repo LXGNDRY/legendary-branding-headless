@@ -11,12 +11,24 @@ type AppSessionStorage = ReturnType<
   typeof createCookieSessionStorage<HydrogenCombinedSessionData, SessionData>
 >;
 
+/**
+ * Detect if we're running in production mode.
+ *
+ * In Oxygen (production/preview deployments), NODE_ENV is 'production'.
+ * In local `shopify hydrogen dev`, NODE_ENV is 'development'.
+ */
+const IS_PRODUCTION =
+  (globalThis as {process?: {env?: {NODE_ENV?: string}}}).process?.env
+    ?.NODE_ENV === 'production';
+
 export class AppSession implements HydrogenSession {
   #sessionStorage: AppSessionStorage;
   #session: AppSessionType;
   isPending = false;
 
   static async init(request: Request, secrets: string[]) {
+    const url = new URL(request.url);
+
     const sessionStorage = createCookieSessionStorage<
       HydrogenSessionData & SessionData,
       SessionData
@@ -26,7 +38,11 @@ export class AppSession implements HydrogenSession {
         httpOnly: true,
         path: '/',
         sameSite: 'lax',
+        // Secure cookie in production or any HTTPS context
+        secure: IS_PRODUCTION || url.protocol === 'https:',
         secrets,
+        // 7 day session expiry
+        maxAge: 60 * 60 * 24 * 7,
       },
     });
 

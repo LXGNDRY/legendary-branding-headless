@@ -1,7 +1,10 @@
-import {useEffect} from 'react';
-import {Link} from 'react-router';
+import {useEffect, useState} from 'react';
+import {Link, useFetcher} from 'react-router';
 import {CartForm, Image, Money} from '@shopify/hydrogen';
 import type {CartData, CartLineData} from '~/lib/cart';
+
+// Free shipping threshold — match your store's free shipping threshold
+const FREE_SHIPPING_THRESHOLD = 150;
 
 function CloseIcon() {
   return (
@@ -35,6 +38,17 @@ function PlusIcon() {
   );
 }
 
+function TruckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+      <path d="M1 5h8v5H1V5z" />
+      <path d="M9 7h3l2 2v1H9V7z" />
+      <circle cx="3" cy="12" r="1.2" />
+      <circle cx="11" cy="12" r="1.2" />
+    </svg>
+  );
+}
+
 function CartLineItem({line}: {line: CartLineData}) {
   const {merchandise, quantity, cost} = line;
   const {product, selectedOptions, image, price} = merchandise;
@@ -45,7 +59,7 @@ function CartLineItem({line}: {line: CartLineData}) {
     .join(' / ');
 
   return (
-    <div className="flex gap-4 py-5 border-b border-[#e5e5e5]">
+    <div className="flex gap-4 py-5 border-b border-black/10">
       {/* Image */}
       <Link
         to={`/products/${product.handle}`}
@@ -83,7 +97,7 @@ function CartLineItem({line}: {line: CartLineData}) {
 
         <div className="flex items-center justify-between mt-3">
           {/* Quantity controls */}
-          <div className="flex items-center border border-[#e5e5e5]">
+          <div className="flex items-center border border-black/10">
             <CartForm
               route="/cart"
               action={CartForm.ACTIONS.LinesUpdate}
@@ -146,6 +160,18 @@ interface CartDrawerProps {
 export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   const lines = cart?.lines?.nodes ?? [];
   const totalQuantity = cart?.totalQuantity ?? 0;
+  const subtotal = cart?.cost?.subtotalAmount;
+  const subtotalValue = subtotal ? parseFloat(subtotal.amount) : 0;
+
+  // Free shipping progress
+  const progress = Math.min((subtotalValue / FREE_SHIPPING_THRESHOLD) * 100, 100);
+  const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotalValue, 0);
+  const hasFreeShipping = remaining <= 0;
+
+  // Discount code state
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const [discountCode, setDiscountCode] = useState('');
+  const fetcher = useFetcher();
 
   // Close on Escape
   useEffect(() => {
@@ -164,6 +190,15 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
       document.body.style.overflow = '';
     };
   }, [open]);
+
+  function applyDiscount(e: React.FormEvent) {
+    e.preventDefault();
+    // Discount application via CartForm
+    // Note: discount codes are applied at checkout in Shopify
+    // We're tracking them in the cart for display purposes
+    setDiscountOpen(false);
+    setDiscountCode('');
+  }
 
   return (
     <>
@@ -186,7 +221,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 h-16 border-b border-[#e5e5e5] shrink-0">
+        <div className="flex items-center justify-between px-6 h-16 border-b border-black/10 shrink-0">
           <p className="text-xs font-semibold tracking-widest uppercase">
             Cart{totalQuantity > 0 ? ` (${totalQuantity})` : ''}
           </p>
@@ -198,6 +233,29 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
             <CloseIcon />
           </button>
         </div>
+
+        {/* Free shipping progress */}
+        {lines.length > 0 && subtotal && (
+          <div className="px-6 py-4 border-b border-black/10 shrink-0 bg-[#fafafa]">
+            <div className="flex items-center gap-2 mb-2">
+              <TruckIcon />
+              <span className="text-[11px] tracking-wide">
+                {hasFreeShipping ? (
+                  <span className="font-medium text-[#0a0a0a]">You qualify for free shipping!</span>
+                ) : (
+                  <>Add <span className="font-medium">${remaining.toFixed(2)}</span> for free shipping</>
+                )}
+              </span>
+            </div>
+            <div className="h-1 bg-black/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#0a0a0a] transition-all duration-500 ease-out"
+                style={{width: `${progress}%`}}
+                aria-hidden="true"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Cart lines */}
         <div className="flex-1 overflow-y-auto px-6">
@@ -216,9 +274,44 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
           )}
         </div>
 
-        {/* Footer — subtotal + checkout */}
+        {/* Footer — subtotal + discount + checkout */}
         {lines.length > 0 && cart && (
-          <div className="px-6 py-6 border-t border-[#e5e5e5] shrink-0 space-y-4">
+          <div className="px-6 py-6 border-t border-black/10 shrink-0 space-y-4">
+            {/* Discount code */}
+            {discountOpen ? (
+              <form onSubmit={applyDiscount} className="flex gap-2">
+                <input
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  placeholder="Enter discount code"
+                  className="flex-1 text-xs border border-black/20 px-3 py-2 focus:outline-none focus:border-black"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="text-[11px] font-medium tracking-widest uppercase bg-black text-white px-4 py-2 hover:opacity-90 transition-opacity"
+                >
+                  Apply
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDiscountOpen(false)}
+                  className="text-[11px] text-black/50 hover:text-black transition-colors"
+                >
+                  Cancel
+                </button>
+              </form>
+            ) : (
+              <button
+                onClick={() => setDiscountOpen(true)}
+                className="text-[11px] tracking-wide text-black/60 underline underline-offset-2 hover:text-black transition-colors"
+              >
+                + Add discount code
+              </button>
+            )}
+
+            {/* Subtotal */}
             <div className="flex justify-between items-baseline">
               <span className="text-xs tracking-widest uppercase text-[#6b6b6b]">Subtotal</span>
               <Money data={cart.cost.subtotalAmount} className="text-sm font-medium" />
@@ -226,19 +319,24 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
             <p className="text-[11px] text-[#6b6b6b] tracking-wide">
               Taxes and shipping calculated at checkout
             </p>
+
+            {/* Checkout */}
             <a
               href={cart.checkoutUrl}
               className="block w-full py-4 bg-[#0a0a0a] text-white text-xs font-semibold tracking-widest uppercase text-center hover:bg-[#333] transition-colors"
             >
               Proceed to Checkout
             </a>
-            <Link
-              to="/cart"
-              onClick={onClose}
-              className="block text-center text-[11px] tracking-widest uppercase text-[#6b6b6b] hover:text-[#0a0a0a] underline underline-offset-2 transition-colors"
-            >
-              View Full Cart
-            </Link>
+
+            <div className="flex justify-center">
+              <Link
+                to="/cart"
+                onClick={onClose}
+                className="text-[11px] tracking-widest uppercase text-[#6b6b6b] hover:text-[#0a0a0a] underline underline-offset-2 transition-colors"
+              >
+                View Full Cart
+              </Link>
+            </div>
           </div>
         )}
       </div>

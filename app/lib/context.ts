@@ -23,6 +23,9 @@ export async function createAppLoadContext(
   if (!env.PUBLIC_STOREFRONT_API_TOKEN) {
     throw new Error('PUBLIC_STOREFRONT_API_TOKEN environment variable is not set');
   }
+  if (!env.PRIVATE_STOREFRONT_API_TOKEN) {
+    throw new Error('PRIVATE_STOREFRONT_API_TOKEN environment variable is not set');
+  }
 
   const waitUntil = executionContext.waitUntil.bind(executionContext);
 
@@ -31,13 +34,35 @@ export async function createAppLoadContext(
     AppSession.init(request, [env.SESSION_SECRET]),
   ]);
 
+  // Read currency from URL param or session
+  const url = new URL(request.url);
+  const currencyParam = url.searchParams.get('currency');
+  const storedCurrency = session.get('currency');
+  const activeCurrency = currencyParam ?? storedCurrency ?? 'USD';
+
+  // If URL param is set, update the session
+  if (currencyParam && currencyParam !== storedCurrency) {
+    session.set('currency', currencyParam);
+  }
+
+  // Configure customer account if env vars are present
+  const hasCustomerAccount = Boolean(
+    env.PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID,
+  );
+
   return createHydrogenContext({
     env,
     request,
     cache,
     waitUntil,
     session,
-    i18n: {language: 'EN', country: 'US'},
+    i18n: {language: 'EN', country: 'US', currency: activeCurrency},
+    // Customer Account API is only active when the client ID is configured
+    ...(hasCustomerAccount && {
+      customerAccount: {
+        authUrl: '/account/authorize',
+      },
+    }),
   });
 }
 

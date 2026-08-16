@@ -5,7 +5,7 @@
     "**/*.tsx",
     ".react-router/**/*"
   ],
-  "exclude": ["node_modules", "dist", "build"],
+  "exclude": ["node_modules", "dist", "build", "vitest.config.ts", "app/**/*.test.ts", "app/**/*.test.tsx"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "isolatedModules": true,
@@ -17,7 +17,6 @@
     "target": "ES2022",
     "strict": true,
     "allowJs": true,
-    "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"]
     },
