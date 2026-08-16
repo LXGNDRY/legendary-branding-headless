@@ -24,8 +24,8 @@ const SEARCH_QUERY = `#graphql
     $availableV2: Boolean
     $productType: String
     $productVendor: String
-    $minPrice: Money
-    $maxPrice: Money
+    $minPrice: Float
+    $maxPrice: Float
     $country: CountryCode
     $language: LanguageCode
   ) @inContext(country: $country, language: $language) {
@@ -83,13 +83,12 @@ const SEARCH_QUERY = `#graphql
           }
         }
       }
-      filters {
+      productFilters {
         id
         label
         type
         values {
           label
-          value
           input
           count
         }

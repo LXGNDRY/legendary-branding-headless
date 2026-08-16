@@ -21,7 +21,6 @@ const CUSTOMER_QUERY = `#graphql
       emailAddress {
         emailAddress
       }
-      numberOfOrders
     }
   }
 ` as const;
@@ -32,7 +31,6 @@ interface CustomerData {
   emailAddress: {
     emailAddress: string;
   };
-  numberOfOrders: number;
 }
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -73,12 +71,8 @@ export default function AccountPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
           <div className="border border-black/10 p-8">
             <div className="lb-eyebrow mb-3 text-black/50">ORDERS</div>
-            <h3 className="text-2xl mb-2">{customer.numberOfOrders}</h3>
-            <p className="text-sm text-black/60 mb-6">
-              {customer.numberOfOrders === 0
-                ? 'No orders yet'
-                : `Total order${customer.numberOfOrders > 1 ? 's' : ''} placed`}
-            </p>
+            <h3 className="text-2xl mb-2">View History</h3>
+            <p className="text-sm text-black/60 mb-6">See all your past orders.</p>
             <Link to="/account/orders">
               <Button variant="outline" size="sm">
                 View Orders

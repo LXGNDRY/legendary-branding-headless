@@ -27,7 +27,7 @@ const ADDRESSES_QUERY = `#graphql
         province
         country
         zip
-        phone
+        phoneNumber
         company
       }
       addresses(first: 10) {
@@ -41,7 +41,7 @@ const ADDRESSES_QUERY = `#graphql
           province
           country
           zip
-          phone
+          phoneNumber
           company
         }
       }
@@ -59,7 +59,7 @@ interface AddressNode {
   province: string;
   country: string;
   zip: string;
-  phone?: string | null;
+  phoneNumber?: string | null;
   company?: string | null;
 }
 

@@ -20,34 +20,30 @@ const ORDERS_QUERY = `#graphql
         nodes {
           id
           name
-          orderNumber
+          number
           processedAt
-          statusUrl
+          statusPageUrl
           totalPrice {
             amount
             currencyCode
           }
           lineItems(first: 5) {
             nodes {
-              variant {
-                title
-                image {
-                  url
-                  altText
-                  width
-                  height
-                }
-                product {
-                  title
-                }
+              image {
+                url
+                altText
+                width
+                height
               }
+              title
+              variantTitle
               quantity
             }
           }
           fulfillments(first: 3) {
             nodes {
               status
-              trackingInfo(first: 1) {
+              trackingInformation {
                 company
                 number
               }
@@ -66,27 +62,25 @@ const ORDERS_QUERY = `#graphql
 interface OrderNode {
   id: string;
   name: string;
-  orderNumber: number;
+  number: number;
   processedAt: string;
-  statusUrl: string;
+  statusPageUrl: string;
   totalPrice: {
     amount: string;
     currencyCode: string;
   };
   lineItems: {
     nodes: Array<{
-      variant: {
-        title: string;
-        image?: {url: string; altText?: string | null};
-        product: {title: string};
-      };
+      image?: {url: string; altText?: string | null; width?: number; height?: number};
+      title: string;
+      variantTitle?: string | null;
       quantity: number;
     }>;
   };
   fulfillments: {
     nodes: Array<{
       status: string;
-      trackingInfo: {nodes: Array<{company: string; number: string}>};
+      trackingInformation: Array<{company: string; number: string}>;
     }>;
   };
 }
@@ -170,7 +164,7 @@ export default function OrdersPage() {
                         {formatDate(order.processedAt)}
                       </p>
                       <h3 className="text-xl font-normal">
-                        Order #{order.orderNumber}
+                        Order #{order.number}
                       </h3>
                     </div>
                     <div className="mt-4 md:mt-0 text-right">
@@ -197,10 +191,10 @@ export default function OrdersPage() {
                   <div className="flex gap-4 flex-wrap mb-6">
                     {order.lineItems.nodes.map((item, i) => (
                       <div key={i} className="w-16 h-16 bg-[#f5f5f5] flex items-center justify-center">
-                        {item.variant.image?.url ? (
+                        {item.image?.url ? (
                           <img
-                            src={item.variant.image.url}
-                            alt={item.variant.image.altText || item.variant.product.title}
+                            src={item.image.url}
+                            alt={item.image.altText || item.title}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -214,7 +208,7 @@ export default function OrdersPage() {
 
                   <div className="flex gap-4">
                     <a
-                      href={order.statusUrl}
+                      href={order.statusPageUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[0.78rem] font-medium tracking-[0.08em] uppercase border border-black px-6 py-2.5 hover:bg-black hover:text-white transition-all duration-300"
