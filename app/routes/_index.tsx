@@ -1,21 +1,18 @@
 import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
-import {useLoaderData, Link} from 'react-router';
-import {getPaginationVariables, Image} from '@shopify/hydrogen';
-import Container from '~/components/ui/Container';
-import Button from '~/components/ui/Button';
+import {useLoaderData} from 'react-router';
+import {getPaginationVariables} from '@shopify/hydrogen';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
-import StreetHero from '~/components/sections/StreetHero';
-import BrandMarquee from '~/components/sections/BrandMarquee';
+import HeroSplit from '~/components/sections/HeroSplit';
 import StatStrip from '~/components/sections/StatStrip';
-import CollectionGrid from '~/components/sections/CollectionGrid';
-import BrandStory from '~/components/sections/BrandStory';
+import CategoryGrid from '~/components/sections/CategoryGrid';
+import NewArrivalsGrid from '~/components/sections/NewArrivalsGrid';
+import EditorialBand from '~/components/sections/EditorialBand';
 import Testimonials from '~/components/sections/Testimonials';
-import DropTimer from '~/components/sections/DropTimer';
-import Lookbook from '~/components/sections/Lookbook';
-import NewsletterPopup from '~/components/sections/NewsletterPopup';
+import NewsletterBand from '~/components/sections/NewsletterBand';
+import BrandMarquee from '~/components/sections/BrandMarquee';
 import {CacheLong} from '~/lib/cache';
 
 type CollectionNode = {
@@ -29,7 +26,6 @@ type CollectionNode = {
     width?: number | null;
     height?: number | null;
   } | null;
-  products?: {nodes: Array<{id: string}>};
 };
 
 const HOMEPAGE_QUERY = `#graphql
@@ -47,9 +43,6 @@ const HOMEPAGE_QUERY = `#graphql
           altText
           width
           height
-        }
-        products(first: 1) {
-          nodes { id }
         }
       }
     }
@@ -88,12 +81,11 @@ export const meta: MetaFunction = () => {
 
 export async function loader({context, request}: LoaderFunctionArgs) {
   const {storefront} = context;
-  const paginationVariables = getPaginationVariables(request, {
-    pageBy: 8,
-  });
+  const paginationVariables = getPaginationVariables(request, {pageBy: 8});
 
-  const {featuredCollections, newDrops, bestSellers} =
-    await storefront.query(HOMEPAGE_QUERY, {
+  const {featuredCollections, newDrops, bestSellers} = await storefront.query(
+    HOMEPAGE_QUERY,
+    {
       variables: {
         ...paginationVariables,
         first: 8,
@@ -101,7 +93,8 @@ export async function loader({context, request}: LoaderFunctionArgs) {
         language: storefront.i18n.language,
       },
       cache: CacheLong(),
-    });
+    },
+  );
 
   return {featuredCollections, newDrops, bestSellers};
 }
@@ -118,120 +111,95 @@ const MARQUEE_ITEMS = [
 
 const TESTIMONIALS = [
   {
-    quote: "This is the heaviest tee I've ever owned. The quality is unreal — you can feel the difference the second you put it on.",
+    quote:
+      "This is the heaviest tee I've ever owned. The quality is unreal — you can feel the difference the second you put it on.",
     name: 'Marcus T.',
     location: 'Atlanta, GA',
     stars: 5,
   },
   {
-    quote: "Made to order means I actually had to wait — but it was worth every day. Fits perfectly, no shrinkage after washing.",
+    quote:
+      'Made to order means I actually had to wait — but it was worth every day. Fits perfectly, no shrinkage after washing.',
     name: 'Jordan L.',
     location: 'London, UK',
     stars: 5,
   },
   {
-    quote: "The DTG print quality blew me away. Sharp edges, no cracking. Other brands can't touch this.",
+    quote:
+      "The DTG print quality blew me away. Sharp edges, no cracking. Other brands can't touch this.",
     name: 'Aaliyah M.',
     location: 'Toronto, CA',
     stars: 5,
   },
 ];
 
-// Next drop date (30 days from build — update for real drops)
-const NEXT_DROP_DATE = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
 export default function Homepage() {
   const {featuredCollections, newDrops, bestSellers} =
     useLoaderData<typeof loader>();
 
-  const newDropsProducts = newDrops?.products?.nodes as
-    | ProductCardFragment[]
-    | undefined;
-  const bestSellerProducts = bestSellers?.products?.nodes as
-    | ProductCardFragment[]
-    | undefined;
-
-  // Use first available product image for hero (placeholder if none)
-  const firstProduct = newDropsProducts?.[0];
-  const secondProduct = newDropsProducts?.[1];
-
-  // Build lookbook items from best sellers (only products with images)
-  const lookbookItems = (bestSellerProducts ?? [])
-    .filter((product) => product.featuredImage?.url)
-    .map((product, i) => ({
-      id: product.id,
-      image: product.featuredImage!,
-      product: {
-        handle: product.handle,
-        title: product.title,
-        price: product.priceRange.minVariantPrice,
-        image: product.featuredImage!,
-      },
-      hotspotX: 50,
-      hotspotY: 50,
-      spanCols: i === 0 ? 6 : i === 1 ? 3 : i === 2 ? 3 : 6,
-      spanRows: i === 0 ? 3 : i === 1 ? 2 : i === 2 ? 2 : 2,
-    }));
+  const newDropProducts = (newDrops?.products?.nodes ?? []) as ProductCardFragment[];
+  const bestSellerProducts = (bestSellers?.products?.nodes ?? []) as ProductCardFragment[];
 
   return (
     <div>
-      {/* 1. Street Hero */}
-      <StreetHero
-        eyebrow="235GSM+ Tees · Made To Order · DTG Prints"
-        heading="Legendary Branding"
-        subtext="Shop Heavyweight Essentials — premium streetwear built to last."
-        buttonLabel="Shop Heavyweight Essentials"
-        buttonLink="/collections/all-products"
-        imageLeft={firstProduct?.featuredImage}
-        imageRight={secondProduct?.featuredImage}
-        splitLayout={!!firstProduct?.featuredImage?.url && !!secondProduct?.featuredImage?.url}
-        contentAlignment="bottom-left"
-        fullScreen
+      {/* 1 — Split hero */}
+      <HeroSplit
+        eyebrow="235GSM+ · Made To Order · DTG Prints"
+        heading={`Premium\nStreet\nwear.`}
+        subtext="Heavyweight essentials built to last. No restocks. No shortcuts."
+        primaryLabel="Shop Now"
+        primaryHref="/collections/all-products"
+        secondaryLabel="Lookbook"
+        secondaryHref="/journal"
+        leftProduct={newDropProducts[0] ?? null}
+        rightProduct={newDropProducts[1] ?? null}
       />
 
-      {/* 2. Brand Marquee */}
+      {/* 2 — Marquee */}
       <BrandMarquee items={MARQUEE_ITEMS} style="bold" speed={30} />
 
-      {/* 3. Stat Strip */}
+      {/* 3 — Stats */}
       <StatStrip />
 
-      {/* 4. Collection Grid */}
-      <CollectionGrid
+      {/* 4 — Featured categories */}
+      <CategoryGrid
         eyebrow="Explore"
         heading="Shop by Category"
-        linkLabel="View all collections"
-        linkUrl="/collections"
-        collections={(featuredCollections?.nodes as CollectionNode[]) ?? []}
-        columns={3}
+        items={(featuredCollections?.nodes as CollectionNode[]).slice(0, 3)}
       />
 
-      {/* 5. Brand Story */}
-      <BrandStory
+      {/* 5 — New arrivals asymmetric grid */}
+      <NewArrivalsGrid
+        eyebrow="Just Dropped"
+        heading="New Arrivals"
+        products={newDropProducts}
+        viewAllHref="/collections/all-products"
+      />
+
+      {/* 6 — Editorial dark band */}
+      <EditorialBand
+        theme="dark"
         eyebrow="Our Craft"
-        heading="Built Different. Made to Last."
-        body="Every piece starts with fabric weight most brands won't touch — 235GSM+ cotton, structured for the streets. Made to order. No shortcuts, no restocks. If you know, you know."
-        buttonLabel="Shop the Collection"
-        buttonLink="/collections/all-products"
-        imagePosition="left"
+        heading="Built different. Made to last."
+        body="Every piece starts with fabric weight most brands won't touch — 235GSM+ cotton, structured for the streets. Made to order. No shortcuts, no restocks."
+        primaryLabel="Shop the collection"
+        primaryHref="/collections/all-products"
+        secondaryLabel="Our story"
+        secondaryHref="/policies/about"
       />
 
-      {/* 6. Best Sellers */}
-      {bestSellerProducts && bestSellerProducts.length > 0 && (
-        <section className="lb-section bg-[#f5f5f5]">
-          <div className="lb-container">
-            <div className="lb-section-header">
+      {/* 7 — Best sellers */}
+      {bestSellerProducts.length > 0 && (
+        <section className="h-section bg-[#FAF9F6]">
+          <div className="h-container">
+            <div className="flex items-end justify-between mb-10">
               <div>
-                <div className="lb-eyebrow mb-2">Best Sellers</div>
-                <h2>Most Wanted</h2>
+                <p className="h-eyebrow mb-3">Most Wanted</p>
+                <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[#1A1A1A]">
+                  Best Sellers
+                </h2>
               </div>
-              <Link
-                to="/collections/all-products"
-                className="lb-section-header__link"
-              >
-                View All
-              </Link>
             </div>
-
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {bestSellerProducts.slice(0, 4).map((product, i) => (
                 <ProductCard
@@ -247,84 +215,19 @@ export default function Homepage() {
         </section>
       )}
 
-      {/* 8. Testimonials */}
+      {/* 8 — Testimonials */}
       <Testimonials
         eyebrow="Customer Reviews"
         heading="The Culture Speaks"
         items={TESTIMONIALS}
       />
 
-      {/* 9. Drop Timer */}
-      <DropTimer
-        eyebrow="Coming Soon"
-        heading="Next Drop"
-        description="New limited edition pieces dropping soon. Made to order — no restocks, no second chances."
-        dropDate={NEXT_DROP_DATE}
-        buttonLabel="Shop Now"
-        buttonLink="/collections/all-products"
+      {/* 9 — Newsletter */}
+      <NewsletterBand
+        eyebrow="Stay in the loop"
+        heading="Get early access to drops."
+        subtext="New arrivals, restocks, and editorial content — straight to your inbox."
       />
-
-      {/* 6. New Drops */}
-      {newDropsProducts && newDropsProducts.length > 0 && (
-        <section className="lb-section">
-          <div className="lb-container">
-            <div className="lb-section-header">
-              <div>
-                <div className="lb-eyebrow mb-2">Just Dropped</div>
-                <h2>New Arrivals</h2>
-              </div>
-              <Link
-                to="/collections/all-products"
-                className="lb-section-header__link"
-              >
-                View All
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {newDropsProducts.slice(0, 8).map((product, i) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  loading={i < 2 ? 'eager' : 'lazy'}
-                  hoverFlip
-                  showQuickAdd
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 7. Lookbook */}
-      {lookbookItems.length > 0 && (
-        <Lookbook
-          eyebrow="The Collection"
-          heading="SS25 Lookbook"
-          linkLabel="Shop the Look"
-          linkUrl="/collections/all-products"
-          items={lookbookItems}
-          gridStyle="editorial"
-        />
-      )}
-
-      {/* Newsletter Popup */}
-      <NewsletterPopup />
-
-      {/* 8. Journal CTA */}
-      <section className="lb-section text-center bg-[#f5f5f5]">
-        <div className="lb-container max-w-3xl">
-          <div className="lb-eyebrow mb-4">The Journal</div>
-          <h2 className="mb-6">Culture. Craft. Community.</h2>
-          <p className="text-black/60 max-w-xl mx-auto mb-8 leading-relaxed">
-            Stories from the culture. Behind-the-scenes drops, artist
-            collaborations, and the people who make Legendary.
-          </p>
-          <Button as="link" to="/journal" variant="solid" size="lg">
-            Read the Journal
-          </Button>
-        </div>
-      </section>
     </div>
   );
 }
