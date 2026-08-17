@@ -151,7 +151,7 @@ export default function Header({cartCount = 0, isLoggedIn = false, onOpenCart}: 
               {/* Search toggle */}
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="hidden sm:flex p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
+                className="flex p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
                 aria-label={searchOpen ? 'Close search' : 'Search'}
                 aria-expanded={searchOpen}
               >

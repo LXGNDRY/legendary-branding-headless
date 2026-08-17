@@ -49,6 +49,7 @@ export const meta: MetaFunction = () => [
     name: 'description',
     content: 'Culture, craft, and community from Legendary Branding.',
   },
+  {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/journal'},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
