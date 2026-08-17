@@ -52,7 +52,6 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Generate Storefront API types
-        if: ${{ secrets.PUBLIC_STORE_DOMAIN != '' && secrets.PUBLIC_STOREFRONT_API_TOKEN != '' }}
         run: npm run codegen
         env:
           PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
