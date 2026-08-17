@@ -16,7 +16,6 @@ import {
   type VariantOption,
 } from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
-import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
 import ProductGallery from '~/components/ui/ProductGallery';
@@ -39,12 +38,7 @@ type ProductVariantFragment = {
   selectedOptions: {name: string; value: string}[];
   price: MoneyData;
   compareAtPrice?: MoneyData | null;
-  image?: {
-    url: string;
-    altText?: string | null;
-    width?: number | null;
-    height?: number | null;
-  } | null;
+  image?: {url: string; altText?: string | null; width?: number | null; height?: number | null} | null;
 };
 
 type ProductFull = {
@@ -55,30 +49,14 @@ type ProductFull = {
   tags: string[];
   vendor: string;
   metafields: {
-    nodes: Array<{
-      key: string;
-      value: string;
-      type: string;
-    }>;
+    nodes: Array<{key: string; value: string; type: string}>;
   };
   images: {
-    nodes: {
-      id?: string | null;
-      url: string;
-      altText?: string | null;
-      width?: number | null;
-      height?: number | null;
-    }[];
+    nodes: {id?: string | null; url: string; altText?: string | null; width?: number | null; height?: number | null}[];
   };
-  options: {
-    id?: string;
-    name: string;
-    optionValues: {name: string}[];
-  }[];
+  options: {id?: string; name: string; optionValues: {name: string}[]}[];
   selectedVariant?: ProductVariantFragment | null;
-  variants: {
-    nodes: ProductVariantFragment[];
-  };
+  variants: {nodes: ProductVariantFragment[]};
 };
 
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
@@ -153,7 +131,6 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
     : `Shop ${product?.title ?? 'this product'} at Legendary Branding.`;
   const ogImage = product?.images?.nodes?.[0]?.url ?? '';
   const canonical = `https://legendary-branding.com${location.pathname}`;
-
   return [
     {title: `${product?.title ?? 'Product'} — LEGENDARY BRANDING`},
     {name: 'description', content: description},
@@ -173,9 +150,9 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
 export async function action({request, context}: ActionFunctionArgs) {
   const {cart} = context;
   const formData = await request.formData();
-  const {action, inputs} = CartForm.getFormInput(formData);
+  const {action: cartAction, inputs} = CartForm.getFormInput(formData);
 
-  if (action === CartForm.ACTIONS.LinesAdd) {
+  if (cartAction === CartForm.ACTIONS.LinesAdd) {
     const result = await cart.addLines(
       inputs.lines as Parameters<typeof cart.addLines>[0],
     );
@@ -191,47 +168,28 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   if (!handle) throw new Response('Not Found', {status: 404});
 
   const selectedOptions = getSelectedProductOptions(request);
-
-  const {product, relatedProducts} = await context.storefront.query(
-    PRODUCT_QUERY,
-    {
-      variables: {
-        handle,
-        selectedOptions,
-        country: context.storefront.i18n.country,
-        language: context.storefront.i18n.language,
-      },
-      cache: CacheLong(),
-    },
-  );
+  const {product, relatedProducts} = await context.storefront.query(PRODUCT_QUERY, {
+    variables: {handle, selectedOptions, country: context.storefront.i18n.country, language: context.storefront.i18n.language},
+    cache: CacheLong(),
+  });
 
   if (!product) throw new Response('Product not found', {status: 404});
-
   return {product: product as ProductFull, relatedProducts};
 }
 
-function AddToCartButton({
-  variant,
-  quantity = 1,
-  buyNow = false,
-}: {
-  variant?: ProductVariantFragment | null;
-  quantity?: number;
-  buyNow?: boolean;
-}) {
+function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragment | null; quantity?: number}) {
   const soldOut = !variant?.availableForSale;
   const unavailable = !variant;
 
   if (soldOut || unavailable) {
     return (
-      <Button
-        variant="outline"
+      <button
         type="button"
-        className="w-full py-4 text-sm opacity-60 cursor-not-allowed"
         disabled
+        className="w-full h-btn-primary opacity-40 cursor-not-allowed"
       >
         {unavailable ? 'Select Options' : 'Sold Out'}
-      </Button>
+      </button>
     );
   }
 
@@ -239,60 +197,73 @@ function AddToCartButton({
     <CartForm
       route="/cart"
       action={CartForm.ACTIONS.LinesAdd}
-      inputs={{
-        lines: [
-          {
-            merchandiseId: variant.id,
-            quantity,
-          },
-        ],
-      }}
+      inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
     >
-      <button
-        type="submit"
-        className={`w-full py-4 text-sm font-semibold tracking-widest uppercase transition-all duration-300 ${
-          buyNow
-            ? 'border-2 border-black bg-white text-black hover:bg-black hover:text-white'
-            : 'bg-black text-white hover:bg-[#333]'
-        }`}
-      >
-        {buyNow ? 'Buy Now' : 'Add to Cart'}
+      <button type="submit" className="w-full h-btn-primary">
+        Add to Bag
       </button>
     </CartForm>
   );
 }
 
-function QuantitySelector({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-}) {
+function QuantitySelector({value, onChange}: {value: number; onChange: (v: number) => void}) {
   return (
-    <div className="flex items-center border border-black/10">
+    <div className="flex items-center border border-[#E8E6E1] rounded-full overflow-hidden">
       <button
         type="button"
         onClick={() => onChange(Math.max(1, value - 1))}
-        className="w-10 h-10 flex items-center justify-center hover:bg-[#f7f7f7] transition-colors disabled:opacity-40"
+        className="w-10 h-10 flex items-center justify-center text-[#1A1A1A] hover:bg-[#F3F2EE] transition-colors disabled:opacity-40"
         aria-label="Decrease quantity"
         disabled={value <= 1}
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M2 7h10" />
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+          <path d="M2 6h8" />
         </svg>
       </button>
-      <span className="w-10 text-center text-sm font-medium">{value}</span>
+      <span className="w-10 text-center text-sm font-medium text-[#1A1A1A]">{value}</span>
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-10 h-10 flex items-center justify-center hover:bg-[#f7f7f7] transition-colors"
+        className="w-10 h-10 flex items-center justify-center text-[#1A1A1A] hover:bg-[#F3F2EE] transition-colors"
         aria-label="Increase quantity"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+          <path d="M6 2v8M2 6h8" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function Accordion({label, children}: {label: string; children: React.ReactNode}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-[#E8E6E1]">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center justify-between w-full py-4 text-left"
+        aria-expanded={open}
+      >
+        <span className="h-eyebrow text-[#1A1A1A]">{label}</span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className={`transition-transform duration-200 ${open ? 'rotate-45' : ''}`}
+          aria-hidden="true"
+        >
           <path d="M7 2v10M2 7h10" />
         </svg>
       </button>
+      {open && (
+        <div className="pb-5 text-[0.875rem] text-[#6B6B6B] leading-relaxed">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -309,8 +280,7 @@ export default function ProductPage() {
 
   const isOnSale =
     selectedVariant?.compareAtPrice &&
-    parseFloat(selectedVariant.compareAtPrice.amount) >
-      parseFloat(selectedVariant.price.amount);
+    parseFloat(selectedVariant.compareAtPrice.amount) > parseFloat(selectedVariant.price.amount);
 
   const isNew = product.tags.includes('new');
 
@@ -325,9 +295,7 @@ export default function ProductPage() {
       '@type': 'Offer',
       price: v.price.amount,
       priceCurrency: v.price.currencyCode,
-      availability: v.availableForSale
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
+      availability: v.availableForSale ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       url: `https://legendary-branding.com/products/${product.handle}`,
     })),
   };
@@ -335,235 +303,190 @@ export default function ProductPage() {
   return (
     <>
       <JsonLd data={productJsonLd} />
-      <Container className="py-12">
-        {/* Breadcrumb */}
-        <nav
-          className="mb-8 text-[11px] tracking-widest uppercase text-[#6b6b6b]"
-          aria-label="Breadcrumb"
-        >
-          <Link to="/collections/all-products" className="hover:text-[#0a0a0a] transition-colors">
-            Shop
-          </Link>
-          <span className="mx-2">/</span>
-          {product.vendor && (
-            <>
-              <span className="text-[#6b6b6b]">{product.vendor}</span>
-              <span className="mx-2">/</span>
-            </>
-          )}
-          <span className="text-[#0a0a0a]">{product.title}</span>
-        </nav>
+      <div className="bg-[#FAF9F6]">
+        <div className="h-container py-10">
+          {/* Breadcrumb */}
+          <nav className="h-eyebrow text-[#9E9C97] mb-8" aria-label="Breadcrumb">
+            <Link to="/collections/all-products" className="hover:text-[#1A1A1A] transition-colors">
+              Shop
+            </Link>
+            <span className="mx-2 opacity-40">/</span>
+            {product.vendor && (
+              <>
+                <span>{product.vendor}</span>
+                <span className="mx-2 opacity-40">/</span>
+              </>
+            )}
+            <span className="text-[#1A1A1A]">{product.title}</span>
+          </nav>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
-          {/* Gallery */}
-          <ProductGallery images={product.images.nodes} title={product.title} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
+            {/* Gallery */}
+            <ProductGallery images={product.images.nodes} title={product.title} />
 
-          {/* Product info */}
-          <div className="space-y-6">
-            {/* Title + price */}
-            <div>
+            {/* Product info */}
+            <div className="space-y-6">
+              {/* Badges */}
               {(isOnSale || isNew || !selectedVariant?.availableForSale) && (
-                <div className="flex gap-2 mb-3">
-                  {!selectedVariant?.availableForSale && (
-                    <Badge variant="soldout">Sold Out</Badge>
-                  )}
+                <div className="flex gap-2">
+                  {!selectedVariant?.availableForSale && <Badge variant="soldout">Sold Out</Badge>}
                   {isOnSale && <Badge variant="sale">Sale</Badge>}
                   {isNew && !isOnSale && <Badge variant="new">New</Badge>}
                 </div>
               )}
-              <h1 className="!text-[clamp(1.75rem,4vw,3rem)] !font-normal !leading-none mb-3">
-                {product.title}
-              </h1>
-              <div className="flex items-baseline gap-3">
-                {selectedVariant ? (
-                  <>
-                    <Money
-                      data={selectedVariant.price}
-                      className="text-lg font-medium"
+
+              {/* Title + price */}
+              <div>
+                <h1 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.01em] text-[#1A1A1A] mb-3">
+                  {product.title}
+                </h1>
+                <div className="flex items-baseline gap-3">
+                  {selectedVariant ? (
+                    <>
+                      <Money data={selectedVariant.price} className="text-[1.1rem] font-medium text-[#1A1A1A]" />
+                      {isOnSale && selectedVariant.compareAtPrice && (
+                        <Money data={selectedVariant.compareAtPrice} className="text-sm text-[#9E9C97] line-through font-normal" />
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-[1.1rem] font-medium text-[#9E9C97]">Select a variant</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Variant selector */}
+              <VariantSelector
+                handle={product.handle}
+                options={product.options as Parameters<typeof VariantSelector>[0]['options']}
+                variants={product.variants.nodes as Parameters<typeof VariantSelector>[0]['variants']}
+                selectedVariant={selectedVariant as Parameters<typeof VariantSelector>[0]['selectedVariant']}
+              >
+                {({option}: {option: VariantOption}) => (
+                  <div key={option.name} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <p className="h-eyebrow text-[#1A1A1A]">{option.name}</p>
+                      {option.name.toLowerCase() === 'size' && (
+                        <button
+                          type="button"
+                          onClick={() => setSizeGuideOpen(true)}
+                          className="h-eyebrow text-[#6B6B6B] hover:text-[#1A1A1A] underline underline-offset-2 transition-colors"
+                        >
+                          Size Guide
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {option.values.map(({value, isActive, isAvailable, to}) => (
+                        <Link
+                          key={value}
+                          to={to}
+                          replace
+                          preventScrollReset
+                          prefetch="intent"
+                          className={`min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-full ${
+                            isActive
+                              ? 'border-[#1A1A1A] bg-[#1A1A1A] text-[#FAF9F6]'
+                              : isAvailable
+                                ? 'border-[#E8E6E1] text-[#1A1A1A] hover:border-[#1A1A1A]'
+                                : 'border-[#E8E6E1] text-[#9E9C97] cursor-not-allowed line-through'
+                          }`}
+                          aria-disabled={!isAvailable}
+                          aria-label={`${option.name}: ${value}${!isAvailable ? ' (unavailable)' : ''}`}
+                        >
+                          {value}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </VariantSelector>
+
+              {/* Quantity + Add to cart */}
+              <div className="space-y-3 pt-2">
+                {selectedVariant?.availableForSale && (
+                  <div className="flex items-center justify-between">
+                    <span className="h-eyebrow text-[#6B6B6B]">Quantity</span>
+                    <QuantitySelector value={quantity} onChange={setQuantity} />
+                  </div>
+                )}
+                <AddToCartButton
+                  variant={selectedVariant as ProductVariantFragment | null | undefined}
+                  quantity={quantity}
+                />
+                {!selectedVariant?.availableForSale && selectedVariant && (
+                  <div className="mt-4">
+                    <WaitlistForm
+                      productTitle={product.title}
+                      variantTitle={selectedVariant.selectedOptions.map((o) => o.value).join(' / ')}
                     />
-                    {isOnSale && selectedVariant.compareAtPrice && (
-                      <Money
-                        data={selectedVariant.compareAtPrice}
-                        className="text-sm text-black/40 line-through font-normal"
-                      />
-                    )}
-                  </>
-                ) : (
-                  <span className="text-lg font-medium text-black/50">
-                    Select a variant
-                  </span>
+                  </div>
                 )}
               </div>
-            </div>
 
-            {/* Variant selector */}
-            <VariantSelector
-              handle={product.handle}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              options={product.options as any}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              variants={product.variants.nodes as any}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              selectedVariant={selectedVariant as any}
-            >
-              {({option}: {option: VariantOption}) => (
-                <div key={option.name} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <p className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase">
-                      {option.name}
-                    </p>
-                    {option.name.toLowerCase() === 'size' && (
-                      <button
-                        type="button"
-                        onClick={() => setSizeGuideOpen(true)}
-                        className="text-[0.65rem] tracking-wide underline underline-offset-2 text-black/60 hover:text-black transition-colors"
-                      >
-                        Size Guide
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {option.values.map(({value, isActive, isAvailable, to}) => (
-                      <Link
-                        key={value}
-                        to={to}
-                        replace
-                        preventScrollReset
-                        prefetch="intent"
-                        className={`min-w-[3rem] h-10 px-3 border text-xs font-medium transition-colors flex items-center justify-center ${
-                          isActive
-                            ? 'border-black bg-black text-white'
-                            : isAvailable
-                              ? 'border-[#e5e5e5] hover:border-black text-black'
-                              : 'border-[#e5e5e5] text-black/30 cursor-not-allowed line-through'
-                        }`}
-                        aria-disabled={!isAvailable}
-                        aria-label={`${option.name}: ${value}${!isAvailable ? ' (unavailable)' : ''}`}
-                      >
-                        {value}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </VariantSelector>
-
-            {/* Sticky add to cart */}
-            <div className="sticky bottom-0 pt-2 -mx-1 px-1 pb-1 bg-gradient-to-t from-white via-white/95 to-transparent">
-              {/* Quantity selector */}
-              {selectedVariant?.availableForSale && (
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs tracking-widest uppercase text-black/60">
-                    Quantity
-                  </span>
-                  <QuantitySelector value={quantity} onChange={setQuantity} />
-                </div>
-              )}
-
-              {/* Add to cart */}
-              <AddToCartButton
-                variant={selectedVariant as ProductVariantFragment | null | undefined}
-                quantity={quantity}
-              />
-
-              {/* Buy Now */}
-              {selectedVariant?.availableForSale && (
-                <div className="mt-3">
-                  <AddToCartButton
-                    variant={selectedVariant as ProductVariantFragment}
-                    quantity={quantity}
-                    buyNow
-                  />
-                </div>
-              )}
-
-              {/* Waitlist for sold out */}
-              {!selectedVariant?.availableForSale && selectedVariant && (
-                <div className="mt-4">
-                  <WaitlistForm
-                    productTitle={product.title}
-                    variantTitle={selectedVariant.selectedOptions
-                      .map((o) => o.value)
-                      .join(' / ')}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Description */}
-            {product.descriptionHtml && (
-              <div className="border-t border-black/10 pt-6">
-                <p className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase mb-4">
-                  Description
-                </p>
-                <div
-                  className="prose prose-sm max-w-none text-black [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-black/70 [&_ul]:text-sm [&_ul]:text-black/70 [&_li]:my-0.5"
-                  // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
-                />
-              </div>
-            )}
-
-            {/* Metafields: Material / Fit / Care */}
-            {product.metafields && product.metafields.nodes && product.metafields.nodes.some((m: {value: string}) => m.value) && (
-              <div className="border-t border-black/10 pt-6 space-y-4">
-                {(product.metafields.nodes as Array<{key: string; value: string}>).map((mf) => {
-                  if (!mf.value) return null;
-                  const labels: Record<string, string> = {
-                    material: 'Material',
-                    fit: 'Fit',
-                    care: 'Care Instructions',
-                    size_chart: 'Size Chart',
-                  };
-                  return (
-                    <div key={mf.key}>
-                      <p className="text-[0.65rem] font-semibold tracking-[0.15em] uppercase mb-2">
-                        {labels[mf.key] ?? mf.key}
-                      </p>
-                      <p className="text-sm text-black/70 leading-relaxed">{mf.value}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Shipping note */}
-            <div className="border-t border-[#e5e5e5] pt-4">
-              <p className="text-[0.78rem] tracking-wide text-black/60">
-                Free shipping on orders over $100 · Easy returns within 30 days
+              {/* Shipping note */}
+              <p className="h-eyebrow text-[#9E9C97] text-center">
+                Free shipping over $100 · 30-day returns
               </p>
+
+              {/* Accordions */}
+              <div className="border-t border-[#E8E6E1] pt-4">
+                {product.descriptionHtml && (
+                  <Accordion label="Description">
+                    <div
+                      className="prose prose-sm max-w-none [&_p]:text-[#6B6B6B] [&_ul]:text-[#6B6B6B]"
+                      dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
+                    />
+                  </Accordion>
+                )}
+                <Accordion label="Shipping & Returns">
+                  <p>Free shipping on orders over $100. Orders ship within 3–5 business days. Easy 30-day returns on unworn items.</p>
+                </Accordion>
+                {product.metafields?.nodes?.some((m) => m.key === 'care' && m.value) && (
+                  <Accordion label="Care Guide">
+                    <p>{product.metafields.nodes.find((m) => m.key === 'care')?.value}</p>
+                  </Accordion>
+                )}
+                <Accordion label="Size Guide">
+                  <button
+                    type="button"
+                    onClick={() => setSizeGuideOpen(true)}
+                    className="h-link"
+                  >
+                    View full size guide →
+                  </button>
+                </Accordion>
+              </div>
             </div>
           </div>
         </div>
-      </Container>
 
-      {/* Related products */}
-      {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
-        <section className="bg-[#f5f5f5]">
-          <Container className="py-20">
-            <div className="flex items-baseline justify-between mb-10">
-              <h2 className="text-[0.78rem] font-medium tracking-[0.15em] uppercase">
-                You May Also Like
-              </h2>
-              <Button as="link" to="/collections/all-products" variant="ghost">
-                View All
-              </Button>
+        {/* Related products */}
+        {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
+          <section className="border-t border-[#E8E6E1]">
+            <div className="h-container py-16">
+              <div className="flex items-end justify-between mb-10">
+                <div>
+                  <p className="h-eyebrow mb-3">More to explore</p>
+                  <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[#1A1A1A]">
+                    You May Also Like
+                  </h2>
+                </div>
+                <Button as="link" to="/collections/all-products" variant="ghost">
+                  View All
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {(relatedProducts.products.nodes as ProductCardFragment[])
+                  .filter((p) => p.id !== product.id)
+                  .slice(0, 4)
+                  .map((p, i) => (
+                    <ProductCard key={p.id} product={p} loading={i < 2 ? 'eager' : 'lazy'} hoverFlip showQuickAdd />
+                  ))}
+              </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {(relatedProducts.products.nodes as ProductCardFragment[])
-                .filter((p) => p.id !== product.id)
-                .slice(0, 4)
-                .map((p, i) => (
-                  <ProductCard
-                    key={p.id}
-                    product={p}
-                    loading={i < 2 ? 'eager' : 'lazy'}
-                  />
-                ))}
-            </div>
-          </Container>
-        </section>
-      )}
+          </section>
+        )}
+      </div>
 
       {/* Recently viewed */}
       <RecentlyViewed
@@ -574,10 +497,7 @@ export default function ProductPage() {
       />
 
       {/* Size guide modal */}
-      <SizeGuideModal
-        open={sizeGuideOpen}
-        onClose={() => setSizeGuideOpen(false)}
-      />
+      <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
     </>
   );
 }
