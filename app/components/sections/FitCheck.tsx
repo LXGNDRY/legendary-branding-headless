@@ -77,11 +77,11 @@ export default function FitCheck({eyebrow, heading, image, hotspots}: FitCheckPr
                   {spot.product.image ? (
                     <Image
                       data={spot.product.image}
-                      className="w-14 h-14 object-cover shrink-0"
+                      className="w-14 h-14 object-cover rounded-lg shrink-0"
                       sizes="56px"
                     />
                   ) : (
-                    <div className="w-14 h-14 bg-[#f0ede8] shrink-0" />
+                    <div className="w-14 h-14 rounded-lg bg-[#f0ede8] shrink-0" />
                   )}
                   <div className="min-w-0">
                     {spot.label && (

@@ -63,7 +63,7 @@ function CartLineItem({line}: {line: CartLineData}) {
       {/* Image */}
       <Link
         to={`/products/${product.handle}`}
-        className="shrink-0 w-20 h-24 overflow-hidden bg-[#f7f7f7] block"
+        className="shrink-0 w-20 h-24 overflow-hidden rounded-lg bg-[#f7f7f7] block"
       >
         {image ? (
           <Image

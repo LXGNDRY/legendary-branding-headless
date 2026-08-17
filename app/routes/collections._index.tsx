@@ -85,7 +85,7 @@ export default function CollectionsIndex() {
             prefetch="intent"
             className="group block"
           >
-            <div className="relative overflow-hidden mb-4">
+            <div className="relative overflow-hidden rounded-lg mb-4">
               {collection.image ? (
                 <Image
                   data={collection.image}
