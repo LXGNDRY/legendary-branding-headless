@@ -1,21 +1,11 @@
 import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
-import {getPaginationVariables, Image} from '@shopify/hydrogen';
-import Container from '~/components/ui/Container';
-import Button from '~/components/ui/Button';
+import {getPaginationVariables} from '@shopify/hydrogen';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
-import StreetHero from '~/components/sections/StreetHero';
-import BrandMarquee from '~/components/sections/BrandMarquee';
-import StatStrip from '~/components/sections/StatStrip';
-import CollectionGrid from '~/components/sections/CollectionGrid';
-import BrandStory from '~/components/sections/BrandStory';
-import Testimonials from '~/components/sections/Testimonials';
-import DropTimer from '~/components/sections/DropTimer';
-import Lookbook from '~/components/sections/Lookbook';
-import NewsletterPopup from '~/components/sections/NewsletterPopup';
+import HeroPlaceholder from '~/components/ui/HeroPlaceholder';
 import {CacheLong} from '~/lib/cache';
 
 type CollectionNode = {
@@ -71,17 +61,17 @@ const HOMEPAGE_QUERY = `#graphql
 ` as const;
 
 export const meta: MetaFunction = () => {
-  const description = 'Premium editorial streetwear. Bold, minimal, fast.';
+  const description = 'Premium editorial streetwear. Limited drops, exceptional quality.';
   return [
-    {title: 'LEGENDARY BRANDING — Premium Editorial Streetwear'},
+    {title: 'LEGENDARY — Premium Editorial Streetwear'},
     {name: 'description', content: description},
     {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/'},
     {property: 'og:type', content: 'website'},
-    {property: 'og:title', content: 'LEGENDARY BRANDING'},
+    {property: 'og:title', content: 'LEGENDARY'},
     {property: 'og:description', content: description},
     {property: 'og:url', content: 'https://legendary-branding.com/'},
     {name: 'twitter:card', content: 'summary_large_image'},
-    {name: 'twitter:title', content: 'LEGENDARY BRANDING'},
+    {name: 'twitter:title', content: 'LEGENDARY'},
     {name: 'twitter:description', content: description},
   ];
 };
@@ -106,40 +96,6 @@ export async function loader({context, request}: LoaderFunctionArgs) {
   return {featuredCollections, newDrops, bestSellers};
 }
 
-const MARQUEE_ITEMS = [
-  '235GSM+ HEAVYWEIGHT TEES',
-  'MADE TO ORDER',
-  'FREE SHIPPING OVER $150',
-  'WORLDWIDE SHIPPING',
-  'AUTHENTICITY GUARANTEED',
-  'NEW DROPS EVERY FRIDAY',
-  'DTG PRINTS',
-];
-
-const TESTIMONIALS = [
-  {
-    quote: "This is the heaviest tee I've ever owned. The quality is unreal — you can feel the difference the second you put it on.",
-    name: 'Marcus T.',
-    location: 'Atlanta, GA',
-    stars: 5,
-  },
-  {
-    quote: "Made to order means I actually had to wait — but it was worth every day. Fits perfectly, no shrinkage after washing.",
-    name: 'Jordan L.',
-    location: 'London, UK',
-    stars: 5,
-  },
-  {
-    quote: "The DTG print quality blew me away. Sharp edges, no cracking. Other brands can't touch this.",
-    name: 'Aaliyah M.',
-    location: 'Toronto, CA',
-    stars: 5,
-  },
-];
-
-// Next drop date (30 days from build — update for real drops)
-const NEXT_DROP_DATE = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
 export default function Homepage() {
   const {featuredCollections, newDrops, bestSellers} =
     useLoaderData<typeof loader>();
@@ -150,179 +106,264 @@ export default function Homepage() {
   const bestSellerProducts = bestSellers?.products?.nodes as
     | ProductCardFragment[]
     | undefined;
-
-  // Use first available product image for hero (placeholder if none)
-  const firstProduct = newDropsProducts?.[0];
-  const secondProduct = newDropsProducts?.[1];
-
-  // Build lookbook items from best sellers (only products with images)
-  const lookbookItems = (bestSellerProducts ?? [])
-    .filter((product) => product.featuredImage?.url)
-    .map((product, i) => ({
-      id: product.id,
-      image: product.featuredImage!,
-      product: {
-        handle: product.handle,
-        title: product.title,
-        price: product.priceRange.minVariantPrice,
-        image: product.featuredImage!,
-      },
-      hotspotX: 50,
-      hotspotY: 50,
-      spanCols: i === 0 ? 6 : i === 1 ? 3 : i === 2 ? 3 : 6,
-      spanRows: i === 0 ? 3 : i === 1 ? 2 : i === 2 ? 2 : 2,
-    }));
+  const collections = (featuredCollections?.nodes as CollectionNode[]) ?? [];
+  const featured3 = collections.slice(0, 3);
 
   return (
     <div>
-      {/* 1. Street Hero */}
-      <StreetHero
-        eyebrow="235GSM+ Tees · Made To Order · DTG Prints"
-        heading="Legendary Branding"
-        subtext="Shop Heavyweight Essentials — premium streetwear built to last."
-        buttonLabel="Shop Heavyweight Essentials"
-        buttonLink="/collections/all-products"
-        imageLeft={firstProduct?.featuredImage}
-        imageRight={secondProduct?.featuredImage}
-        splitLayout={!!firstProduct?.featuredImage?.url && !!secondProduct?.featuredImage?.url}
-        contentAlignment="bottom-left"
-        fullScreen
-      />
-
-      {/* 2. Brand Marquee */}
-      <BrandMarquee items={MARQUEE_ITEMS} style="bold" speed={30} />
-
-      {/* 3. Stat Strip */}
-      <StatStrip />
-
-      {/* 4. Collection Grid */}
-      <CollectionGrid
-        eyebrow="Explore"
-        heading="Shop by Category"
-        linkLabel="View all collections"
-        linkUrl="/collections"
-        collections={(featuredCollections?.nodes as CollectionNode[]) ?? []}
-        columns={3}
-      />
-
-      {/* 5. Brand Story */}
-      <BrandStory
-        eyebrow="Our Craft"
-        heading="Built Different. Made to Last."
-        body="Every piece starts with fabric weight most brands won't touch — 235GSM+ cotton, structured for the streets. Made to order. No shortcuts, no restocks. If you know, you know."
-        buttonLabel="Shop the Collection"
-        buttonLink="/collections/all-products"
-        imagePosition="left"
-      />
-
-      {/* 6. Best Sellers */}
-      {bestSellerProducts && bestSellerProducts.length > 0 && (
-        <section className="lb-section bg-[#f5f5f5]">
-          <div className="lb-container">
-            <div className="lb-section-header">
-              <div>
-                <div className="lb-eyebrow mb-2">Best Sellers</div>
-                <h2>Most Wanted</h2>
-              </div>
-              <Link
-                to="/collections/all-products"
-                className="lb-section-header__link"
-              >
-                View All
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {bestSellerProducts.slice(0, 4).map((product, i) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  loading={i < 2 ? 'eager' : 'lazy'}
-                  hoverFlip
-                  showQuickAdd
-                />
-              ))}
+      {/* ── 1. HERO — split-screen editorial ── */}
+      <section className="relative">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] min-h-[80vh] lg:min-h-[85vh]">
+          {/* Left: big image */}
+          <div className="relative overflow-hidden bg-[#E8E6E1] aspect-[4/5] lg:aspect-auto">
+            <HeroPlaceholder variant="dark" />
+            {/* Overlay text at bottom left */}
+            <div className="absolute bottom-8 left-8 right-8 z-10">
+              <p className="text-white/80 text-xs uppercase tracking-[0.15em] mb-3 font-medium">
+                Fall / Winter 2025
+              </p>
+              <h1 className="font-serif text-white text-display-1 leading-[0.9] tracking-tight max-w-[10ch]">
+                The New Season
+              </h1>
             </div>
           </div>
-        </section>
-      )}
 
-      {/* 8. Testimonials */}
-      <Testimonials
-        eyebrow="Customer Reviews"
-        heading="The Culture Speaks"
-        items={TESTIMONIALS}
-      />
-
-      {/* 9. Drop Timer */}
-      <DropTimer
-        eyebrow="Coming Soon"
-        heading="Next Drop"
-        description="New limited edition pieces dropping soon. Made to order — no restocks, no second chances."
-        dropDate={NEXT_DROP_DATE}
-        buttonLabel="Shop Now"
-        buttonLink="/collections/all-products"
-      />
-
-      {/* 6. New Drops */}
-      {newDropsProducts && newDropsProducts.length > 0 && (
-        <section className="lb-section">
-          <div className="lb-container">
-            <div className="lb-section-header">
-              <div>
-                <div className="lb-eyebrow mb-2">Just Dropped</div>
-                <h2>New Arrivals</h2>
-              </div>
+          {/* Right: content */}
+          <div className="flex flex-col justify-center px-[clamp(1.5rem,5vw,4rem)] py-16 lg:py-0 bg-[#FAF9F6]">
+            <p className="text-eyebrow mb-4">New Drop — Available Now</p>
+            <h2 className="font-serif text-display-2 leading-[1.05] tracking-tight mb-6 max-w-[12ch]">
+              Built to last, made to fade.
+            </h2>
+            <p className="text-base text-[#6B6B6B] leading-relaxed mb-10 max-w-md">
+              Heavyweight essentials cut from premium textiles. Every piece
+              made in small batches — quality before quantity.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/collections/new-arrivals"
+                className="btn btn-primary btn-lg"
+              >
+                Shop New
+              </Link>
               <Link
                 to="/collections/all-products"
-                className="lb-section-header__link"
+                className="btn btn-outline btn-lg"
               >
-                View All
+                Browse All
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {newDropsProducts.slice(0, 8).map((product, i) => (
+      {/* ── 2. FEATURED CATEGORIES — 3-up image grid ── */}
+      <section className="section">
+        <div className="container-x">
+          <div className="flex items-end justify-between mb-10 md:mb-14 flex-wrap gap-4">
+            <div>
+              <p className="text-eyebrow mb-2">Shop by Category</p>
+              <h2 className="font-serif text-display-3 leading-[1.1] tracking-tight">
+                Essentials
+              </h2>
+            </div>
+            <Link
+              to="/collections/all-products"
+              className="link-underline text-caps text-[#1A1A1A]"
+            >
+              View All →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            {featured3.length > 0
+              ? featured3.map((col, i) => (
+                  <Link
+                    key={col.id}
+                    to={`/collections/${col.handle}`}
+                    className="group relative overflow-hidden aspect-[3/4] bg-[#E8E6E1] img-zoom"
+                  >
+                    {col.image?.url ? (
+                      <img
+                        src={col.image.url}
+                        alt={col.image.altText || col.title}
+                        className="w-full h-full object-cover"
+                        loading="eager"
+                      />
+                    ) : (
+                      <HeroPlaceholder variant="light" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A]/40 to-transparent" />
+                    <div className="absolute bottom-6 left-6 right-6 z-10">
+                      <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
+                        {col.title}
+                      </h3>
+                      <p className="text-white/80 text-xs uppercase tracking-[0.15em] mt-2 font-medium">
+                        Explore →
+                      </p>
+                    </div>
+                  </Link>
+                ))
+              : [...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="relative overflow-hidden aspect-[3/4] bg-[#E8E6E1]"
+                  >
+                    <HeroPlaceholder variant="light" />
+                    <div className="absolute bottom-6 left-6 z-10">
+                      <h3 className="font-serif text-3xl text-white">
+                        {['Tees', 'Hoodies', 'Outerwear'][i]}
+                      </h3>
+                    </div>
+                  </div>
+                ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3. NEW ARRIVALS — asymmetric grid ── */}
+      <section className="section-sm bg-white">
+        <div className="container-x">
+          <div className="flex items-end justify-between mb-10 md:mb-14 flex-wrap gap-4">
+            <div>
+              <p className="text-eyebrow mb-2">Just Dropped</p>
+              <h2 className="font-serif text-display-3 leading-[1.1] tracking-tight">
+                New Arrivals
+              </h2>
+            </div>
+            <Link
+              to="/collections/all-products"
+              className="link-underline text-caps text-[#1A1A1A]"
+            >
+              View All →
+            </Link>
+          </div>
+
+          {/* Asymmetric grid: first product spans 2 cols on lg */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-5">
+            {(newDropsProducts ?? []).slice(0, 4).map((product, i) => (
+              <div
+                key={product.id}
+                className={i === 0 ? 'lg:col-span-2 lg:row-span-1' : ''}
+              >
                 <ProductCard
-                  key={product.id}
                   product={product}
-                  loading={i < 2 ? 'eager' : 'lazy'}
-                  hoverFlip
-                  showQuickAdd
+                  showVendor={false}
                 />
-              ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Second row — 4 products */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mt-3 md:mt-5">
+            {(newDropsProducts ?? []).slice(4, 8).map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                showVendor={false}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. EDITORIAL — image + text ── */}
+      <section className="section">
+        <div className="container-x">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-8 lg:gap-16 items-center">
+            {/* Image */}
+            <div className="relative aspect-[3/2] bg-[#E8E6E1] overflow-hidden">
+              <HeroPlaceholder variant="dark" />
+            </div>
+
+            {/* Text */}
+            <div className="lg:pl-8">
+              <p className="text-eyebrow mb-4">Our Philosophy</p>
+              <h2 className="font-serif text-display-3 leading-[1.1] tracking-tight mb-6">
+                Less but better. Every piece earns its place.
+              </h2>
+              <p className="text-base text-[#6B6B6B] leading-relaxed mb-6">
+                We don't chase trends. We build a wardrobe of pieces you'll
+                reach for every day — cut from heavyweight fabrics, stitched
+                with care, made to improve with age.
+              </p>
+              <p className="text-base text-[#6B6B6B] leading-relaxed mb-8">
+                Small batch production means zero waste, fair wages, and a
+                product that actually lasts. That's the Legendary promise.
+              </p>
+              <Link to="/pages/about" className="link-underline text-caps">
+                Our Story →
+              </Link>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* 7. Lookbook */}
-      {lookbookItems.length > 0 && (
-        <Lookbook
-          eyebrow="The Collection"
-          heading="SS25 Lookbook"
-          linkLabel="Shop the Look"
-          linkUrl="/collections/all-products"
-          items={lookbookItems}
-          gridStyle="editorial"
-        />
-      )}
+      {/* ── 5. BEST SELLERS ── */}
+      <section className="section-sm bg-white">
+        <div className="container-x">
+          <div className="flex items-end justify-between mb-10 md:mb-14 flex-wrap gap-4">
+            <div>
+              <p className="text-eyebrow mb-2">Fan Favorites</p>
+              <h2 className="font-serif text-display-3 leading-[1.1] tracking-tight">
+                Best Sellers
+              </h2>
+            </div>
+            <Link
+              to="/collections/best-sellers"
+              className="link-underline text-caps text-[#1A1A1A]"
+            >
+              Shop All →
+            </Link>
+          </div>
 
-      {/* Newsletter Popup */}
-      <NewsletterPopup />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
+            {(bestSellerProducts ?? []).map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                showVendor={false}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
 
-      {/* 8. Journal CTA */}
-      <section className="lb-section text-center bg-[#f5f5f5]">
-        <div className="lb-container max-w-3xl">
-          <div className="lb-eyebrow mb-4">The Journal</div>
-          <h2 className="mb-6">Culture. Craft. Community.</h2>
-          <p className="text-black/60 max-w-xl mx-auto mb-8 leading-relaxed">
-            Stories from the culture. Behind-the-scenes drops, artist
-            collaborations, and the people who make Legendary.
-          </p>
-          <Button as="link" to="/journal" variant="solid" size="lg">
-            Read the Journal
-          </Button>
+      {/* ── 6. NEWSLETTER — full-width dark ── */}
+      <section className="bg-[#1A1A1A] text-[#FAF9F6] py-20 md:py-28">
+        <div className="container-x">
+          <div className="max-w-2xl mx-auto text-center">
+            <p className="text-xs uppercase tracking-[0.15em] text-white/60 font-medium mb-4">
+              Join the List
+            </p>
+            <h2 className="font-serif text-display-3 leading-[1.05] tracking-tight mb-5">
+              First access to new drops.
+            </h2>
+            <p className="text-white/60 text-base mb-8 max-w-lg mx-auto">
+              Subscribers get 24 hours early access before every release.
+              No spam, just drops.
+            </p>
+
+            <form
+              className="flex gap-2 max-w-md mx-auto"
+              onSubmit={(e) => {
+                e.preventDefault();
+                // Newsletter signup — connect to Klaviyo/Shopify
+              }}
+            >
+              <input
+                type="email"
+                required
+                placeholder="Enter your email"
+                className="flex-1 bg-transparent border-b border-white/30 text-white placeholder:text-white/40 py-3 px-1 text-base focus:outline-none focus:border-white transition-colors"
+              />
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm shrink-0"
+              >
+                Subscribe
+              </button>
+            </form>
+          </div>
         </div>
       </section>
     </div>

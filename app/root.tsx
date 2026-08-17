@@ -29,7 +29,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&display=swap',
+    href: 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap',
   },
   {rel: 'stylesheet', href: styles},
 ];
@@ -156,26 +156,49 @@ export default function App() {
 }
 
 export function ErrorBoundary({error}: {error: unknown}) {
-  const message = error instanceof Error ? error.message : 'Unknown error';
+  // In production, never expose error details to the client.
+  // In dev, show the error message (but never the stack trace) for debugging.
+  const message = import.meta.env.DEV
+    ? error instanceof Error
+      ? error.message
+      : String(error)
+    : 'Something went wrong';
 
-  // Never expose stack traces to end users — log server-side only
-  if (typeof window === 'undefined' && error instanceof Error) {
-    console.error(error.stack);
+  // Server-side: log the full error (stack + all context).
+  // Client-side: never leak internal details to the DOM.
+  if (typeof window === 'undefined') {
+    console.error(
+      '[root.tsx] Unhandled error in route:',
+      error instanceof Error ? error.stack : error,
+    );
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-8">
-      <div className="max-w-2xl text-center">
-        <p className="text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-black/50 mb-4">
-          ERROR
+    <div className="min-h-dvh flex items-center justify-center p-8 bg-[#FAF9F6]">
+      <div className="max-w-xl text-center">
+        <p className="text-eyebrow mb-4">
+          Error
         </p>
-        <h1 className="mb-6">Something went wrong</h1>
-        <p className="text-black/60 text-sm mb-10">
+        <h1 className="font-serif text-display-3 leading-[1.1] tracking-tight mb-6 text-[#1A1A1A]">
+          Something went wrong
+        </h1>
+        <p className="text-[#6B6B6B] text-base leading-relaxed mb-10">
           An unexpected error occurred. Please try again in a few moments.
+          If the problem persists, contact support.
         </p>
+        {import.meta.env.DEV && message !== 'Something went wrong' && (
+          <div className="mb-8 p-4 text-left bg-[#1A1A1A]/5 rounded-lg border border-[#E8E6E1]">
+            <p className="text-xs text-eyebrow text-[#6B6B6B] mb-2">
+              Dev only — error message
+            </p>
+            <pre className="text-xs text-[#1A1A1A] font-mono whitespace-pre-wrap break-words">
+              {message}
+            </pre>
+          </div>
+        )}
         <a
           href="/"
-          className="inline-block text-[0.78rem] font-medium tracking-[0.08em] uppercase border border-black px-7 py-3 hover:bg-black hover:text-white transition-all duration-300"
+          className="inline-flex items-center justify-center btn btn-dark btn-sm"
         >
           Back to Home
         </a>

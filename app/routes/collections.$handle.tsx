@@ -14,6 +14,7 @@ import ProductCard, {
 } from '~/components/ui/ProductCard';
 import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
+import HeroPlaceholder from '~/components/ui/HeroPlaceholder';
 import {CacheShort} from '~/lib/cache';
 
 const COLLECTION_QUERY = `#graphql
@@ -310,53 +311,50 @@ export default function CollectionPage() {
   return (
     <div>
       {/* Collection hero */}
-      <div className="relative h-[250px] md:h-[380px] bg-[#f5f5f5] overflow-hidden">
+      <div className="relative h-[280px] md:h-[420px] bg-[#E8E6E1] overflow-hidden">
         {collection.image?.url ? (
           <Image
             data={collection.image}
             sizes="100vw"
             loading="eager"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out hover:scale-[1.02]"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="lb-eyebrow text-black/30">{collection.title}</span>
+          <div className="w-full h-full">
+            <HeroPlaceholder variant="dark" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        <Container className="absolute inset-0 flex items-end pb-10">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A]/60 to-transparent" />
+        <div className="absolute inset-0 max-w-[1280px] mx-auto px-[clamp(1.25rem,4vw,2.5rem)] flex items-end pb-12 md:pb-16">
           <div className="text-white max-w-2xl">
             <nav className="text-[11px] tracking-widest uppercase text-white/70 mb-4" aria-label="Breadcrumb">
               <a href="/collections" className="hover:text-white transition-colors">
-                Collections
+                All
               </a>
               <span className="mx-2">/</span>
               <span>{collection.title}</span>
             </nav>
-            <h1
-              className="text-4xl md:text-6xl font-normal leading-none tracking-tight"
-              style={{fontFamily: 'var(--font-display)', textTransform: 'uppercase'}}
-            >
+            <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl leading-[0.95] tracking-tight">
               {collection.title}
             </h1>
             {collection.description && (
-              <p className="mt-3 text-sm text-white/80 max-w-lg">{collection.description}</p>
+              <p className="mt-4 text-sm text-white/80 max-w-lg">{collection.description}</p>
             )}
           </div>
-        </Container>
+        </div>
       </div>
 
-      <Container className="py-12">
+      <div className="max-w-[1280px] mx-auto px-[clamp(1.25rem,4vw,2.5rem)] py-16 md:py-20">
         <div className="flex flex-col lg:flex-row gap-10">
           {/* Sidebar filters — desktop */}
           <aside className="hidden lg:block w-60 shrink-0">
-            <div className="sticky top-24">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-sm font-semibold tracking-widest uppercase">Filters</h2>
+            <div className="sticky top-28">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-caps text-[#1A1A1A]">Filters</h2>
                 {hasActiveFilters && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-xs text-black/50 hover:text-black underline transition-colors"
+                    className="text-xs text-[#6B6B6B] hover:text-[#1A1A1A] underline transition-colors"
                   >
                     Clear all
                   </button>
@@ -621,7 +619,7 @@ export default function CollectionPage() {
             </Pagination>
           </div>
         </div>
-      </Container>
+      </div>
 
       {/* Mobile filter drawer */}
       {filterOpen && (
