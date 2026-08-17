@@ -59,6 +59,9 @@ jobs:
           SESSION_SECRET: ci-only-do-not-use
         continue-on-error: true
 
+      - name: Build
+        run: npm run build
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -67,9 +70,6 @@ jobs:
 
       - name: Test
         run: npm run test
-
-      - name: Build
-        run: npm run build
 
   deploy:
     name: Deploy to Oxygen
