@@ -7,6 +7,7 @@ import * as build from 'virtual:react-router/server-build';
 import {storefrontRedirect} from '@shopify/hydrogen';
 import {createAppLoadContext} from '~/lib/context';
 import {applySecurityHeaders, isAssetRequest} from '~/lib/security';
+import {initSentryServer, captureServerError} from '~/lib/sentry.server';
 
 const handleRequest = createRequestHandler(
   build as unknown as ServerBuild,
@@ -26,6 +27,9 @@ export default {
     ctx: ExecutionContext,
   ): Promise<Response> {
     try {
+      // Sentry — init early so errors during context setup are captured
+      initSentryServer(env);
+
       const appContext = await createAppLoadContext(request, env, ctx);
 
       let response = await handleRequest(
@@ -66,6 +70,9 @@ export default {
     } catch (error) {
       // Server-level error — never expose details to the client
       console.error('Server error:', error);
+
+      // Report to Sentry
+      captureServerError(error, {request});
 
       // In development, include the error message for debugging
       const isDev = !import.meta.env.PROD;
