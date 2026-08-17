@@ -6,9 +6,12 @@ name: Storefront 1000167667
 on:
   push:
     branches:
-      - main        # production deploy
-      - dev         # preview deploy
-      - 'claude/**' # agent working branches — preview only
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
 
 permissions:
   contents: read
@@ -19,21 +22,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Validate (typecheck + lint + build)
+  quality:
+    name: Quality Gate (codegen + typecheck + lint + test + build)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Setup node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
-          node-version: "lts/*"
-          check-latest: true
+          node-version: "20"
+          check-latest: false
 
       - name: Cache node modules
         id: cache-npm
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         env:
           cache-name: cache-node-modules
         with:
@@ -48,16 +51,13 @@ jobs:
         run: npm ci
 
       - name: Generate Storefront API types
-        # Requires Storefront API credentials as repository secrets.
-        # If secrets are absent (e.g. a fork), this step is skipped — typecheck
-        # still passes because routes type against @shopify/hydrogen/storefront-api-types
-        # (a static package) rather than the generated file.
         if: ${{ secrets.PUBLIC_STORE_DOMAIN != '' && secrets.PUBLIC_STOREFRONT_API_TOKEN != '' }}
         run: npm run codegen
         env:
           PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
           PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
-        continue-on-error: true  # never block CI on a schema introspection failure
+          SESSION_SECRET: ci-only-do-not-use
+        continue-on-error: true
 
       - name: Typecheck
         run: npm run typecheck
@@ -65,32 +65,33 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build
-        run: npm run build
-
       - name: Test
         run: npm run test
 
+      - name: Build
+        run: npm run build
+
   deploy:
     name: Deploy to Oxygen
-    needs: validate     # deploy only if quality gate passes
+    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
+    needs: quality
     timeout-minutes: 30
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Setup node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
-          node-version: "lts/*"
-          check-latest: true
+          node-version: "20"
+          check-latest: false
 
       - name: Cache node modules
         id: cache-npm-deploy
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         env:
           cache-name: cache-node-modules
         with:
