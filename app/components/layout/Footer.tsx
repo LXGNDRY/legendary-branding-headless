@@ -22,6 +22,7 @@ const LEGAL_LINKS = [
   {label: 'Privacy Policy', href: '/policies/privacy-with-legendary-branding'},
   {label: 'Terms of Service', href: '/policies/terms-of-service'},
   {label: 'Shipping Policy', href: '/policies/shipping-policy'},
+  {label: 'Do Not Sell My Info', href: '/policies/privacy-with-legendary-branding#ccpa'},
 ];
 
 const SOCIAL_LINKS = [
