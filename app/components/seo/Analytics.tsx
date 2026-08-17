@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import {Link} from 'react-router';
 
 /**
  * Analytics component — loads GA4, Meta Pixel, and other tracking scripts
@@ -150,25 +151,40 @@ export default function Analytics({
     <>
       {/* Consent banner */}
       {showBanner && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black text-white p-4 md:p-6">
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 bg-[#1A1A1A] text-[#FAF9F6] p-4 md:p-6"
+          role="dialog"
+          aria-live="polite"
+          aria-label="Cookie consent"
+        >
           <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
             <div className="flex-1">
               <p className="text-sm font-medium mb-1">We value your privacy</p>
-              <p className="text-xs text-white/70">
+              <p className="text-xs text-[#FAF9F6]/70 leading-relaxed">
                 We use cookies and similar technologies to analyze traffic and improve your experience.
                 You can accept or reject non-essential tracking.
+                {' '}
+                <Link
+                  to="/policies/privacy-with-legendary-branding"
+                  className="underline underline-offset-2 hover:text-[#FAF9F6] transition-colors"
+                >
+                  Learn more
+                </Link>
+                .
               </p>
             </div>
             <div className="flex gap-3 shrink-0">
               <button
                 onClick={handleReject}
-                className="text-xs font-medium tracking-widest uppercase border border-white/30 px-6 py-3 hover:bg-white/10 transition-colors"
+                className="text-xs font-medium tracking-widest uppercase border border-[#FAF9F6]/30 px-6 py-3 hover:bg-[#FAF9F6]/10 transition-colors"
+                aria-label="Reject non-essential cookies"
               >
                 Reject
               </button>
               <button
                 onClick={handleAccept}
-                className="text-xs font-semibold tracking-widest uppercase bg-white text-black px-6 py-3 hover:bg-white/90 transition-colors"
+                className="text-xs font-semibold tracking-widest uppercase bg-[#FAF9F6] text-[#1A1A1A] px-6 py-3 hover:bg-white/90 transition-colors"
+                aria-label="Accept all cookies"
               >
                 Accept All
               </button>
