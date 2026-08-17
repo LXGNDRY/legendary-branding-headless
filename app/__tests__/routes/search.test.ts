@@ -3,7 +3,7 @@
  */
 
 import {describe, it, expect, beforeEach} from 'vitest';
-import {loader} from './search';
+import {loader} from '~/routes/search';
 import {createMockStorefront} from '~/test/mock-storefront';
 
 describe('search loader', () => {

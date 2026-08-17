@@ -5,7 +5,7 @@
  */
 
 import {describe, it, expect, beforeEach} from 'vitest';
-import {loader} from './products.$handle';
+import {loader} from '~/routes/products.$handle';
 import {createMockStorefront} from '~/test/mock-storefront';
 
 describe('products.$handle loader', () => {

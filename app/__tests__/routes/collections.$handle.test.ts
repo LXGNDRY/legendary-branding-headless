@@ -8,7 +8,7 @@
  */
 
 import {describe, it, expect, beforeEach} from 'vitest';
-import {loader} from './collections.$handle';
+import {loader} from '~/routes/collections.$handle';
 import {createMockStorefront} from '~/test/mock-storefront';
 
 describe('collections.$handle loader', () => {

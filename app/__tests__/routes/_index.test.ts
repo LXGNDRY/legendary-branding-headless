@@ -7,7 +7,7 @@
  */
 
 import {describe, it, expect, beforeEach} from 'vitest';
-import {loader} from './_index';
+import {loader} from '~/routes/_index';
 import {createMockStorefront} from '~/test/mock-storefront';
 
 describe('_index loader', () => {
