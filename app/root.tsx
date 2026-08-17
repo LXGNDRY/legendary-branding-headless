@@ -29,7 +29,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap',
+    href: 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap',
   },
   {rel: 'stylesheet', href: styles},
 ];
@@ -119,7 +119,7 @@ export default function App() {
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-black focus:text-white focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-[#FF3B30] focus:text-[#FAF9F6] focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase focus:rounded-full"
       >
         Skip to content
       </a>
@@ -156,50 +156,21 @@ export default function App() {
 }
 
 export function ErrorBoundary({error}: {error: unknown}) {
-  // In production, never expose error details to the client.
-  // In dev, show the error message (but never the stack trace) for debugging.
-  const message = import.meta.env.DEV
-    ? error instanceof Error
-      ? error.message
-      : String(error)
-    : 'Something went wrong';
-
-  // Server-side: log the full error (stack + all context).
-  // Client-side: never leak internal details to the DOM.
-  if (typeof window === 'undefined') {
-    console.error(
-      '[root.tsx] Unhandled error in route:',
-      error instanceof Error ? error.stack : error,
-    );
+  if (typeof window === 'undefined' && error instanceof Error) {
+    console.error(error.stack);
   }
 
   return (
     <div className="min-h-dvh flex items-center justify-center p-8 bg-[#FAF9F6]">
       <div className="max-w-xl text-center">
-        <p className="text-eyebrow mb-4">
-          Error
-        </p>
-        <h1 className="font-serif text-display-3 leading-[1.1] tracking-tight mb-6 text-[#1A1A1A]">
-          Something went wrong
+        <p className="h-eyebrow mb-6">Something went wrong</p>
+        <h1 className="font-serif text-[clamp(3.5rem,8vw,7rem)] leading-[0.95] mb-8 text-[#1A1A1A]">
+          Oops.
         </h1>
-        <p className="text-[#6B6B6B] text-base leading-relaxed mb-10">
+        <p className="text-[#6B6B6B] text-lg mb-12">
           An unexpected error occurred. Please try again in a few moments.
-          If the problem persists, contact support.
         </p>
-        {import.meta.env.DEV && message !== 'Something went wrong' && (
-          <div className="mb-8 p-4 text-left bg-[#1A1A1A]/5 rounded-lg border border-[#E8E6E1]">
-            <p className="text-xs text-eyebrow text-[#6B6B6B] mb-2">
-              Dev only — error message
-            </p>
-            <pre className="text-xs text-[#1A1A1A] font-mono whitespace-pre-wrap break-words">
-              {message}
-            </pre>
-          </div>
-        )}
-        <a
-          href="/"
-          className="inline-flex items-center justify-center btn btn-dark btn-sm"
-        >
+        <a href="/" className="h-btn-primary">
           Back to Home
         </a>
       </div>
