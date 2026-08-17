@@ -13,7 +13,9 @@ export const SECURITY_HEADERS: Record<string, string> = {
   'Content-Security-Policy': [
     "default-src 'self'",
     // Scripts: self + Shopify CDN + inline hydration + consent-gated analytics
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.shopify.com shop.app *.shopifypay.com www.googletagmanager.com connect.facebook.net analytics.tiktok.com",
+    // unsafe-inline: needed for React hydration + inline script preloading
+    // unsafe-eval removed: not needed by Hydrogen / React Router / Tailwind
+    "script-src 'self' 'unsafe-inline' cdn.shopify.com shop.app *.shopifypay.com www.googletagmanager.com connect.facebook.net analytics.tiktok.com",
     // Styles: inline needed for Tailwind + inline styles
     "style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.shopify.com",
     // Fonts: Google Fonts
@@ -24,8 +26,8 @@ export const SECURITY_HEADERS: Record<string, string> = {
     "media-src 'self' data: blob: *.shopify.com",
     // Iframe: Shopify checkout, shop pay
     "frame-src 'self' *.shopify.com shop.app *.shopifypay.com",
-    // Connect: API calls, analytics beacons, WebSocket for HMR in dev
-    "connect-src 'self' *.shopify.com cdn.shopify.com wss: ws: www.google-analytics.com analytics.google.com www.googletagmanager.com graph.facebook.com analytics.tiktok.com",
+    // Connect: API calls, analytics beacons, Sentry, WebSocket for HMR in dev
+    "connect-src 'self' *.shopify.com cdn.shopify.com wss: ws: www.google-analytics.com analytics.google.com www.googletagmanager.com graph.facebook.com analytics.tiktok.com *.sentry.io",
     // Form actions
     "form-action 'self' *.shopify.com",
     // Base URI
