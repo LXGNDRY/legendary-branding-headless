@@ -16,7 +16,7 @@ export default function Placeholder({
 }: PlaceholderProps) {
   return (
     <div
-      className={`${aspect} w-full bg-[#f7f7f7] flex items-center justify-center ${className}`}
+      className={`${aspect} w-full rounded-lg bg-[#f7f7f7] flex items-center justify-center ${className}`}
       aria-label={label}
       role="img"
     >

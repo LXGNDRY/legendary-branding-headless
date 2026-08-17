@@ -35,7 +35,7 @@ export default function BrandStory({
         className={`grid md:grid-cols-2 min-h-[480px] ${imagePosition === 'right' ? 'md:flex-row-reverse' : ''}`}
       >
         {/* Image */}
-        <div className={`relative bg-[#f5f5f5] overflow-hidden min-h-[360px] md:min-h-0 ${imagePosition === 'right' ? 'md:order-last' : ''}`}>
+        <div className={`relative bg-[#f5f5f5] overflow-hidden rounded-lg min-h-[360px] md:min-h-0 ${imagePosition === 'right' ? 'md:order-last' : ''}`}>
           {image?.url ? (
             <Image
               data={image}

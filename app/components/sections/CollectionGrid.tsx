@@ -71,7 +71,7 @@ export default function CollectionGrid({
                 prefetch="intent"
                 className="group relative block"
               >
-                <div className="relative overflow-hidden aspect-[4/3] bg-[#f5f5f5]">
+                <div className="relative overflow-hidden rounded-lg aspect-[4/3] bg-[#f5f5f5]">
                   {collection.image ? (
                     <Image
                       data={collection.image}

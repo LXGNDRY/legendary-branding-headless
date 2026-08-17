@@ -74,7 +74,7 @@ function CartLineRow({line}: {line: CartLineData}) {
       {/* Image */}
       <Link
         to={`/products/${product.handle}`}
-        className="shrink-0 w-24 h-28 overflow-hidden bg-[#f7f7f7] block"
+        className="shrink-0 w-24 h-28 overflow-hidden rounded-lg bg-[#f7f7f7] block"
       >
         {image ? (
           <Image

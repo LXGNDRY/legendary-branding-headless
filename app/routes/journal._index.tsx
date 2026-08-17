@@ -95,7 +95,7 @@ export default function JournalIndex() {
       {/* Featured article */}
       {featured && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-14 pb-14 border-b border-[#e5e5e5]">
-          <Link to={`/journal/${featured.handle}`} prefetch="intent" className="group block overflow-hidden bg-[#f7f7f7]">
+          <Link to={`/journal/${featured.handle}`} prefetch="intent" className="group block overflow-hidden rounded-lg bg-[#f7f7f7]">
             {featured.image ? (
               <Image
                 data={featured.image}
@@ -142,7 +142,7 @@ export default function JournalIndex() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {rest.map((article, i) => (
             <article key={article.id} className="group">
-              <Link to={`/journal/${article.handle}`} prefetch="intent" className="block mb-4 overflow-hidden bg-[#f7f7f7]">
+              <Link to={`/journal/${article.handle}`} prefetch="intent" className="block mb-4 overflow-hidden rounded-lg bg-[#f7f7f7]">
                 {article.image ? (
                   <Image
                     data={article.image}

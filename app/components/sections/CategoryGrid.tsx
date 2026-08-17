@@ -41,7 +41,7 @@ export default function CategoryGrid({eyebrow = 'Shop', heading = 'Collections',
             <Link
               key={item.id}
               to={`/collections/${item.handle}`}
-              className="h-reveal group relative aspect-[3/4] overflow-hidden bg-[#F3F2EE]"
+              className="h-reveal group relative aspect-[3/4] overflow-hidden rounded-lg bg-[#F3F2EE]"
             >
               {item.image?.url ? (
                 <Image

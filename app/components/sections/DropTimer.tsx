@@ -105,7 +105,7 @@ export default function DropTimer({
                   aspectRatio="1/1"
                   sizes="(max-width: 768px) 200px, 400px"
                   loading="lazy"
-                  className="max-h-[340px] w-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
+                  className="max-h-[340px] w-auto object-contain rounded-lg drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
                 />
               </div>
             )}
