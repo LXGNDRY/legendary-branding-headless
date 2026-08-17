@@ -7,8 +7,11 @@ on:
   push:
     branches:
       - main        # production deploy
-      - dev         # preview deploy
-      - 'claude/**' # agent working branches — preview only
+      - dev         # preview deploy (staging)
+  pull_request:
+    branches:
+      - main
+      - dev         # quality gate on PRs — no deploy, just validate
 
 permissions:
   contents: read
@@ -19,8 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Validate (typecheck + lint + build)
+  quality:
+    name: Quality Gate (codegen + typecheck + lint + test + build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -28,8 +31,8 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "lts/*"
-          check-latest: true
+          node-version: "20"
+          check-latest: false
 
       - name: Cache node modules
         id: cache-npm
@@ -57,6 +60,7 @@ jobs:
         env:
           PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
           PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+          SESSION_SECRET: ci-only-do-not-use
         continue-on-error: true  # never block CI on a schema introspection failure
 
       - name: Typecheck
@@ -65,15 +69,18 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build
-        run: npm run build
-
       - name: Test
         run: npm run test
 
+      - name: Build
+        run: npm run build
+
   deploy:
     name: Deploy to Oxygen
-    needs: validate     # deploy only if quality gate passes
+    # Only deploy on push to main (production) or dev (preview).
+    # Never deploy on pull_request — quality gate only.
+    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
+    needs: quality      # deploy only if quality gate passes
     timeout-minutes: 30
     runs-on: ubuntu-latest
     environment:
@@ -85,8 +92,8 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "lts/*"
-          check-latest: true
+          node-version: "20"
+          check-latest: false
 
       - name: Cache node modules
         id: cache-npm-deploy
