@@ -3,7 +3,7 @@
 
 name: Storefront 1000167667
 
-on:
+"on":
   push:
     branches:
       - main        # production deploy
