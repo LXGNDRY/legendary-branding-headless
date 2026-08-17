@@ -110,3 +110,79 @@ jobs:
         run: npx shopify hydrogen deploy --force
         env:
           SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000167667 }}
+
+      - name: Post-deploy smoke test
+        if: steps.deploy.outputs.url != ''
+        run: |
+          DEPLOY_URL="${{ steps.deploy.outputs.url }}"
+          echo "Running smoke tests against: $DEPLOY_URL"
+
+          # Wait for deployment to be reachable
+          for i in $(seq 1 15); do
+            if curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL" | grep -q "200"; then
+              echo "Deployment is reachable"
+              break
+            fi
+            echo "Waiting for deployment... ($i/15)"
+            sleep 4
+          done
+
+          FAILURES=0
+
+          # Route 1: Homepage
+          STATUS=$(curl -s -o /tmp/homepage.html -w "%{http_code}" "$DEPLOY_URL/")
+          echo "Homepage: HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "  FAIL: homepage returned $STATUS"
+            FAILURES=$((FAILURES + 1))
+          elif grep -qi "something went wrong\|unexpected error occurred\|server error" /tmp/homepage.html; then
+            echo "  FAIL: homepage contains error boundary text"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          # Route 2: Collections listing / all products
+          STATUS=$(curl -s -o /tmp/all-products.html -w "%{http_code}" "$DEPLOY_URL/collections/all-products")
+          echo "All products: HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "  FAIL: all-products returned $STATUS"
+            FAILURES=$((FAILURES + 1))
+          elif grep -qi "something went wrong\|unexpected error occurred\|server error" /tmp/all-products.html; then
+            echo "  FAIL: all-products contains error boundary text"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          # Route 3: Policies/about
+          STATUS=$(curl -s -o /tmp/about.html -w "%{http_code}" "$DEPLOY_URL/policies/about")
+          echo "About policy: HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "  FAIL: about policy returned $STATUS"
+            FAILURES=$((FAILURES + 1))
+          elif grep -qi "something went wrong\|unexpected error occurred\|server error" /tmp/about.html; then
+            echo "  FAIL: about policy contains error boundary text"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          # Route 4: Sitemap
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL/sitemap.xml")
+          echo "Sitemap: HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "  FAIL: sitemap returned $STATUS"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          # Route 5: robots.txt
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL/robots.txt")
+          echo "Robots: HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "  FAIL: robots.txt returned $STATUS"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          if [ "$FAILURES" -gt 0 ]; then
+            echo ""
+            echo "SMOKE TEST FAILED: $FAILURES route(s) returned errors"
+            exit 1
+          fi
+
+          echo ""
+          echo "All smoke tests passed ($FAILURES failures)"

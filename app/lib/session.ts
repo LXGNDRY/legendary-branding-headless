@@ -14,12 +14,14 @@ type AppSessionStorage = ReturnType<
 /**
  * Detect if we're running in production mode.
  *
- * In Oxygen (production/preview deployments), NODE_ENV is 'production'.
- * In local `shopify hydrogen dev`, NODE_ENV is 'development'.
+ * Uses import.meta.env.PROD — a compile-time constant set by Vite/Rollup.
+ * On Oxygen (production/preview), PROD is always true.
+ * On local dev, PROD is false.
+ *
+ * DO NOT use process.env.NODE_ENV — it's a Node API that doesn't exist
+ * in the Cloudflare Workers runtime (Oxygen).
  */
-const IS_PRODUCTION =
-  (globalThis as {process?: {env?: {NODE_ENV?: string}}}).process?.env
-    ?.NODE_ENV === 'production';
+const IS_PRODUCTION = import.meta.env.PROD;
 
 export class AppSession implements HydrogenSession {
   #sessionStorage: AppSessionStorage;

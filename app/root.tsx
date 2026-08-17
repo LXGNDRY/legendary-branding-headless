@@ -12,7 +12,7 @@ import {useState, useEffect} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
 import {CacheShort} from '~/lib/cache';
-import {initSentry, useWebVitals} from '~/lib/monitoring';
+import {initSentry, useWebVitals, captureError} from '~/lib/monitoring';
 import {WishlistProvider} from '~/components/ui/Wishlist';
 import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
@@ -179,8 +179,12 @@ export default function App() {
 }
 
 export function ErrorBoundary({error}: {error: unknown}) {
-  if (typeof window === 'undefined' && error instanceof Error) {
-    console.error(error.stack);
+  // Report to Sentry on both server and client
+  if (typeof window === 'undefined') {
+    // Server-side — stack is logged by server.ts already
+  } else {
+    // Client-side — send to Sentry
+    captureError(error, {route: window.location.pathname});
   }
 
   return (

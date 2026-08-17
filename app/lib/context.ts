@@ -25,6 +25,21 @@ export async function createAppLoadContext(
   }
   // PRIVATE_STOREFRONT_API_TOKEN is optional — Hydrogen falls back to the public token
 
+  // Customer Account API: both-or-neither validation.
+  // A half-configured setup (one set, one missing) would fail deep in /account/* routes.
+  // Fail fast at boot so the issue is obvious immediately.
+  const hasClientId = !!env.PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID;
+  const hasApiUrl = !!env.PUBLIC_CUSTOMER_ACCOUNT_API_URL;
+  if (hasClientId !== hasApiUrl) {
+    throw new Error(
+      'Customer Account API is half-configured: ' +
+        (hasClientId
+          ? 'PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID is set but PUBLIC_CUSTOMER_ACCOUNT_API_URL is missing'
+          : 'PUBLIC_CUSTOMER_ACCOUNT_API_URL is set but PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID is missing') +
+        '. Set both or neither.',
+    );
+  }
+
   const waitUntil = executionContext.waitUntil.bind(executionContext);
 
   const [cache, session] = await Promise.all([
