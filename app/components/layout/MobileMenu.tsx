@@ -1,11 +1,13 @@
 import {Link} from 'react-router';
 import {useEffect} from 'react';
+import {useFocusTrap} from '~/hooks/useFocusTrap';
 
 /**
  * HANSSEN x LEGENDARY — Mobile Menu
  *
  * Full-screen overlay menu with large serif links stacked vertically.
  * Slides down from top when open.
+ * Includes focus trap for accessibility — Tab stays inside the menu.
  */
 
 interface MobileMenuProps {
@@ -15,6 +17,8 @@ interface MobileMenuProps {
 }
 
 export default function MobileMenu({open, onClose, links}: MobileMenuProps) {
+  const {containerRef} = useFocusTrap(open, onClose);
+
   // Lock body scroll when menu is open
   useEffect(() => {
     if (open) {
@@ -32,20 +36,24 @@ export default function MobileMenu({open, onClose, links}: MobileMenuProps) {
   const secondaryLinks = [
     {label: 'Account', href: '/account/login'},
     {label: 'Wishlist', href: '/wishlist'},
-    {label: 'Contact', href: '/pages/contact'},
-    {label: 'Shipping & Returns', href: '/pages/shipping-returns'},
+    {label: 'Contact', href: '/policies/contact'},
+    {label: 'Shipping & Returns', href: '/policies/shipping-policy'},
   ];
 
   return (
-    <div className="fixed inset-0 z-[200] md:hidden">
+    <div className="fixed inset-0 z-[200] md:hidden" role="dialog" aria-modal="true" aria-label="Mobile menu">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-[#FAF9F6] animate-[fadeIn_0.2s_ease-out]"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Content */}
-      <div className="relative h-full flex flex-col px-[clamp(1.25rem,5vw,2.5rem)] pt-16 pb-10 overflow-y-auto">
+      <div
+        ref={containerRef}
+        className="relative h-full flex flex-col px-[clamp(1.25rem,5vw,2.5rem)] pt-16 pb-10 overflow-y-auto"
+      >
         {/* Close button */}
         <button
           onClick={onClose}
