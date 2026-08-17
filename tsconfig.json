@@ -17,6 +17,7 @@
     "target": "ES2022",
     "strict": true,
     "allowJs": true,
+    "rootDirs": [".", "./.react-router/types"],
     "paths": {
       "~/*": ["./app/*"]
     },
