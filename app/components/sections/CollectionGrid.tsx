@@ -22,18 +22,18 @@ interface CollectionGridProps {
   linkLabel?: string;
   linkUrl?: string;
   collections: CollectionNode[];
-  columns?: 2 | 3 | 4 | 5 | 6;
+  columns?: 2 | 3 | 4;
 }
 
 /**
- * LEGENDARY STREETWEAR — Collection Grid Section
- * Editorial collection cards with hover zoom and overlay.
- * Ported from sections/lb-collection-grid.liquid
+ * HANSSEN — Collection Grid Section
+ * Editorial collection cards with image + serif title beneath.
+ * No hover overlay — clean Hanssen aesthetic with subtle zoom.
  */
 export default function CollectionGrid({
-  eyebrow = 'EXPLORE',
+  eyebrow = 'Shop by category',
   heading,
-  linkLabel = 'View all collections',
+  linkLabel = 'View all',
   linkUrl = '/collections',
   collections,
   columns = 3,
@@ -42,26 +42,26 @@ export default function CollectionGrid({
     2: 'grid-cols-1 sm:grid-cols-2',
     3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
     4: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
-    5: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5',
-    6: 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6',
   };
 
   return (
-    <section className="lb-section">
-      <div className="lb-container">
-        <div className="lb-section-header">
+    <section className="h-section bg-[#FAF9F6] h-reveal">
+      <div className="h-container">
+        <div className="h-section-header">
           <div>
-            <div className="lb-eyebrow mb-2">{eyebrow}</div>
-            <h2>{heading}</h2>
+            <p className="h-eyebrow mb-3">{eyebrow}</p>
+            <h2 className="text-[clamp(2rem,4vw,3.5rem)] leading-[1.05] font-serif font-normal">
+              {heading}
+            </h2>
           </div>
           {linkLabel && linkUrl && (
-            <Link to={linkUrl} className="lb-section-header__link">
+            <Link to={linkUrl} className="h-link">
               {linkLabel}
             </Link>
           )}
         </div>
 
-        <div className={`grid gap-6 ${gridCols[columns]}`}>
+        <div className={`grid gap-8 ${gridCols[columns]}`}>
           {collections.map((collection) => {
             const productCount = collection.products?.nodes.length ?? 0;
             return (
@@ -69,33 +69,34 @@ export default function CollectionGrid({
                 key={collection.id}
                 to={`/collections/${collection.handle}`}
                 prefetch="intent"
-                className="group relative block"
+                className="group block"
               >
-                <div className="relative overflow-hidden rounded-lg aspect-[4/3] bg-[#f5f5f5]">
+                <div className="relative overflow-hidden aspect-[3/4] bg-[#F3F2EE] mb-4">
                   {collection.image ? (
                     <Image
                       data={collection.image}
-                      aspectRatio="4/3"
+                      aspectRatio="3/4"
                       sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
                     />
                   ) : (
-                    <Placeholder aspect="aspect-[4/3]" label={collection.title} />
+                    <Placeholder aspect="aspect-[3/4]" label={collection.title} />
                   )}
+                </div>
 
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                  {/* Title overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
-                    <h3 className="text-white text-xl font-normal tracking-[0.05em] uppercase">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <h3 className="text-[clamp(1.25rem,2vw,1.75rem)] font-serif leading-tight">
                       {collection.title}
                     </h3>
-                    <p className="text-white/70 text-xs tracking-[0.1em] uppercase mt-1">
+                    <p className="h-eyebrow mt-1">
                       {productCount} {productCount === 1 ? 'item' : 'items'}
                     </p>
                   </div>
+                  <span className="h-eyebrow opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Shop →
+                  </span>
                 </div>
               </Link>
             );
