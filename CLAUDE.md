@@ -115,19 +115,95 @@ All three must pass with zero errors. No exceptions.
 **File:** `.github/workflows/oxygen-deployment-1000167667.yml`
 
 ### Required pipeline shape
+
+The quality job runs on every PR and push. The deploy job runs only on pushes to `main` or `dev` and only if the quality job passes.
+
 ```
-on: push → branches: [main]   # production only
-steps:
+quality job (all triggers):
   1. checkout
-  2. setup node (lts/*)
-  3. npm ci
-  4. npm run typecheck          # must pass
-  5. npm run lint               # must pass
-  6. npm run build              # must pass
-  7. shopify hydrogen deploy    # only if steps 4–6 pass
+  2. setup node 20
+  3. npm ci --legacy-peer-deps
+  4. npm run codegen              # continue-on-error: true (needs live store secrets)
+  5. npm run build                # MUST run before typecheck — generates .react-router/types/
+  6. npm run typecheck            # tsc --noEmit
+  7. npm run lint
+  8. npm run test
+
+deploy job (push to main or dev only, needs quality to pass):
+  9. npm ci --legacy-peer-deps
+  10. npx shopify hydrogen deploy --force
 ```
 
-Any push to `main` that fails steps 4–6 must NOT deploy. Agents must ensure this gate exists before any new code ships.
+Any push to `main` that fails steps 5–8 must NOT deploy. Agents must ensure this gate exists before any new code ships.
+
+### Critical workflow rules (learned from production incidents)
+
+**1. Build must run before Typecheck.**
+React Router v7 generates type stubs into `.react-router/types/` during `npm run build`. TypeScript needs those files to resolve route module types. Running `typecheck` before `build` causes TS2307 errors on every `../route.js` import in the generated stubs. Always keep Build → Typecheck order in the workflow.
+
+**2. Never use `secrets` context in a step-level `if:` condition.**
+GitHub's expression parser rejects `secrets.*` at step level — it is only valid at job level. Using it (e.g. `if: ${{ secrets.FOO != '' }}`) causes the entire workflow to fail to parse, resulting in 0 jobs dispatched for every trigger with no error output. If a step needs to be conditional on a secret being present, use `continue-on-error: true` instead.
+
+**3. Keep `package-lock.json` in sync with `package.json`.**
+`npm ci` is strict — it fails with ERESOLVE if the lock file does not satisfy all versions in `package.json`. After any dependency version bump in `package.json`, always run `npm install --legacy-peer-deps` locally and commit the updated `package-lock.json` in the same PR. Never manually edit `package-lock.json`.
+
+**4. `npm ci --legacy-peer-deps` is required.**
+The Hydrogen + React Router v7 peer dependency graph has conflicts that only resolve with `--legacy-peer-deps`. Both the quality job and the deploy job must use this flag.
+
+**5. `tsconfig.json` must include `rootDirs`.**
+```json
+"rootDirs": [".", "./.react-router/types"]
+```
+Without this, TypeScript cannot resolve `.js` import extensions in the React Router v7 generated type stubs to their actual `.tsx` source files. This must remain in `tsconfig.json` at all times.
+
+---
+
+## Oxygen Deploy Workflow
+
+### End-to-end path for a change to reach production
+
+```
+agent branch (claude/*)
+  └─► PR → dev           # agent opens PR, CI quality gate runs
+        └─► merge        # owner or agent merges when CI green
+              └─► Oxygen preview deploy (automatic via CI on push to dev)
+                    └─► owner reviews preview URL
+                          └─► PR: dev → main    # owner merges
+                                └─► Oxygen production deploy (automatic via CI on push to main)
+```
+
+### What triggers each environment
+
+| Trigger | Environment | Who initiates |
+|---|---|---|
+| PR to `dev` or `main` | CI quality gate only (no deploy) | Agent / developer |
+| Push to `dev` (merge) | Oxygen **preview** deploy | CI automatically |
+| Push to `main` (merge) | Oxygen **production** deploy | CI automatically |
+| Manual `workflow_dispatch` | Quality gate only (no deploy) | Manual — for debugging CI |
+
+### Verifying a deploy reached Oxygen
+
+After merging to `dev` or `main`:
+1. Go to GitHub → Actions → the workflow run triggered by the merge push.
+2. Confirm the `quality` job completed with ✅ conclusion: success.
+3. Confirm the `Deploy to Oxygen` job ran (not skipped) with ✅ conclusion: success.
+4. The deploy job prints the Oxygen preview URL in its logs — use that URL to verify the live deployment.
+
+If the deploy job shows `skipped`, the trigger was a PR event (not a push) — only merge commits to `dev`/`main` trigger deploys.
+
+### Hydrogen Admin — viewing deployments
+
+Deployments and their preview URLs are visible in the Shopify Partners dashboard under the Hydrogen storefront (Storefront 1000167667). Each successful CI deploy creates a new deployment entry with its own URL.
+
+### Common failure modes and fixes
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| 0 jobs dispatched, instant failure | `secrets` context in step-level `if:` | Remove the `if:` condition; use `continue-on-error: true` |
+| `npm ci` ERESOLVE | `package-lock.json` out of sync | Run `npm install --legacy-peer-deps`, commit updated lock file |
+| TS2307 on `../route.js` imports | Build ran after Typecheck, or `rootDirs` missing from tsconfig | Move Build step before Typecheck; ensure `rootDirs` in tsconfig |
+| Deploy job skipped | Event was `pull_request`, not `push` | Merge the PR — only push events to `dev`/`main` deploy |
+| Codegen fails in CI | `PUBLIC_STORE_DOMAIN`/`PUBLIC_STOREFRONT_API_TOKEN` secrets not set | Add secrets in GitHub repo settings; codegen has `continue-on-error: true` so build still proceeds |
 
 ---
 
