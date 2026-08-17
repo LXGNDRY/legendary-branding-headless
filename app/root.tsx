@@ -5,8 +5,10 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useNavigation,
+  useFetchers,
 } from 'react-router';
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
 import {CacheShort} from '~/lib/cache';
@@ -21,6 +23,7 @@ import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 
 export const links: LinksFunction = () => [
+  {rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml'},
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
   {
     rel: 'preconnect',
@@ -104,6 +107,18 @@ export function Layout({children}: {children: React.ReactNode}) {
 export default function App() {
   const {cart, isLoggedIn} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
+  const navigation = useNavigation();
+  const fetchers = useFetchers();
+
+  // Auto-open cart drawer when an add-to-cart action completes
+  useEffect(() => {
+    const addingFetcher = fetchers.find(
+      (f) =>
+        f.state === 'loading' &&
+        f.formData?.get('cartAction') === 'LinesAdd',
+    );
+    if (addingFetcher) setCartOpen(true);
+  }, [fetchers]);
 
   // Sentry init + web vitals (guard: only on client)
   if (typeof window !== 'undefined') {
@@ -112,10 +127,18 @@ export default function App() {
   useWebVitals(import.meta.env.PUBLIC_GA4_MEASUREMENT_ID);
 
   const cartCount = cart?.totalQuantity ?? 0;
+  const isNavigating = navigation.state !== 'idle';
 
   return (
     <WishlistProvider>
       <div className="flex flex-col min-h-dvh">
+      {/* Page-transition progress bar */}
+      <div
+        aria-hidden="true"
+        className={`fixed top-0 left-0 z-[100] h-[2px] bg-[#0a0a0a] transition-all duration-300 ease-out ${
+          isNavigating ? 'w-2/3 opacity-100' : 'w-full opacity-0'
+        }`}
+      />
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"

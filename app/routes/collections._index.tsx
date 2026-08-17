@@ -47,6 +47,7 @@ const COLLECTIONS_QUERY = `#graphql
 export const meta: MetaFunction = () => [
   {title: 'Collections — LEGENDARY BRANDING'},
   {name: 'description', content: 'Shop all Legendary Branding collections.'},
+  {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/collections'},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {

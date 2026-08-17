@@ -48,7 +48,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Generate Storefront API types
         if: ${{ secrets.PUBLIC_STORE_DOMAIN != '' && secrets.PUBLIC_STOREFRONT_API_TOKEN != '' }}
@@ -103,7 +103,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build and Publish to Oxygen
         id: deploy

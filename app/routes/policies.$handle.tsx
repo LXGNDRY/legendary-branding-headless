@@ -18,6 +18,7 @@ const SHOP_POLICY_MAP: Record<string, string> = {
   'refund-policy': 'refundPolicy',
   'terms-of-service': 'termsOfService',
   'shipping-policy': 'shippingPolicy',
+  'privacy-with-legendary-branding': 'privacyPolicy',
 };
 
 const POLICY_QUERY = `#graphql
@@ -137,7 +138,16 @@ export default function PolicyPage() {
           <div className="mt-12 p-8 bg-[#f7f7f7]">
             <h2 className="text-xs font-semibold tracking-widest uppercase mb-6">Get in Touch</h2>
             <div className="space-y-3 text-sm text-[#6b6b6b]">
-              <p>For order inquiries, reach us at your Shopify store contact email.</p>
+              <p>
+                For order inquiries, email us at{' '}
+                <a
+                  href="mailto:lb@legendary-branding.com"
+                  className="underline underline-offset-2 hover:text-[#0a0a0a] transition-colors"
+                >
+                  lb@legendary-branding.com
+                </a>
+                .
+              </p>
               <p>Response time: 1–2 business days.</p>
             </div>
           </div>

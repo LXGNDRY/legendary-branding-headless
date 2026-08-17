@@ -50,6 +50,7 @@ const COLLECTION_QUERY = `#graphql
         nodes {
           ...ProductCard
         }
+        totalCount
         pageInfo {
           hasPreviousPage
           hasNextPage
@@ -104,7 +105,13 @@ interface CollectionData {
   image?: {url: string; altText?: string | null; width?: number | null; height?: number | null} | null;
   products: {
     nodes: ProductCardFragment[];
-    pageInfo: {hasPreviousPage: boolean; hasNextPage: boolean; startCursor: string; endCursor: string};
+    totalCount: number;
+    pageInfo: {
+      hasPreviousPage: boolean;
+      hasNextPage: boolean;
+      startCursor: string;
+      endCursor: string;
+    };
     filters: FilterData[];
   };
 }
@@ -210,7 +217,8 @@ export default function CollectionPage() {
     ['price_min', 'price_max', 'in_stock', 'type', 'tag', 'vendor'].includes(k),
   );
 
-  const productCount = collection.products.nodes.length;
+  const productCount = collection.products.totalCount;
+  const priceFilter = collection.products.filters.find((f) => f.type === 'PRICE_RANGE');
   const typeFilter = collection.products.filters.find(
     (f) => f.id === 'productType' || f.label.toLowerCase().includes('type'),
   );

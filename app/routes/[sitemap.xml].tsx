@@ -52,7 +52,12 @@ const STATIC_PAGES = [
  * Cached for 1 hour with 24h SWR.
  */
 export async function loader({request, context}: LoaderFunctionArgs) {
-  const origin = new URL(request.url).origin;
+  // Use PUBLIC_CHECKOUT_DOMAIN when available so sitemap URLs always point
+  // to the canonical domain rather than the Oxygen preview origin.
+  const env = context.env as {PUBLIC_CHECKOUT_DOMAIN?: string};
+  const origin = env.PUBLIC_CHECKOUT_DOMAIN
+    ? `https://${env.PUBLIC_CHECKOUT_DOMAIN}`
+    : new URL(request.url).origin;
 
   const [productsRes, collectionsRes, pagesRes] = await Promise.all([
     context.storefront.query(SITEMAP_PRODUCTS_QUERY, {
