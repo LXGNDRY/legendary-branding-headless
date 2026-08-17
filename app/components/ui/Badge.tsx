@@ -1,24 +1,29 @@
-type BadgeVariant = 'default' | 'sale' | 'new' | 'soldout';
-
-interface BadgeProps {
-  variant?: BadgeVariant;
-  children: React.ReactNode;
-  className?: string;
-}
+import type {ReactNode} from 'react';
 
 /**
- * Legendary Branding badge — streetwear editorial style
- * Small pill with tight tracking, B&W palette
+ * HANSSEN x LEGENDARY — Badge
+ *
+ * Pill-shaped badges for product status indicators.
+ *
+ * Variants:
+ * - default: off-black background, white text
+ * - sale: red accent background, white text
+ * - new: off-black background, white text
+ * - soldout: light gray background, dark text
  */
-const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  default: 'bg-white text-black',
-  sale: 'bg-black text-white',
-  new: 'bg-black text-white',
-  soldout: 'bg-black/80 text-white',
-};
 
-const BASE =
-  'inline-block px-[10px] py-1 text-[0.65rem] font-semibold tracking-[0.1em] uppercase rounded-[2px]';
+const variants = {
+  default: 'bg-[#1A1A1A] text-white',
+  sale: 'bg-[#FF3B30] text-white',
+  new: 'bg-[#1A1A1A] text-white',
+  soldout: 'bg-[#E8E6E1] text-[#6B6B6B]',
+} as const;
+
+interface BadgeProps {
+  variant?: keyof typeof variants;
+  children: ReactNode;
+  className?: string;
+}
 
 export default function Badge({
   variant = 'default',
@@ -26,7 +31,9 @@ export default function Badge({
   className = '',
 }: BadgeProps) {
   return (
-    <span className={`${BASE} ${VARIANT_CLASSES[variant]} ${className}`}>
+    <span
+      className={`inline-flex items-center justify-center px-2.5 py-1 text-[10px] font-medium tracking-[0.1em] uppercase rounded-full ${variants[variant]} ${className}`}
+    >
       {children}
     </span>
   );

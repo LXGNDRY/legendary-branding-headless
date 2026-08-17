@@ -2,9 +2,8 @@ import {Link, useFetcher} from 'react-router';
 import {Image, Money} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Badge from '~/components/ui/Badge';
-import Button from '~/components/ui/Button';
-import Placeholder from '~/components/ui/Placeholder';
 import WishlistButton from '~/components/ui/WishlistButton';
+import Placeholder from '~/components/ui/Placeholder';
 
 type MoneyFragment = {
   amount: string;
@@ -49,6 +48,7 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
     availableForSale
     vendor
     featuredImage {
+      id
       url
       altText
       width
@@ -56,6 +56,7 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
     }
     images(first: 2) {
       nodes {
+        id
         url
         altText
         width
@@ -83,22 +84,29 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
 ` as const;
 
 function isOnSale(product: ProductCardFragment) {
-  const price = parseFloat(product.priceRange.minVariantPrice.amount);
-  const compareAt = parseFloat(
-    product.compareAtPriceRange.minVariantPrice.amount,
+  return (
+    Number(product.compareAtPriceRange?.minVariantPrice?.amount) >
+    Number(product.priceRange?.minVariantPrice?.amount)
   );
-  return compareAt > 0 && compareAt > price;
 }
 
 function isNew(product: ProductCardFragment) {
-  // Products tagged 'new' or published within the last 14 days
-  // (date-based check is done at query level; tag-based here)
   return product.tags.includes('new');
 }
 
+/**
+ * HANSSEN x LEGENDARY — Product Card
+ *
+ * Large image, minimal UI. Signature Hanssen style:
+ * - Image fills the card, 3/4 aspect
+ * - Hover: image zooms in, secondary image fades in
+ * - Hover: "Quick add" button slides up from bottom
+ * - Below image: title (regular weight, not bold) + price on same line
+ * - Wishlist heart appears in top-right on hover
+ */
 export default function ProductCard({
   product,
-  loading,
+  loading = 'lazy',
   showVendor = false,
   showQuickAdd = true,
   hoverFlip = true,
@@ -127,8 +135,8 @@ export default function ProductCard({
   if (layout === 'list') {
     return (
       <article
-        className={`group flex gap-6 border-b border-black/10 py-6 cursor-pointer ${
-          soldOut ? 'opacity-90' : ''
+        className={`group flex gap-6 border-b border-[#E8E6E1] py-6 cursor-pointer ${
+          soldOut ? 'opacity-60' : ''
         }`}
         data-product-id={product.id}
       >
@@ -136,7 +144,7 @@ export default function ProductCard({
         <Link
           to={`/products/${product.handle}`}
           prefetch="intent"
-          className="relative overflow-hidden w-28 h-36 md:w-36 md:h-48 shrink-0 bg-[#f5f5f5]"
+          className="relative overflow-hidden w-28 h-36 md:w-36 md:h-48 shrink-0 bg-[#E8E6E1] img-zoom"
         >
           {product.featuredImage ? (
             <Image
@@ -149,31 +157,24 @@ export default function ProductCard({
           ) : (
             <Placeholder aspect="aspect-[3/4]" label={product.title} />
           )}
-          {(soldOut || onSale || isNewTag) && (
-            <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none z-10">
-              {onSale && <Badge variant="sale">Sale</Badge>}
-              {isNewTag && <Badge variant="new">New</Badge>}
-              {soldOut && <Badge variant="soldout">Sold out</Badge>}
-            </div>
-          )}
         </Link>
 
         {/* Info */}
         <div className="flex-1 flex flex-col justify-between py-1">
           <div>
             {showVendor && product.vendor && (
-              <div className="text-[10px] tracking-[0.15em] uppercase text-black/50 mb-1">
+              <div className="text-eyebrow mb-1">
                 {product.vendor}
               </div>
             )}
             <Link
               to={`/products/${product.handle}`}
               prefetch="intent"
-              className="text-base md:text-lg font-medium leading-tight hover:opacity-70 transition-opacity block mb-2"
+              className="text-lg font-serif hover:text-[#6B6B6B] transition-colors block mb-2"
             >
               {product.title}
             </Link>
-            <p className="text-sm text-black/60 line-clamp-2 hidden md:block">
+            <p className="text-sm text-[#6B6B6B] line-clamp-2 hidden md:block">
               {product.tags.slice(0, 3).join(' · ')}
             </p>
           </div>
@@ -182,21 +183,21 @@ export default function ProductCard({
             <div className="flex gap-2 items-baseline">
               <Money
                 data={product.priceRange.minVariantPrice}
-                className="text-base md:text-lg font-medium text-black"
+                className="text-lg font-serif text-[#1A1A1A]"
               />
               {onSale && (
                 <Money
                   data={product.compareAtPriceRange.minVariantPrice}
-                  className="text-black/40 line-through font-normal text-sm"
+                  className="text-[#6B6B6B] line-through font-normal text-sm"
                 />
               )}
             </div>
             {showQuickAdd && product.availableForSale && (
               <Link
                 to={`/products/${product.handle}`}
-                className="text-[0.78rem] font-medium tracking-[0.08em] uppercase border border-black px-4 py-2 hover:bg-black hover:text-white transition-all duration-300"
+                className="text-caps border-b border-[#1A1A1A] pb-0.5 hover:opacity-60 transition-opacity"
               >
-                View Product
+                View
               </Link>
             )}
           </div>
@@ -209,105 +210,103 @@ export default function ProductCard({
   return (
     <article
       className={`group flex flex-col gap-3 cursor-pointer ${
-        soldOut ? 'opacity-90' : ''
+        soldOut ? 'opacity-60' : ''
       }`}
       data-product-id={product.id}
     >
       {/* Media */}
-      <Link
-        to={`/products/${product.handle}`}
-        prefetch="intent"
-        className="relative overflow-hidden aspect-[3/4] bg-[#f5f5f5]"
-      >
-        {/* Primary image */}
-        {product.featuredImage ? (
-          <Image
-            data={product.featuredImage}
-            aspectRatio="3/4"
-            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-            loading={loading}
-            className="w-full h-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
-          />
-        ) : (
-          <Placeholder aspect="aspect-[3/4]" label={product.title} />
-        )}
+      <div className="relative overflow-hidden aspect-[3/4] bg-[#E8E6E1]">
+        <Link
+          to={`/products/${product.handle}`}
+          prefetch="intent"
+          className="block h-full"
+        >
+          {/* Primary image */}
+          {product.featuredImage ? (
+            <Image
+              data={product.featuredImage}
+              aspectRatio="3/4"
+              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              loading={loading}
+              className="w-full h-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+            />
+          ) : (
+            <Placeholder aspect="aspect-[3/4]" label={product.title} />
+          )}
 
-        {/* Secondary image (flip on hover) */}
-        {hasSecondImage && (
-          <Image
-            data={product.images!.nodes[1]}
-            aspectRatio="3/4"
-            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-[300ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
-          />
-        )}
+          {/* Secondary image (flip on hover) */}
+          {hasSecondImage && (
+            <Image
+              data={product.images!.nodes[1]}
+              aspectRatio="3/4"
+              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
+            />
+          )}
+        </Link>
 
-        {/* Badge overlays — split layout: left/right */}
-        <div className="absolute top-3 left-3 right-3 flex justify-between pointer-events-none z-10">
-            <div className="flex gap-1.5 flex-wrap">
-              {onSale && <Badge variant="sale">Sale</Badge>}
-              {isNewTag && <Badge variant="new">New</Badge>}
-            </div>
-            <div className="flex items-center gap-1.5 pointer-events-auto">
-              {soldOut && <Badge variant="soldout">Sold out</Badge>}
-              <WishlistButton
-                size="sm"
-                className="text-black/70 hover:text-black"
-                product={{
-                  id: product.id,
-                  handle: product.handle,
-                  title: product.title,
-                  price: product.priceRange.minVariantPrice.amount,
-                  image: product.featuredImage?.url,
-                }}
-              />
-            </div>
+        {/* Badges top-left */}
+        {(onSale || isNewTag || soldOut) && (
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+            {isNewTag && <Badge variant="new">New</Badge>}
+            {onSale && <Badge variant="sale">Sale</Badge>}
+            {soldOut && <Badge variant="soldout">Sold out</Badge>}
           </div>
+        )}
+
+        {/* Wishlist top-right */}
+        <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <WishlistButton
+            size="sm"
+            className="bg-white/90 backdrop-blur-sm rounded-full p-1.5 text-[#1A1A1A] hover:text-[#FF3B30]"
+            product={{
+              id: product.id,
+              handle: product.handle,
+              title: product.title,
+              price: product.priceRange.minVariantPrice.amount,
+              image: product.featuredImage?.url,
+            }}
+          />
+        </div>
 
         {/* Quick add — slides up on hover */}
         {showQuickAdd && product.availableForSale && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 translate-y-2.5 opacity-0 transition-all duration-[300ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none w-[calc(100%-32px)] group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto">
+          <div className="absolute bottom-0 left-0 right-0 translate-y-full opacity-0 transition-all duration-[300ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:opacity-100 z-10 p-3">
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 onQuickAdd?.(product.id);
               }}
-              className="w-full justify-center bg-black text-white border border-black text-[0.78rem] font-medium tracking-[0.08em] uppercase py-2.5 hover:opacity-90 transition-opacity"
+              className="w-full justify-center bg-[#1A1A1A] text-white text-caps py-3 hover:bg-[#FF3B30] transition-colors duration-200 rounded-full"
               aria-label={`Quick add ${product.title}`}
             >
               Quick add
             </button>
           </div>
         )}
-      </Link>
+      </div>
 
       {/* Info */}
-      <div className="flex flex-col gap-0.5 px-1">
+      <div className="flex flex-col gap-1 px-0.5">
         {showVendor && product.vendor && (
-          <div className="text-[0.78rem] text-black/50 uppercase tracking-[0.08em]">
+          <div className="text-eyebrow text-[10px]">
             {product.vendor}
           </div>
         )}
-        <Link
-          to={`/products/${product.handle}`}
-          prefetch="intent"
-          className="text-[0.85rem] font-medium leading-tight tracking-[0.02em] hover:opacity-70 transition-opacity"
-        >
-          {product.title}
-        </Link>
-        <div className="flex gap-2 items-baseline text-[0.85rem] font-medium">
+        <div className="flex items-start justify-between gap-2">
+          <Link
+            to={`/products/${product.handle}`}
+            prefetch="intent"
+            className="font-serif text-base leading-snug hover:text-[#6B6B6B] transition-colors"
+          >
+            {product.title}
+          </Link>
           <Money
             data={product.priceRange.minVariantPrice}
-            className="text-black"
+            className="font-serif text-base text-[#1A1A1A] shrink-0"
           />
-          {onSale && (
-            <Money
-              data={product.compareAtPriceRange.minVariantPrice}
-              className="text-black/40 line-through font-normal text-[0.78rem]"
-            />
-          )}
         </div>
       </div>
     </article>

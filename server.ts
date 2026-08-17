@@ -13,6 +13,12 @@ const handleRequest = createRequestHandler(
   import.meta.env.PROD ? 'production' : 'development',
 );
 
+// Mode is determined by import.meta.env.PROD (set by Vite/Rollup at build time).
+// On Oxygen production, PROD is always true. On local dev, it's false.
+// Never hardcode 'development' — it exposes stack traces in production error responses.
+// DO NOT change this to a runtime check (process.env.NODE_ENV etc.) —
+// PROD is a compile-time constant that Vite strips dead code branches.
+
 export default {
   async fetch(
     request: Request,

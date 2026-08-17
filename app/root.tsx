@@ -32,7 +32,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&display=swap',
+    href: 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap',
   },
   {rel: 'stylesheet', href: styles},
 ];
@@ -142,7 +142,7 @@ export default function App() {
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-black focus:text-white focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-[#FF3B30] focus:text-[#FAF9F6] focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase focus:rounded-full"
       >
         Skip to content
       </a>
@@ -179,27 +179,21 @@ export default function App() {
 }
 
 export function ErrorBoundary({error}: {error: unknown}) {
-  const message = error instanceof Error ? error.message : 'Unknown error';
-
-  // Never expose stack traces to end users — log server-side only
   if (typeof window === 'undefined' && error instanceof Error) {
     console.error(error.stack);
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-8">
-      <div className="max-w-2xl text-center">
-        <p className="text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-black/50 mb-4">
-          ERROR
-        </p>
-        <h1 className="mb-6">Something went wrong</h1>
-        <p className="text-black/60 text-sm mb-10">
+    <div className="min-h-dvh flex items-center justify-center p-8 bg-[#FAF9F6]">
+      <div className="max-w-xl text-center">
+        <p className="h-eyebrow mb-6">Something went wrong</p>
+        <h1 className="font-serif text-[clamp(3.5rem,8vw,7rem)] leading-[0.95] mb-8 text-[#1A1A1A]">
+          Oops.
+        </h1>
+        <p className="text-[#6B6B6B] text-lg mb-12">
           An unexpected error occurred. Please try again in a few moments.
         </p>
-        <a
-          href="/"
-          className="inline-block text-[0.78rem] font-medium tracking-[0.08em] uppercase border border-black px-7 py-3 hover:bg-black hover:text-white transition-all duration-300"
-        >
+        <a href="/" className="h-btn-primary">
           Back to Home
         </a>
       </div>
