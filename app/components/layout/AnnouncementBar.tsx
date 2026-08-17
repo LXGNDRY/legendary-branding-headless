@@ -10,42 +10,41 @@ interface AnnouncementBarProps {
 }
 
 const DEFAULT_ITEMS: Announcement[] = [
-  {text: 'FREE SHIPPING ON ORDERS $100+', link: '/collections/all-products'},
-  {text: '235GSM+ HEAVYWEIGHT TEES — MADE TO ORDER'},
-  {text: 'NEW DROPS EVERY FRIDAY', link: '/collections/all-products'},
+  {text: 'Free Shipping on Orders $100+', link: '/collections/all-products'},
+  {text: '235GSM+ Heavyweight Tees — Made to Order'},
+  {text: 'New Drops Every Friday', link: '/collections/all-products'},
 ];
 
+/**
+ * HANSSEN — Announcement Bar
+ * Top-of-page scrolling marquee with announcements.
+ * Uses h-announce-scroll animation from app.css.
+ */
 export default function AnnouncementBar({items = DEFAULT_ITEMS}: AnnouncementBarProps) {
   return (
-    <div className="bg-[#0a0a0a] text-white overflow-hidden">
+    <div className="bg-[#1A1A1A] text-[#FAF9F6] overflow-hidden">
       <div
-        className="flex whitespace-nowrap py-2 will-change-transform"
-        style={{animation: 'lb-announce-scroll 30s linear infinite'}}
+        className="flex whitespace-nowrap py-2.5 will-change-transform"
+        style={{animation: 'h-announce-scroll 35s linear infinite'}}
       >
-        {[...items, ...items].map((item, i) => (
-          <span key={i} className="inline-flex items-center gap-6 mx-6">
+        {[...items, ...items, ...items].map((item, i) => (
+          <span key={i} className="inline-flex items-center gap-6 mx-8">
             {item.link ? (
               <Link
                 to={item.link}
-                className="text-[10px] font-medium tracking-[0.2em] uppercase hover:text-white/70 transition-colors"
+                className="h-eyebrow font-medium text-[#FAF9F6] hover:text-[#FF3B30] transition-colors"
               >
                 {item.text}
               </Link>
             ) : (
-              <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-white/80">
+              <span className="h-eyebrow font-medium text-[#FAF9F6]/80">
                 {item.text}
               </span>
             )}
-            <span className="text-white/30 text-[8px]" aria-hidden="true">✦</span>
+            <span className="text-[#FF3B30] text-xs" aria-hidden="true">✦</span>
           </span>
         ))}
       </div>
-      <style>{`
-        @keyframes lb-announce-scroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-      `}</style>
     </div>
   );
 }
