@@ -1,6 +1,5 @@
 import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
 import {useLoaderData} from 'react-router';
-import {getPaginationVariables} from '@shopify/hydrogen';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -30,7 +29,7 @@ type CollectionNode = {
 
 const HOMEPAGE_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
-  query Homepage($country: CountryCode, $language: LanguageCode, $first: Int!)
+  query Homepage($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
     featuredCollections: collections(first: 6, sortKey: UPDATED_AT) {
       nodes {
@@ -79,16 +78,13 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export async function loader({context, request}: LoaderFunctionArgs) {
+export async function loader({context}: LoaderFunctionArgs) {
   const {storefront} = context;
-  const paginationVariables = getPaginationVariables(request, {pageBy: 8});
 
   const {featuredCollections, newDrops, bestSellers} = await storefront.query(
     HOMEPAGE_QUERY,
     {
       variables: {
-        ...paginationVariables,
-        first: 8,
         country: storefront.i18n.country,
         language: storefront.i18n.language,
       },
@@ -165,7 +161,7 @@ export default function Homepage() {
       <CategoryGrid
         eyebrow="Explore"
         heading="Shop by Category"
-        items={(featuredCollections?.nodes as CollectionNode[]).slice(0, 3)}
+        items={((featuredCollections?.nodes ?? []) as CollectionNode[]).slice(0, 3)}
       />
 
       {/* 5 — New arrivals asymmetric grid */}
