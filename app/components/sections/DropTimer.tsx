@@ -101,6 +101,8 @@ export default function DropTimer({
                 <Image
                   data={productImage}
                   aspectRatio="1/1"
+                  width={600}
+                  height={600}
                   sizes="(max-width: 768px) 200px, 400px"
                   loading="lazy"
                   className="max-h-[340px] w-auto object-contain"

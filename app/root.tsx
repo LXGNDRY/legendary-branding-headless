@@ -134,7 +134,7 @@ export default function App() {
   const isNavigating = navigation.state !== 'idle';
 
   return (
-    <WishlistProvider>
+    <WishlistProvider isLoggedIn={isLoggedIn}>
       <div className="flex flex-col min-h-dvh">
       {/* Page-transition progress bar */}
       <div

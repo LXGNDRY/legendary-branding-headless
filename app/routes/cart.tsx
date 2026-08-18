@@ -80,6 +80,8 @@ function CartLineRow({line}: {line: CartLineData}) {
           <Image
             data={image}
             aspectRatio="6/7"
+            width={300}
+            height={350}
             sizes="96px"
             loading="lazy"
             className="w-full h-full object-cover"

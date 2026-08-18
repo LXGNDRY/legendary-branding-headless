@@ -46,6 +46,9 @@ export default function CategoryGrid({eyebrow = 'Shop', heading = 'Collections',
               {item.image?.url ? (
                 <Image
                   data={item.image}
+                  aspectRatio="3/4"
+                  width={600}
+                  height={800}
                   className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                   sizes="(max-width: 640px) 100vw, 33vw"
                 />

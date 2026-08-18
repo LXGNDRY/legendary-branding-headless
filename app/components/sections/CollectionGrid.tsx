@@ -76,6 +76,8 @@ export default function CollectionGrid({
                     <Image
                       data={collection.image}
                       aspectRatio="3/4"
+                      width={600}
+                      height={800}
                       sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"

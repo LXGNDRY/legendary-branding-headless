@@ -35,6 +35,8 @@ export default function ProductGallery({
         <Image
           data={active}
           aspectRatio="3/4"
+          width={800}
+          height={1067}
           sizes="(min-width: 768px) 50vw, 100vw"
           loading="eager"
           className="w-full object-cover transition-opacity duration-300"
@@ -60,6 +62,8 @@ export default function ProductGallery({
               <Image
                 data={img}
                 aspectRatio="1/1"
+                width={200}
+                height={200}
                 sizes="12vw"
                 loading="lazy"
                 className="w-full object-cover"
