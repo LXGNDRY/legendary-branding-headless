@@ -210,8 +210,7 @@ jobs:
 
   e2e:
     name: E2E Tests (Playwright)
-    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
-    needs: deploy
+    needs: quality
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
@@ -239,10 +238,27 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run E2E tests against deployed preview
+      - name: Build
+        run: npm run build
+        env:
+          PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
+          PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+          SESSION_SECRET: ci-only-do-not-use
+
+      # Runs against a local `shopify hydrogen preview` server (see
+      # playwright.config.ts's webServer), not the live Oxygen preview URL.
+      # Shopify's Oxygen preview (*.myshopify.dev) domains intercept
+      # automated browser traffic — including real Chromium — with a
+      # "Verifying your connection..." bot-check, which previously made
+      # every single E2E test fail regardless of the actual app's health.
+      # Testing a locally-served production build sidesteps that entirely
+      # and removes the dependency on a live deploy succeeding first.
+      - name: Run E2E tests against local production build
         run: npm run test:e2e -- --project=chromium
         env:
-          BASE_URL: ${{ needs.deploy.outputs.url }}
+          PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
+          PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+          SESSION_SECRET: ci-only-do-not-use
 
       - name: Upload test results on failure
         if: failure()

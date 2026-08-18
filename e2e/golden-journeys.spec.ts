@@ -116,7 +116,7 @@ test.describe('Journey 7: Empty search state', () => {
     const results = page.locator('a[href^="/products/"]');
     const count = await results.count();
     if (count === 0) {
-      const noResults = page.getByText(/no results|no products found|nothing found|couldn't find/i).first();
+      const noResults = page.getByText(/no results|no products found|no products match|nothing found|couldn't find/i).first();
       await expect(noResults).toBeVisible({timeout: 5000});
     }
   });
