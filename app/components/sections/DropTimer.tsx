@@ -105,7 +105,7 @@ export default function DropTimer({
                   height={600}
                   sizes="(max-width: 768px) 200px, 400px"
                   loading="lazy"
-                  className="max-h-[340px] w-auto object-contain"
+                  className="max-h-[340px] w-auto object-contain rounded-lg"
                 />
               </div>
             )}
