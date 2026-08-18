@@ -9,34 +9,34 @@ These need to be created in the Shopify admin under **Settings → Custom data**
 
 ## Product Metafields
 
-| Namespace | Key | Type | Description | Used on |
+| Namespace | Key | Type | Description | Status |
 |---|---|---|---|---|
-| `custom` | `material` | `single_line_text_field` | Fabric / material composition | PDP details section |
-| `custom` | `fit` | `single_line_text_field` | Fit description (e.g. "Regular fit") | PDP details section |
-| `custom` | `care` | `multi_line_text_field` | Care instructions (wash, dry, etc.) | PDP details section |
-| `custom` | `size_chart` | `file_reference` (image) | Size chart image | PDP size chart modal |
-| `custom` | `new_drop` | `boolean` | Mark as new drop (used in New Drops collection) | DropTimer + collection |
-| `custom` | `lookbook_images` | `list.file_reference` | Additional editorial images | PDP gallery + Lookbook |
-| `custom` | `waitlist_available` | `boolean` | Enable waitlist for out-of-stock products | PDP waitlist form |
-| `custom` | `accents` | `list.single_line_text_field` | Product feature highlights | PDP features list |
+| `custom` | `material` | `single_line_text_field` | Fabric / material composition | ✅ Queried & rendered (PDP accordion) |
+| `custom` | `fit` | `single_line_text_field` | Fit description (e.g. "Regular fit") | ✅ Queried & rendered (PDP accordion) |
+| `custom` | `care` | `multi_line_text_field` | Care instructions (wash, dry, etc.) | ✅ Queried & rendered (PDP accordion) |
+| `custom` | `size_chart` | `file_reference` (image) | Size chart image | ⚠️ Queried but unused (SizeGuideModal uses hardcoded chart) |
+| `custom` | `new_drop` | `boolean` | Mark as new drop | 📋 Aspirational — not yet implemented |
+| `custom` | `lookbook_images` | `list.file_reference` | Additional editorial images | 📋 Aspirational — not yet implemented |
+| `custom` | `waitlist_available` | `boolean` | Enable waitlist for OOS products | 📋 Aspirational — waitlist form renders unconditionally |
+| `custom` | `accents` | `list.single_line_text_field` | Product feature highlights | 📋 Aspirational — not yet implemented |
 
 ---
 
 ## Collection Metafields
 
-| Namespace | Key | Type | Description | Used on |
+| Namespace | Key | Type | Description | Status |
 |---|---|---|---|---|
-| `custom` | `drop_date` | `date_time` | Drop release date for timers | DropTimer section |
-| `custom` | `hero_image` | `file_reference` (image) | Custom hero image for collection page | Collection hero |
-| `custom` | `lookbook_layout` | `single_line_text_field` | Layout style: "editorial" / "grid" | Lookbook section |
+| `custom` | `drop_date` | `date_time` | Drop release date for timers | 📋 Aspirational — DropTimer receives date as prop |
+| `custom` | `hero_image` | `file_reference` (image) | Custom hero image for collection page | 📋 Aspirational — not yet implemented |
+| `custom` | `lookbook_layout` | `single_line_text_field` | Layout style: "editorial" / "grid" | 📋 Aspirational — not yet implemented |
 
 ---
 
 ## Page Metafields
 
-| Namespace | Key | Type | Description | Used on |
+| Namespace | Key | Type | Description | Status |
 |---|---|---|---|---|
-| `custom` | `content_blocks` | `json` | Array of content block objects | /pages/:handle content |
+| `custom` | `content_blocks` | `json` | Array of content block objects | ✅ Wired — /pages/:handle |
 
 ### Content blocks JSON schema
 
@@ -79,10 +79,10 @@ Block types: `heading`, `rich_text`, `image_text`, `quote`, `cta`.
 
 ## Customer Metafields
 
-| Namespace | Key | Type | Description | Used on |
+| Namespace | Key | Type | Description | Status |
 |---|---|---|---|---|
-| `custom` | `wishlist` | `json` | Saved product handles + metadata | Wishlist sync (logged-in) |
-| `custom` | `size_preferences` | `json` | Saved size per product type | PDP size recommendations |
+| `custom` | `wishlist` | `json` | Saved product handles + metadata | 📋 Aspirational — wishlist is localStorage-only today |
+| `custom` | `size_preferences` | `json` | Saved size per product type | 📋 Aspirational — not yet implemented |
 
 ---
 

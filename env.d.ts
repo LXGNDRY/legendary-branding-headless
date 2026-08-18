@@ -24,6 +24,9 @@ interface Env {
   PUBLIC_TIKTOK_PIXEL_ID: string;
   // Monitoring (optional)
   PUBLIC_SENTRY_DSN: string;
+  // Newsletter / Klaviyo (optional — server-only)
+  PRIVATE_KLAVIYO_API_KEY: string;
+  PUBLIC_KLAVIYO_LIST_ID: string;
 }
 
 declare module 'virtual:react-router/server-build' {

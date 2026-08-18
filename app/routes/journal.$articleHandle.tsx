@@ -4,6 +4,7 @@ import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
+import {articleSchema, breadcrumbSchema} from '~/components/seo/SeoSchema';
 
 type ArticleData = {
   id: string;
@@ -99,32 +100,32 @@ function formatDate(iso: string) {
 export default function ArticlePage() {
   const {article} = useLoaderData<typeof loader>();
 
-  const articleJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'NewsArticle',
-    headline: article.title,
+  const articleJsonLd = articleSchema({
+    title: article.title,
+    handle: article.handle,
     datePublished: article.publishedAt,
     description: article.excerpt ?? '',
-    image: article.image ? [article.image.url] : [],
-    author: article.author
-      ? [{'@type': 'Person', name: article.author.name}]
-      : [{'@type': 'Organization', name: 'Legendary Branding'}],
-    publisher: {
-      '@type': 'Organization',
-      name: 'Legendary Branding',
-      url: 'https://legendary-branding.com',
-    },
-  };
+    imageUrl: article.image?.url,
+    authorName: article.author?.name,
+  });
+
+  const breadcrumbJsonLd = breadcrumbSchema([
+    {name: 'Journal', url: '/journal'},
+    {name: article.title},
+  ]);
 
   return (
     <article>
       <JsonLd data={articleJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       {/* Hero image */}
       {article.image && (
         <div className="w-full overflow-hidden bg-[#f7f7f7] max-h-[70vh]">
           <Image
             data={article.image}
             aspectRatio="16/7"
+            width={1600}
+            height={700}
             sizes="100vw"
             loading="eager"
             className="w-full object-cover"

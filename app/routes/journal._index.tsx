@@ -50,6 +50,9 @@ export const meta: MetaFunction = () => [
     content: 'Culture, craft, and community from Legendary Branding.',
   },
   {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/journal'},
+  {property: 'og:title', content: 'Journal — LEGENDARY BRANDING'},
+  {property: 'og:description', content: 'Culture, craft, and community from Legendary Branding.'},
+  {property: 'og:url', content: 'https://legendary-branding.com/journal'},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -100,6 +103,8 @@ export default function JournalIndex() {
               <Image
                 data={featured.image}
                 aspectRatio="4/3"
+                width={1200}
+                height={900}
                 sizes="(min-width: 768px) 50vw, 100vw"
                 loading="eager"
                 className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -147,6 +152,8 @@ export default function JournalIndex() {
                   <Image
                     data={article.image}
                     aspectRatio="3/2"
+                    width={900}
+                    height={600}
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     loading={i < 3 ? 'eager' : 'lazy'}
                     className="w-full object-cover transition-transform duration-500 group-hover:scale-105"

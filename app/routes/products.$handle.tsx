@@ -20,6 +20,10 @@ import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
 import ProductGallery from '~/components/ui/ProductGallery';
 import JsonLd from '~/components/ui/JsonLd';
+import {
+  productSchema,
+  breadcrumbSchema,
+} from '~/components/seo/SeoSchema';
 import SizeGuideModal from '~/components/ui/SizeGuideModal';
 import WaitlistForm from '~/components/ui/WaitlistForm';
 import RecentlyViewed from '~/components/ui/RecentlyViewed';
@@ -284,25 +288,31 @@ export default function ProductPage() {
 
   const isNew = product.tags.includes('new');
 
-  const productJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.title,
-    image: product.images.nodes.map((img) => img.url),
+  const productJsonLd = productSchema({
+    id: product.id,
+    title: product.title,
+    handle: product.handle,
     description: product.descriptionHtml.replace(/<[^>]+>/g, ''),
-    brand: {'@type': 'Brand', name: product.vendor || 'Legendary Branding'},
-    offers: product.variants.nodes.map((v) => ({
-      '@type': 'Offer',
+    images: product.images.nodes.map((img) => img.url),
+    vendor: product.vendor || undefined,
+    variants: product.variants.nodes.map((v) => ({
+      id: v.id,
       price: v.price.amount,
-      priceCurrency: v.price.currencyCode,
-      availability: v.availableForSale ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      url: `https://legendary-branding.com/products/${product.handle}`,
+      currencyCode: v.price.currencyCode,
+      available: v.availableForSale,
     })),
-  };
+  });
+
+  const breadcrumbJsonLd = breadcrumbSchema([
+    {name: 'Shop', url: '/collections/all-products'},
+    ...(product.vendor ? [{name: product.vendor}] : []),
+    {name: product.title},
+  ]);
 
   return (
     <>
       <JsonLd data={productJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       <div className="bg-[#FAF9F6]">
         <div className="h-container py-10">
           {/* Breadcrumb */}
@@ -444,6 +454,16 @@ export default function ProductPage() {
                 {product.metafields?.nodes?.some((m) => m.key === 'care' && m.value) && (
                   <Accordion label="Care Guide">
                     <p>{product.metafields.nodes.find((m) => m.key === 'care')?.value}</p>
+                  </Accordion>
+                )}
+                {product.metafields?.nodes?.some((m) => m.key === 'material' && m.value) && (
+                  <Accordion label="Material">
+                    <p>{product.metafields.nodes.find((m) => m.key === 'material')?.value}</p>
+                  </Accordion>
+                )}
+                {product.metafields?.nodes?.some((m) => m.key === 'fit' && m.value) && (
+                  <Accordion label="Fit">
+                    <p>{product.metafields.nodes.find((m) => m.key === 'fit')?.value}</p>
                   </Accordion>
                 )}
                 <Accordion label="Size Guide">

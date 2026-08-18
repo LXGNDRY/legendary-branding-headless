@@ -24,6 +24,10 @@ import type {CartData} from '~/lib/cart';
 
 export const links: LinksFunction = () => [
   {rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml'},
+  {rel: 'icon', href: '/favicon-32.png', sizes: '32x32', type: 'image/png'},
+  {rel: 'icon', href: '/favicon-16.png', sizes: '16x16', type: 'image/png'},
+  {rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180'},
+  {rel: 'manifest', href: '/site.webmanifest'},
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
   {
     rel: 'preconnect',
