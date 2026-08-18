@@ -213,26 +213,26 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
 
 function QuantitySelector({value, onChange}: {value: number; onChange: (v: number) => void}) {
   return (
-    <div className="flex items-center border border-[var(--color-border-subtle)] rounded-full overflow-hidden">
+    <div className="flex items-center border border-[var(--color-border-medium)] rounded-md overflow-hidden bg-[var(--color-bg-level-2)]">
       <button
         type="button"
         onClick={() => onChange(Math.max(1, value - 1))}
-        className="w-10 h-10 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors disabled:opacity-40"
+        className="w-10 h-10 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors disabled:opacity-40"
         aria-label="Decrease quantity"
         disabled={value <= 1}
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
           <path d="M2 6h8" />
         </svg>
       </button>
-      <span className="w-10 text-center text-sm font-medium text-[var(--color-foreground)]">{value}</span>
+      <span className="w-10 text-center text-sm font-medium text-[var(--color-text-primary)]">{value}</span>
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-10 h-10 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors"
+        className="w-10 h-10 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors"
         aria-label="Increase quantity"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
           <path d="M6 2v8M2 6h8" />
         </svg>
       </button>
@@ -243,14 +243,14 @@ function QuantitySelector({value, onChange}: {value: number; onChange: (v: numbe
 function Accordion({label, children}: {label: string; children: React.ReactNode}) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-[var(--color-border-subtle)]">
+    <div className="border-b border-[var(--color-border-muted)]">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between w-full py-4 text-left"
+        className="flex items-center justify-between w-full py-4 text-left text-[var(--color-text-primary)]"
         aria-expanded={open}
       >
-        <span className="h-eyebrow text-[var(--color-foreground)]">{label}</span>
+        <span className="h-eyebrow">{label}</span>
         <svg
           width="14"
           height="14"
@@ -258,7 +258,8 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
           fill="none"
           stroke="currentColor"
           strokeWidth="1.5"
-          className={`transition-transform duration-200 ${open ? 'rotate-45' : ''}`}
+          strokeLinecap="round"
+          className={`transition-transform duration-200 text-[var(--color-text-secondary)] ${open ? 'rotate-45' : ''}`}
           aria-hidden="true"
         >
           <path d="M7 2v10M2 7h10" />
@@ -314,8 +315,8 @@ export default function ProductPage() {
     <>
       <JsonLd data={productJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
-      <div className="bg-[var(--color-background)]">
-        <div className="h-container py-10">
+      <div className="bg-[var(--color-bg-level-0)]">
+        <div className="h-container py-10 md:py-14">
           {/* Breadcrumb */}
           <nav className="h-eyebrow text-[var(--color-text-tertiary)] mb-8" aria-label="Breadcrumb">
             <Link to="/collections/all-products" className="hover:text-[var(--color-foreground)] transition-colors">
@@ -348,13 +349,13 @@ export default function ProductPage() {
 
               {/* Title + price */}
               <div>
-                <h1 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.01em] text-[var(--color-foreground)] mb-3">
+                <h1 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.01em] text-[var(--color-text-primary)] mb-3">
                   {product.title}
                 </h1>
                 <div className="flex items-baseline gap-3">
                   {selectedVariant ? (
                     <>
-                      <Money data={selectedVariant.price} className="text-[1.1rem] font-medium text-[var(--color-foreground)]" />
+                      <Money data={selectedVariant.price} className="text-[1.1rem] font-medium text-[var(--color-text-primary)]" />
                       {isOnSale && selectedVariant.compareAtPrice && (
                         <Money data={selectedVariant.compareAtPrice} className="text-sm text-[var(--color-text-tertiary)] line-through font-normal" />
                       )}
@@ -375,12 +376,12 @@ export default function ProductPage() {
                 {({option}: {option: VariantOption}) => (
                   <div key={option.name} className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <p className="h-eyebrow text-[var(--color-foreground)]">{option.name}</p>
+                      <p className="h-eyebrow text-[var(--color-text-primary)]">{option.name}</p>
                       {option.name.toLowerCase() === 'size' && (
                         <button
                           type="button"
                           onClick={() => setSizeGuideOpen(true)}
-                          className="h-eyebrow text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] underline underline-offset-2 transition-colors"
+                          className="text-[11px] text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] underline underline-offset-2 transition-colors"
                         >
                           Size Guide
                         </button>
@@ -394,12 +395,12 @@ export default function ProductPage() {
                           replace
                           preventScrollReset
                           prefetch="intent"
-                          className={`min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-full ${
+                          className={`min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-md ${
                             isActive
-                              ? 'border-[var(--color-foreground)] bg-[var(--color-foreground)] text-[var(--color-text-inverse)]'
+                              ? 'border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)]'
                               : isAvailable
-                                ? 'border-[var(--color-border-subtle)] text-[var(--color-foreground)] hover:border-[var(--color-foreground)]'
-                                : 'border-[var(--color-border-subtle)] text-[var(--color-text-tertiary)] cursor-not-allowed line-through'
+                                ? 'border-[var(--color-border-medium)] text-[var(--color-text-primary)] hover:border-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-2)]'
+                                : 'border-[var(--color-border-muted)] text-[var(--color-text-tertiary)] cursor-not-allowed line-through opacity-50'
                           }`}
                           aria-disabled={!isAvailable}
                           aria-label={`${option.name}: ${value}${!isAvailable ? ' (unavailable)' : ''}`}
@@ -440,7 +441,7 @@ export default function ProductPage() {
               </p>
 
               {/* Accordions */}
-              <div className="border-t border-[var(--color-border-subtle)] pt-4">
+              <div className="border-t border-[var(--color-border-muted)] pt-4">
                 {product.descriptionHtml && (
                   <Accordion label="Description">
                     <div
@@ -483,12 +484,12 @@ export default function ProductPage() {
 
         {/* Related products */}
         {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
-          <section className="border-t border-[var(--color-border-subtle)]">
+          <section className="border-t border-[var(--color-border-muted)]">
             <div className="h-container py-16">
               <div className="flex items-end justify-between mb-10">
                 <div>
                   <p className="h-eyebrow mb-3">More to explore</p>
-                  <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-foreground)]">
+                  <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)]">
                     You May Also Like
                   </h2>
                 </div>
@@ -530,7 +531,7 @@ export function ErrorBoundary() {
     <div className="py-24 md:py-32">
       <div className="max-w-xl mx-auto text-center px-4">
         <p className="h-eyebrow mb-6">404 — Not Found</p>
-        <h1 className="font-serif text-[clamp(2.5rem,7vw,5rem)] leading-[0.95] mb-6 text-[var(--color-foreground)]">
+        <h1 className="font-serif text-[clamp(2.5rem,7vw,5rem)] leading-[0.95] mb-6 text-[var(--color-text-primary)]">
           Sold out.
         </h1>
         <p className="text-[var(--color-text-secondary)] text-base leading-relaxed mb-10">

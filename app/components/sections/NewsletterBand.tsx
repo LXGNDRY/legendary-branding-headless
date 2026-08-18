@@ -1,5 +1,5 @@
-import {useReveal} from '~/hooks/useReveal';
 import NewsletterForm from '~/components/ui/NewsletterForm';
+import {useReveal} from '~/hooks/useReveal';
 
 interface NewsletterBandProps {
   eyebrow?: string;
@@ -7,28 +7,28 @@ interface NewsletterBandProps {
   subtext?: string;
 }
 
+/**
+ * ONYX — Newsletter Band
+ * Dark theme newsletter signup section.
+ */
 export default function NewsletterBand({
-  eyebrow = 'Stay in the loop',
-  heading = 'Get early access to drops.',
-  subtext = 'New arrivals, restocks, and editorial content — straight to your inbox.',
+  eyebrow = 'The List',
+  heading = 'Enter the Legendary List.',
+  subtext = 'First access to new drops, exclusive releases, and members-only offers.',
 }: NewsletterBandProps) {
   const ref = useReveal<HTMLElement>();
 
   return (
-    <section ref={ref} className="h-reveal h-section bg-[var(--color-surface)] border-t border-[var(--color-border-subtle)]">
+    <section ref={ref} className="h-reveal h-section bg-[var(--color-bg-level-1)] border-t border-[var(--color-border-muted)]">
       <div className="h-container max-w-2xl text-center">
-        {eyebrow && <p className="h-eyebrow mb-4">{eyebrow}</p>}
-        <h2 className="font-serif font-normal text-[clamp(1.75rem,4vw,3rem)] leading-[1.05] text-[var(--color-foreground)] mb-3">
+        <p className="h-eyebrow mb-4 text-[var(--color-text-tertiary)]">{eyebrow}</p>
+        <h2 className="font-serif font-normal text-[clamp(1.75rem,4vw,3rem)] leading-[1.1] text-[var(--color-text-primary)] mb-4">
           {heading}
         </h2>
-        {subtext && (
-          <p className="text-[var(--color-text-secondary)] text-[0.95rem] mb-8">{subtext}</p>
-        )}
-
-        <NewsletterForm source="newsletter_band" variant="band" />
-        <p className="mt-4 text-[0.7rem] text-[var(--color-text-tertiary)] tracking-wide">
-          No spam. Unsubscribe any time.
+        <p className="text-[var(--color-text-secondary)] mb-8 max-w-md mx-auto">
+          {subtext}
         </p>
+        <NewsletterForm source="homepage-band" variant="band" buttonText="Subscribe →" />
       </div>
     </section>
   );

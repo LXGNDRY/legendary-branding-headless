@@ -22,23 +22,24 @@ export default function ProductGallery({
 
   if (!images.length) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Placeholder aspect="aspect-[3/4]" label={title} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {/* Main image */}
-      <div className="overflow-hidden rounded-lg bg-[var(--color-surface)]">
+      <div className="overflow-hidden rounded-md bg-[var(--color-bg-level-2)]">
         <Image
           data={active}
           aspectRatio="3/4"
-          width={800}
-          height={1067}
+          width={900}
+          height={1200}
           sizes="(min-width: 768px) 50vw, 100vw"
           loading="eager"
+          fetchPriority="high"
           className="w-full object-cover transition-opacity duration-300"
           key={active.url}
         />
@@ -46,17 +47,18 @@ export default function ProductGallery({
 
       {/* Thumbnails */}
       {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-2">
-          {images.slice(0, 8).map((img, i) => (
+        <div className="grid grid-cols-5 gap-2">
+          {images.slice(0, 10).map((img, i) => (
             <button
               key={img.id ?? img.url}
               type="button"
               onClick={() => setActiveIndex(i)}
               aria-label={`View image ${i + 1}`}
-              className={`overflow-hidden rounded-lg border transition-colors ${
+              aria-current={i === activeIndex ? 'true' : 'false'}
+              className={`overflow-hidden rounded-md border transition-all ${
                 i === activeIndex
-                  ? 'border-[var(--color-foreground)]'
-                  : 'border-transparent hover:border-[var(--color-border-subtle)]'
+                  ? 'border-[var(--color-text-primary)] ring-1 ring-[var(--color-text-primary)]'
+                  : 'border-[var(--color-border-muted)] hover:border-[var(--color-border-strong)]'
               }`}
             >
               <Image
@@ -64,7 +66,7 @@ export default function ProductGallery({
                 aspectRatio="1/1"
                 width={200}
                 height={200}
-                sizes="12vw"
+                sizes="10vw"
                 loading="lazy"
                 className="w-full object-cover"
               />

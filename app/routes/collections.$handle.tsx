@@ -256,11 +256,11 @@ export default function CollectionPage() {
   ]);
 
   return (
-    <div className="bg-[var(--color-background)]">
+    <div className="bg-[var(--color-bg-level-0)]">
       <JsonLd data={collectionJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
       {/* Collection hero */}
-      <div className="relative h-[280px] md:h-[420px] bg-[var(--color-foreground)] overflow-hidden">
+      <div className="relative h-[280px] md:h-[420px] bg-[var(--color-bg-level-2)] overflow-hidden">
         {collection.image?.url ? (
           <Image
             data={collection.image}
@@ -268,10 +268,10 @@ export default function CollectionPage() {
             width={1600}
             height={800}
             loading="eager"
-            className="absolute inset-0 w-full h-full object-cover opacity-70"
+            className="absolute inset-0 w-full h-full object-cover opacity-60"
           />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-foreground)]/70 via-[var(--color-foreground)]/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-level-0)] via-[var(--color-bg-level-0)]/40 to-transparent" />
         <div className="h-container absolute inset-0 flex flex-col justify-end pb-10">
           <nav className="h-eyebrow text-[var(--color-text-inverse)]/50 mb-4" aria-label="Breadcrumb">
             <a href="/collections" className="hover:text-[var(--color-text-inverse)]/80 transition-colors">

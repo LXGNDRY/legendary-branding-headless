@@ -47,19 +47,19 @@ export default function SizeGuideModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="size-guide-title"
-        className="relative bg-[var(--color-background)] rounded-md w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-[0_20px_60px_rgba(0,0,0,0.2)]"
+        className="relative bg-[var(--color-bg-level-1)] rounded-lg w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-xl border border-[var(--color-border-muted)]"
       >
-        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-background)] z-10">
+        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] z-10">
           <h3
             id="size-guide-title"
-            className="text-base font-medium tracking-[0.08em] uppercase"
+            className="text-sm font-semibold tracking-[0.1em] uppercase text-[var(--color-text-primary)]"
           >
             {title}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-black hover:text-black/60 transition-colors"
+            className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             aria-label="Close size guide"
           >
             <svg
