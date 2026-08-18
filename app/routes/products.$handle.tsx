@@ -137,11 +137,11 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
   const ogImage = product?.images?.nodes?.[0]?.url ?? '';
   const canonical = `https://legendary-branding.com${location.pathname}`;
   return [
-    {title: `${product?.title ?? 'Product'} — LEGENDARY BRANDING`},
+    {title: `${product?.title ?? 'Product'} | LEGENDARY BRANDING`},
     {name: 'description', content: description},
     {tagName: 'link', rel: 'canonical', href: canonical},
     {property: 'og:type', content: 'product'},
-    {property: 'og:title', content: `${product?.title ?? 'Product'} — LEGENDARY BRANDING`},
+    {property: 'og:title', content: `${product?.title ?? 'Product'} | LEGENDARY BRANDING`},
     {property: 'og:description', content: description},
     ...(ogImage ? [{property: 'og:image', content: `${ogImage}&width=1200&height=1200`}] : []),
     {property: 'og:url', content: canonical},
@@ -530,7 +530,7 @@ export function ErrorBoundary() {
   return (
     <div className="py-24 md:py-32">
       <div className="max-w-xl mx-auto text-center px-4">
-        <p className="h-eyebrow mb-6">404 — Not Found</p>
+        <p className="h-eyebrow mb-6">404 - Not Found</p>
         <h1 className="font-serif text-[clamp(2.5rem,7vw,5rem)] leading-[0.95] mb-6 text-[var(--color-text-primary)]">
           Sold out.
         </h1>

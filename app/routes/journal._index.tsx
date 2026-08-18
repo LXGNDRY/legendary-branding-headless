@@ -44,13 +44,13 @@ const BLOG_QUERY = `#graphql
 ` as const;
 
 export const meta: MetaFunction = () => [
-  {title: 'Journal — LEGENDARY BRANDING'},
+  {title: 'Journal | LEGENDARY BRANDING'},
   {
     name: 'description',
     content: 'Culture, craft, and community from Legendary Branding.',
   },
   {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/journal'},
-  {property: 'og:title', content: 'Journal — LEGENDARY BRANDING'},
+  {property: 'og:title', content: 'Journal | LEGENDARY BRANDING'},
   {property: 'og:description', content: 'Culture, craft, and community from Legendary Branding.'},
   {property: 'og:url', content: 'https://legendary-branding.com/journal'},
 ];

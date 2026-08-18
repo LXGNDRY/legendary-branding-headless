@@ -65,7 +65,7 @@ const HOMEPAGE_QUERY = `#graphql
 export const meta: MetaFunction = () => {
   const description = 'Premium editorial streetwear. Bold, minimal, fast.';
   return [
-    {title: 'LEGENDARY BRANDING — Premium Editorial Streetwear'},
+    {title: 'LEGENDARY BRANDING | Premium Editorial Streetwear'},
     {name: 'description', content: description},
     {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/'},
     {property: 'og:type', content: 'website'},
@@ -108,14 +108,14 @@ const MARQUEE_ITEMS = [
 const TESTIMONIALS = [
   {
     quote:
-      "This is the heaviest tee I've ever owned. The quality is unreal — you can feel the difference the second you put it on.",
+      "This is the heaviest tee I've ever owned. The quality is unreal. You can feel the difference the second you put it on.",
     name: 'Marcus T.',
     location: 'Atlanta, GA',
     stars: 5,
   },
   {
     quote:
-      'Made to order means I actually had to wait — but it was worth every day. Fits perfectly, no shrinkage after washing.',
+      'Made to order means I actually had to wait, but it was worth every day. Fits perfectly, no shrinkage after washing.',
     name: 'Jordan L.',
     location: 'London, UK',
     stars: 5,
@@ -177,7 +177,7 @@ export default function Homepage() {
         theme="dark"
         eyebrow="Our Craft"
         heading="Built different. Made to last."
-        body="Every piece starts with fabric weight most brands won't touch — 235GSM+ cotton, structured for the streets. Made to order. No shortcuts, no restocks."
+        body="Every piece starts with fabric weight most brands won't touch: 235GSM+ cotton, structured for the streets. Made to order. No shortcuts, no restocks."
         primaryLabel="Shop the collection"
         primaryHref="/collections/all-products"
         secondaryLabel="Our story"
@@ -222,7 +222,7 @@ export default function Homepage() {
       <NewsletterBand
         eyebrow="Stay in the loop"
         heading="Get early access to drops."
-        subtext="New arrivals, restocks, and editorial content — straight to your inbox."
+        subtext="New arrivals, restocks, and editorial content, straight to your inbox."
       />
     </div>
   );

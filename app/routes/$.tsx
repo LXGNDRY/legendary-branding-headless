@@ -2,7 +2,7 @@ import {type MetaFunction, Link} from 'react-router';
 import Container from '~/components/ui/Container';
 
 export const meta: MetaFunction = () => [
-  {title: '404 — Page Not Found — LEGENDARY BRANDING'},
+  {title: '404 - Page Not Found | LEGENDARY BRANDING'},
   {name: 'description', content: 'The page you are looking for does not exist.'},
   {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/404'},
   {name: 'robots', content: 'noindex, follow'},
@@ -16,14 +16,14 @@ export function ErrorBoundary() {
   return (
     <Container className="py-24 md:py-32">
       <div className="max-w-2xl mx-auto text-center">
-        <p className="h-eyebrow mb-6">404 — Not Found</p>
+        <p className="h-eyebrow mb-6">404 - Not Found</p>
         <h1 className="font-serif text-[clamp(3rem,8vw,6rem)] leading-[0.95] mb-8 text-[var(--color-foreground)]">
           Lost in the
           <br />
           drop.
         </h1>
         <p className="text-[var(--color-text-secondary)] text-lg leading-relaxed mb-12 max-w-md mx-auto">
-          The page you&apos;re looking for doesn&apos;t exist — or it sold out.
+          The page you&apos;re looking for doesn&apos;t exist, or it sold out.
           Let&apos;s get you back to the good stuff.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

@@ -1,7 +1,7 @@
 import {redirect, type LoaderFunctionArgs, type MetaFunction} from 'react-router';
 
 export const meta: MetaFunction = () => [
-  {title: 'Register — LEGENDARY BRANDING'},
+  {title: 'Register | LEGENDARY BRANDING'},
   {name: 'description', content: 'Create your Legendary Branding account.'},
 ];
 

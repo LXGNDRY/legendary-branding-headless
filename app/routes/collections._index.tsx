@@ -47,10 +47,10 @@ const COLLECTIONS_QUERY = `#graphql
 ` as const;
 
 export const meta: MetaFunction = () => [
-  {title: 'Collections — LEGENDARY BRANDING'},
+  {title: 'Collections | LEGENDARY BRANDING'},
   {name: 'description', content: 'Shop all Legendary Branding collections.'},
   {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/collections'},
-  {property: 'og:title', content: 'Collections — LEGENDARY BRANDING'},
+  {property: 'og:title', content: 'Collections | LEGENDARY BRANDING'},
   {property: 'og:description', content: 'Shop all Legendary Branding collections.'},
   {property: 'og:url', content: 'https://legendary-branding.com/collections'},
 ];

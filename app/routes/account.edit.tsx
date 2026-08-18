@@ -12,7 +12,7 @@ import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 
 export const meta: MetaFunction = () => [
-  {title: 'Edit Account — LEGENDARY BRANDING'},
+  {title: 'Edit Account | LEGENDARY BRANDING'},
   {name: 'description', content: 'Update your account details.'},
   {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/account/edit'},
 ];
