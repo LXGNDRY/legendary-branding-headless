@@ -54,6 +54,9 @@ export default function FitCheck({eyebrow, heading, image, hotspots}: FitCheckPr
         <div className="relative w-full">
           <Image
             data={image}
+            aspectRatio="3/4"
+            width={800}
+            height={1067}
             className="w-full max-h-[80vh] object-cover"
             sizes="100vw"
           />

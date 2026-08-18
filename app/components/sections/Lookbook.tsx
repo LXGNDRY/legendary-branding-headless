@@ -93,6 +93,8 @@ export default function Lookbook({
                 <Image
                   data={item.image}
                   aspectRatio="4/3"
+                  width={800}
+                  height={600}
                   sizes="(max-width: 749px) 100vw, 33vw"
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03]"

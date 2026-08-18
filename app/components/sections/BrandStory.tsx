@@ -43,6 +43,9 @@ export default function BrandStory({
             {image?.url ? (
               <Image
                 data={image}
+                aspectRatio="4/5"
+                width={800}
+                height={1000}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02]"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />

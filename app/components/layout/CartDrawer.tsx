@@ -69,6 +69,8 @@ function CartLineItem({line}: {line: CartLineData}) {
           <Image
             data={image}
             aspectRatio="5/6"
+            width={250}
+            height={300}
             sizes="80px"
             loading="lazy"
             className="w-full h-full object-cover"

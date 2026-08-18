@@ -84,6 +84,9 @@ export default function BeforeAfter({
           <div className="absolute inset-0">
             <Image
               data={afterImage}
+              aspectRatio="16/9"
+              width={1600}
+              height={900}
               className="w-full h-full object-cover"
               sizes="100vw"
             />
@@ -102,6 +105,9 @@ export default function BeforeAfter({
             <div className="absolute inset-0" style={{width: `${100 / (position / 100)}%`, maxWidth: '100vw'}}>
               <Image
                 data={beforeImage}
+                aspectRatio="16/9"
+                width={1600}
+                height={900}
                 className="w-full h-full object-cover"
                 sizes="100vw"
               />

@@ -64,6 +64,8 @@ export default function StreetHero({
             <Image
               data={imageLeft!}
               aspectRatio={showRight ? '3/4' : '16/9'}
+              width={showRight ? 800 : 1600}
+              height={showRight ? 1067 : 900}
               sizes={showRight ? '50vw' : '100vw'}
               loading="eager"
               className="w-full h-full object-cover"
@@ -79,6 +81,8 @@ export default function StreetHero({
             <Image
               data={imageRight}
               aspectRatio="3/4"
+              width={800}
+              height={1067}
               sizes="50vw"
               loading="lazy"
               className="w-full h-full object-cover"
