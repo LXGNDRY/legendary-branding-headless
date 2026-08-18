@@ -238,12 +238,21 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # `shopify hydrogen preview` (and `dev`) load env vars via Miniflare
+      # from a local `.env` file — they do NOT read inherited shell/step
+      # `env:` vars the way a plain Node script (like codegen) does. Without
+      # this, the preview server 500s on every request with "SESSION_SECRET
+      # environment variable is not set" even though the step below sets it.
+      - name: Create .env for local preview server
+        run: |
+          cat > .env <<EOF
+          SESSION_SECRET=ci-only-do-not-use
+          PUBLIC_STORE_DOMAIN=${{ secrets.PUBLIC_STORE_DOMAIN }}
+          PUBLIC_STOREFRONT_API_TOKEN=${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+          EOF
+
       - name: Build
         run: npm run build
-        env:
-          PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
-          PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
-          SESSION_SECRET: ci-only-do-not-use
 
       # Runs against a local `shopify hydrogen preview` server (see
       # playwright.config.ts's webServer), not the live Oxygen preview URL.
@@ -255,10 +264,6 @@ jobs:
       # and removes the dependency on a live deploy succeeding first.
       - name: Run E2E tests against local production build
         run: npm run test:e2e -- --project=chromium
-        env:
-          PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
-          PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
-          SESSION_SECRET: ci-only-do-not-use
 
       - name: Upload test results on failure
         if: failure()
