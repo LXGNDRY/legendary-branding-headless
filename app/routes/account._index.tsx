@@ -58,7 +58,7 @@ export default function AccountPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-12">
-          <div className="lb-eyebrow mb-3">MY ACCOUNT</div>
+          <div className="h-eyebrow mb-3">MY ACCOUNT</div>
           <h1 className="text-4xl md:text-5xl font-normal mb-4">
             Hey, {customer.firstName}
           </h1>
@@ -70,7 +70,7 @@ export default function AccountPage() {
         {/* Account Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
           <div className="border border-black/10 p-8">
-            <div className="lb-eyebrow mb-3 text-black/50">ORDERS</div>
+            <div className="h-eyebrow mb-3 text-black/50">ORDERS</div>
             <h3 className="text-2xl mb-2">View History</h3>
             <p className="text-sm text-black/60 mb-6">See all your past orders.</p>
             <Link to="/account/orders">
@@ -81,7 +81,7 @@ export default function AccountPage() {
           </div>
 
           <div className="border border-black/10 p-8">
-            <div className="lb-eyebrow mb-3 text-black/50">DETAILS</div>
+            <div className="h-eyebrow mb-3 text-black/50">DETAILS</div>
             <h3 className="text-2xl mb-2">Account Details</h3>
             <p className="text-sm text-black/60 mb-2">
               {customer.firstName} {customer.lastName}
@@ -99,7 +99,7 @@ export default function AccountPage() {
 
         {/* Quick Links */}
         <div className="border-t border-black/10 pt-12">
-          <div className="lb-eyebrow mb-6">QUICK LINKS</div>
+          <div className="h-eyebrow mb-6">QUICK LINKS</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link
               to="/account/orders"

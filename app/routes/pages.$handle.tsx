@@ -104,7 +104,7 @@ export default function PageRoute() {
       <div className="max-w-4xl mx-auto">
         {/* Title */}
         <header className="mb-12 text-center">
-          <div className="lb-eyebrow mb-4">LEGENDARY BRANDING</div>
+          <div className="h-eyebrow mb-4">LEGENDARY BRANDING</div>
           <h1 className="text-4xl md:text-5xl font-normal tracking-tight">
             {page.title}
           </h1>

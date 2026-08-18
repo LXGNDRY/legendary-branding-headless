@@ -1,5 +1,6 @@
 import {Link, useNavigate, type MetaFunction} from 'react-router';
 import Container from '~/components/ui/Container';
+import Button from '~/components/ui/Button';
 import {useWishlist} from '~/components/ui/Wishlist';
 import ProductCard from '~/components/ui/ProductCard';
 import {useEffect, useState} from 'react';
@@ -34,9 +35,9 @@ export default function WishlistPage() {
   return (
     <Container className="py-12">
       <header className="mb-10">
-        <p className="lb-eyebrow mb-3">WISHLIST</p>
+        <p className="h-eyebrow mb-3">WISHLIST</p>
         <div className="flex items-end justify-between flex-wrap gap-4">
-          <h1 className="text-3xl md:text-4xl font-normal tracking-tight">
+          <h1 className="font-serif text-3xl md:text-4xl font-normal">
             Saved Items
           </h1>
           {mounted && count > 0 && (
@@ -75,17 +76,16 @@ export default function WishlistPage() {
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-normal mb-3">Your wishlist is empty</h2>
+          <h2 className="font-serif text-2xl font-normal mb-3">
+            Your wishlist is empty
+          </h2>
           <p className="text-sm text-black/50 mb-8 max-w-md mx-auto">
             Save items you love by clicking the heart icon on any product.
             Come back anytime to pick up where you left off.
           </p>
-          <Link
-            to="/collections/all-products"
-            className="inline-block text-xs font-semibold tracking-widest uppercase border-2 border-black px-8 py-3 hover:bg-black hover:text-white transition-colors"
-          >
-            Shop All
-          </Link>
+          <Button as="link" to="/collections/all-products" variant="solid">
+            Shop All Products
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
