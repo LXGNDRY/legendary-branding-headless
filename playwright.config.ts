@@ -3,14 +3,26 @@ import {defineConfig, devices} from '@playwright/test';
 /**
  * Playwright E2E test configuration.
  *
- * Runs against the Hydrogen dev server (shopify hydrogen dev) on port 3000.
- * In CI, tests run against the deployed preview URL after the deploy step.
+ * By default, runs against a locally-started server on port 3000 — the
+ * Hydrogen dev server locally, or a production build served via
+ * `shopify hydrogen preview` in CI. This is deliberate: Shopify's Oxygen
+ * preview (*.myshopify.dev) URLs intercept automated browser traffic
+ * (including real Chromium, not just curl) with a "Verifying your
+ * connection..." bot-check challenge, which made every E2E test fail
+ * uniformly when this suite ran against the live deployed preview URL —
+ * not because the app was broken, but because every page navigation
+ * landed on Shopify's own challenge page instead. Testing against a
+ * locally-served production build sidesteps that entirely and is a more
+ * deterministic, faster signal anyway (no network/deploy dependency).
  *
  * Run locally:
- *   # Terminal 1: npm run dev
- *   # Terminal 2: npm run test:e2e
+ *   npm run test:e2e          # auto-starts `npm run dev` for you
  *
- * Set BASE_URL to test against a deployed environment.
+ * To test against a real deployed environment instead (e.g. manual
+ * spot-checking after a deploy), set BASE_URL explicitly:
+ *   BASE_URL=https://your-preview-url.myshopify.dev npm run test:e2e
+ * (expect Shopify's bot-check to block most/all requests when run from
+ * a non-interactive environment — this mode is for a human's own machine.)
  */
 export default defineConfig({
   testDir: './e2e',
@@ -45,11 +57,13 @@ export default defineConfig({
     },
   ],
 
-  /* Dev server — only used when running locally without BASE_URL set */
-  webServer: process.env.CI
+  /* Local server — always used unless BASE_URL points at an external
+   * deployment. In CI this serves the already-built production bundle
+   * (`shopify hydrogen preview`); locally it starts the dev server. */
+  webServer: process.env.BASE_URL
     ? undefined
     : {
-        command: 'npm run dev',
+        command: process.env.CI ? 'npm run preview' : 'npm run dev',
         url: 'http://localhost:3000',
         timeout: 120_000,
         reuseExistingServer: !process.env.CI,
