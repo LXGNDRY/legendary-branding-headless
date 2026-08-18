@@ -144,9 +144,6 @@ export default function Analytics({
     setShowBanner(false);
   }
 
-  // Don't show banner if no analytics IDs configured
-  if (!ga4Id && !metaPixelId && !tiktokPixelId) return null;
-
   return (
     <>
       {/* Consent banner */}

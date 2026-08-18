@@ -39,7 +39,7 @@ export default function BrandStory({
           className={`grid md:grid-cols-2 gap-12 md:gap-20 items-center`}
         >
           {/* Image */}
-          <div className={`relative overflow-hidden aspect-[4/5] ${imagePosition === 'right' ? 'md:order-last' : ''}`}>
+          <div className={`relative overflow-hidden rounded-lg aspect-[4/5] ${imagePosition === 'right' ? 'md:order-last' : ''}`}>
             {image?.url ? (
               <Image
                 data={image}

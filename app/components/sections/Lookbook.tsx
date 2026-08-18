@@ -87,7 +87,7 @@ export default function Lookbook({
             return (
               <div
                 key={item.id}
-                className={`relative overflow-hidden ${colClass}`}
+                className={`relative overflow-hidden rounded-lg ${colClass}`}
                 style={rowStyle}
               >
                 <Image
