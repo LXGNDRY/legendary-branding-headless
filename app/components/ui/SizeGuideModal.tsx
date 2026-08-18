@@ -1,4 +1,5 @@
 import {useEffect} from 'react';
+import {useFocusTrap} from '~/hooks/useFocusTrap';
 
 interface SizeGuideModalProps {
   open: boolean;
@@ -16,20 +17,18 @@ export default function SizeGuideModal({
   onClose,
   title = 'Size Guide',
 }: SizeGuideModalProps) {
+  const {containerRef} = useFocusTrap(open, onClose);
+
+  // Lock body scroll when modal is open
   useEffect(() => {
     if (!open) return;
 
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
 
     return () => {
-      document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
@@ -44,6 +43,7 @@ export default function SizeGuideModal({
 
       {/* Modal */}
       <div
+        ref={containerRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="size-guide-title"
