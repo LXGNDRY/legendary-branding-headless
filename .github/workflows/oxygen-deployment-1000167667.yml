@@ -77,6 +77,8 @@ jobs:
     needs: quality
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
     environment:
       name: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
       url: ${{ steps.deploy.outputs.url }}
@@ -107,7 +109,21 @@ jobs:
 
       - name: Build and Publish to Oxygen
         id: deploy
-        run: npx shopify hydrogen deploy --force
+        run: |
+          npx shopify hydrogen deploy --force
+          # Capture the Oxygen preview URL from the deploy log
+          if [ -f h2_deploy_log.json ]; then
+            DEPLOY_URL=$(node -e "
+              const log = require('./h2_deploy_log.json');
+              // Try common paths for the deployment URL
+              const url = log.url || log.previewUrl || log.deploy_url || (log.deployment && log.deployment.url) || (log.deployments && log.deployments[0] && log.deployments[0].url) || '';
+              process.stdout.write(url);
+            " 2>/dev/null || echo "")
+            echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+            echo "Deploy URL extracted: $DEPLOY_URL"
+          else
+            echo "h2_deploy_log.json not found — will try to parse stdout"
+          fi
         env:
           SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000167667 }}
 
