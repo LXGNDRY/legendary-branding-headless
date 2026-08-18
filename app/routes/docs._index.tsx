@@ -13,6 +13,14 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+const PHASE_6_ITEMS = [
+  {
+    title: 'Codegen & GraphQL Validation',
+    description: 'Real type-safety gate for Storefront + Customer Account GraphQL. Fixes account mutation bugs that could never be caught before.',
+    href: '/docs/phase6-codegen-changelog',
+  },
+];
+
 const PHASE_5_ITEMS = [
   {
     title: 'Address CRUD',
@@ -66,13 +74,35 @@ export default function DocsIndex() {
   return (
     <DocsLayout currentPath={location.pathname}>
       <div className="space-y-12">
-        {/* Changelogs */}
+        {/* Latest Changelog */}
         <section>
           <div className="flex items-baseline justify-between mb-6">
             <h2 className="font-serif text-2xl text-[#1A1A1A]">
               Latest Changelog
             </h2>
-            <span className="h-eyebrow text-[#FF3B30]">Phase 5</span>
+            <span className="h-eyebrow text-[#FF3B30]">Phase 6</span>
+          </div>
+          <p className="text-[#6B6B6B] mb-6">
+            Codegen &amp; GraphQL validation — turning type-safety into a real CI gate.
+          </p>
+          <CardList items={PHASE_6_ITEMS} />
+          <div className="mt-6">
+            <Link
+              to="/docs/phase6-codegen-changelog"
+              className="h-link inline-flex items-center gap-2"
+            >
+              Read full Phase 6 changelog →
+            </Link>
+          </div>
+        </section>
+
+        {/* Changelogs */}
+        <section>
+          <div className="flex items-baseline justify-between mb-6">
+            <h2 className="font-serif text-2xl text-[#1A1A1A]">
+              Phase 5 Changelog
+            </h2>
+            <span className="h-eyebrow text-[#9E9C97]">Phase 5</span>
           </div>
           <p className="text-[#6B6B6B] mb-6">
             Content, SEO, and functional completeness — closing the gaps from the enterprise E2E audit.

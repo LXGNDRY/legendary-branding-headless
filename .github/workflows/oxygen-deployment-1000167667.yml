@@ -51,13 +51,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Generate Storefront API types
+      - name: Codegen + GraphQL validation (Storefront & Customer Account)
         run: npm run codegen
         env:
           PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
           PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
           SESSION_SECRET: ci-only-do-not-use
-        continue-on-error: true
 
       - name: Build
         run: npm run build

@@ -9,6 +9,7 @@ export default {
         '!app/graphql/**',
         '!app/routes/account.*.{ts,tsx}',
         '!app/routes/account.{ts,tsx}',
+        '!app/routes/api.wishlist.ts',
       ],
       extensions: {
         codegen: {
@@ -22,7 +23,7 @@ export default {
     },
     customer: {
       schema: 'node_modules/@shopify/hydrogen/dist/customer-account.schema.json',
-      documents: ['app/routes/account.*.{ts,tsx}', 'app/routes/account.{ts,tsx}'],
+      documents: ['app/routes/account.*.{ts,tsx}', 'app/routes/account.{ts,tsx}', 'app/routes/api.wishlist.ts'],
       extensions: {
         codegen: {
           generates: {
