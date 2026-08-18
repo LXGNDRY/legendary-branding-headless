@@ -87,7 +87,7 @@ export default function Footer() {
             </Link>
             <p className="mt-5 text-[var(--color-text-secondary)] leading-relaxed">
               Premium streetwear crafted with intention. Designed for the bold.
-              Built to last — season after season, drop after drop.
+              Built to last, season after season, drop after drop.
             </p>
           </div>
 

@@ -70,7 +70,7 @@ export function collectionPageSchema({
     '@type': 'CollectionPage',
     name: title,
     url: `https://legendary-branding.com/collections/${handle}`,
-    description: description || `${title} — Legendary Branding`,
+    description: description || `${title} | Legendary Branding`,
     mainEntity: products?.length
       ? {
           '@type': 'ItemList',

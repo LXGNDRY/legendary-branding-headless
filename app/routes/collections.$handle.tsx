@@ -118,7 +118,7 @@ interface CollectionData {
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   const collection = data?.collection;
-  const title = `${collection?.title ?? 'Collection'} — LEGENDARY BRANDING`;
+  const title = `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
   const description = collection?.description ?? `Shop ${collection?.title ?? 'this collection'}.`;
   const canonical = `https://legendary-branding.com/collections/${collection?.handle ?? 'all'}`;
   const ogImage = collection?.image?.url

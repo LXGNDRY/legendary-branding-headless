@@ -13,7 +13,7 @@ import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 
 export const meta: MetaFunction = () => [
-  {title: 'Addresses — LEGENDARY BRANDING'},
+  {title: 'Addresses | LEGENDARY BRANDING'},
   {name: 'description', content: 'Manage your shipping addresses.'},
   {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/account/addresses'},
 ];

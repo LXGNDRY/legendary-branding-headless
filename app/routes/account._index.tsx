@@ -9,7 +9,7 @@ import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 
 export const meta: MetaFunction = () => [
-  {title: 'My Account — LEGENDARY BRANDING'},
+  {title: 'My Account | LEGENDARY BRANDING'},
   {name: 'description', content: 'Your Legendary Branding account dashboard.'},
 ];
 

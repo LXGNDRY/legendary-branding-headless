@@ -8,10 +8,10 @@ import {useEffect, useState} from 'react';
 export const meta: MetaFunction = () => {
   const canonical = 'https://legendary-branding.com/wishlist';
   return [
-    {title: 'Wishlist — LEGENDARY BRANDING'},
+    {title: 'Wishlist | LEGENDARY BRANDING'},
     {name: 'description', content: 'Your saved items from Legendary Branding.'},
     {tagName: 'link', rel: 'canonical', href: canonical},
-    {property: 'og:title', content: 'Wishlist — LEGENDARY BRANDING'},
+    {property: 'og:title', content: 'Wishlist | LEGENDARY BRANDING'},
     {property: 'og:description', content: 'Your saved items from Legendary Branding.'},
     {property: 'og:url', content: canonical},
   ];

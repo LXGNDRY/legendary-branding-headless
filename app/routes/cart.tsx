@@ -6,7 +6,7 @@ import Button from '~/components/ui/Button';
 import type {CartData, CartLineData} from '~/lib/cart';
 
 export const meta: MetaFunction = () => [
-  {title: 'Cart — LEGENDARY BRANDING'},
+  {title: 'Cart | LEGENDARY BRANDING'},
 ];
 
 export async function action({request, context}: ActionFunctionArgs) {

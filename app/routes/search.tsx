@@ -148,7 +148,7 @@ interface SearchResult {
 const PAGE_SIZE = 24;
 
 export const meta: MetaFunction<typeof loader> = ({data}) => [
-  {title: `Search: ${data?.query ?? ''} — LEGENDARY BRANDING`},
+  {title: `Search: ${data?.query ?? ''} | LEGENDARY BRANDING`},
   {name: 'description', content: `Search results for "${data?.query ?? ''}" at Legendary Branding.`},
   {robots: 'noindex, follow'},
 ];

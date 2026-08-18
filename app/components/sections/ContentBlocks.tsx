@@ -106,7 +106,7 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
                 </blockquote>
                 {block.attribution && (
                   <figcaption className="mt-4 text-xs tracking-widest uppercase text-[var(--color-text-secondary)]">
-                    — {block.attribution}
+                    - {block.attribution}
                   </figcaption>
                 )}
               </figure>

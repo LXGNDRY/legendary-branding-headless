@@ -64,7 +64,7 @@ export default function WaitlistForm({
       <p className="text-[0.7rem] text-[var(--color-text-tertiary)] mt-2">
         We&apos;ll only email you about{' '}
         <span className="font-medium">{productTitle}</span>
-        {variantTitle ? ` — ${variantTitle}` : ''}.
+        {variantTitle ? `, ${variantTitle}` : ''}.
       </p>
     </div>
   );
