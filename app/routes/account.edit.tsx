@@ -30,8 +30,8 @@ const CUSTOMER_QUERY = `#graphql
 ` as const;
 
 const CUSTOMER_UPDATE_MUTATION = `#graphql
-  mutation customerUpdate($customer: CustomerUpdateInput!) {
-    customerUpdate(customer: $customer) {
+  mutation customerUpdate($input: CustomerUpdateInput!) {
+    customerUpdate(input: $input) {
       customer {
         firstName
         lastName
@@ -103,7 +103,7 @@ export async function action({request, context}: ActionFunctionArgs) {
 
   const result = await customerAccount.mutate(CUSTOMER_UPDATE_MUTATION, {
     variables: {
-      customer: {firstName, lastName},
+      input: {firstName, lastName},
     },
   });
 

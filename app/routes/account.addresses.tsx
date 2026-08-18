@@ -26,28 +26,28 @@ const ADDRESSES_QUERY = `#graphql
         id
         firstName
         lastName
+        company
         address1
         address2
         city
         province
-        country
         zip
+        country
         phoneNumber
-        company
       }
       addresses(first: 10) {
         nodes {
           id
           firstName
           lastName
+          company
           address1
           address2
           city
           province
-          country
           zip
+          country
           phoneNumber
-          company
         }
       }
     }
@@ -55,20 +55,20 @@ const ADDRESSES_QUERY = `#graphql
 ` as const;
 
 const ADDRESS_CREATE_MUTATION = `#graphql
-  mutation customerAddressCreate($address: MailingAddressInput!) {
+  mutation customerAddressCreate($address: CustomerAddressInput!) {
     customerAddressCreate(address: $address) {
       customerAddress {
         id
         firstName
         lastName
+        company
         address1
         address2
         city
         province
-        country
         zip
+        country
         phoneNumber
-        company
       }
       userErrors {
         field
@@ -79,20 +79,20 @@ const ADDRESS_CREATE_MUTATION = `#graphql
 ` as const;
 
 const ADDRESS_UPDATE_MUTATION = `#graphql
-  mutation customerAddressUpdate($id: ID!, $address: MailingAddressInput!) {
-    customerAddressUpdate(id: $id, address: $address) {
+  mutation customerAddressUpdate($addressId: ID!, $address: CustomerAddressInput!) {
+    customerAddressUpdate(addressId: $addressId, address: $address) {
       customerAddress {
         id
         firstName
         lastName
+        company
         address1
         address2
         city
         province
-        country
         zip
+        country
         phoneNumber
-        company
       }
       userErrors {
         field
@@ -103,25 +103,9 @@ const ADDRESS_UPDATE_MUTATION = `#graphql
 ` as const;
 
 const ADDRESS_DELETE_MUTATION = `#graphql
-  mutation customerAddressDelete($id: ID!) {
-    customerAddressDelete(id: $id) {
-      deletedCustomerAddressId
-      userErrors {
-        field
-        message
-      }
-    }
-  }
-` as const;
-
-const ADDRESS_DEFAULT_MUTATION = `#graphql
-  mutation customerDefaultAddressUpdate($addressId: ID!) {
-    customerDefaultAddressUpdate(addressId: $addressId) {
-      customer {
-        defaultAddress {
-          id
-        }
-      }
+  mutation customerAddressDelete($addressId: ID!) {
+    customerAddressDelete(addressId: $addressId) {
+      deletedAddressId
       userErrors {
         field
         message
@@ -134,19 +118,14 @@ interface AddressNode {
   id: string;
   firstName: string;
   lastName: string;
+  company?: string | null;
   address1: string;
   address2?: string | null;
   city: string;
   province: string;
-  country: string;
   zip: string;
+  country: string;
   phoneNumber?: string | null;
-  company?: string | null;
-}
-
-interface LoaderData {
-  defaultAddress: AddressNode | null;
-  addresses: AddressNode[];
 }
 
 interface ActionData {
@@ -190,16 +169,27 @@ export async function action({request, context}: ActionFunctionArgs) {
   const formData = await request.formData();
   const intent = String(formData.get('intent') || '');
 
+  // CustomerAddressInput uses zoneCode (province) + territoryCode (country code)
+  const countryInput = String(formData.get('country') || '').trim();
+  const territoryCode =
+    countryInput.length === 2
+      ? countryInput.toUpperCase()
+      : countryInput.toLowerCase() === 'united states' ||
+          countryInput.toLowerCase() === 'usa' ||
+          countryInput.toLowerCase() === 'us'
+        ? 'US'
+        : countryInput.slice(0, 2).toUpperCase();
+
   const addressInput = {
     firstName: String(formData.get('firstName') || '').trim(),
     lastName: String(formData.get('lastName') || '').trim(),
     address1: String(formData.get('address1') || '').trim(),
     address2: String(formData.get('address2') || '').trim() || null,
     city: String(formData.get('city') || '').trim(),
-    province: String(formData.get('province') || '').trim(),
-    country: String(formData.get('country') || 'United States').trim(),
+    zoneCode: String(formData.get('province') || '').trim(),
     zip: String(formData.get('zip') || '').trim(),
-    phone: String(formData.get('phoneNumber') || '').trim() || null,
+    territoryCode,
+    phoneNumber: String(formData.get('phoneNumber') || '').trim() || null,
     company: String(formData.get('company') || '').trim() || null,
   };
 
@@ -224,9 +214,9 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
 
   if (intent === 'update') {
-    const id = String(formData.get('id') || '');
+    const addressId = String(formData.get('id') || '');
     const result = await customerAccount.mutate(ADDRESS_UPDATE_MUTATION, {
-      variables: {id, address: addressInput},
+      variables: {addressId, address: addressInput},
     });
     const data = result.data as {
       customerAddressUpdate: {
@@ -245,13 +235,13 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
 
   if (intent === 'delete') {
-    const id = String(formData.get('id') || '');
+    const addressId = String(formData.get('id') || '');
     const result = await customerAccount.mutate(ADDRESS_DELETE_MUTATION, {
-      variables: {id},
+      variables: {addressId},
     });
     const data = result.data as {
       customerAddressDelete: {
-        deletedCustomerAddressId: string | null;
+        deletedAddressId: string | null;
         userErrors: Array<{field: string[]; message: string}>;
       };
     };
@@ -263,27 +253,6 @@ export async function action({request, context}: ActionFunctionArgs) {
       };
     }
     return {success: true, action: 'delete'};
-  }
-
-  if (intent === 'setDefault') {
-    const id = String(formData.get('id') || '');
-    const result = await customerAccount.mutate(ADDRESS_DEFAULT_MUTATION, {
-      variables: {addressId: id},
-    });
-    const data = result.data as {
-      customerDefaultAddressUpdate: {
-        customer: {defaultAddress: {id: string}};
-        userErrors: Array<{field: string[]; message: string}>;
-      };
-    };
-    if (data.customerDefaultAddressUpdate.userErrors?.length > 0) {
-      return {
-        success: false,
-        errors: data.customerDefaultAddressUpdate.userErrors.map((e) => e.message),
-        action: 'setDefault',
-      };
-    }
-    return {success: true, action: 'setDefault'};
   }
 
   return {success: false, errors: ['Unknown action.']};
@@ -458,16 +427,13 @@ function AddressCard({
   isDefault,
   onEdit,
   onDelete,
-  onSetDefault,
 }: {
   address: AddressNode;
   isDefault: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onSetDefault: () => void;
 }) {
   const deleteFetcher = useFetcher();
-  const defaultFetcher = useFetcher();
 
   return (
     <div className="border border-[#E8E6E1] p-6 md:p-8 bg-white">
@@ -489,18 +455,6 @@ function AddressCard({
         >
           Edit
         </button>
-        {!isDefault && (
-          <defaultFetcher.Form method="POST">
-            <input type="hidden" name="intent" value="setDefault" />
-            <input type="hidden" name="id" value={address.id} />
-            <button
-              type="submit"
-              className="text-sm text-[#1A1A1A] hover:text-[#FF3B30] transition-colors"
-            >
-              Set as Default
-            </button>
-          </defaultFetcher.Form>
-        )}
         <deleteFetcher.Form method="POST">
           <input type="hidden" name="intent" value="delete" />
           <input type="hidden" name="id" value={address.id} />
@@ -547,7 +501,6 @@ export default function AddressesPage() {
             {actionData.action === 'create' && 'Address added successfully.'}
             {actionData.action === 'update' && 'Address updated successfully.'}
             {actionData.action === 'delete' && 'Address deleted.'}
-            {actionData.action === 'setDefault' && 'Default address updated.'}
           </div>
         )}
 
@@ -594,7 +547,6 @@ export default function AddressesPage() {
                   isDefault={isDefault}
                   onEdit={() => setEditingId(addr.id)}
                   onDelete={() => {}}
-                  onSetDefault={() => {}}
                 />
               );
             })}

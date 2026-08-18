@@ -32,12 +32,13 @@ const CUSTOMER_WISHLIST_QUERY = `#graphql
 ` as const;
 
 const CUSTOMER_WISHLIST_UPDATE_MUTATION = `#graphql
-  mutation customerUpdateWishlist($metafields: [MetafieldInput!]!) {
-    customerUpdate(customer: {metafields: $metafields}) {
-      customer {
-        metafield(namespace: "custom", key: "wishlist") {
-          value
-        }
+  mutation customerWishlistSet($metafields: [MetafieldsSetInput!]!) {
+    metafieldsSet(metafields: $metafields) {
+      metafields {
+        id
+        key
+        namespace
+        value
       }
       userErrors {
         field
@@ -123,12 +124,21 @@ export async function action({request, context}: ActionFunctionArgs) {
   const trimmedItems = items.slice(0, 100);
 
   try {
+    // Step 1: get customer ID (needed for metafieldsSet's ownerId)
+    const customerResult = await customerAccount.query(CUSTOMER_WISHLIST_QUERY);
+    const customerData = customerResult.data as {
+      customer: {id: string};
+    };
+    const customerId = customerData.customer.id;
+
+    // Step 2: set the wishlist metafield
     const result = await customerAccount.mutate(
       CUSTOMER_WISHLIST_UPDATE_MUTATION,
       {
         variables: {
           metafields: [
             {
+              ownerId: customerId,
               namespace: 'custom',
               key: 'wishlist',
               value: JSON.stringify(trimmedItems),
@@ -140,15 +150,15 @@ export async function action({request, context}: ActionFunctionArgs) {
     );
 
     const data = result.data as {
-      customerUpdate: {
-        customer: {metafield: {value: string} | null} | null;
+      metafieldsSet: {
+        metafields: Array<{id: string; key: string; namespace: string; value: string}> | null;
         userErrors: Array<{field: string[]; message: string}>;
       };
     };
 
-    if (data.customerUpdate.userErrors?.length > 0) {
+    if (data.metafieldsSet.userErrors?.length > 0) {
       return Response.json(
-        {error: data.customerUpdate.userErrors.map((e) => e.message).join(', ')},
+        {error: data.metafieldsSet.userErrors.map((e) => e.message).join(', ')},
         {status: 400},
       );
     }
