@@ -52,9 +52,12 @@ export default function HeroSplit({
           <div className="absolute inset-0 bg-[var(--color-bg-level-1)]" />
         )}
 
-        {/* Hero content */}
-        <div className="relative z-10 w-full h-container pt-24 pb-16 lg:py-0 lg:min-h-[85dvh] lg:flex lg:items-center">
-          <div className="max-w-2xl">
+        {/* Hero content — pointer-events-none on the full-width wrapper so its
+            empty space (beyond max-w-2xl) doesn't sit on top of the absolutely
+            positioned right-column product link on desktop; pointer-events-auto
+            on the actual content restores interactivity for its text/buttons. */}
+        <div className="relative z-10 w-full h-container pt-24 pb-16 lg:py-0 lg:min-h-[85dvh] lg:flex lg:items-center pointer-events-none">
+          <div className="max-w-2xl pointer-events-auto">
             <p className="h-eyebrow text-white/70 mb-6">
               {eyebrow}
             </p>

@@ -37,15 +37,7 @@ test.describe('Journey 1: Homepage → Product → Cart → Checkout', () => {
     await expect(brandText).toBeVisible();
   });
 
-  // eslint-disable-next-line playwright/no-fixme -- tracked below, not a silent skip
-  test.fixme('can reach a product page from homepage', async ({page}) => {
-    // KNOWN ISSUE (confirmed on real CI hardware, not a local/sandbox
-    // artifact): the homepage hero's content overlay div intercepts
-    // pointer events on the first product link, so clicking it times out
-    // after 18+ retries. Real bug in the current dark-theme hero component
-    // (likely a z-index/pointer-events gap on the overlay), separate from
-    // E2E test infrastructure. Un-fixme once the hero click-through is
-    // fixed in a follow-up UI slice.
+  test('can reach a product page from homepage', async ({page}) => {
     await page.goto('/');
 
     const productLink = page.locator('a[href^="/products/"]').first();
