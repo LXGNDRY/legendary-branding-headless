@@ -185,3 +185,47 @@ jobs:
 
           echo ""
           echo "All smoke tests passed ($FAILURES failures)"
+
+  e2e:
+    name: E2E Tests (Playwright)
+    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
+    needs: deploy
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Setup node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "20"
+          check-latest: false
+
+      - name: Cache node modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests against deployed preview
+        run: npm run test:e2e -- --project=chromium
+        env:
+          BASE_URL: ${{ needs.deploy.outputs.url }}
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: playwright-report/
+          retention-days: 7

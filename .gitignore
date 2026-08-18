@@ -17,3 +17,8 @@ build
 .vscode
 .idea
 *.swp
+
+# Playwright
+playwright-report/
+test-results/
+.playwright/

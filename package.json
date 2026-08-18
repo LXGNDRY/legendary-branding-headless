@@ -10,7 +10,9 @@
     "codegen": "shopify hydrogen codegen",
     "preview": "shopify hydrogen preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium webkit"
   },
   "type": "module",
   "dependencies": {
@@ -26,6 +28,7 @@
     "web-vitals": "6.1.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@react-router/dev": "7.18.2",
     "@react-router/fs-routes": "7.18.2",
     "@shopify/hydrogen-codegen": "0.3.3",
