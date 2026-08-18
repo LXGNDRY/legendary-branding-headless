@@ -7,6 +7,7 @@ import {
   useLoaderData,
   useNavigation,
   useFetchers,
+  useLocation,
 } from 'react-router';
 import {useState, useEffect} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
@@ -127,7 +128,13 @@ export default function App() {
   const {cart, isLoggedIn} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
+  const location = useLocation();
   const fetchers = useFetchers();
+
+  // Close cart drawer on route change (e.g. clicking a product or "Start Shopping")
+  useEffect(() => {
+    setCartOpen(false);
+  }, [location.pathname, location.search]);
 
   // Auto-open cart drawer when an add-to-cart action completes
   useEffect(() => {
@@ -154,14 +161,14 @@ export default function App() {
       {/* Page-transition progress bar */}
       <div
         aria-hidden="true"
-        className={`fixed top-0 left-0 z-[100] h-[2px] bg-[#0a0a0a] transition-all duration-300 ease-out ${
+        className={`fixed top-0 left-0 z-[100] h-[2px] bg-[var(--color-accent)] transition-all duration-300 ease-out ${
           isNavigating ? 'w-2/3 opacity-100' : 'w-full opacity-0'
         }`}
       />
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-[#FF3B30] focus:text-[#FAF9F6] focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase focus:rounded-full"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-[var(--color-accent)] focus:text-white focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase focus:rounded-full"
       >
         Skip to content
       </a>

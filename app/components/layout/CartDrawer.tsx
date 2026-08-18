@@ -275,7 +275,6 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 to="/collections/all-products"
                 variant="outline"
                 size="sm"
-                onClick={onClose}
                 className="w-full"
               >
                 Start Shopping
