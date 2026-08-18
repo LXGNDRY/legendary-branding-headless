@@ -17,12 +17,12 @@ export function ErrorBoundary() {
     <Container className="py-24 md:py-32">
       <div className="max-w-2xl mx-auto text-center">
         <p className="h-eyebrow mb-6">404 — Not Found</p>
-        <h1 className="font-serif text-[clamp(3rem,8vw,6rem)] leading-[0.95] mb-8 text-[#1A1A1A]">
+        <h1 className="font-serif text-[clamp(3rem,8vw,6rem)] leading-[0.95] mb-8 text-[var(--color-foreground)]">
           Lost in the
           <br />
           drop.
         </h1>
-        <p className="text-[#6B6B6B] text-lg leading-relaxed mb-12 max-w-md mx-auto">
+        <p className="text-[var(--color-text-secondary)] text-lg leading-relaxed mb-12 max-w-md mx-auto">
           The page you&apos;re looking for doesn&apos;t exist — or it sold out.
           Let&apos;s get you back to the good stuff.
         </p>
@@ -32,7 +32,7 @@ export function ErrorBoundary() {
           </Link>
           <Link
             to="/collections/all-products"
-            className="px-6 py-3 border border-[#1A1A1A] text-sm tracking-wide uppercase hover:bg-[#1A1A1A] hover:text-white transition-colors"
+            className="px-6 py-3 border border-[var(--color-foreground)] text-sm tracking-wide uppercase hover:bg-[var(--color-foreground)] hover:text-white transition-colors"
           >
             Shop All
           </Link>

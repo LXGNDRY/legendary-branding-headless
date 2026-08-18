@@ -49,7 +49,7 @@ export default function Lookbook({
   const validItems = items.filter((item) => item.image && item.image.url);
 
   return (
-    <section className="h-section bg-[#FAF9F6] h-reveal">
+    <section className="h-section bg-[var(--color-background)] h-reveal">
       <div className="h-container">
         <div className="h-section-header">
           <div>
@@ -115,12 +115,12 @@ export default function Lookbook({
                       className="group relative block"
                     >
                       {/* Hotspot dot */}
-                      <div className="w-10 h-10 rounded-full bg-[#FF3B30] flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-110 z-10 shadow-lg">
+                      <div className="w-10 h-10 rounded-full bg-[var(--color-accent)] flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-110 z-10 shadow-lg">
                         <span className="text-white text-base font-light leading-none">+</span>
                       </div>
 
                       {/* Product popup card */}
-                      <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-2 w-64 bg-white p-4 opacity-0 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto flex gap-4 shadow-lg border border-[#E8E6E1]">
+                      <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-2 w-64 bg-white p-4 opacity-0 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto flex gap-4 shadow-lg border border-[var(--color-border-subtle)]">
                         {item.product.image && (
                           <img
                             src={item.product.image.url}
@@ -134,7 +134,7 @@ export default function Lookbook({
                           </div>
                           <Money
                             data={item.product.price as any}
-                            className="text-xs text-[#6B6B6B]"
+                            className="text-xs text-[var(--color-text-secondary)]"
                           />
                         </div>
                       </div>

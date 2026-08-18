@@ -60,7 +60,7 @@ export default function BeforeAfter({
   };
 
   return (
-    <section className="h-section bg-[#FAF9F6] h-reveal">
+    <section className="h-section bg-[var(--color-background)] h-reveal">
       <div className="h-container">
         {(eyebrow || heading) && (
           <div className="mb-10">
@@ -91,7 +91,7 @@ export default function BeforeAfter({
               sizes="100vw"
             />
             {afterLabel && (
-              <span className="absolute top-4 right-4 h-eyebrow bg-[#1A1A1A] text-[#FAF9F6] px-4 py-2">
+              <span className="absolute top-4 right-4 h-eyebrow bg-[var(--color-foreground)] text-[var(--color-text-inverse)] px-4 py-2">
                 {afterLabel}
               </span>
             )}
@@ -113,7 +113,7 @@ export default function BeforeAfter({
               />
             </div>
             {beforeLabel && (
-              <span className="absolute top-4 left-4 h-eyebrow bg-[#FF3B30] text-[#FAF9F6] px-4 py-2">
+              <span className="absolute top-4 left-4 h-eyebrow bg-[var(--color-accent)] text-[var(--color-text-inverse)] px-4 py-2">
                 {beforeLabel}
               </span>
             )}
@@ -132,9 +132,9 @@ export default function BeforeAfter({
             onKeyDown={onKeyDown}
           >
             <div className="w-px bg-white/80 flex-1" />
-            <div className="w-11 h-11 rounded-full bg-[#FF3B30] shadow-lg flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-full bg-[var(--color-accent)] text-[var(--color-text-inverse)] shadow-lg flex items-center justify-center shrink-0">
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M7 5L2 10L7 15M13 5L18 10L13 15" stroke="#FAF9F6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M7 5L2 10L7 15M13 5L18 10L13 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
             <div className="w-px bg-white/80 flex-1" />

@@ -31,7 +31,7 @@ export default function ProductGallery({
   return (
     <div className="space-y-2">
       {/* Main image */}
-      <div className="overflow-hidden rounded-lg bg-[#f7f7f7]">
+      <div className="overflow-hidden rounded-lg bg-[var(--color-surface)]">
         <Image
           data={active}
           aspectRatio="3/4"
@@ -55,8 +55,8 @@ export default function ProductGallery({
               aria-label={`View image ${i + 1}`}
               className={`overflow-hidden rounded-lg border transition-colors ${
                 i === activeIndex
-                  ? 'border-[#0a0a0a]'
-                  : 'border-transparent hover:border-[#e5e5e5]'
+                  ? 'border-[var(--color-foreground)]'
+                  : 'border-transparent hover:border-[var(--color-border-subtle)]'
               }`}
             >
               <Image

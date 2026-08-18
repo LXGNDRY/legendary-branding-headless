@@ -42,16 +42,16 @@ export default function NewsletterForm({
 
   const inputStyles =
     variant === 'popup'
-      ? 'flex-1 bg-transparent border border-[#333] border-r-0 px-4 py-3.5 text-sm text-[#FAF9F6] placeholder:text-[#6B6B6B] outline-none focus:border-[#FF3B30] transition-colors'
+      ? 'flex-1 bg-transparent border border-[var(--color-border-medium)] border-r-0 px-4 py-3.5 text-sm text-[var(--color-text-inverse)] placeholder:text-[var(--color-text-secondary)] outline-none focus:border-[var(--color-accent)] transition-colors'
       : variant === 'footer'
-        ? 'flex-1 border border-[#E8E6E1] border-r-0 px-4 py-3 text-sm text-[#1A1A1A] placeholder:text-[#9E9C97] outline-none focus:border-[#1A1A1A] transition-colors bg-transparent'
-        : 'flex-1 px-5 py-3.5 bg-[#FAF9F6] border border-[#E8E6E1] text-[#1A1A1A] text-sm placeholder-[#9E9C97] focus:outline-none focus:border-[#1A1A1A] transition-colors rounded-full';
+        ? 'flex-1 border border-[var(--color-border-subtle)] border-r-0 px-4 py-3 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-text-tertiary)] outline-none focus:border-[var(--color-foreground)] transition-colors bg-transparent'
+        : 'flex-1 px-5 py-3.5 bg-[var(--color-background)] border border-[var(--color-border-subtle)] text-[var(--color-foreground)] text-sm placeholder-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-foreground)] transition-colors rounded-full';
 
   const buttonStyles =
     variant === 'popup'
-      ? 'px-6 py-3.5 bg-[#FF3B30] text-[#FAF9F6] hover:bg-[#E0342A] transition-colors whitespace-nowrap h-eyebrow font-semibold'
+      ? 'px-6 py-3.5 bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap h-eyebrow font-semibold'
       : variant === 'footer'
-        ? 'px-5 py-3 bg-[#1A1A1A] text-[#FAF9F6] h-eyebrow font-semibold hover:bg-[#FF3B30] transition-colors whitespace-nowrap'
+        ? 'px-5 py-3 bg-[var(--color-foreground)] text-[var(--color-text-inverse)] h-eyebrow font-semibold hover:bg-[var(--color-accent)] transition-colors whitespace-nowrap'
         : 'h-btn-primary whitespace-nowrap';
 
   const formWrapperClass =
@@ -63,7 +63,7 @@ export default function NewsletterForm({
     <div className={className}>
       {isSuccess ? (
         <p
-          className={`h-eyebrow ${variant === 'popup' ? 'text-[#FF3B30]' : 'text-[#1A1A1A]'}`}
+          className={`h-eyebrow ${variant === 'popup' ? 'text-[var(--color-accent)]' : 'text-[var(--color-foreground)]'}`}
         >
           {fetcher.data?.message || "You're in. Watch your inbox."}
         </p>
@@ -96,7 +96,7 @@ export default function NewsletterForm({
       )}
       {error && (
         <p
-          className={`mt-2 text-[0.75rem] ${variant === 'popup' ? 'text-[#FF3B30]' : 'text-[#FF3B30]'}`}
+          className={`mt-2 text-[0.75rem] ${variant === 'popup' ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent)]'}`}
           role="alert"
         >
           {error}

@@ -84,21 +84,21 @@ export default function JournalIndex() {
   return (
     <Container className="py-16">
       <div className="mb-14 max-w-lg">
-        <p className="text-[10px] font-semibold tracking-widest uppercase text-[#6b6b6b] mb-2">
+        <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-text-secondary)] mb-2">
           Editorial
         </p>
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
           The Journal
         </h1>
-        <p className="mt-4 text-sm text-[#6b6b6b] leading-relaxed">
+        <p className="mt-4 text-sm text-[var(--color-text-secondary)] leading-relaxed">
           Culture. Craft. Community.
         </p>
       </div>
 
       {/* Featured article */}
       {featured && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-14 pb-14 border-b border-[#e5e5e5]">
-          <Link to={`/journal/${featured.handle}`} prefetch="intent" className="group block overflow-hidden rounded-lg bg-[#f7f7f7]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-14 pb-14 border-b border-[var(--color-border-subtle)]">
+          <Link to={`/journal/${featured.handle}`} prefetch="intent" className="group block overflow-hidden rounded-lg bg-[var(--color-surface)]">
             {featured.image ? (
               <Image
                 data={featured.image}
@@ -110,31 +110,31 @@ export default function JournalIndex() {
                 className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             ) : (
-              <div className="aspect-[4/3] bg-[#e5e5e5]" />
+              <div className="aspect-[4/3] bg-[var(--color-border-subtle)]" />
             )}
           </Link>
           <div className="flex flex-col justify-center">
-            <span className="text-[10px] font-semibold tracking-widest uppercase text-[#6b6b6b] mb-3">
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-text-secondary)] mb-3">
               Featured
             </span>
             <Link to={`/journal/${featured.handle}`} prefetch="intent" className="group">
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-4 group-hover:text-[#6b6b6b] transition-colors leading-tight">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-4 group-hover:text-[var(--color-text-secondary)] transition-colors leading-tight">
                 {featured.title}
               </h2>
             </Link>
             {featured.excerpt && (
-              <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4 line-clamp-3">
+              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed mb-4 line-clamp-3">
                 {featured.excerpt}
               </p>
             )}
-            <p className="text-[11px] text-[#999999] tracking-wide mb-6">
+            <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide mb-6">
               {formatDate(featured.publishedAt)}
               {featured.author?.name && ` · ${featured.author.name}`}
             </p>
             <Link
               to={`/journal/${featured.handle}`}
               prefetch="intent"
-              className="text-xs font-semibold tracking-widest uppercase underline underline-offset-4 hover:text-[#6b6b6b] transition-colors w-fit"
+              className="text-xs font-semibold tracking-widest uppercase underline underline-offset-4 hover:text-[var(--color-text-secondary)] transition-colors w-fit"
             >
               Read More
             </Link>
@@ -147,7 +147,7 @@ export default function JournalIndex() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {rest.map((article, i) => (
             <article key={article.id} className="group">
-              <Link to={`/journal/${article.handle}`} prefetch="intent" className="block mb-4 overflow-hidden rounded-lg bg-[#f7f7f7]">
+              <Link to={`/journal/${article.handle}`} prefetch="intent" className="block mb-4 overflow-hidden rounded-lg bg-[var(--color-surface)]">
                 {article.image ? (
                   <Image
                     data={article.image}
@@ -159,19 +159,19 @@ export default function JournalIndex() {
                     className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="aspect-[3/2] bg-[#e5e5e5]" />
+                  <div className="aspect-[3/2] bg-[var(--color-border-subtle)]" />
                 )}
               </Link>
-              <p className="text-[11px] text-[#999999] tracking-wide mb-2">
+              <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide mb-2">
                 {formatDate(article.publishedAt)}
               </p>
               <Link to={`/journal/${article.handle}`} prefetch="intent">
-                <h3 className="text-sm font-medium leading-snug group-hover:text-[#6b6b6b] transition-colors mb-2">
+                <h3 className="text-sm font-medium leading-snug group-hover:text-[var(--color-text-secondary)] transition-colors mb-2">
                   {article.title}
                 </h3>
               </Link>
               {article.excerpt && (
-                <p className="text-xs text-[#6b6b6b] leading-relaxed line-clamp-2">
+                <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
                   {article.excerpt}
                 </p>
               )}
@@ -182,7 +182,7 @@ export default function JournalIndex() {
 
       {articles.length === 0 && (
         <div className="py-24 text-center">
-          <p className="text-sm text-[#6b6b6b] tracking-wide">No articles yet. Check back soon.</p>
+          <p className="text-sm text-[var(--color-text-secondary)] tracking-wide">No articles yet. Check back soon.</p>
         </div>
       )}
     </Container>

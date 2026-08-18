@@ -25,9 +25,9 @@ export default function StatStrip({
   className = '',
   variant = 'light',
 }: StatStripProps) {
-  const bg = variant === 'dark' ? 'bg-[#1A1A1A] text-[#FAF9F6] border-[#333]' : 'bg-[#FAF9F6] text-[#1A1A1A] border-[#E8E6E1]';
-  const valueColor = variant === 'dark' ? 'text-[#FAF9F6]' : 'text-[#1A1A1A]';
-  const labelColor = variant === 'dark' ? 'text-[#9E9C97]' : 'text-[#6B6B6B]';
+  const bg = variant === 'dark' ? 'bg-[var(--color-foreground)] text-[var(--color-text-inverse)] border-[var(--color-border-medium)]' : 'bg-[var(--color-background)] text-[var(--color-foreground)] border-[var(--color-border-subtle)]';
+  const valueColor = variant === 'dark' ? 'text-[var(--color-text-inverse)]' : 'text-[var(--color-foreground)]';
+  const labelColor = variant === 'dark' ? 'text-[var(--color-text-tertiary)]' : 'text-[var(--color-text-secondary)]';
 
   return (
     <dl

@@ -56,21 +56,21 @@ export default function DropTimer({
     <section className="h-section h-reveal">
       <div className="h-container">
         <div
-          className="relative overflow-hidden bg-[#1A1A1A] text-[#FAF9F6] bg-cover bg-center"
+          className="relative overflow-hidden bg-[var(--color-foreground)] text-[var(--color-text-inverse)] bg-cover bg-center"
           style={bgStyle}
         >
           {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1A1A1A]/95 to-[#1A1A1A]/70 z-0" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-foreground)]/95 to-[var(--color-foreground)]/70 z-0" />
 
           <div className="relative z-10 grid md:grid-cols-[1.5fr_1fr] gap-12 items-center px-8 md:px-16 py-16 md:py-24">
             {/* Text side */}
             <div className="flex flex-col gap-4">
-              <p className="h-eyebrow text-[#9E9C97]">{eyebrow}</p>
+              <p className="h-eyebrow text-[var(--color-text-tertiary)]">{eyebrow}</p>
               <h2 className="text-[clamp(2rem,5vw,4.5rem)] leading-[0.95] font-serif font-normal">
                 {heading}
               </h2>
               {description && (
-                <p className="text-[#FAF9F6]/70 max-w-[50ch] leading-relaxed">
+                <p className="text-[var(--color-text-inverse)]/70 max-w-[50ch] leading-relaxed">
                   {description}
                 </p>
               )}
@@ -119,10 +119,10 @@ export default function DropTimer({
 function TimerUnit({value, label}: {value: string; label: string}) {
   return (
     <div className="flex flex-col items-center gap-1 min-w-[60px]">
-      <span className="text-[clamp(2rem,5vw,3.5rem)] font-serif leading-none text-[#FF3B30]">
+      <span className="text-[clamp(2rem,5vw,3.5rem)] font-serif leading-none text-[var(--color-accent)]">
         {value}
       </span>
-      <span className="h-eyebrow text-[#9E9C97]">
+      <span className="h-eyebrow text-[var(--color-text-tertiary)]">
         {label}
       </span>
     </div>
@@ -131,7 +131,7 @@ function TimerUnit({value, label}: {value: string; label: string}) {
 
 function TimerSep() {
   return (
-    <span className="text-2xl font-serif text-[#9E9C97] leading-none mt-2">:</span>
+    <span className="text-2xl font-serif text-[var(--color-text-tertiary)] leading-none mt-2">:</span>
   );
 }
 

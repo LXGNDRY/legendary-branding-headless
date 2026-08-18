@@ -215,7 +215,7 @@ export default function AccountEditPage() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" variant="solid">
+            <Button type="submit" variant="primary">
               Save Changes
             </Button>
             <Link to="/account">

@@ -105,7 +105,7 @@ function CloseIcon() {
 function CountBadge({count}: {count: number}) {
   if (!count) return null;
   return (
-    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-[#FF3B30] text-white text-[9px] font-bold rounded-full px-1 leading-none">
+    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-[9px] font-bold rounded-full px-1 leading-none">
       {count > 99 ? '99+' : count}
     </span>
   );
@@ -116,11 +116,11 @@ function CountBadge({count}: {count: number}) {
 function MegaDropdown({item, onClose}: {item: NavItem; onClose: () => void}) {
   if (!item.groups) return null;
   return (
-    <div className="absolute top-full left-0 w-full bg-[#FAF9F6] border-t border-b border-[#E8E6E1] shadow-sm z-[200]">
-      <div className="max-w-screen-xl mx-auto px-[clamp(1rem,4vw,2.5rem)] py-10 grid grid-cols-4 gap-10">
+    <div className="absolute top-full left-0 w-full bg-[var(--color-background)] border-t border-b border-[var(--color-border-subtle)] shadow-sm z-[200]">
+      <div className="h-container py-10 grid grid-cols-4 gap-10">
         {/* Featured placeholder — left 1 col */}
-        <div className="col-span-1 bg-[#F3F2EE] aspect-[3/4] flex items-end p-5">
-          <span className="text-[10px] tracking-widest uppercase text-[#6B6B6B]">
+        <div className="col-span-1 bg-[var(--color-surface)] aspect-[3/4] flex items-end p-5">
+          <span className="text-[10px] tracking-widest uppercase text-[var(--color-text-secondary)]">
             {item.label}
           </span>
         </div>
@@ -136,11 +136,11 @@ function MegaDropdown({item, onClose}: {item: NavItem; onClose: () => void}) {
                     <Link
                       to={link.href}
                       onClick={onClose}
-                      className="group flex items-center gap-2 text-[0.9rem] text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+                      className="group flex items-center gap-2 text-[0.9rem] text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
                     >
                       {link.label}
                       {link.isNew && (
-                        <span className="text-[9px] font-semibold tracking-widest uppercase bg-[#FF3B30] text-white px-1.5 py-0.5 rounded-full">
+                        <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-[var(--color-text-inverse)] px-1.5 py-0.5 rounded-full">
                           New
                         </span>
                       )}
@@ -169,24 +169,24 @@ function MobileMenu({
 }) {
   return (
     <div
-      className={`fixed inset-0 z-[1000] flex flex-col bg-[#FAF9F6] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      className={`fixed inset-0 z-[1000] flex flex-col bg-[var(--color-background)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
         open ? 'translate-y-0' : '-translate-y-full'
       }`}
       aria-modal="true"
       role="dialog"
       aria-label="Main menu"
     >
-      <div className="flex items-center justify-between px-5 h-16 border-b border-[#E8E6E1]">
+      <div className="flex items-center justify-between px-5 h-16 border-b border-[var(--color-border-subtle)]">
         <Link
           to="/"
           onClick={onClose}
-          className="font-serif text-xl text-[#1A1A1A]"
+          className="font-serif text-xl text-[var(--color-foreground)]"
         >
           LEGENDARY
         </Link>
         <button
           onClick={onClose}
-          className="p-2 text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+          className="p-2 text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
           aria-label="Close menu"
         >
           <CloseIcon />
@@ -200,7 +200,7 @@ function MobileMenu({
               <Link
                 to={item.href}
                 onClick={onClose}
-                className="font-serif text-[clamp(2rem,8vw,3rem)] leading-none text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+                className="font-serif text-[clamp(2rem,8vw,3rem)] leading-none text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
               >
                 {item.label}
               </Link>
@@ -208,25 +208,25 @@ function MobileMenu({
           ))}
         </ul>
 
-        <div className="border-t border-[#E8E6E1] pt-8 space-y-4">
+        <div className="border-t border-[var(--color-border-subtle)] pt-8 space-y-4">
           <Link
             to={isLoggedIn ? '/account' : '/account/login'}
             onClick={onClose}
-            className="h-eyebrow block hover:text-[#1A1A1A] transition-colors"
+            className="h-eyebrow block hover:text-[var(--color-foreground)] transition-colors"
           >
             {isLoggedIn ? 'My Account' : 'Sign In'}
           </Link>
           <Link
             to="/wishlist"
             onClick={onClose}
-            className="h-eyebrow block hover:text-[#1A1A1A] transition-colors"
+            className="h-eyebrow block hover:text-[var(--color-foreground)] transition-colors"
           >
             Wishlist
           </Link>
           {isLoggedIn && (
             <a
               href="/account/logout"
-              className="h-eyebrow block hover:text-[#1A1A1A] transition-colors"
+              className="h-eyebrow block hover:text-[var(--color-foreground)] transition-colors"
             >
               Sign Out
             </a>
@@ -292,15 +292,15 @@ export default function Header({
       <header
         className={`sticky top-0 z-[100] transition-all duration-300 ${
           scrolled
-            ? 'bg-[#FAF9F6]/95 backdrop-blur-md border-b border-[#E8E6E1] shadow-[0_1px_0_rgba(26,26,26,0.04)]'
-            : 'bg-[#FAF9F6] border-b border-transparent'
+            ? 'bg-[var(--color-background)]/95 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-[0_1px_0_rgba(26,26,26,0.04)]'
+            : 'bg-[var(--color-background)] border-b border-transparent'
         }`}
       >
-        <div className="max-w-screen-xl mx-auto px-[clamp(1rem,4vw,2.5rem)]">
+        <div className="h-container">
           <div className="flex items-center justify-between h-16 gap-8">
             {/* Mobile: hamburger */}
             <button
-              className="md:hidden p-1.5 text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+              className="md:hidden p-1.5 text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
               aria-expanded={mobileOpen}
@@ -311,7 +311,7 @@ export default function Header({
             {/* Wordmark */}
             <Link
               to="/"
-              className="font-serif text-[1.35rem] tracking-tight text-[#1A1A1A] select-none shrink-0"
+              className="font-serif text-[1.35rem] tracking-tight text-[var(--color-foreground)] select-none shrink-0"
             >
               LEGENDARY
             </Link>
@@ -330,12 +330,12 @@ export default function Header({
                 >
                   <Link
                     to={item.href}
-                    className={`h-eyebrow py-1 relative transition-colors hover:text-[#1A1A1A] ${
-                      activeNav === item.label ? 'text-[#1A1A1A]' : ''
+                    className={`h-eyebrow py-1 relative transition-colors hover:text-[var(--color-foreground)] ${
+                      activeNav === item.label ? 'text-[var(--color-foreground)]' : ''
                     }`}
                   >
                     {item.label}
-                    <span className="absolute bottom-0 left-0 w-full h-px bg-[#1A1A1A] scale-x-0 transition-transform duration-200 origin-left group-hover:scale-x-100" />
+                    <span className="absolute bottom-0 left-0 w-full h-px bg-[var(--color-foreground)] scale-x-0 transition-transform duration-200 origin-left group-hover:scale-x-100" />
                   </Link>
                 </div>
               ))}
@@ -345,7 +345,7 @@ export default function Header({
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setSearchOpen((s) => !s)}
-                className="p-2 text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+                className="p-2 text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
                 aria-label={searchOpen ? 'Close search' : 'Search'}
                 aria-expanded={searchOpen}
               >
@@ -354,7 +354,7 @@ export default function Header({
 
               <Link
                 to={isLoggedIn ? '/account' : '/account/login'}
-                className="hidden sm:flex p-2 text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+                className="hidden sm:flex p-2 text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
                 aria-label={isLoggedIn ? 'My Account' : 'Sign In'}
               >
                 <UserIcon />
@@ -362,7 +362,7 @@ export default function Header({
 
               <Link
                 to="/wishlist"
-                className="relative hidden sm:flex p-2 text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+                className="relative hidden sm:flex p-2 text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
                 aria-label={`Wishlist${wishlistCount > 0 ? ` (${wishlistCount} items)` : ''}`}
               >
                 <WishlistIcon />
@@ -372,7 +372,7 @@ export default function Header({
               <button
                 type="button"
                 onClick={onOpenCart}
-                className="relative p-2 text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+                className="relative p-2 text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
                 aria-label={`Cart${cartCount > 0 ? ` (${cartCount} items)` : ''}`}
               >
                 <CartIcon />
@@ -383,7 +383,7 @@ export default function Header({
 
           {/* Search panel */}
           {searchOpen && (
-            <div className="border-t border-[#E8E6E1] py-3">
+            <div className="border-t border-[var(--color-border-subtle)] py-3">
               <SearchTypeahead onClose={() => setSearchOpen(false)} />
             </div>
           )}

@@ -13,10 +13,10 @@ import type {ReactNode} from 'react';
  */
 
 const variants = {
-  default: 'bg-[#1A1A1A] text-white',
-  sale: 'bg-[#FF3B30] text-white',
-  new: 'bg-[#1A1A1A] text-white',
-  soldout: 'bg-[#E8E6E1] text-[#6B6B6B]',
+  default: 'bg-[var(--color-foreground)] text-[var(--color-text-inverse)]',
+  sale: 'bg-[var(--color-accent)] text-[var(--color-text-inverse)]',
+  new: 'bg-[var(--color-foreground)] text-[var(--color-text-inverse)]',
+  soldout: 'bg-[var(--color-surface)] text-[var(--color-text-secondary)]',
 } as const;
 
 interface BadgeProps {

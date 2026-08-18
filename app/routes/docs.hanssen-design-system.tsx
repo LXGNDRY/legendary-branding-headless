@@ -17,7 +17,7 @@ function SectionHeading({id, children}: {id: string; children: React.ReactNode})
   return (
     <h2
       id={id}
-      className="font-serif text-3xl text-[#1A1A1A] mt-16 mb-6 pb-3 border-b border-[#E8E6E1] scroll-mt-24"
+      className="font-serif text-3xl text-[var(--color-foreground)] mt-16 mb-6 pb-3 border-b border-[var(--color-border-subtle)] scroll-mt-24"
     >
       {children}
     </h2>
@@ -28,7 +28,7 @@ function SubHeading({id, children}: {id: string; children: React.ReactNode}) {
   return (
     <h3
       id={id}
-      className="font-serif text-xl text-[#1A1A1A] mt-8 mb-4 scroll-mt-24"
+      className="font-serif text-xl text-[var(--color-foreground)] mt-8 mb-4 scroll-mt-24"
     >
       {children}
     </h3>
@@ -36,12 +36,12 @@ function SubHeading({id, children}: {id: string; children: React.ReactNode}) {
 }
 
 function P({children}: {children: React.ReactNode}) {
-  return <p className="text-[#1A1A1A]/80 leading-relaxed mb-4">{children}</p>;
+  return <p className="text-[var(--color-foreground)]/80 leading-relaxed mb-4">{children}</p>;
 }
 
 function InlineCode({children}: {children: React.ReactNode}) {
   return (
-    <code className="px-1.5 py-0.5 bg-[#F3F2EE] text-sm text-[#FF3B30] rounded font-mono">
+    <code className="px-1.5 py-0.5 bg-[var(--color-surface)] text-sm text-[var(--color-accent)] rounded font-mono">
       {children}
     </code>
   );
@@ -58,11 +58,11 @@ function DocTable({
     <div className="overflow-x-auto mb-6">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b border-[#E8E6E1]">
+          <tr className="border-b border-[var(--color-border-subtle)]">
             {headers.map((h) => (
               <th
                 key={h}
-                className="text-left h-eyebrow text-[#9E9C97] py-3 pr-4 font-normal first:pl-0"
+                className="text-left h-eyebrow text-[var(--color-text-tertiary)] py-3 pr-4 font-normal first:pl-0"
               >
                 {h}
               </th>
@@ -71,11 +71,11 @@ function DocTable({
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-b border-[#E8E6E1]/50">
+            <tr key={i} className="border-b border-[var(--color-border-subtle)]/50">
               {row.map((cell, j) => (
                 <td
                   key={j}
-                  className="py-3 pr-4 text-[#1A1A1A]/80 first:pl-0"
+                  className="py-3 pr-4 text-[var(--color-foreground)]/80 first:pl-0"
                 >
                   {cell}
                 </td>
@@ -92,13 +92,13 @@ function ColorSwatch({hex, label, usage}: {hex: string; label: string; usage: st
   return (
     <div className="flex items-start gap-4">
       <div
-        className="w-12 h-12 rounded-lg border border-[#E8E6E1] shrink-0"
+        className="w-12 h-12 rounded-lg border border-[var(--color-border-subtle)] shrink-0"
         style={{backgroundColor: hex}}
       />
       <div>
-        <p className="font-medium text-[#1A1A1A]">{label}</p>
-        <p className="text-xs text-[#9E9C97] font-mono">{hex}</p>
-        <p className="text-sm text-[#6B6B6B] mt-1">{usage}</p>
+        <p className="font-medium text-[var(--color-foreground)]">{label}</p>
+        <p className="text-xs text-[var(--color-text-tertiary)] font-mono">{hex}</p>
+        <p className="text-sm text-[var(--color-text-secondary)] mt-1">{usage}</p>
       </div>
     </div>
   );
@@ -110,11 +110,11 @@ export default function HanssenDesignSystemPage() {
   return (
     <DocsLayout currentPath={location.pathname}>
       <div>
-        <p className="h-eyebrow text-[#FF3B30] mb-4">DESIGN SYSTEM</p>
-        <h1 className="font-serif text-4xl md:text-5xl font-normal text-[#1A1A1A] mb-4 leading-tight">
+        <p className="h-eyebrow text-[var(--color-accent)] mb-4">DESIGN SYSTEM</p>
+        <h1 className="font-serif text-4xl md:text-5xl font-normal text-[var(--color-foreground)] mb-4 leading-tight">
           Hanssen Design System
         </h1>
-        <p className="text-lg text-[#6B6B6B] leading-relaxed mb-8 max-w-2xl">
+        <p className="text-lg text-[var(--color-text-secondary)] leading-relaxed mb-8 max-w-2xl">
           Editorial luxury streetwear — off-white canvas, serif headlines,
           accent red CTAs, Inter body. Inspired by the Hanssen Framer template.
         </p>
@@ -240,7 +240,7 @@ export default function HanssenDesignSystemPage() {
           ]}
         />
 
-        <p className="text-sm text-[#9E9C97] mt-12 pt-6 border-t border-[#E8E6E1]">
+        <p className="text-sm text-[var(--color-text-tertiary)] mt-12 pt-6 border-t border-[var(--color-border-subtle)]">
           Full design system reference with component catalog, section references,
           and usage guidelines is available in{' '}
           <InlineCode>docs/theme/hanssen-design-system.md</InlineCode>.

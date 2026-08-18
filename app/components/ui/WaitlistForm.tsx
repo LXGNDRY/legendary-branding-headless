@@ -26,7 +26,7 @@ export default function WaitlistForm({
 
   if (submitted) {
     return (
-      <div className="p-4 bg-[#f5f5f5] rounded-sm border border-[#e5e5e5]">
+      <div className="p-4 bg-[var(--color-surface)] rounded-sm border border-[var(--color-border-subtle)]">
         <p className="text-xs font-medium mb-1">You&apos;re on the list</p>
         <p className="text-xs text-black/60">
           We&apos;ll email <span className="font-medium">{email}</span> when
@@ -37,7 +37,7 @@ export default function WaitlistForm({
   }
 
   return (
-    <div className="p-4 bg-[#f5f5f5] rounded-sm border border-[#e5e5e5]">
+    <div className="p-4 bg-[var(--color-surface)] rounded-sm border border-[var(--color-border-subtle)]">
       <p className="text-xs font-medium mb-2">
         Sold out? Get notified when it&apos;s back.
       </p>
@@ -52,11 +52,11 @@ export default function WaitlistForm({
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
           required
-          className="flex-1 border border-[#e5e5e5] px-3 py-2 text-xs bg-white focus:border-black outline-none transition-colors"
+          className="flex-1 border border-[var(--color-border-subtle)] px-3 py-2 text-xs bg-white focus:border-black outline-none transition-colors"
         />
         <button
           type="submit"
-          className="px-4 py-2 bg-black text-white text-[0.65rem] font-semibold tracking-[0.1em] uppercase hover:bg-black/80 transition-colors"
+          className="px-4 py-2 bg-black text-[var(--color-text-inverse)] text-[0.65rem] font-semibold tracking-[0.1em] uppercase hover:bg-black/80 transition-colors"
         >
           Notify Me
         </button>

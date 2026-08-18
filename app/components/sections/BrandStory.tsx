@@ -33,7 +33,7 @@ export default function BrandStory({
   const contentOrder = imagePosition === 'right' ? 'md:order-first' : '';
 
   return (
-    <section className="h-section bg-[#FAF9F6] h-reveal overflow-hidden">
+    <section className="h-section bg-[var(--color-background)] h-reveal overflow-hidden">
       <div className="h-container">
         <div
           className={`grid md:grid-cols-2 gap-12 md:gap-20 items-center`}
@@ -50,7 +50,7 @@ export default function BrandStory({
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             ) : (
-              <div className="absolute inset-0 bg-[#F3F2EE] flex items-center justify-center">
+              <div className="absolute inset-0 bg-[var(--color-surface)] flex items-center justify-center">
                 <span className="h-eyebrow">Brand Image</span>
               </div>
             )}
@@ -64,7 +64,7 @@ export default function BrandStory({
             <h2 className="text-[clamp(2rem,4vw,3.5rem)] leading-[1.05] font-serif font-normal mb-6">
               {heading}
             </h2>
-            <p className="text-[#6B6B6B] leading-relaxed mb-8 max-w-md text-[1rem]">
+            <p className="text-[var(--color-text-secondary)] leading-relaxed mb-8 max-w-md text-[1rem]">
               {body}
             </p>
             {buttonLabel && buttonLink && (

@@ -20,13 +20,13 @@ export default function CategoryGrid({eyebrow = 'Shop', heading = 'Collections',
   const visible = items.slice(0, 3);
 
   return (
-    <section className="h-section bg-[#FAF9F6]">
+    <section className="h-section bg-[var(--color-background)]">
       <div className="h-container">
         <div className="flex items-end justify-between mb-10">
           <div>
             {eyebrow && <p className="h-eyebrow mb-3">{eyebrow}</p>}
             {heading && (
-              <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[#1A1A1A]">
+              <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-foreground)]">
                 {heading}
               </h2>
             )}
@@ -41,7 +41,7 @@ export default function CategoryGrid({eyebrow = 'Shop', heading = 'Collections',
             <Link
               key={item.id}
               to={`/collections/${item.handle}`}
-              className="h-reveal group relative aspect-[3/4] overflow-hidden rounded-lg bg-[#F3F2EE]"
+              className="h-reveal group relative aspect-[3/4] overflow-hidden rounded-lg bg-[var(--color-surface)]"
             >
               {item.image?.url ? (
                 <Image
@@ -53,12 +53,12 @@ export default function CategoryGrid({eyebrow = 'Shop', heading = 'Collections',
                   sizes="(max-width: 640px) 100vw, 33vw"
                 />
               ) : (
-                <div className="absolute inset-0 bg-[#1A1A1A]/5" />
+                <div className="absolute inset-0 bg-[var(--color-foreground)]/5" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A]/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-foreground)]/60 via-transparent to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
-                <p className="h-eyebrow text-[#FAF9F6]/70 mb-1">{eyebrow}</p>
-                <p className="font-serif text-[1.35rem] text-[#FAF9F6] leading-tight">{item.title}</p>
+                <p className="h-eyebrow text-[var(--color-text-inverse)]/70 mb-1">{eyebrow}</p>
+                <p className="font-serif text-[1.35rem] text-[var(--color-text-inverse)] leading-tight">{item.title}</p>
               </div>
             </Link>
           ))}

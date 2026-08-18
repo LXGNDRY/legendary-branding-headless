@@ -61,10 +61,10 @@ export default function WishlistPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="space-y-3">
-              <div className="aspect-[3/4] bg-[#f5f5f5] animate-pulse" />
+              <div className="aspect-[3/4] bg-[var(--color-surface)] animate-pulse" />
               <div className="space-y-1.5">
-                <div className="h-4 w-3/4 bg-[#f5f5f5] animate-pulse" />
-                <div className="h-3 w-1/3 bg-[#f5f5f5] animate-pulse" />
+                <div className="h-4 w-3/4 bg-[var(--color-surface)] animate-pulse" />
+                <div className="h-3 w-1/3 bg-[var(--color-surface)] animate-pulse" />
               </div>
             </div>
           ))}
@@ -83,7 +83,7 @@ export default function WishlistPage() {
             Save items you love by clicking the heart icon on any product.
             Come back anytime to pick up where you left off.
           </p>
-          <Button as="link" to="/collections/all-products" variant="solid">
+          <Button as="link" to="/collections/all-products" variant="primary">
             Shop All Products
           </Button>
         </div>

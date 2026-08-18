@@ -34,16 +34,16 @@ export default function NewsletterPopup() {
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-[#1A1A1A]/70"
+        className="absolute inset-0 bg-[var(--color-foreground)]/70"
         onClick={dismiss}
         aria-hidden="true"
       />
 
       {/* Panel */}
-      <div className="relative bg-[#1A1A1A] text-[#FAF9F6] max-w-md w-full p-8 sm:p-12">
+      <div className="relative bg-[var(--color-foreground)] text-[var(--color-text-inverse)] max-w-md w-full p-8 sm:p-12">
         <button
           onClick={dismiss}
-          className="absolute top-5 right-5 text-[#9E9C97] hover:text-[#FAF9F6] transition-colors p-1"
+          className="absolute top-5 right-5 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-inverse)] transition-colors p-1"
           aria-label="Close"
         >
           <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -51,11 +51,11 @@ export default function NewsletterPopup() {
           </svg>
         </button>
 
-        <p className="h-eyebrow mb-4 text-[#9E9C97]">The List</p>
+        <p className="h-eyebrow mb-4 text-[var(--color-text-tertiary)]">The List</p>
         <h2 className="text-[clamp(1.75rem,3vw,2.5rem)] font-serif leading-tight mb-3">
           Stay Legendary
         </h2>
-        <p className="text-[#FAF9F6]/60 text-sm leading-relaxed mb-8">
+        <p className="text-[var(--color-text-inverse)]/60 text-sm leading-relaxed mb-8">
           Early access to drops, exclusive offers, and behind-the-scenes content.
         </p>
         <NewsletterForm
@@ -64,7 +64,7 @@ export default function NewsletterPopup() {
           buttonText="Join →"
           placeholder="your@email.com"
         />
-        <p className="text-[#6B6B6B] text-[11px] mt-4">No spam. Unsubscribe anytime.</p>
+        <p className="text-[var(--color-text-secondary)] text-[11px] mt-4">No spam. Unsubscribe anytime.</p>
       </div>
     </div>
   );

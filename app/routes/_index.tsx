@@ -186,12 +186,12 @@ export default function Homepage() {
 
       {/* 7 — Best sellers */}
       {bestSellerProducts.length > 0 && (
-        <section className="h-section bg-[#FAF9F6]">
+        <section className="h-section bg-[var(--color-background)]">
           <div className="h-container">
             <div className="flex items-end justify-between mb-10">
               <div>
                 <p className="h-eyebrow mb-3">Most Wanted</p>
-                <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[#1A1A1A]">
+                <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-foreground)]">
                   Best Sellers
                 </h2>
               </div>

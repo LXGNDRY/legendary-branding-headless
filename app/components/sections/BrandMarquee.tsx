@@ -41,11 +41,11 @@ export default function BrandMarquee({
 
   const variantClasses = {
     editorial:
-      'bg-[#FAF9F6] text-[#1A1A1A] border-[#E8E6E1] border-y py-4',
+      'bg-[var(--color-background)] text-[var(--color-foreground)] border-[var(--color-border-subtle)] border-y py-4',
     bold:
       'bg-white text-black border-black border-y py-[14px]',
     minimal:
-      'bg-white text-black border-[#e5e5e5] border-y py-[14px]',
+      'bg-white text-black border-[var(--color-border-subtle)] border-y py-[14px]',
   };
 
   const textClasses = {
@@ -89,7 +89,7 @@ export default function BrandMarquee({
               </svg>
             )}
             {style === 'editorial' && (
-              <span className="text-[#FF3B30] not-italic text-2xl font-serif">✦</span>
+              <span className="text-[var(--color-accent)] not-italic text-2xl font-serif">✦</span>
             )}
             {item}
           </div>

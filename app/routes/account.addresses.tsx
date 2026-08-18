@@ -281,139 +281,139 @@ function AddressForm({
   submitLabel: string;
 }) {
   return (
-    <form method="POST" className="space-y-4 bg-[#F3F2EE] p-6 rounded-lg">
+    <form method="POST" className="space-y-4 bg-[var(--color-surface)] p-6 rounded-lg">
       <input type="hidden" name="intent" value={intent} />
       {address && <input type="hidden" name="id" value={address.id} />}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             First Name
           </label>
           <input
             name="firstName"
             defaultValue={address?.firstName || ''}
             required
-            className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             Last Name
           </label>
           <input
             name="lastName"
             defaultValue={address?.lastName || ''}
             required
-            className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Company (optional)
         </label>
         <input
           name="company"
           defaultValue={address?.company || ''}
-          className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+          className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Address
         </label>
         <input
           name="address1"
           defaultValue={address?.address1 || ''}
           required
-          className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+          className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Apartment, suite, etc. (optional)
         </label>
         <input
           name="address2"
           defaultValue={address?.address2 || ''}
-          className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+          className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             City
           </label>
           <input
             name="city"
             defaultValue={address?.city || ''}
             required
-            className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             State / Province
           </label>
           <input
             name="province"
             defaultValue={address?.province || ''}
             required
-            className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             ZIP / Postal Code
           </label>
           <input
             name="zip"
             defaultValue={address?.zip || ''}
             required
-            className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             Country
           </label>
           <input
             name="country"
             defaultValue={address?.country || 'United States'}
             required
-            className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[#6B6B6B] mb-2">
+        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Phone (optional)
         </label>
         <input
           name="phoneNumber"
           defaultValue={address?.phoneNumber || ''}
           type="tel"
-          className="w-full px-4 py-2.5 border border-[#E8E6E1] text-sm bg-white focus:outline-none focus:border-[#1A1A1A]"
+          className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
         />
       </div>
 
       <div className="flex gap-3 pt-2">
-        <Button type="submit" variant="solid">
+        <Button type="submit" variant="primary">
           {submitLabel}
         </Button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-5 py-2.5 border border-[#E8E6E1] text-sm hover:border-[#1A1A1A] transition-colors"
+          className="px-5 py-2.5 border border-[var(--color-border-subtle)] text-sm hover:border-[var(--color-foreground)] transition-colors"
         >
           Cancel
         </button>
@@ -436,13 +436,13 @@ function AddressCard({
   const deleteFetcher = useFetcher();
 
   return (
-    <div className="border border-[#E8E6E1] p-6 md:p-8 bg-white">
+    <div className="border border-[var(--color-border-subtle)] p-6 md:p-8 bg-white">
       {isDefault && (
-        <span className="inline-block text-[10px] font-semibold tracking-widest uppercase px-3 py-1 bg-[#1A1A1A] text-white mb-4">
+        <span className="inline-block text-[10px] font-semibold tracking-widest uppercase px-3 py-1 bg-[var(--color-foreground)] text-[var(--color-text-inverse)] mb-4">
           Default
         </span>
       )}
-      <div className="space-y-1 text-sm text-[#1A1A1A] mb-6">
+      <div className="space-y-1 text-sm text-[var(--color-foreground)] mb-6">
         {formatAddress(address).map((line, i) => (
           <p key={i}>{line}</p>
         ))}
@@ -451,7 +451,7 @@ function AddressCard({
         <button
           type="button"
           onClick={onEdit}
-          className="text-sm text-[#1A1A1A] hover:text-[#FF3B30] transition-colors"
+          className="text-sm text-[var(--color-foreground)] hover:text-[var(--color-accent)] transition-colors"
         >
           Edit
         </button>
@@ -460,7 +460,7 @@ function AddressCard({
           <input type="hidden" name="id" value={address.id} />
           <button
             type="submit"
-            className="text-sm text-[#9E9C97] hover:text-[#FF3B30] transition-colors"
+            className="text-sm text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors"
             onClick={(e) => {
               if (!confirm('Delete this address?')) e.preventDefault();
             }}
@@ -513,9 +513,9 @@ export default function AddressesPage() {
         )}
 
         {allAddresses.length === 0 && !showAddForm ? (
-          <div className="text-center py-20 border border-[#E8E6E1] bg-[#FAF9F6]">
-            <p className="h-eyebrow mb-4 text-[#9E9C97]">NO ADDRESSES</p>
-            <p className="text-[#6B6B6B] mb-8">
+          <div className="text-center py-20 border border-[var(--color-border-subtle)] bg-[var(--color-background)]">
+            <p className="h-eyebrow mb-4 text-[var(--color-text-tertiary)]">NO ADDRESSES</p>
+            <p className="text-[var(--color-text-secondary)] mb-8">
               You haven&apos;t saved any addresses yet.
             </p>
             <button
@@ -559,12 +559,12 @@ export default function AddressesPage() {
                 onCancel={() => setShowAddForm(false)}
               />
             ) : (
-              <div className="border border-dashed border-[#D0CDC6] p-6 md:p-8 flex flex-col items-center justify-center text-center min-h-[200px] bg-[#FAF9F6]">
-                <p className="h-eyebrow text-[#9E9C97] mb-4">NEW</p>
-                <p className="text-[#6B6B6B] mb-6">Add a new shipping address</p>
+              <div className="border border-dashed border-[var(--color-border-muted)] p-6 md:p-8 flex flex-col items-center justify-center text-center min-h-[200px] bg-[var(--color-background)]">
+                <p className="h-eyebrow text-[var(--color-text-tertiary)] mb-4">NEW</p>
+                <p className="text-[var(--color-text-secondary)] mb-6">Add a new shipping address</p>
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="px-5 py-2.5 border border-[#1A1A1A] text-sm hover:bg-[#1A1A1A] hover:text-white transition-colors"
+                  className="px-5 py-2.5 border border-[var(--color-foreground)] text-sm hover:bg-[var(--color-foreground)] hover:text-white transition-colors"
                 >
                   + Add Address
                 </button>

@@ -45,7 +45,7 @@ export default function CollectionGrid({
   };
 
   return (
-    <section className="h-section bg-[#FAF9F6] h-reveal">
+    <section className="h-section bg-[var(--color-background)] h-reveal">
       <div className="h-container">
         <div className="h-section-header">
           <div>
@@ -71,7 +71,7 @@ export default function CollectionGrid({
                 prefetch="intent"
                 className="group block"
               >
-                <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-[#F3F2EE] mb-4">
+                <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-[var(--color-surface)] mb-4">
                   {collection.image ? (
                     <Image
                       data={collection.image}

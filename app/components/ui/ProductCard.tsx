@@ -135,7 +135,7 @@ export default function ProductCard({
   if (layout === 'list') {
     return (
       <article
-        className={`group flex gap-6 border-b border-[#E8E6E1] py-6 cursor-pointer ${
+        className={`group flex gap-6 border-b border-[var(--color-border-subtle)] py-6 cursor-pointer ${
           soldOut ? 'opacity-60' : ''
         }`}
         data-product-id={product.id}
@@ -144,7 +144,7 @@ export default function ProductCard({
         <Link
           to={`/products/${product.handle}`}
           prefetch="intent"
-          className="relative overflow-hidden rounded-lg w-28 h-36 md:w-36 md:h-48 shrink-0 bg-[#E8E6E1] img-zoom"
+          className="relative overflow-hidden rounded-lg w-28 h-36 md:w-36 md:h-48 shrink-0 bg-[var(--color-surface)] img-zoom"
         >
           {product.featuredImage ? (
             <Image
@@ -172,11 +172,11 @@ export default function ProductCard({
             <Link
               to={`/products/${product.handle}`}
               prefetch="intent"
-              className="text-lg font-serif hover:text-[#6B6B6B] transition-colors block mb-2"
+              className="text-lg font-serif hover:text-[var(--color-text-secondary)] transition-colors block mb-2"
             >
               {product.title}
             </Link>
-            <p className="text-sm text-[#6B6B6B] line-clamp-2 hidden md:block">
+            <p className="text-sm text-[var(--color-text-secondary)] line-clamp-2 hidden md:block">
               {product.tags.slice(0, 3).join(' · ')}
             </p>
           </div>
@@ -185,19 +185,19 @@ export default function ProductCard({
             <div className="flex gap-2 items-baseline">
               <Money
                 data={product.priceRange.minVariantPrice}
-                className="text-lg font-serif text-[#1A1A1A]"
+                className="text-lg font-serif text-[var(--color-foreground)]"
               />
               {onSale && (
                 <Money
                   data={product.compareAtPriceRange.minVariantPrice}
-                  className="text-[#6B6B6B] line-through font-normal text-sm"
+                  className="text-[var(--color-text-secondary)] line-through font-normal text-sm"
                 />
               )}
             </div>
             {showQuickAdd && product.availableForSale && (
               <Link
                 to={`/products/${product.handle}`}
-                className="text-caps border-b border-[#1A1A1A] pb-0.5 hover:opacity-60 transition-opacity"
+                className="text-caps border-b border-[var(--color-foreground)] pb-0.5 hover:opacity-60 transition-opacity"
               >
                 View
               </Link>
@@ -217,7 +217,7 @@ export default function ProductCard({
       data-product-id={product.id}
     >
       {/* Media */}
-      <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-[#E8E6E1]">
+      <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-[var(--color-surface)]">
         <Link
           to={`/products/${product.handle}`}
           prefetch="intent"
@@ -265,7 +265,7 @@ export default function ProductCard({
         <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <WishlistButton
             size="sm"
-            className="bg-white/90 backdrop-blur-sm rounded-full p-1.5 text-[#1A1A1A] hover:text-[#FF3B30]"
+            className="bg-white/90 backdrop-blur-sm rounded-full p-1.5 text-[var(--color-foreground)] hover:text-[var(--color-accent)]"
             product={{
               id: product.id,
               handle: product.handle,
@@ -285,7 +285,7 @@ export default function ProductCard({
                 e.preventDefault();
                 onQuickAdd?.(product.id);
               }}
-              className="w-full justify-center bg-[#1A1A1A] text-white text-caps py-3 hover:bg-[#FF3B30] transition-colors duration-200 rounded-full"
+              className="w-full justify-center bg-[var(--color-foreground)] text-[var(--color-text-inverse)] text-caps py-3 hover:bg-[var(--color-accent)] transition-colors duration-200 rounded-full"
               aria-label={`Quick add ${product.title}`}
             >
               Quick add
@@ -305,13 +305,13 @@ export default function ProductCard({
           <Link
             to={`/products/${product.handle}`}
             prefetch="intent"
-            className="font-serif text-base leading-snug hover:text-[#6B6B6B] transition-colors"
+            className="font-serif text-base leading-snug hover:text-[var(--color-text-secondary)] transition-colors"
           >
             {product.title}
           </Link>
           <Money
             data={product.priceRange.minVariantPrice}
-            className="font-serif text-base text-[#1A1A1A] shrink-0"
+            className="font-serif text-base text-[var(--color-foreground)] shrink-0"
           />
         </div>
       </div>

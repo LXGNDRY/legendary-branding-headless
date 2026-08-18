@@ -213,11 +213,11 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
 
 function QuantitySelector({value, onChange}: {value: number; onChange: (v: number) => void}) {
   return (
-    <div className="flex items-center border border-[#E8E6E1] rounded-full overflow-hidden">
+    <div className="flex items-center border border-[var(--color-border-subtle)] rounded-full overflow-hidden">
       <button
         type="button"
         onClick={() => onChange(Math.max(1, value - 1))}
-        className="w-10 h-10 flex items-center justify-center text-[#1A1A1A] hover:bg-[#F3F2EE] transition-colors disabled:opacity-40"
+        className="w-10 h-10 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors disabled:opacity-40"
         aria-label="Decrease quantity"
         disabled={value <= 1}
       >
@@ -225,11 +225,11 @@ function QuantitySelector({value, onChange}: {value: number; onChange: (v: numbe
           <path d="M2 6h8" />
         </svg>
       </button>
-      <span className="w-10 text-center text-sm font-medium text-[#1A1A1A]">{value}</span>
+      <span className="w-10 text-center text-sm font-medium text-[var(--color-foreground)]">{value}</span>
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-10 h-10 flex items-center justify-center text-[#1A1A1A] hover:bg-[#F3F2EE] transition-colors"
+        className="w-10 h-10 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors"
         aria-label="Increase quantity"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -243,14 +243,14 @@ function QuantitySelector({value, onChange}: {value: number; onChange: (v: numbe
 function Accordion({label, children}: {label: string; children: React.ReactNode}) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-[#E8E6E1]">
+    <div className="border-b border-[var(--color-border-subtle)]">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex items-center justify-between w-full py-4 text-left"
         aria-expanded={open}
       >
-        <span className="h-eyebrow text-[#1A1A1A]">{label}</span>
+        <span className="h-eyebrow text-[var(--color-foreground)]">{label}</span>
         <svg
           width="14"
           height="14"
@@ -265,7 +265,7 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
         </svg>
       </button>
       {open && (
-        <div className="pb-5 text-[0.875rem] text-[#6B6B6B] leading-relaxed">
+        <div className="pb-5 text-[0.875rem] text-[var(--color-text-secondary)] leading-relaxed">
           {children}
         </div>
       )}
@@ -314,11 +314,11 @@ export default function ProductPage() {
     <>
       <JsonLd data={productJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
-      <div className="bg-[#FAF9F6]">
+      <div className="bg-[var(--color-background)]">
         <div className="h-container py-10">
           {/* Breadcrumb */}
-          <nav className="h-eyebrow text-[#9E9C97] mb-8" aria-label="Breadcrumb">
-            <Link to="/collections/all-products" className="hover:text-[#1A1A1A] transition-colors">
+          <nav className="h-eyebrow text-[var(--color-text-tertiary)] mb-8" aria-label="Breadcrumb">
+            <Link to="/collections/all-products" className="hover:text-[var(--color-foreground)] transition-colors">
               Shop
             </Link>
             <span className="mx-2 opacity-40">/</span>
@@ -328,7 +328,7 @@ export default function ProductPage() {
                 <span className="mx-2 opacity-40">/</span>
               </>
             )}
-            <span className="text-[#1A1A1A]">{product.title}</span>
+            <span className="text-[var(--color-foreground)]">{product.title}</span>
           </nav>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
@@ -348,19 +348,19 @@ export default function ProductPage() {
 
               {/* Title + price */}
               <div>
-                <h1 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.01em] text-[#1A1A1A] mb-3">
+                <h1 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.01em] text-[var(--color-foreground)] mb-3">
                   {product.title}
                 </h1>
                 <div className="flex items-baseline gap-3">
                   {selectedVariant ? (
                     <>
-                      <Money data={selectedVariant.price} className="text-[1.1rem] font-medium text-[#1A1A1A]" />
+                      <Money data={selectedVariant.price} className="text-[1.1rem] font-medium text-[var(--color-foreground)]" />
                       {isOnSale && selectedVariant.compareAtPrice && (
-                        <Money data={selectedVariant.compareAtPrice} className="text-sm text-[#9E9C97] line-through font-normal" />
+                        <Money data={selectedVariant.compareAtPrice} className="text-sm text-[var(--color-text-tertiary)] line-through font-normal" />
                       )}
                     </>
                   ) : (
-                    <span className="text-[1.1rem] font-medium text-[#9E9C97]">Select a variant</span>
+                    <span className="text-[1.1rem] font-medium text-[var(--color-text-tertiary)]">Select a variant</span>
                   )}
                 </div>
               </div>
@@ -375,12 +375,12 @@ export default function ProductPage() {
                 {({option}: {option: VariantOption}) => (
                   <div key={option.name} className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <p className="h-eyebrow text-[#1A1A1A]">{option.name}</p>
+                      <p className="h-eyebrow text-[var(--color-foreground)]">{option.name}</p>
                       {option.name.toLowerCase() === 'size' && (
                         <button
                           type="button"
                           onClick={() => setSizeGuideOpen(true)}
-                          className="h-eyebrow text-[#6B6B6B] hover:text-[#1A1A1A] underline underline-offset-2 transition-colors"
+                          className="h-eyebrow text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] underline underline-offset-2 transition-colors"
                         >
                           Size Guide
                         </button>
@@ -396,10 +396,10 @@ export default function ProductPage() {
                           prefetch="intent"
                           className={`min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-full ${
                             isActive
-                              ? 'border-[#1A1A1A] bg-[#1A1A1A] text-[#FAF9F6]'
+                              ? 'border-[var(--color-foreground)] bg-[var(--color-foreground)] text-[var(--color-text-inverse)]'
                               : isAvailable
-                                ? 'border-[#E8E6E1] text-[#1A1A1A] hover:border-[#1A1A1A]'
-                                : 'border-[#E8E6E1] text-[#9E9C97] cursor-not-allowed line-through'
+                                ? 'border-[var(--color-border-subtle)] text-[var(--color-foreground)] hover:border-[var(--color-foreground)]'
+                                : 'border-[var(--color-border-subtle)] text-[var(--color-text-tertiary)] cursor-not-allowed line-through'
                           }`}
                           aria-disabled={!isAvailable}
                           aria-label={`${option.name}: ${value}${!isAvailable ? ' (unavailable)' : ''}`}
@@ -416,7 +416,7 @@ export default function ProductPage() {
               <div className="space-y-3 pt-2">
                 {selectedVariant?.availableForSale && (
                   <div className="flex items-center justify-between">
-                    <span className="h-eyebrow text-[#6B6B6B]">Quantity</span>
+                    <span className="h-eyebrow text-[var(--color-text-secondary)]">Quantity</span>
                     <QuantitySelector value={quantity} onChange={setQuantity} />
                   </div>
                 )}
@@ -435,16 +435,16 @@ export default function ProductPage() {
               </div>
 
               {/* Shipping note */}
-              <p className="h-eyebrow text-[#9E9C97] text-center">
+              <p className="h-eyebrow text-[var(--color-text-tertiary)] text-center">
                 Free shipping over $100 · 30-day returns
               </p>
 
               {/* Accordions */}
-              <div className="border-t border-[#E8E6E1] pt-4">
+              <div className="border-t border-[var(--color-border-subtle)] pt-4">
                 {product.descriptionHtml && (
                   <Accordion label="Description">
                     <div
-                      className="prose prose-sm max-w-none [&_p]:text-[#6B6B6B] [&_ul]:text-[#6B6B6B]"
+                      className="prose prose-sm max-w-none [&_p]:text-[var(--color-text-secondary)] [&_ul]:text-[var(--color-text-secondary)]"
                       dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
                     />
                   </Accordion>
@@ -483,12 +483,12 @@ export default function ProductPage() {
 
         {/* Related products */}
         {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
-          <section className="border-t border-[#E8E6E1]">
+          <section className="border-t border-[var(--color-border-subtle)]">
             <div className="h-container py-16">
               <div className="flex items-end justify-between mb-10">
                 <div>
                   <p className="h-eyebrow mb-3">More to explore</p>
-                  <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[#1A1A1A]">
+                  <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-foreground)]">
                     You May Also Like
                   </h2>
                 </div>
@@ -530,10 +530,10 @@ export function ErrorBoundary() {
     <div className="py-24 md:py-32">
       <div className="max-w-xl mx-auto text-center px-4">
         <p className="h-eyebrow mb-6">404 — Not Found</p>
-        <h1 className="font-serif text-[clamp(2.5rem,7vw,5rem)] leading-[0.95] mb-6 text-[#1A1A1A]">
+        <h1 className="font-serif text-[clamp(2.5rem,7vw,5rem)] leading-[0.95] mb-6 text-[var(--color-foreground)]">
           Sold out.
         </h1>
-        <p className="text-[#6B6B6B] text-base leading-relaxed mb-10">
+        <p className="text-[var(--color-text-secondary)] text-base leading-relaxed mb-10">
           We couldn&apos;t find the product{params.handle ? ` "${params.handle}"` : ''} you&apos;re
           looking for. It might have sold out or been removed.
         </p>
@@ -543,7 +543,7 @@ export function ErrorBoundary() {
           </Link>
           <Link
             to="/"
-            className="px-6 py-3 border border-[#1A1A1A] text-sm tracking-wide uppercase hover:bg-[#1A1A1A] hover:text-white transition-colors"
+            className="px-6 py-3 border border-[var(--color-foreground)] text-sm tracking-wide uppercase hover:bg-[var(--color-foreground)] hover:text-white transition-colors"
           >
             Back to Home
           </Link>

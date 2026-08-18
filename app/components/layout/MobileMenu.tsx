@@ -44,7 +44,7 @@ export default function MobileMenu({open, onClose, links}: MobileMenuProps) {
     <div className="fixed inset-0 z-[200] md:hidden" role="dialog" aria-modal="true" aria-label="Mobile menu">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-[#FAF9F6] animate-[fadeIn_0.2s_ease-out]"
+        className="absolute inset-0 bg-[var(--color-background)] animate-[fadeIn_0.2s_ease-out]"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -57,7 +57,7 @@ export default function MobileMenu({open, onClose, links}: MobileMenuProps) {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-[clamp(1.25rem,5vw,2.5rem)] p-1 text-[#1A1A1A]"
+          className="absolute top-5 right-[clamp(1.25rem,5vw,2.5rem)] p-1 text-[var(--color-foreground)]"
           aria-label="Close menu"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
@@ -70,7 +70,7 @@ export default function MobileMenu({open, onClose, links}: MobileMenuProps) {
         <Link
           to="/"
           onClick={onClose}
-          className="text-xl font-serif tracking-tight text-[#1A1A1A] mb-12"
+          className="text-xl font-serif tracking-tight text-[var(--color-foreground)] mb-12"
         >
           LEGENDARY
         </Link>
@@ -87,7 +87,7 @@ export default function MobileMenu({open, onClose, links}: MobileMenuProps) {
                 <Link
                   to={link.href}
                   onClick={onClose}
-                  className="font-serif text-4xl leading-tight text-[#1A1A1A] hover:text-[#FF3B30] transition-colors block py-2"
+                  className="font-serif text-4xl leading-tight text-[var(--color-foreground)] hover:text-[var(--color-accent)] transition-colors block py-2"
                 >
                   {link.label}
                 </Link>
@@ -97,7 +97,7 @@ export default function MobileMenu({open, onClose, links}: MobileMenuProps) {
         </nav>
 
         {/* Divider */}
-        <div className="h-px bg-[#E8E6E1] my-8" />
+        <div className="h-px bg-[var(--color-border-subtle)] my-8" />
 
         {/* Secondary links */}
         <ul className="space-y-3 mb-8">
@@ -106,7 +106,7 @@ export default function MobileMenu({open, onClose, links}: MobileMenuProps) {
               <Link
                 to={link.href}
                 onClick={onClose}
-                className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
+                className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors"
               >
                 {link.label}
               </Link>
@@ -116,19 +116,19 @@ export default function MobileMenu({open, onClose, links}: MobileMenuProps) {
 
         {/* Socials */}
         <div className="flex items-center gap-4">
-          <a href="#" className="text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors" aria-label="Instagram">
+          <a href="#" className="text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors" aria-label="Instagram">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
               <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
               <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
             </svg>
           </a>
-          <a href="#" className="text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors" aria-label="TikTok">
+          <a href="#" className="text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors" aria-label="TikTok">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
               <path d="M9 12a4 4 0 104 4V4a5 5 0 005 5" />
             </svg>
           </a>
-          <a href="#" className="text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors" aria-label="YouTube">
+          <a href="#" className="text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors" aria-label="YouTube">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
               <path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.33z" />
               <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />

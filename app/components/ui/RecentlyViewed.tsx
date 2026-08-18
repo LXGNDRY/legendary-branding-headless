@@ -74,7 +74,7 @@ export default function RecentlyViewed({
 
   return (
     <section className="border-t border-black/10">
-      <div className="max-w-screen-xl mx-auto px-[clamp(1rem,4vw,2.5rem)] py-16">
+      <div className="h-container py-16">
         <h2 className="text-[0.78rem] font-medium tracking-[0.15em] uppercase mb-10">
           Recently Viewed
         </h2>
@@ -86,7 +86,7 @@ export default function RecentlyViewed({
               to={`/products/${p.handle}`}
               className="group"
             >
-              <div className="aspect-[3/4] bg-[#f5f5f5] mb-3 overflow-hidden">
+              <div className="aspect-[3/4] bg-[var(--color-surface)] mb-3 overflow-hidden">
                 {p.image ? (
                   <img
                     src={p.image}

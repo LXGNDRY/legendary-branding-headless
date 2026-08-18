@@ -165,10 +165,10 @@ export default function SearchTypeahead({
                         key={product.id}
                         to={`/products/${product.handle}`}
                         onClick={handleSelect}
-                        className="flex gap-3 hover:bg-[#fafafa] -mx-2 px-2 py-1.5 transition-colors"
+                        className="flex gap-3 hover:bg-[var(--color-surface-elevated)] -mx-2 px-2 py-1.5 transition-colors"
                       >
                         {product.featuredImage?.url ? (
-                          <div className="w-12 h-14 bg-[#f5f5f5] shrink-0 overflow-hidden">
+                          <div className="w-12 h-14 bg-[var(--color-surface)] shrink-0 overflow-hidden">
                             <img
                               src={product.featuredImage.url}
                               alt={product.featuredImage.altText || product.title}
@@ -177,7 +177,7 @@ export default function SearchTypeahead({
                             />
                           </div>
                         ) : (
-                          <div className="w-12 h-14 bg-[#f5f5f5] shrink-0" />
+                          <div className="w-12 h-14 bg-[var(--color-surface)] shrink-0" />
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium leading-tight line-clamp-2">

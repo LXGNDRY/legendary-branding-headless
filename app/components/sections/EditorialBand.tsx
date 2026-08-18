@@ -25,10 +25,10 @@ export default function EditorialBand({
   const ref = useReveal<HTMLElement>();
 
   const isDark = theme === 'dark';
-  const bg = isDark ? 'bg-[#1A1A1A]' : 'bg-[#FAF9F6]';
-  const eyebrowColor = isDark ? 'text-[#FAF9F6]/40' : 'text-[#6B6B6B]';
-  const textColor = isDark ? 'text-[#FAF9F6]' : 'text-[#1A1A1A]';
-  const bodyColor = isDark ? 'text-[#FAF9F6]/60' : 'text-[#6B6B6B]';
+  const bg = isDark ? 'bg-[var(--color-foreground)]' : 'bg-[var(--color-background)]';
+  const eyebrowColor = isDark ? 'text-[var(--color-text-inverse)]/40' : 'text-[var(--color-text-secondary)]';
+  const textColor = isDark ? 'text-[var(--color-text-inverse)]' : 'text-[var(--color-foreground)]';
+  const bodyColor = isDark ? 'text-[var(--color-text-inverse)]/60' : 'text-[var(--color-text-secondary)]';
 
   return (
     <section ref={ref} className={`h-reveal h-section ${bg}`}>
@@ -50,7 +50,7 @@ export default function EditorialBand({
               <Link
                 to={primaryHref}
                 className={isDark
-                  ? 'inline-flex items-center justify-center gap-2 font-semibold tracking-[0.12em] uppercase border border-[#FAF9F6] text-[0.75rem] px-7 py-3.5 rounded-full text-[#FAF9F6] hover:bg-[#FAF9F6] hover:text-[#1A1A1A] transition-all duration-200 hover:-translate-y-px'
+                  ? 'inline-flex items-center justify-center gap-2 font-semibold tracking-[0.12em] uppercase border border-[var(--color-text-inverse)] text-[0.75rem] px-7 py-3.5 rounded-full text-[var(--color-text-inverse)] hover:bg-[var(--color-background)] hover:text-[var(--color-foreground)] transition-all duration-200 hover:-translate-y-px'
                   : 'h-btn-primary'}
               >
                 {primaryLabel}
@@ -60,7 +60,7 @@ export default function EditorialBand({
               <Link
                 to={secondaryHref}
                 className={isDark
-                  ? 'inline-flex items-center justify-center gap-2 font-semibold tracking-[0.12em] uppercase text-[0.75rem] px-7 py-3.5 text-[#FAF9F6]/60 hover:text-[#FAF9F6] transition-colors underline-offset-4 hover:underline'
+                  ? 'inline-flex items-center justify-center gap-2 font-semibold tracking-[0.12em] uppercase text-[0.75rem] px-7 py-3.5 text-[var(--color-text-inverse)]/60 hover:text-[var(--color-text-inverse)] transition-colors underline-offset-4 hover:underline'
                   : 'h-btn-outline'}
               >
                 {secondaryLabel}

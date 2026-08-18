@@ -16,11 +16,11 @@ export default function Placeholder({
 }: PlaceholderProps) {
   return (
     <div
-      className={`${aspect} w-full rounded-lg bg-[#f7f7f7] flex items-center justify-center ${className}`}
+      className={`${aspect} w-full rounded-lg bg-[var(--color-surface)] flex items-center justify-center ${className}`}
       aria-label={label}
       role="img"
     >
-      <span className="text-[10px] font-medium tracking-widest uppercase text-[#999999] select-none">
+      <span className="text-[10px] font-medium tracking-widest uppercase text-[var(--color-text-tertiary)] select-none">
         {label}
       </span>
     </div>

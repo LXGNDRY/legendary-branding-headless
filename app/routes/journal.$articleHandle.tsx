@@ -120,7 +120,7 @@ export default function ArticlePage() {
       <JsonLd data={breadcrumbJsonLd} />
       {/* Hero image */}
       {article.image && (
-        <div className="w-full overflow-hidden bg-[#f7f7f7] max-h-[70vh]">
+        <div className="w-full overflow-hidden bg-[var(--color-surface)] max-h-[70vh]">
           <Image
             data={article.image}
             aspectRatio="16/7"
@@ -137,21 +137,21 @@ export default function ArticlePage() {
         {/* Breadcrumb + header */}
         <header className="max-w-2xl mx-auto mb-12">
           <nav
-            className="mb-6 text-[11px] tracking-widest uppercase text-[#6b6b6b]"
+            className="mb-6 text-[11px] tracking-widest uppercase text-[var(--color-text-secondary)]"
             aria-label="Breadcrumb"
           >
-            <Link to="/journal" className="hover:text-[#0a0a0a] transition-colors">
+            <Link to="/journal" className="hover:text-[var(--color-foreground)] transition-colors">
               Journal
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-[#0a0a0a] line-clamp-1">{article.title}</span>
+            <span className="text-[var(--color-foreground)] line-clamp-1">{article.title}</span>
           </nav>
 
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight mb-6">
             {article.title}
           </h1>
 
-          <div className="flex items-center gap-4 text-[11px] text-[#999999] tracking-wide">
+          <div className="flex items-center gap-4 text-[11px] text-[var(--color-text-tertiary)] tracking-wide">
             <span>{formatDate(article.publishedAt)}</span>
             {article.author?.name && (
               <>
@@ -162,7 +162,7 @@ export default function ArticlePage() {
           </div>
 
           {article.excerpt && (
-            <p className="mt-6 text-base text-[#6b6b6b] leading-relaxed border-l-2 border-[#e5e5e5] pl-4">
+            <p className="mt-6 text-base text-[var(--color-text-secondary)] leading-relaxed border-l-2 border-[var(--color-border-subtle)] pl-4">
               {article.excerpt}
             </p>
           )}
@@ -171,14 +171,14 @@ export default function ArticlePage() {
         {/* Article body */}
         <div
           className="max-w-2xl mx-auto prose prose-sm lg:prose-base max-w-none
-            [&_p]:text-[#0a0a0a] [&_p]:leading-relaxed [&_p]:mb-5
+            [&_p]:text-[var(--color-foreground)] [&_p]:leading-relaxed [&_p]:mb-5
             [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-4
             [&_h3]:text-lg [&_h3]:font-bold [&_h3]:tracking-tight [&_h3]:mt-8 [&_h3]:mb-3
-            [&_ul]:pl-5 [&_ul]:mb-5 [&_li]:mb-1 [&_li]:text-[#0a0a0a]
+            [&_ul]:pl-5 [&_ul]:mb-5 [&_li]:mb-1 [&_li]:text-[var(--color-foreground)]
             [&_ol]:pl-5 [&_ol]:mb-5
-            [&_strong]:font-semibold [&_strong]:text-[#0a0a0a]
-            [&_a]:underline [&_a]:underline-offset-2 [&_a]:text-[#0a0a0a] [&_a]:hover:text-[#6b6b6b]
-            [&_blockquote]:border-l-2 [&_blockquote]:border-[#0a0a0a] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-[#6b6b6b]
+            [&_strong]:font-semibold [&_strong]:text-[var(--color-foreground)]
+            [&_a]:underline [&_a]:underline-offset-2 [&_a]:text-[var(--color-foreground)] [&_a]:hover:text-[var(--color-text-secondary)]
+            [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--color-foreground)] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-[var(--color-text-secondary)]
             [&_img]:w-full [&_img]:my-8"
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{__html: article.contentHtml}}
@@ -186,12 +186,12 @@ export default function ArticlePage() {
 
         {/* Tags */}
         {article.tags.length > 0 && (
-          <div className="max-w-2xl mx-auto mt-12 pt-8 border-t border-[#e5e5e5]">
+          <div className="max-w-2xl mx-auto mt-12 pt-8 border-t border-[var(--color-border-subtle)]">
             <div className="flex flex-wrap gap-2">
               {article.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[10px] tracking-widest uppercase border border-[#e5e5e5] px-3 py-1.5 text-[#6b6b6b]"
+                  className="text-[10px] tracking-widest uppercase border border-[var(--color-border-subtle)] px-3 py-1.5 text-[var(--color-text-secondary)]"
                 >
                   {tag}
                 </span>
@@ -204,7 +204,7 @@ export default function ArticlePage() {
         <div className="max-w-2xl mx-auto mt-12">
           <Link
             to="/journal"
-            className="text-xs font-semibold tracking-widest uppercase border-b border-[#0a0a0a] pb-0.5 hover:border-[#6b6b6b] hover:text-[#6b6b6b] transition-colors"
+            className="text-xs font-semibold tracking-widest uppercase border-b border-[var(--color-foreground)] pb-0.5 hover:border-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] transition-colors"
           >
             ← Back to Journal
           </Link>

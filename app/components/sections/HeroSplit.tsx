@@ -31,7 +31,7 @@ export default function HeroSplit({
   return (
     <section className="w-full min-h-[90dvh] grid grid-cols-1 lg:grid-cols-[2fr_1fr] overflow-hidden">
       {/* Left — large product image with bottom-left overlay */}
-      <div className="relative min-h-[60dvh] lg:min-h-[90dvh] bg-[#1A1A1A] overflow-hidden">
+      <div className="relative min-h-[60dvh] lg:min-h-[90dvh] bg-[var(--color-foreground)] overflow-hidden">
         {leftImage?.url ? (
           <Image
             data={leftImage}
@@ -42,14 +42,14 @@ export default function HeroSplit({
             loading="eager"
           />
         ) : (
-          <div className="absolute inset-0 bg-[#1A1A1A]" />
+          <div className="absolute inset-0 bg-[var(--color-foreground)]" />
         )}
         {/* Bottom-left label */}
         <div className="absolute bottom-8 left-8 z-10">
           {leftProduct && (
             <Link
               to={`/products/${leftProduct.handle}`}
-              className="h-eyebrow text-[#FAF9F6]/70 hover:text-[#FAF9F6] transition-colors"
+              className="h-eyebrow text-[var(--color-text-inverse)]/70 hover:text-[var(--color-text-inverse)] transition-colors"
             >
               {leftProduct.title}
             </Link>
@@ -58,10 +58,10 @@ export default function HeroSplit({
       </div>
 
       {/* Right — content + optional second image */}
-      <div className="flex flex-col bg-[#FAF9F6]">
+      <div className="flex flex-col bg-[var(--color-background)]">
         {/* Second product thumbnail */}
         {rightImage?.url && (
-          <div className="relative flex-1 min-h-[30vh] bg-[#F3F2EE] overflow-hidden">
+          <div className="relative flex-1 min-h-[30vh] bg-[var(--color-surface)] overflow-hidden">
             <Image
               data={rightImage}
               width={800}
@@ -74,7 +74,7 @@ export default function HeroSplit({
               <div className="absolute bottom-5 left-5">
                 <Link
                   to={`/products/${rightProduct.handle}`}
-                  className="h-eyebrow text-[#FAF9F6]/70 hover:text-[#FAF9F6] transition-colors"
+                  className="h-eyebrow text-[var(--color-text-inverse)]/70 hover:text-[var(--color-text-inverse)] transition-colors"
                 >
                   {rightProduct.title}
                 </Link>
@@ -88,11 +88,11 @@ export default function HeroSplit({
           {eyebrow && (
             <p className="h-eyebrow">{eyebrow}</p>
           )}
-          <h1 className="font-serif font-normal text-[clamp(2.5rem,5vw,4rem)] leading-[0.95] tracking-[-0.01em] text-[#1A1A1A]">
+          <h1 className="font-serif font-normal text-[clamp(2.5rem,5vw,4rem)] leading-[0.95] tracking-[-0.01em] text-[var(--color-foreground)]">
             {heading}
           </h1>
           {subtext && (
-            <p className="text-[#6B6B6B] text-[0.95rem] leading-relaxed max-w-[28ch]">
+            <p className="text-[var(--color-text-secondary)] text-[0.95rem] leading-relaxed max-w-[28ch]">
               {subtext}
             </p>
           )}

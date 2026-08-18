@@ -17,7 +17,7 @@ function SectionHeading({id, children}: {id: string; children: React.ReactNode})
   return (
     <h2
       id={id}
-      className="font-serif text-3xl text-[#1A1A1A] mt-16 mb-6 pb-3 border-b border-[#E8E6E1] scroll-mt-24"
+      className="font-serif text-3xl text-[var(--color-foreground)] mt-16 mb-6 pb-3 border-b border-[var(--color-border-subtle)] scroll-mt-24"
     >
       {children}
     </h2>
@@ -28,7 +28,7 @@ function SubHeading({id, children}: {id: string; children: React.ReactNode}) {
   return (
     <h3
       id={id}
-      className="font-serif text-xl text-[#1A1A1A] mt-8 mb-4 scroll-mt-24"
+      className="font-serif text-xl text-[var(--color-foreground)] mt-8 mb-4 scroll-mt-24"
     >
       {children}
     </h3>
@@ -36,12 +36,12 @@ function SubHeading({id, children}: {id: string; children: React.ReactNode}) {
 }
 
 function P({children}: {children: React.ReactNode}) {
-  return <p className="text-[#1A1A1A]/80 leading-relaxed mb-4">{children}</p>;
+  return <p className="text-[var(--color-foreground)]/80 leading-relaxed mb-4">{children}</p>;
 }
 
 function InlineCode({children}: {children: React.ReactNode}) {
   return (
-    <code className="px-1.5 py-0.5 bg-[#F3F2EE] text-sm text-[#FF3B30] rounded font-mono">
+    <code className="px-1.5 py-0.5 bg-[var(--color-surface)] text-sm text-[var(--color-accent)] rounded font-mono">
       {children}
     </code>
   );
@@ -52,9 +52,9 @@ function DocTable({headers, rows}: {headers: string[]; rows: string[][]}) {
     <div className="overflow-x-auto mb-6">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b border-[#E8E6E1]">
+          <tr className="border-b border-[var(--color-border-subtle)]">
             {headers.map((h) => (
-              <th key={h} className="text-left h-eyebrow text-[#9E9C97] py-3 pr-4 font-normal first:pl-0">
+              <th key={h} className="text-left h-eyebrow text-[var(--color-text-tertiary)] py-3 pr-4 font-normal first:pl-0">
                 {h}
               </th>
             ))}
@@ -62,9 +62,9 @@ function DocTable({headers, rows}: {headers: string[]; rows: string[][]}) {
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-b border-[#E8E6E1]/50">
+            <tr key={i} className="border-b border-[var(--color-border-subtle)]/50">
               {row.map((cell, j) => (
-                <td key={j} className="py-3 pr-4 text-[#1A1A1A]/80 first:pl-0">{cell}</td>
+                <td key={j} className="py-3 pr-4 text-[var(--color-foreground)]/80 first:pl-0">{cell}</td>
               ))}
             </tr>
           ))}
@@ -80,13 +80,13 @@ export default function Phase7to10Page() {
   return (
     <DocsLayout currentPath={location.pathname}>
       <div>
-        <p className="h-eyebrow text-[#FF3B30] mb-4">PHASES 7–10</p>
-        <h1 className="font-serif text-4xl md:text-5xl font-normal text-[#1A1A1A] mb-4 leading-tight">
+        <p className="h-eyebrow text-[var(--color-accent)] mb-4">PHASES 7–10</p>
+        <h1 className="font-serif text-4xl md:text-5xl font-normal text-[var(--color-foreground)] mb-4 leading-tight">
           Performance, Errors,
           <br />
           Caching &amp; Security
         </h1>
-        <p className="text-lg text-[#6B6B6B] leading-relaxed mb-8 max-w-2xl">
+        <p className="text-lg text-[var(--color-text-secondary)] leading-relaxed mb-8 max-w-2xl">
           Combined hardening pass across 4 phases — speed, reliability, caching,
           and defense-in-depth. All additive, zero risky refactors.
         </p>
@@ -97,7 +97,7 @@ export default function Phase7to10Page() {
         </P>
 
         <SubHeading id="p7-preconnect">Preconnect + DNS prefetch</SubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>
             <InlineCode>preconnect</InlineCode> to <InlineCode>cdn.shopify.com</InlineCode> with{' '}
             <InlineCode>crossorigin</InlineCode> — eliminates DNS + TLS round-trip for product images
@@ -117,7 +117,7 @@ export default function Phase7to10Page() {
         </P>
 
         <SubHeading id="p7-lazy">Image lazy loading (already in place)</SubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>ProductCard defaults to <InlineCode>loading=&quot;lazy&quot;</InlineCode></li>
           <li>
             All images have explicit <InlineCode>width</InlineCode>/<InlineCode>height</InlineCode>
@@ -131,7 +131,7 @@ export default function Phase7to10Page() {
         </P>
 
         <SubHeading id="p8-root">Root ErrorBoundary upgrade</SubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>
             Distinguishes 404 responses from 500 errors — &quot;Lost.&quot; vs &quot;Oops.&quot;
           </li>
@@ -140,7 +140,7 @@ export default function Phase7to10Page() {
         </ul>
 
         <SubHeading id="p8-404">404 page redesign</SubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>Upgraded to Hanssen design system (serif display, eyebrow labels)</li>
           <li>
             Added <InlineCode>noindex, follow</InlineCode> robots meta tag — prevents 404s
@@ -173,7 +173,7 @@ export default function Phase7to10Page() {
         />
 
         <P>All public content routes use appropriate caching:</P>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>Homepage: CacheLong</li>
           <li>Product pages: CacheLong</li>
           <li>Collection pages: CacheLong</li>
@@ -189,7 +189,7 @@ export default function Phase7to10Page() {
         </P>
 
         <SubHeading id="p10-ratelimit">Rate limiting utility</SubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>Sliding-window in-memory rate limiter</li>
           <li>IP-based keying with user-agent fallback</li>
           <li>Automatic cleanup of expired entries (60s sweep)</li>
@@ -213,7 +213,7 @@ export default function Phase7to10Page() {
         />
 
         <SubHeading id="p10-newsletter">Newsletter API — sanitization</SubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>Email validation via RFC 5322 simplified regex</li>
           <li>String sanitization: strips control characters, caps length</li>
           <li>Source field capped at 50 characters</li>

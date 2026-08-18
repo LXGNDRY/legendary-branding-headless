@@ -45,12 +45,21 @@
 | `--color-foreground` | `#1A1A1A` | Default text |
 | `--color-text-secondary` | `#6B6B6B` | Secondary text, muted labels |
 | `--color-text-inverse` | `#FAF9F6` | Text on dark backgrounds |
+| `--color-text-tertiary` | `#9E9C97` | Tertiary text, captions, metadata |
+
 | `--color-border-subtle` | `#E8E6E1` | Dividers, borders |
+| `--color-border-muted` | `#D0CDC6` | Dashed borders, empty state outlines |
+| `--color-border-medium` | `#333333` | Medium-weight borders, dark hover states |
 | `--color-border-strong` | `#1A1A1A` | Strong borders |
+
 | `--color-surface` | `#F3F2EE` | Card surfaces, subtle backgrounds |
+| `--color-surface-elevated` | `#FAFAFA` | Elevated surfaces (cards on light bg) |
+| `--color-surface-dark` | `#252525` | Dark surfaces (cards on dark bg) |
 | `--color-sale` | `#FF3B30` | Sale badges |
 
-**Legacy aliases** (kept for backwards compat): `--color-canvas`, `--color-ink`, `--color-muted`, `--color-subtle`, `--color-border`, `--color-shadow`
+**Legacy aliases** (deprecated — kept for backwards compat, do not use in new code): `--color-canvas`, `--color-ink`, `--color-muted`, `--color-subtle`, `--color-border`, `--color-shadow`
+
+**Naming convention:** Use semantic names (`--color-background`, `--color-text-secondary`, `--color-border-subtle`) for all new code. Canonical names (`--color-offwhite`, `--color-accent`) are fine when the semantic equivalent doesn't make sense.
 
 ---
 
@@ -166,9 +175,9 @@ Usage: add `.h-reveal` + `useReveal()` hook to the element.
 #### Footer
 - **File:** `app/components/layout/Footer.tsx`
 - Top row: serif brand wordmark + newsletter signup
-- 3 columns: Shop / Info / Legal
+- 4 columns: Shop / Info / Guides / Legal
 - Bottom bar: copyright + social links
-- Light background (`#FAF9F6`), `#E8E6E1` borders
+- Light background (`--color-background`), `--color-border-subtle` borders
 
 #### AnnouncementBar
 - **File:** `app/components/layout/AnnouncementBar.tsx`
@@ -216,22 +225,22 @@ All section components follow the same pattern:
 |---|---|---|
 | `ProductCard` | product, showBadge, showQuickAdd, showWishlist, variant | Product card with hover zoom, quick-add, wishlist heart |
 | `Badge` | label, variant (sale/new/soldout) | Pill-shaped badge (red sale variant) |
-| `Button` | children, variant (primary/outline/ghost), size (sm/md/lg), as (button/link), to | Reusable button |
-| `Container` | className, children | Max-width container wrapper |
+| `Button` | children, variant (primary/outline/ghost/dark), size (sm/md/lg), as (button/link/a), to/href | Reusable button — single source of truth for all CTAs |
+| `Container` | className, children, as | Max-width container wrapper (uses `.h-container` internally, 1440px max-width) |
 | `HeroPlaceholder` | variant (editorial/street) | CSS/SVG placeholder when hero image missing |
 | `ProductGallery` | images, onSelect | PDP image gallery with thumbnails |
 | `RecentlyViewed` | products | Recently viewed products row |
 | `WishlistButton` | productId, productHandle | Heart icon wishlist toggle |
 | `SearchTypeahead` | (search query) | Predictive search dropdown |
-| `SizeGuideModal` | open, onClose | Size guide modal |
+| `SizeGuideModal` | open, onClose | Size guide modal (with focus trap) |
 | `WaitlistForm` | productId | Out-of-stock waitlist signup |
-| `CurrencySwitcher` | (none) | Currency selector dropdown |
 
 ### Hooks
 
 | Hook | File | Purpose |
 |---|---|---|
 | `useReveal()` | `app/hooks/useReveal.ts` | IntersectionObserver hook — adds `.is-visible` when element enters viewport |
+| `useFocusTrap()` | `app/hooks/useFocusTrap.ts` | Traps keyboard focus within a container (modals, mobile menus) |
 
 ---
 
@@ -253,8 +262,9 @@ All section components follow the same pattern:
 ### When to use `h-` vs inline Tailwind
 - Use `h-` utility classes for **design-system patterns** (buttons, sections, links, eyebrows)
 - Use inline Tailwind utilities for **one-off layout adjustments** (margins, gaps, flex configs)
-- Never hardcode hex colors — use CSS variables or the `bg-[#HEX]` pattern for one-offs
-- Product images: **no border radius** (flush rectangle), with `transition-transform` hover zoom
+- **Never hardcode hex colors** — always use CSS variables (`bg-[var(--color-accent)]`, etc.). If a color isn't in the palette, add it as a named variable first.
+- Product images: `rounded-lg` by default (card containers), no radius on images themselves
+- Container width: 1440px max-width (`.h-container` / `<Container>` component), responsive horizontal padding
 
 ### Adding a new section
 1. Create in `app/components/sections/MyNewSection.tsx`

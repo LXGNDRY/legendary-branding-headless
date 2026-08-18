@@ -47,7 +47,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h4 className="h-eyebrow mb-5 text-[#1A1A1A]">
+      <h4 className="h-eyebrow mb-5 text-[var(--color-foreground)]">
         {heading}
       </h4>
       <ul className="space-y-3">
@@ -56,7 +56,7 @@ function FooterColumn({
             <Link
               to={href}
               prefetch="intent"
-              className="text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
+              className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors"
             >
               {label}
             </Link>
@@ -74,28 +74,28 @@ function FooterColumn({
  */
 export default function Footer() {
   return (
-    <footer className="border-t border-[#E8E6E1] bg-[#FAF9F6] mt-auto">
+    <footer className="border-t border-[var(--color-border-subtle)] bg-[var(--color-background)] mt-auto">
       <div className="h-container py-16 md:py-24">
         {/* Top: brand + newsletter */}
-        <div className="grid md:grid-cols-[1.5fr_1fr] gap-16 mb-20 pb-16 border-b border-[#E8E6E1]">
+        <div className="grid md:grid-cols-[1.5fr_1fr] gap-16 mb-20 pb-16 border-b border-[var(--color-border-subtle)]">
           <div className="max-w-md">
             <Link
               to="/"
-              className="inline-block text-[clamp(1.75rem,3vw,2.5rem)] font-serif leading-none text-[#1A1A1A] select-none"
+              className="inline-block text-[clamp(1.75rem,3vw,2.5rem)] font-serif leading-none text-[var(--color-foreground)] select-none"
             >
               LEGENDARY
             </Link>
-            <p className="mt-4 text-[#6B6B6B] leading-relaxed">
+            <p className="mt-4 text-[var(--color-text-secondary)] leading-relaxed">
               Premium editorial streetwear — crafted with intention, built to last.
             </p>
           </div>
 
           {/* Newsletter */}
           <div>
-            <h4 className="h-eyebrow mb-4 text-[#1A1A1A]">
+            <h4 className="h-eyebrow mb-4 text-[var(--color-foreground)]">
               Stay Legendary
             </h4>
-            <p className="text-sm text-[#6B6B6B] mb-5">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-5">
               Get early access to drops, exclusive offers, and behind-the-scenes content.
             </p>
             <NewsletterForm source="footer" variant="footer" buttonText="Join →" placeholder="Enter your email" />
@@ -111,8 +111,8 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-[#E8E6E1] pt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <p className="text-xs text-[#9E9C97] tracking-wide">
+        <div className="border-t border-[var(--color-border-subtle)] pt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <p className="text-xs text-[var(--color-text-tertiary)] tracking-wide">
             © {new Date().getFullYear()} Legendary Branding®. All rights reserved.
           </p>
 
@@ -123,7 +123,7 @@ export default function Footer() {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-[#9E9C97] hover:text-[#1A1A1A] tracking-wide transition-colors"
+                className="text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-foreground)] tracking-wide transition-colors"
               >
                 {label}
               </a>

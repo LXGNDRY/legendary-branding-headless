@@ -38,7 +38,7 @@ export default function FitCheck({eyebrow, heading, image, hotspots}: FitCheckPr
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
-    <section className="h-section bg-[#FAF9F6] h-reveal">
+    <section className="h-section bg-[var(--color-background)] h-reveal">
       <div className="h-container">
         {(eyebrow || heading) && (
           <div className="mb-10">
@@ -68,20 +68,20 @@ export default function FitCheck({eyebrow, heading, image, hotspots}: FitCheckPr
               style={{left: `${spot.x}%`, top: `${spot.y}%`}}
             >
               <button
-                className={`relative w-9 h-9 rounded-full border-2 border-[#FAF9F6] bg-[#FF3B30] flex items-center justify-center transition-all duration-200 ${activeIndex === i ? 'scale-110' : 'hover:scale-105'}`}
+                className={`relative w-9 h-9 rounded-full border-2 border-[var(--color-text-inverse)] bg-[var(--color-accent)] flex items-center justify-center transition-all duration-200 ${activeIndex === i ? 'scale-110' : 'hover:scale-105'}`}
                 onClick={() => setActiveIndex(activeIndex === i ? null : i)}
                 aria-expanded={activeIndex === i}
                 aria-label={`View ${spot.product.title}`}
               >
-                <span className="absolute inset-0 rounded-full border-2 border-[#FF3B30]/40 animate-ping" />
-                <span className="relative w-2 h-2 rounded-full bg-[#FAF9F6]" />
+                <span className="absolute inset-0 rounded-full border-2 border-[var(--color-accent)]/40 animate-ping" />
+                <span className="relative w-2 h-2 rounded-full bg-[var(--color-background)]" />
               </button>
 
               {activeIndex === i && (
-                <div className="absolute z-20 bottom-full mb-3 left-1/2 -translate-x-1/2 w-60 bg-white shadow-lg border border-[#E8E6E1]">
+                <div className="absolute z-20 bottom-full mb-3 left-1/2 -translate-x-1/2 w-60 bg-white shadow-lg border border-[var(--color-border-subtle)]">
                   <Link
                     to={`/products/${spot.product.handle}`}
-                    className="flex items-center gap-4 p-4 hover:bg-[#F3F2EE] transition-colors"
+                    className="flex items-center gap-4 p-4 hover:bg-[var(--color-surface)] transition-colors"
                     onClick={() => setActiveIndex(null)}
                   >
                     {spot.product.image ? (
@@ -91,7 +91,7 @@ export default function FitCheck({eyebrow, heading, image, hotspots}: FitCheckPr
                         sizes="56px"
                       />
                     ) : (
-                      <div className="w-14 h-16 rounded-lg bg-[#F3F2EE] shrink-0" />
+                      <div className="w-14 h-16 rounded-lg bg-[var(--color-surface)] shrink-0" />
                     )}
                     <div className="min-w-0 flex-1">
                       {spot.label && (
@@ -99,10 +99,10 @@ export default function FitCheck({eyebrow, heading, image, hotspots}: FitCheckPr
                           {spot.label}
                         </p>
                       )}
-                      <p className="text-sm font-serif text-[#1A1A1A] truncate leading-snug">
+                      <p className="text-sm font-serif text-[var(--color-foreground)] truncate leading-snug">
                         {spot.product.title}
                       </p>
-                      <p className="text-xs text-[#6B6B6B] mt-1">
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                         {new Intl.NumberFormat('en-US', {
                           style: 'currency',
                           currency: spot.product.price.currencyCode,

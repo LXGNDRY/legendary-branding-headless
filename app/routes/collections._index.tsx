@@ -80,7 +80,7 @@ export default function CollectionsIndex() {
     <Container className="py-16">
       <JsonLd data={breadcrumbJsonLd} />
       <div className="mb-12">
-        <p className="text-[10px] font-semibold tracking-widest uppercase text-[#6b6b6b] mb-2">
+        <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-text-secondary)] mb-2">
           Shop
         </p>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
@@ -111,15 +111,15 @@ export default function CollectionsIndex() {
               )}
             </div>
             <div className="flex items-baseline justify-between">
-              <span className="text-sm font-medium tracking-[0.12em] uppercase group-hover:text-[#6b6b6b] transition-colors">
+              <span className="text-sm font-medium tracking-[0.12em] uppercase group-hover:text-[var(--color-text-secondary)] transition-colors">
                 {collection.title}
               </span>
-              <span className="text-xs text-[#6b6b6b]">
+              <span className="text-xs text-[var(--color-text-secondary)]">
                 {collection.products.nodes.length > 0 ? 'Shop Now' : 'Coming Soon'}
               </span>
             </div>
             {collection.description && (
-              <p className="mt-1 text-xs text-[#6b6b6b] line-clamp-1">
+              <p className="mt-1 text-xs text-[var(--color-text-secondary)] line-clamp-1">
                 {collection.description}
               </p>
             )}

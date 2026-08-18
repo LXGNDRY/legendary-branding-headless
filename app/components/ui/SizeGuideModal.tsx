@@ -47,9 +47,9 @@ export default function SizeGuideModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="size-guide-title"
-        className="relative bg-white rounded-md w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-[0_20px_60px_rgba(0,0,0,0.2)]"
+        className="relative bg-[var(--color-background)] rounded-md w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-[0_20px_60px_rgba(0,0,0,0.2)]"
       >
-        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-[#e5e5e5] bg-white z-10">
+        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-background)] z-10">
           <h3
             id="size-guide-title"
             className="text-base font-medium tracking-[0.08em] uppercase"
@@ -86,10 +86,10 @@ export default function SizeGuideModal({
             <h4 className="text-xs font-semibold tracking-[0.1em] uppercase mb-3">
               Tops & Outerwear
             </h4>
-            <div className="w-full text-xs border border-[#e5e5e5] rounded-sm overflow-hidden">
+            <div className="w-full text-xs border border-[var(--color-border-subtle)] rounded-sm overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[#f5f5f5]">
+                  <tr className="bg-[var(--color-surface)]">
                     <th className="text-left px-3 py-2 font-medium text-[0.7rem] tracking-[0.08em] uppercase">
                       Size
                     </th>
@@ -114,7 +114,7 @@ export default function SizeGuideModal({
                   ].map((row, i) => (
                     <tr
                       key={row[0]}
-                      className={i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}
+                      className={i % 2 === 0 ? 'bg-white' : 'bg-[var(--color-surface-elevated)]'}
                     >
                       <td className="px-3 py-2 font-medium">{row[0]}</td>
                       <td className="px-3 py-2">{row[1]}</td>
@@ -132,10 +132,10 @@ export default function SizeGuideModal({
             <h4 className="text-xs font-semibold tracking-[0.1em] uppercase mb-3">
               Bottoms
             </h4>
-            <div className="w-full text-xs border border-[#e5e5e5] rounded-sm overflow-hidden">
+            <div className="w-full text-xs border border-[var(--color-border-subtle)] rounded-sm overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[#f5f5f5]">
+                  <tr className="bg-[var(--color-surface)]">
                     <th className="text-left px-3 py-2 font-medium text-[0.7rem] tracking-[0.08em] uppercase">
                       Size
                     </th>
@@ -160,7 +160,7 @@ export default function SizeGuideModal({
                   ].map((row, i) => (
                     <tr
                       key={row[0]}
-                      className={i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}
+                      className={i % 2 === 0 ? 'bg-white' : 'bg-[var(--color-surface-elevated)]'}
                     >
                       <td className="px-3 py-2 font-medium">{row[0]}</td>
                       <td className="px-3 py-2">{row[1]}</td>

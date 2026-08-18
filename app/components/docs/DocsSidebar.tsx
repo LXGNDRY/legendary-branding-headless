@@ -44,7 +44,7 @@ export default function DocsSidebar({currentPath}: DocsSidebarProps) {
       <nav className="sticky top-24 space-y-8">
         {NAV_GROUPS.map((group) => (
           <div key={group.title}>
-            <h4 className="h-eyebrow text-[#9E9C97] mb-4">
+            <h4 className="h-eyebrow text-[var(--color-text-tertiary)] mb-4">
               {group.title}
             </h4>
             <ul className="space-y-2">
@@ -58,8 +58,8 @@ export default function DocsSidebar({currentPath}: DocsSidebarProps) {
                       to={link.href}
                       className={`block text-sm py-1.5 transition-colors ${
                         isActive
-                          ? 'text-[#1A1A1A] font-medium'
-                          : 'text-[#6B6B6B] hover:text-[#1A1A1A]'
+                          ? 'text-[var(--color-foreground)] font-medium'
+                          : 'text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)]'
                       }`}
                     >
                       {link.label}

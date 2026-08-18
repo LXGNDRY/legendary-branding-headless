@@ -256,11 +256,11 @@ export default function CollectionPage() {
   ]);
 
   return (
-    <div className="bg-[#FAF9F6]">
+    <div className="bg-[var(--color-background)]">
       <JsonLd data={collectionJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
       {/* Collection hero */}
-      <div className="relative h-[280px] md:h-[420px] bg-[#1A1A1A] overflow-hidden">
+      <div className="relative h-[280px] md:h-[420px] bg-[var(--color-foreground)] overflow-hidden">
         {collection.image?.url ? (
           <Image
             data={collection.image}
@@ -271,20 +271,20 @@ export default function CollectionPage() {
             className="absolute inset-0 w-full h-full object-cover opacity-70"
           />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A]/70 via-[#1A1A1A]/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-foreground)]/70 via-[var(--color-foreground)]/20 to-transparent" />
         <div className="h-container absolute inset-0 flex flex-col justify-end pb-10">
-          <nav className="h-eyebrow text-[#FAF9F6]/50 mb-4" aria-label="Breadcrumb">
-            <a href="/collections" className="hover:text-[#FAF9F6]/80 transition-colors">
+          <nav className="h-eyebrow text-[var(--color-text-inverse)]/50 mb-4" aria-label="Breadcrumb">
+            <a href="/collections" className="hover:text-[var(--color-text-inverse)]/80 transition-colors">
               Collections
             </a>
             <span className="mx-2 opacity-40">/</span>
-            <span className="text-[#FAF9F6]/70">{collection.title}</span>
+            <span className="text-[var(--color-text-inverse)]/70">{collection.title}</span>
           </nav>
-          <h1 className="font-serif font-normal text-[clamp(2.5rem,6vw,5rem)] leading-[0.95] tracking-[-0.01em] text-[#FAF9F6]">
+          <h1 className="font-serif font-normal text-[clamp(2.5rem,6vw,5rem)] leading-[0.95] tracking-[-0.01em] text-[var(--color-text-inverse)]">
             {collection.title}
           </h1>
           {collection.description && (
-            <p className="mt-3 text-[0.9rem] text-[#FAF9F6]/60 max-w-lg leading-relaxed">
+            <p className="mt-3 text-[0.9rem] text-[var(--color-text-inverse)]/60 max-w-lg leading-relaxed">
               {collection.description}
             </p>
           )}
@@ -302,7 +302,7 @@ export default function CollectionPage() {
                 {hasActiveFilters && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-[0.7rem] text-[#6B6B6B] hover:text-[#1A1A1A] underline underline-offset-2 transition-colors"
+                    className="text-[0.7rem] text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] underline underline-offset-2 transition-colors"
                   >
                     Clear all
                   </button>
@@ -310,14 +310,14 @@ export default function CollectionPage() {
               </div>
 
               {/* Availability */}
-              <div className="mb-7 border-b border-[#E8E6E1] pb-7">
-                <p className="h-eyebrow mb-4 text-[#1A1A1A]">Availability</p>
-                <label className="flex items-center gap-2.5 text-[0.85rem] cursor-pointer hover:text-[#6B6B6B] transition-colors">
+              <div className="mb-7 border-b border-[var(--color-border-subtle)] pb-7">
+                <p className="h-eyebrow mb-4 text-[var(--color-foreground)]">Availability</p>
+                <label className="flex items-center gap-2.5 text-[0.85rem] cursor-pointer hover:text-[var(--color-text-secondary)] transition-colors">
                   <input
                     type="checkbox"
                     checked={searchParams.get('in_stock') === '1'}
                     onChange={(e) => handleFilterChange('in_stock', e.target.checked ? '1' : null)}
-                    className="w-4 h-4 accent-[#1A1A1A] rounded-sm"
+                    className="w-4 h-4 accent-[var(--color-foreground)] rounded-sm"
                   />
                   In stock only
                 </label>
@@ -326,12 +326,12 @@ export default function CollectionPage() {
               {/* Product type */}
               {typeFilter && typeFilter.values.length > 0 && (
                 <div className="mb-7">
-                  <p className="h-eyebrow mb-4 text-[#1A1A1A]">{typeFilter.label}</p>
+                  <p className="h-eyebrow mb-4 text-[var(--color-foreground)]">{typeFilter.label}</p>
                   <div className="space-y-2.5">
                     {typeFilter.values.slice(0, 15).map((v) => {
                       const isActive = searchParams.get('type') === v.label;
                       return (
-                        <label key={v.id} className="flex items-center justify-between text-[0.85rem] cursor-pointer hover:text-[#6B6B6B] transition-colors">
+                        <label key={v.id} className="flex items-center justify-between text-[0.85rem] cursor-pointer hover:text-[var(--color-text-secondary)] transition-colors">
                           <div className="flex items-center gap-2.5">
                             <input
                               type="checkbox"
@@ -343,11 +343,11 @@ export default function CollectionPage() {
                                 p.delete('cursor');
                                 setSearchParams(p, {replace: true});
                               }}
-                              className="w-4 h-4 accent-[#1A1A1A]"
+                              className="w-4 h-4 accent-[var(--color-foreground)]"
                             />
                             {v.label}
                           </div>
-                          <span className="text-[0.7rem] text-[#9E9C97]">{v.count}</span>
+                          <span className="text-[0.7rem] text-[var(--color-text-tertiary)]">{v.count}</span>
                         </label>
                       );
                     })}
@@ -360,31 +360,31 @@ export default function CollectionPage() {
           {/* Product grid */}
           <div className="flex-1 min-w-0">
             {/* Toolbar */}
-            <div className="flex items-center justify-between border-b border-[#E8E6E1] pb-4 mb-8">
+            <div className="flex items-center justify-between border-b border-[var(--color-border-subtle)] pb-4 mb-8">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setFilterOpen(true)}
-                  className="lg:hidden flex items-center gap-2 h-eyebrow text-[#1A1A1A] hover:text-[#6B6B6B] transition-colors"
+                  className="lg:hidden flex items-center gap-2 h-eyebrow text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
                 >
                   <FilterIcon />
                   Filters
                   {hasActiveFilters && (
-                    <span className="bg-[#1A1A1A] text-[#FAF9F6] text-[9px] font-bold rounded-full px-1.5 py-0.5">
+                    <span className="bg-[var(--color-foreground)] text-[var(--color-text-inverse)] text-[9px] font-bold rounded-full px-1.5 py-0.5">
                       ON
                     </span>
                   )}
                 </button>
-                <span className="h-eyebrow text-[#9E9C97]">
+                <span className="h-eyebrow text-[var(--color-text-tertiary)]">
                   {productCount} {productCount === 1 ? 'product' : 'products'}
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="h-eyebrow text-[#9E9C97] hidden sm:block">Sort</span>
+                <span className="h-eyebrow text-[var(--color-text-tertiary)] hidden sm:block">Sort</span>
                 <select
                   value={sort}
                   onChange={(e) => handleSort(e.target.value)}
-                  className="h-eyebrow text-[#1A1A1A] bg-transparent border-b border-[#E8E6E1] focus:border-[#1A1A1A] focus:outline-none cursor-pointer pb-0.5 transition-colors"
+                  className="h-eyebrow text-[var(--color-foreground)] bg-transparent border-b border-[var(--color-border-subtle)] focus:border-[var(--color-foreground)] focus:outline-none cursor-pointer pb-0.5 transition-colors"
                 >
                   {SORT_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -399,7 +399,7 @@ export default function CollectionPage() {
                 {searchParams.get('in_stock') === '1' && (
                   <button
                     onClick={() => handleFilterChange('in_stock', null)}
-                    className="flex items-center gap-1.5 h-eyebrow px-3 py-1.5 border border-[#1A1A1A] rounded-full text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-[#FAF9F6] transition-all"
+                    className="flex items-center gap-1.5 h-eyebrow px-3 py-1.5 border border-[var(--color-foreground)] rounded-full text-[var(--color-foreground)] hover:bg-[var(--color-foreground)] hover:text-[var(--color-text-inverse)] transition-all"
                   >
                     In stock <CloseIcon />
                   </button>
@@ -407,7 +407,7 @@ export default function CollectionPage() {
                 {searchParams.get('type') && (
                   <button
                     onClick={() => handleFilterChange('type', null)}
-                    className="flex items-center gap-1.5 h-eyebrow px-3 py-1.5 border border-[#1A1A1A] rounded-full text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-[#FAF9F6] transition-all"
+                    className="flex items-center gap-1.5 h-eyebrow px-3 py-1.5 border border-[var(--color-foreground)] rounded-full text-[var(--color-foreground)] hover:bg-[var(--color-foreground)] hover:text-[var(--color-text-inverse)] transition-all"
                   >
                     {searchParams.get('type')} <CloseIcon />
                   </button>
@@ -441,7 +441,7 @@ export default function CollectionPage() {
                   ) : (
                     <div className="py-28 text-center">
                       <p className="h-eyebrow mb-4">No products</p>
-                      <p className="text-[#6B6B6B] text-sm mb-7">No products match your current filters.</p>
+                      <p className="text-[var(--color-text-secondary)] text-sm mb-7">No products match your current filters.</p>
                       <button onClick={clearAllFilters} className="h-btn-outline">
                         Clear filters
                       </button>
@@ -465,30 +465,30 @@ export default function CollectionPage() {
       {/* Mobile filter drawer */}
       {filterOpen && (
         <div className="fixed inset-0 z-[500] lg:hidden">
-          <div className="absolute inset-0 bg-[#1A1A1A]/40" onClick={() => setFilterOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-[#FAF9F6] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[#E8E6E1]">
-              <p className="h-eyebrow text-[#1A1A1A]">Filters</p>
-              <button onClick={() => setFilterOpen(false)} aria-label="Close filters" className="p-1 text-[#1A1A1A]">
+          <div className="absolute inset-0 bg-[var(--color-foreground)]/40" onClick={() => setFilterOpen(false)} />
+          <div className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border-subtle)]">
+              <p className="h-eyebrow text-[var(--color-foreground)]">Filters</p>
+              <button onClick={() => setFilterOpen(false)} aria-label="Close filters" className="p-1 text-[var(--color-foreground)]">
                 <CloseIcon />
               </button>
             </div>
             <div className="overflow-y-auto flex-1 px-6 py-6 space-y-7">
               <div>
-                <p className="h-eyebrow mb-4 text-[#1A1A1A]">Availability</p>
+                <p className="h-eyebrow mb-4 text-[var(--color-foreground)]">Availability</p>
                 <label className="flex items-center gap-2.5 text-sm cursor-pointer">
                   <input
                     type="checkbox"
                     checked={searchParams.get('in_stock') === '1'}
                     onChange={(e) => handleFilterChange('in_stock', e.target.checked ? '1' : null)}
-                    className="w-4 h-4 accent-[#1A1A1A]"
+                    className="w-4 h-4 accent-[var(--color-foreground)]"
                   />
                   In stock only
                 </label>
               </div>
               {typeFilter && typeFilter.values.length > 0 && (
                 <div>
-                  <p className="h-eyebrow mb-4 text-[#1A1A1A]">{typeFilter.label}</p>
+                  <p className="h-eyebrow mb-4 text-[var(--color-foreground)]">{typeFilter.label}</p>
                   <div className="space-y-3">
                     {typeFilter.values.slice(0, 20).map((v) => {
                       const isActive = searchParams.get('type') === v.label;
@@ -505,11 +505,11 @@ export default function CollectionPage() {
                                 p.delete('cursor');
                                 setSearchParams(p, {replace: true});
                               }}
-                              className="w-4 h-4 accent-[#1A1A1A]"
+                              className="w-4 h-4 accent-[var(--color-foreground)]"
                             />
                             {v.label}
                           </div>
-                          <span className="text-[0.7rem] text-[#9E9C97]">{v.count}</span>
+                          <span className="text-[0.7rem] text-[var(--color-text-tertiary)]">{v.count}</span>
                         </label>
                       );
                     })}
@@ -517,7 +517,7 @@ export default function CollectionPage() {
                 </div>
               )}
             </div>
-            <div className="px-6 py-5 border-t border-[#E8E6E1] flex gap-3">
+            <div className="px-6 py-5 border-t border-[var(--color-border-subtle)] flex gap-3">
               <button onClick={clearAllFilters} className="flex-1 h-btn-outline text-[0.7rem] px-4 py-3">
                 Clear
               </button>

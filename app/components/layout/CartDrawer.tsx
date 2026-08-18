@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Link, useFetcher} from 'react-router';
+import Button from '~/components/ui/Button';
 import {CartForm, Image, Money} from '@shopify/hydrogen';
 import type {CartData, CartLineData} from '~/lib/cart';
 
@@ -63,7 +64,7 @@ function CartLineItem({line}: {line: CartLineData}) {
       {/* Image */}
       <Link
         to={`/products/${product.handle}`}
-        className="shrink-0 w-20 h-24 overflow-hidden rounded-lg bg-[#f7f7f7] block"
+        className="shrink-0 w-20 h-24 overflow-hidden rounded-lg bg-[var(--color-surface)] block"
       >
         {image ? (
           <Image
@@ -76,7 +77,7 @@ function CartLineItem({line}: {line: CartLineData}) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-[#e5e5e5]" />
+          <div className="w-full h-full bg-[var(--color-border-subtle)]" />
         )}
       </Link>
 
@@ -85,12 +86,12 @@ function CartLineItem({line}: {line: CartLineData}) {
         <div>
           <Link
             to={`/products/${product.handle}`}
-            className="text-xs font-medium tracking-wide text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors line-clamp-2 block"
+            className="text-xs font-medium tracking-wide text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors line-clamp-2 block"
           >
             {product.title}
           </Link>
           {variantLabel && (
-            <p className="mt-0.5 text-[11px] text-[#6b6b6b] tracking-wide">{variantLabel}</p>
+            <p className="mt-0.5 text-[11px] text-[var(--color-text-secondary)] tracking-wide">{variantLabel}</p>
           )}
           <div className="mt-1">
             <Money data={price} className="text-xs font-medium" />
@@ -107,7 +108,7 @@ function CartLineItem({line}: {line: CartLineData}) {
             >
               <button
                 type="submit"
-                className="w-8 h-8 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f7f7f7] transition-colors disabled:opacity-40"
+                className="w-8 h-8 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors disabled:opacity-40"
                 aria-label="Decrease quantity"
                 disabled={quantity <= 1}
               >
@@ -122,7 +123,7 @@ function CartLineItem({line}: {line: CartLineData}) {
             >
               <button
                 type="submit"
-                className="w-8 h-8 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f7f7f7] transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors"
                 aria-label="Increase quantity"
               >
                 <PlusIcon />
@@ -140,7 +141,7 @@ function CartLineItem({line}: {line: CartLineData}) {
             >
               <button
                 type="submit"
-                className="text-[11px] text-[#6b6b6b] underline underline-offset-2 hover:text-[#0a0a0a] transition-colors"
+                className="text-[11px] text-[var(--color-text-secondary)] underline underline-offset-2 hover:text-[var(--color-foreground)] transition-colors"
                 aria-label={`Remove ${product.title}`}
               >
                 Remove
@@ -230,7 +231,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
           <button
             onClick={onClose}
             aria-label="Close cart"
-            className="p-1 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
+            className="p-1 text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
           >
             <CloseIcon />
           </button>
@@ -238,12 +239,12 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
 
         {/* Free shipping progress */}
         {lines.length > 0 && subtotal && (
-          <div className="px-6 py-4 border-b border-black/10 shrink-0 bg-[#fafafa]">
+          <div className="px-6 py-4 border-b border-black/10 shrink-0 bg-[var(--color-surface-elevated)]">
             <div className="flex items-center gap-2 mb-2">
               <TruckIcon />
               <span className="text-[11px] tracking-wide">
                 {hasFreeShipping ? (
-                  <span className="font-medium text-[#0a0a0a]">You qualify for free shipping!</span>
+                  <span className="font-medium text-[var(--color-foreground)]">You qualify for free shipping!</span>
                 ) : (
                   <>Add <span className="font-medium">${remaining.toFixed(2)}</span> for free shipping</>
                 )}
@@ -251,7 +252,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
             </div>
             <div className="h-1 bg-black/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#0a0a0a] transition-all duration-500 ease-out"
+                className="h-full bg-[var(--color-foreground)] transition-all duration-500 ease-out"
                 style={{width: `${progress}%`}}
                 aria-hidden="true"
               />
@@ -263,10 +264,10 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         <div className="flex-1 overflow-y-auto px-6">
           {lines.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="text-sm text-[#6b6b6b] mb-6 tracking-wide">Your cart is empty.</p>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-6 tracking-wide">Your cart is empty.</p>
               <button
                 onClick={onClose}
-                className="text-xs font-medium tracking-widest uppercase underline underline-offset-4 text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors"
+                className="text-xs font-medium tracking-widest uppercase underline underline-offset-4 text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
               >
                 Continue Shopping
               </button>
@@ -292,7 +293,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 />
                 <button
                   type="submit"
-                  className="text-[11px] font-medium tracking-widest uppercase bg-black text-white px-4 py-2 hover:opacity-90 transition-opacity"
+                  className="text-[11px] font-medium tracking-widest uppercase bg-black text-[var(--color-text-inverse)] px-4 py-2 hover:opacity-90 transition-opacity"
                 >
                   Apply
                 </button>
@@ -315,26 +316,28 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
 
             {/* Subtotal */}
             <div className="flex justify-between items-baseline">
-              <span className="text-xs tracking-widest uppercase text-[#6b6b6b]">Subtotal</span>
+              <span className="text-xs tracking-widest uppercase text-[var(--color-text-secondary)]">Subtotal</span>
               <Money data={cart.cost.subtotalAmount} className="text-sm font-medium" />
             </div>
-            <p className="text-[11px] text-[#6b6b6b] tracking-wide">
+            <p className="text-[11px] text-[var(--color-text-secondary)] tracking-wide">
               Taxes and shipping calculated at checkout
             </p>
 
             {/* Checkout */}
-            <a
+            <Button
+              as="a"
               href={cart.checkoutUrl}
-              className="block w-full py-4 bg-[#0a0a0a] text-white text-xs font-semibold tracking-widest uppercase text-center hover:bg-[#333] transition-colors"
+              variant="dark"
+              className="w-full justify-center"
             >
               Proceed to Checkout
-            </a>
+            </Button>
 
             <div className="flex justify-center">
               <Link
                 to="/cart"
                 onClick={onClose}
-                className="text-[11px] tracking-widest uppercase text-[#6b6b6b] hover:text-[#0a0a0a] underline underline-offset-2 transition-colors"
+                className="text-[11px] tracking-widest uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] underline underline-offset-2 transition-colors"
               >
                 View Full Cart
               </Link>

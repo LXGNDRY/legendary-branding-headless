@@ -70,11 +70,11 @@ function CartLineRow({line}: {line: CartLineData}) {
     .join(' / ');
 
   return (
-    <div className="flex gap-5 py-6 border-b border-[#e5e5e5]">
+    <div className="flex gap-5 py-6 border-b border-[var(--color-border-subtle)]">
       {/* Image */}
       <Link
         to={`/products/${product.handle}`}
-        className="shrink-0 w-24 h-28 overflow-hidden rounded-lg bg-[#f7f7f7] block"
+        className="shrink-0 w-24 h-28 overflow-hidden rounded-lg bg-[var(--color-surface)] block"
       >
         {image ? (
           <Image
@@ -87,7 +87,7 @@ function CartLineRow({line}: {line: CartLineData}) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-[#e5e5e5]" />
+          <div className="w-full h-full bg-[var(--color-border-subtle)]" />
         )}
       </Link>
 
@@ -97,12 +97,12 @@ function CartLineRow({line}: {line: CartLineData}) {
           <div className="min-w-0">
             <Link
               to={`/products/${product.handle}`}
-              className="text-sm font-medium text-[#0a0a0a] hover:text-[#6b6b6b] transition-colors block leading-snug"
+              className="text-sm font-medium text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors block leading-snug"
             >
               {product.title}
             </Link>
             {variantLabel && (
-              <p className="mt-1 text-xs text-[#6b6b6b] tracking-wide">{variantLabel}</p>
+              <p className="mt-1 text-xs text-[var(--color-text-secondary)] tracking-wide">{variantLabel}</p>
             )}
             <div className="mt-1">
               <Money data={price} className="text-sm font-medium" />
@@ -115,7 +115,7 @@ function CartLineRow({line}: {line: CartLineData}) {
 
         {/* Quantity + remove */}
         <div className="flex items-center gap-4 mt-4">
-          <div className="flex items-center border border-[#e5e5e5]">
+          <div className="flex items-center border border-[var(--color-border-subtle)]">
             <CartForm
               route="/cart"
               action={CartForm.ACTIONS.LinesUpdate}
@@ -123,7 +123,7 @@ function CartLineRow({line}: {line: CartLineData}) {
             >
               <button
                 type="submit"
-                className="w-9 h-9 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f7f7f7] transition-colors disabled:opacity-40"
+                className="w-9 h-9 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors disabled:opacity-40"
                 aria-label="Decrease quantity"
                 disabled={quantity <= 1}
               >
@@ -138,7 +138,7 @@ function CartLineRow({line}: {line: CartLineData}) {
             >
               <button
                 type="submit"
-                className="w-9 h-9 flex items-center justify-center text-[#0a0a0a] hover:bg-[#f7f7f7] transition-colors"
+                className="w-9 h-9 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors"
                 aria-label="Increase quantity"
               >
                 <PlusIcon />
@@ -153,7 +153,7 @@ function CartLineRow({line}: {line: CartLineData}) {
           >
             <button
               type="submit"
-              className="text-xs text-[#6b6b6b] underline underline-offset-2 hover:text-[#0a0a0a] transition-colors"
+              className="text-xs text-[var(--color-text-secondary)] underline underline-offset-2 hover:text-[var(--color-foreground)] transition-colors"
             >
               Remove
             </button>
@@ -174,8 +174,8 @@ export default function CartPage() {
       <h1 className="text-3xl font-bold tracking-tight mb-10">Your Cart</h1>
 
       {isEmpty ? (
-        <div className="py-24 text-center border-y border-[#e5e5e5]">
-          <p className="text-sm text-[#6b6b6b] tracking-wide mb-6">
+        <div className="py-24 text-center border-y border-[var(--color-border-subtle)]">
+          <p className="text-sm text-[var(--color-text-secondary)] tracking-wide mb-6">
             Your cart is empty.
           </p>
           <Button as="link" to="/collections/all-products" variant="outline">
@@ -192,7 +192,7 @@ export default function CartPage() {
             <div className="pt-6">
               <Link
                 to="/collections/all-products"
-                className="text-xs tracking-widest uppercase underline underline-offset-2 text-[#6b6b6b] hover:text-[#0a0a0a] transition-colors"
+                className="text-xs tracking-widest uppercase underline underline-offset-2 text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors"
               >
                 Continue Shopping
               </Link>
@@ -200,13 +200,13 @@ export default function CartPage() {
           </div>
 
           {/* Order summary */}
-          <div className="bg-[#f7f7f7] p-8 h-fit">
+          <div className="bg-[var(--color-surface)] p-8 h-fit">
             <h2 className="text-xs font-semibold tracking-widest uppercase mb-6">
               Order Summary
             </h2>
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm">
-                <span className="text-[#6b6b6b]">
+                <span className="text-[var(--color-text-secondary)]">
                   Subtotal ({cart?.totalQuantity} {cart?.totalQuantity === 1 ? 'item' : 'items'})
                 </span>
                 {cart?.cost.subtotalAmount && (
@@ -214,11 +214,11 @@ export default function CartPage() {
                 )}
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-[#6b6b6b]">Shipping</span>
-                <span className="text-[#6b6b6b]">Calculated at checkout</span>
+                <span className="text-[var(--color-text-secondary)]">Shipping</span>
+                <span className="text-[var(--color-text-secondary)]">Calculated at checkout</span>
               </div>
             </div>
-            <div className="border-t border-[#e5e5e5] pt-4 mb-8">
+            <div className="border-t border-[var(--color-border-subtle)] pt-4 mb-8">
               <div className="flex justify-between font-medium text-sm">
                 <span>Estimated Total</span>
                 {cart?.cost.totalAmount && (
@@ -228,24 +228,26 @@ export default function CartPage() {
             </div>
 
             {cart?.checkoutUrl ? (
-              <a
+              <Button
+                as="a"
                 href={cart.checkoutUrl}
-                className="block w-full py-4 bg-[#0a0a0a] text-white text-xs font-semibold tracking-widest uppercase text-center hover:bg-[#333] transition-colors"
+                variant="dark"
+                className="w-full justify-center"
               >
                 Proceed to Checkout
-              </a>
+              </Button>
             ) : (
               <Button
-                variant="solid"
+                variant="dark"
                 type="button"
-                className="w-full py-4 text-sm"
+                className="w-full justify-center"
                 disabled
               >
                 Proceed to Checkout
               </Button>
             )}
 
-            <p className="mt-4 text-center text-[11px] text-[#6b6b6b] tracking-wide">
+            <p className="mt-4 text-center text-[11px] text-[var(--color-text-secondary)] tracking-wide">
               Taxes and shipping calculated at checkout
             </p>
           </div>

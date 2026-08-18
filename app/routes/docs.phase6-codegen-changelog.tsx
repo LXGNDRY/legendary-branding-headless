@@ -17,7 +17,7 @@ function SectionHeading({id, children}: {id: string; children: React.ReactNode})
   return (
     <h2
       id={id}
-      className="font-serif text-3xl text-[#1A1A1A] mt-16 mb-6 pb-3 border-b border-[#E8E6E1] scroll-mt-24"
+      className="font-serif text-3xl text-[var(--color-foreground)] mt-16 mb-6 pb-3 border-b border-[var(--color-border-subtle)] scroll-mt-24"
     >
       {children}
     </h2>
@@ -28,7 +28,7 @@ function SubHeading({id, children}: {id: string; children: React.ReactNode}) {
   return (
     <h3
       id={id}
-      className="font-serif text-xl text-[#1A1A1A] mt-8 mb-4 scroll-mt-24"
+      className="font-serif text-xl text-[var(--color-foreground)] mt-8 mb-4 scroll-mt-24"
     >
       {children}
     </h3>
@@ -36,12 +36,12 @@ function SubHeading({id, children}: {id: string; children: React.ReactNode}) {
 }
 
 function P({children}: {children: React.ReactNode}) {
-  return <p className="text-[#1A1A1A]/80 leading-relaxed mb-4">{children}</p>;
+  return <p className="text-[var(--color-foreground)]/80 leading-relaxed mb-4">{children}</p>;
 }
 
 function InlineCode({children}: {children: React.ReactNode}) {
   return (
-    <code className="px-1.5 py-0.5 bg-[#F3F2EE] text-sm text-[#FF3B30] rounded font-mono">
+    <code className="px-1.5 py-0.5 bg-[var(--color-surface)] text-sm text-[var(--color-accent)] rounded font-mono">
       {children}
     </code>
   );
@@ -49,7 +49,7 @@ function InlineCode({children}: {children: React.ReactNode}) {
 
 function CodeBlock({children}: {children: React.ReactNode}) {
   return (
-    <pre className="bg-[#1A1A1A] text-[#FAF9F6] p-5 rounded-lg text-sm overflow-x-auto mb-6 font-mono leading-relaxed">
+    <pre className="bg-[var(--color-foreground)] text-[var(--color-text-inverse)] p-5 rounded-lg text-sm overflow-x-auto mb-6 font-mono leading-relaxed">
       {children}
     </pre>
   );
@@ -57,8 +57,8 @@ function CodeBlock({children}: {children: React.ReactNode}) {
 
 function Note({children}: {children: React.ReactNode}) {
   return (
-    <div className="border-l-4 border-[#FF3B30] bg-[#FF3B30]/5 p-5 rounded-r-lg mb-6">
-      <p className="text-sm text-[#1A1A1A] leading-relaxed m-0">{children}</p>
+    <div className="border-l-4 border-[var(--color-accent)] bg-[var(--color-accent)]/5 p-5 rounded-r-lg mb-6">
+      <p className="text-sm text-[var(--color-foreground)] leading-relaxed m-0">{children}</p>
     </div>
   );
 }
@@ -68,9 +68,9 @@ function DocTable({headers, rows}: {headers: string[]; rows: string[][]}) {
     <div className="overflow-x-auto mb-6">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b border-[#E8E6E1]">
+          <tr className="border-b border-[var(--color-border-subtle)]">
             {headers.map((h) => (
-              <th key={h} className="text-left h-eyebrow text-[#9E9C97] py-3 pr-4 font-normal first:pl-0">
+              <th key={h} className="text-left h-eyebrow text-[var(--color-text-tertiary)] py-3 pr-4 font-normal first:pl-0">
                 {h}
               </th>
             ))}
@@ -78,9 +78,9 @@ function DocTable({headers, rows}: {headers: string[]; rows: string[][]}) {
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-b border-[#E8E6E1]/50">
+            <tr key={i} className="border-b border-[var(--color-border-subtle)]/50">
               {row.map((cell, j) => (
-                <td key={j} className="py-3 pr-4 text-[#1A1A1A]/80 first:pl-0">{cell}</td>
+                <td key={j} className="py-3 pr-4 text-[var(--color-foreground)]/80 first:pl-0">{cell}</td>
               ))}
             </tr>
           ))}
@@ -96,11 +96,11 @@ export default function Phase6CodegenPage() {
   return (
     <DocsLayout currentPath={location.pathname}>
       <div>
-        <p className="h-eyebrow text-[#FF3B30] mb-4">PHASE 6</p>
-        <h1 className="font-serif text-4xl md:text-5xl font-normal text-[#1A1A1A] mb-4 leading-tight">
+        <p className="h-eyebrow text-[var(--color-accent)] mb-4">PHASE 6</p>
+        <h1 className="font-serif text-4xl md:text-5xl font-normal text-[var(--color-foreground)] mb-4 leading-tight">
           Codegen &amp; GraphQL Validation
         </h1>
-        <p className="text-lg text-[#6B6B6B] leading-relaxed mb-8 max-w-2xl">
+        <p className="text-lg text-[var(--color-text-secondary)] leading-relaxed mb-8 max-w-2xl">
           Real type-safety gate for Storefront + Customer Account GraphQL —
           fixing the DB-level bugs that could never be caught before this phase.
         </p>
@@ -250,7 +250,7 @@ export default function Phase6CodegenPage() {
         />
 
         <SectionHeading id="checks">6. Checks</SectionHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>Codegen passes validation (no GraphQL document errors)</li>
           <li>Typecheck passes (<InlineCode>npm run typecheck</InlineCode>)</li>
           <li>Build passes (<InlineCode>npm run build</InlineCode>)</li>

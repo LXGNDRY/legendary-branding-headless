@@ -62,12 +62,12 @@ function CardList({items}: {items: Array<{title: string; description: string; hr
         <Link
           key={item.href}
           to={item.href}
-          className="block p-6 border border-[#E8E6E1] rounded-lg bg-white hover:border-[#1A1A1A] transition-colors"
+          className="block p-6 border border-[var(--color-border-subtle)] rounded-lg bg-white hover:border-[var(--color-foreground)] transition-colors"
         >
-          <h3 className="font-serif text-lg text-[#1A1A1A] mb-2">
+          <h3 className="font-serif text-lg text-[var(--color-foreground)] mb-2">
             {item.title}
           </h3>
-          <p className="text-sm text-[#6B6B6B] leading-relaxed">
+          <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
             {item.description}
           </p>
         </Link>
@@ -85,12 +85,12 @@ export default function DocsIndex() {
         {/* Latest Changelog */}
         <section>
           <div className="flex items-baseline justify-between mb-6">
-            <h2 className="font-serif text-2xl text-[#1A1A1A]">
+            <h2 className="font-serif text-2xl text-[var(--color-foreground)]">
               Latest Changelog
             </h2>
-            <span className="h-eyebrow text-[#FF3B30]">Phases 7–10</span>
+            <span className="h-eyebrow text-[var(--color-accent)]">Phases 7–10</span>
           </div>
-          <p className="text-[#6B6B6B] mb-6">
+          <p className="text-[var(--color-text-secondary)] mb-6">
             Combined hardening pass: performance, error handling, caching, and security.
           </p>
           <CardList items={PHASE_7_10_ITEMS} />
@@ -107,12 +107,12 @@ export default function DocsIndex() {
         {/* Phase 6 Changelog */}
         <section>
           <div className="flex items-baseline justify-between mb-6">
-            <h2 className="font-serif text-2xl text-[#1A1A1A]">
+            <h2 className="font-serif text-2xl text-[var(--color-foreground)]">
               Phase 6 Changelog
             </h2>
-            <span className="h-eyebrow text-[#9E9C97]">Phase 6</span>
+            <span className="h-eyebrow text-[var(--color-text-tertiary)]">Phase 6</span>
           </div>
-          <p className="text-[#6B6B6B] mb-6">
+          <p className="text-[var(--color-text-secondary)] mb-6">
             Codegen &amp; GraphQL validation — turning type-safety into a real CI gate.
           </p>
           <CardList items={PHASE_6_ITEMS} />
@@ -129,12 +129,12 @@ export default function DocsIndex() {
         {/* Changelogs */}
         <section>
           <div className="flex items-baseline justify-between mb-6">
-            <h2 className="font-serif text-2xl text-[#1A1A1A]">
+            <h2 className="font-serif text-2xl text-[var(--color-foreground)]">
               Phase 5 Changelog
             </h2>
-            <span className="h-eyebrow text-[#9E9C97]">Phase 5</span>
+            <span className="h-eyebrow text-[var(--color-text-tertiary)]">Phase 5</span>
           </div>
-          <p className="text-[#6B6B6B] mb-6">
+          <p className="text-[var(--color-text-secondary)] mb-6">
             Content, SEO, and functional completeness — closing the gaps from the enterprise E2E audit.
           </p>
           <CardList items={PHASE_5_ITEMS} />
@@ -150,7 +150,7 @@ export default function DocsIndex() {
 
         {/* Design System */}
         <section>
-          <h2 className="font-serif text-2xl text-[#1A1A1A] mb-6">
+          <h2 className="font-serif text-2xl text-[var(--color-foreground)] mb-6">
             Design System
           </h2>
           <CardList items={DESIGN_SYSTEM_ITEMS} />

@@ -27,10 +27,15 @@
   --color-background-dark: #1A1A1A;
   --color-text-secondary: #6B6B6B;
   --color-text-inverse: #FAF9F6;
+  --color-text-tertiary: #9E9C97;
 
   --color-border-subtle: #E8E6E1;
+  --color-border-muted: #D0CDC6;
+  --color-border-medium: #333333;
   --color-border-strong: #1A1A1A;
   --color-surface: #F3F2EE;
+  --color-surface-elevated: #FAFAFA;
+  --color-surface-dark: #252525;
   --color-sale: #FF3B30;
 
   /* legacy aliases (keep for any still-existing references) */

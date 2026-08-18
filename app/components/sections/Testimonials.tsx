@@ -24,8 +24,8 @@ function StarRating({count}: {count: number}) {
         >
           <polygon
             points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
-            fill={i < count ? '#FF3B30' : 'transparent'}
-            stroke="#FF3B30"
+            fill={i < count ? 'var(--color-accent)' : 'transparent'}
+            stroke="var(--color-accent)"
             strokeWidth="1.5"
           />
         </svg>
@@ -46,12 +46,12 @@ export default function Testimonials({
   if (!items.length) return null;
 
   return (
-    <section className="h-section bg-[#1A1A1A] text-[#FAF9F6] h-reveal">
+    <section className="h-section bg-[var(--color-foreground)] text-[var(--color-text-inverse)] h-reveal">
       <div className="h-container">
         <div className="h-section-header">
           <div>
             {eyebrow && (
-              <p className="h-eyebrow mb-3 text-[#9E9C97]">{eyebrow}</p>
+              <p className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">{eyebrow}</p>
             )}
             {heading && (
               <h2 className="text-[clamp(2rem,4vw,3.5rem)] leading-[1.05] font-serif font-normal">
@@ -65,18 +65,18 @@ export default function Testimonials({
           {items.map((t, i) => (
             <blockquote
               key={i}
-              className="bg-[#252525] border border-[#333] p-8 flex flex-col gap-4"
+              className="bg-[var(--color-surface-dark)] border border-[var(--color-border-medium)] p-8 flex flex-col gap-4"
             >
               {(t.stars ?? 5) > 0 && <StarRating count={t.stars ?? 5} />}
-              <p className="text-[#FAF9F6]/80 text-base leading-relaxed flex-1 font-serif italic">
+              <p className="text-[var(--color-text-inverse)]/80 text-base leading-relaxed flex-1 font-serif italic">
                 &ldquo;{t.quote}&rdquo;
               </p>
-              <footer className="pt-4 border-t border-[#333]">
-                <cite className="text-[#FAF9F6] text-sm font-sans font-medium tracking-wide not-italic block">
+              <footer className="pt-4 border-t border-[var(--color-border-medium)]">
+                <cite className="text-[var(--color-text-inverse)] text-sm font-sans font-medium tracking-wide not-italic block">
                   {t.name}
                 </cite>
                 {t.location && (
-                  <span className="block text-[#9E9C97] text-xs tracking-wide mt-1">
+                  <span className="block text-[var(--color-text-tertiary)] text-xs tracking-wide mt-1">
                     {t.location}
                   </span>
                 )}

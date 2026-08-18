@@ -17,7 +17,7 @@ function SectionHeading({id, children}: {id: string; children: React.ReactNode})
   return (
     <h2
       id={id}
-      className="font-serif text-3xl text-[#1A1A1A] mt-16 mb-6 pb-3 border-b border-[#E8E6E1] scroll-mt-24"
+      className="font-serif text-3xl text-[var(--color-foreground)] mt-16 mb-6 pb-3 border-b border-[var(--color-border-subtle)] scroll-mt-24"
     >
       {children}
     </h2>
@@ -28,7 +28,7 @@ function SubHeading({id, children}: {id: string; children: React.ReactNode}) {
   return (
     <h3
       id={id}
-      className="font-serif text-xl text-[#1A1A1A] mt-8 mb-4 scroll-mt-24"
+      className="font-serif text-xl text-[var(--color-foreground)] mt-8 mb-4 scroll-mt-24"
     >
       {children}
     </h3>
@@ -39,7 +39,7 @@ function SubSubHeading({id, children}: {id: string; children: React.ReactNode}) 
   return (
     <h4
       id={id}
-      className="text-sm font-semibold tracking-wide uppercase text-[#1A1A1A] mt-6 mb-3 scroll-mt-24"
+      className="text-sm font-semibold tracking-wide uppercase text-[var(--color-foreground)] mt-6 mb-3 scroll-mt-24"
     >
       {children}
     </h4>
@@ -47,12 +47,12 @@ function SubSubHeading({id, children}: {id: string; children: React.ReactNode}) 
 }
 
 function P({children}: {children: React.ReactNode}) {
-  return <p className="text-[#1A1A1A]/80 leading-relaxed mb-4">{children}</p>;
+  return <p className="text-[var(--color-foreground)]/80 leading-relaxed mb-4">{children}</p>;
 }
 
 function Lead({children}: {children: React.ReactNode}) {
   return (
-    <p className="text-lg text-[#6B6B6B] leading-relaxed mb-8 max-w-2xl">
+    <p className="text-lg text-[var(--color-text-secondary)] leading-relaxed mb-8 max-w-2xl">
       {children}
     </p>
   );
@@ -60,7 +60,7 @@ function Lead({children}: {children: React.ReactNode}) {
 
 function InlineCode({children}: {children: React.ReactNode}) {
   return (
-    <code className="px-1.5 py-0.5 bg-[#F3F2EE] text-sm text-[#FF3B30] rounded font-mono">
+    <code className="px-1.5 py-0.5 bg-[var(--color-surface)] text-sm text-[var(--color-accent)] rounded font-mono">
       {children}
     </code>
   );
@@ -68,7 +68,7 @@ function InlineCode({children}: {children: React.ReactNode}) {
 
 function CodeBlock({children}: {children: React.ReactNode}) {
   return (
-    <pre className="bg-[#1A1A1A] text-[#FAF9F6] p-5 rounded-lg text-sm overflow-x-auto mb-6 font-mono leading-relaxed">
+    <pre className="bg-[var(--color-foreground)] text-[var(--color-text-inverse)] p-5 rounded-lg text-sm overflow-x-auto mb-6 font-mono leading-relaxed">
       {children}
     </pre>
   );
@@ -76,8 +76,8 @@ function CodeBlock({children}: {children: React.ReactNode}) {
 
 function Note({children}: {children: React.ReactNode}) {
   return (
-    <div className="border-l-4 border-[#FF3B30] bg-[#FF3B30]/5 p-5 rounded-r-lg mb-6">
-      <p className="text-sm text-[#1A1A1A] leading-relaxed m-0">{children}</p>
+    <div className="border-l-4 border-[var(--color-accent)] bg-[var(--color-accent)]/5 p-5 rounded-r-lg mb-6">
+      <p className="text-sm text-[var(--color-foreground)] leading-relaxed m-0">{children}</p>
     </div>
   );
 }
@@ -93,11 +93,11 @@ function DocTable({
     <div className="overflow-x-auto mb-6">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b border-[#E8E6E1]">
+          <tr className="border-b border-[var(--color-border-subtle)]">
             {headers.map((h) => (
               <th
                 key={h}
-                className="text-left h-eyebrow text-[#9E9C97] py-3 pr-4 font-normal first:pl-0"
+                className="text-left h-eyebrow text-[var(--color-text-tertiary)] py-3 pr-4 font-normal first:pl-0"
               >
                 {h}
               </th>
@@ -106,11 +106,11 @@ function DocTable({
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-b border-[#E8E6E1]/50">
+            <tr key={i} className="border-b border-[var(--color-border-subtle)]/50">
               {row.map((cell, j) => (
                 <td
                   key={j}
-                  className="py-3 pr-4 text-[#1A1A1A]/80 first:pl-0"
+                  className="py-3 pr-4 text-[var(--color-foreground)]/80 first:pl-0"
                 >
                   {cell}
                 </td>
@@ -125,14 +125,14 @@ function DocTable({
 
 function OnThisPage({items}: {items: Array<{id: string; label: string}>}) {
   return (
-    <div className="bg-[#F3F2EE] p-6 rounded-lg mb-8">
-      <p className="h-eyebrow text-[#9E9C97] mb-3">ON THIS PAGE</p>
+    <div className="bg-[var(--color-surface)] p-6 rounded-lg mb-8">
+      <p className="h-eyebrow text-[var(--color-text-tertiary)] mb-3">ON THIS PAGE</p>
       <ul className="space-y-2">
         {items.map((item) => (
           <li key={item.id}>
             <a
               href={`#${item.id}`}
-              className="text-sm text-[#1A1A1A]/70 hover:text-[#1A1A1A] transition-colors"
+              className="text-sm text-[var(--color-foreground)]/70 hover:text-[var(--color-foreground)] transition-colors"
             >
               {item.label}
             </a>
@@ -149,8 +149,8 @@ export default function Phase5ChangelogPage() {
   return (
     <DocsLayout currentPath={location.pathname}>
       <div>
-        <p className="h-eyebrow text-[#FF3B30] mb-4">PHASE 5</p>
-        <h1 className="font-serif text-4xl md:text-5xl font-normal text-[#1A1A1A] mb-4 leading-tight">
+        <p className="h-eyebrow text-[var(--color-accent)] mb-4">PHASE 5</p>
+        <h1 className="font-serif text-4xl md:text-5xl font-normal text-[var(--color-foreground)] mb-4 leading-tight">
           Functional Changelog
         </h1>
         <Lead>
@@ -179,7 +179,7 @@ export default function Phase5ChangelogPage() {
         </P>
 
         <SubSubHeading id="address-crud-files">Files</SubSubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>
             <InlineCode>app/routes/account.edit.tsx</InlineCode> — new route
             (profile editing)
@@ -250,7 +250,7 @@ const result = await customerAccount.mutate(CUSTOMER_UPDATE_MUTATION, {
         </P>
 
         <SubHeading id="address-dead-links">Resolved Dead Links</SubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>
             <InlineCode>/account/edit</InlineCode> — now exists, was 404
           </li>
@@ -276,7 +276,7 @@ const result = await customerAccount.mutate(CUSTOMER_UPDATE_MUTATION, {
         </P>
 
         <SubSubHeading id="wishlist-files">Files</SubSubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>
             <InlineCode>app/routes/api.wishlist.ts</InlineCode> — new server
             route (read + write)
@@ -329,7 +329,7 @@ Guest user flow:
         <P>
           When a user logs in with items already in localStorage:
         </P>
-        <ol className="list-decimal pl-5 mb-6 space-y-2 text-[#1A1A1A]/80">
+        <ol className="list-decimal pl-5 mb-6 space-y-2 text-[var(--color-foreground)]/80">
           <li>Server wishlist is fetched</li>
           <li>Both lists are merged by <InlineCode>handle</InlineCode></li>
           <li>For duplicates, the item with the older <InlineCode>addedAt</InlineCode> wins</li>
@@ -350,7 +350,7 @@ Guest user flow:
         <P>
           All network failures are silent from the user&apos;s perspective:
         </P>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>The localStorage copy stays authoritative</li>
           <li>The console logs the error for debugging</li>
           <li>No toast, no error banner, no broken state</li>
@@ -375,7 +375,7 @@ Guest user flow:
         </P>
 
         <SubHeading id="wishlist-guest">Guest Behavior (unchanged)</SubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>localStorage key: <InlineCode>lb_wishlist</InlineCode></li>
           <li>TTL: 30 days</li>
           <li>Shape: <InlineCode>{`{ items: WishlistItem[], savedAt: number }`}</InlineCode></li>
@@ -409,7 +409,7 @@ Guest user flow:
           reserving space, but explicit pixel dimensions give the browser more
           information for:
         </P>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>Choosing the right srcset size at parse time</li>
           <li>Better Lighthouse CLS scoring</li>
           <li>Consistent behavior across browsers and rendering modes</li>
@@ -443,14 +443,14 @@ Guest user flow:
         <SubHeading id="image-components-touched">Components Touched</SubHeading>
 
         <SubSubHeading id="image-ui-components">UI Components</SubSubHeading>
-        <ul className="list-disc pl-5 mb-4 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-4 space-y-1 text-[var(--color-foreground)]/80">
           <li>ProductCard — all 3 instances (cart variant, primary, secondary hover)</li>
           <li>ProductGallery — main image + thumbnail grid</li>
           <li>CartDrawer — line item thumbnails</li>
         </ul>
 
         <SubSubHeading id="image-sections">Sections</SubSubHeading>
-        <ul className="list-disc pl-5 mb-4 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-4 space-y-1 text-[var(--color-foreground)]/80">
           <li>HeroSplit — left (1200×1600) + right (800×1000)</li>
           <li>CategoryGrid — all category cards</li>
           <li>CollectionGrid — all collection cards</li>
@@ -463,7 +463,7 @@ Guest user flow:
         </ul>
 
         <SubSubHeading id="image-routes">Routes</SubSubHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>cart.tsx — line item images</li>
           <li>collections.$handle.tsx — collection hero</li>
           <li>collections._index.tsx — collection grid</li>
@@ -479,7 +479,7 @@ Guest user flow:
         </Note>
 
         <SectionHeading id="checks">4. Checks</SectionHeading>
-        <ul className="list-disc pl-5 mb-6 space-y-1 text-[#1A1A1A]/80">
+        <ul className="list-disc pl-5 mb-6 space-y-1 text-[var(--color-foreground)]/80">
           <li>Typecheck passes (<InlineCode>npm run typecheck</InlineCode>)</li>
           <li>Lint passes (<InlineCode>npm run lint</InlineCode>)</li>
           <li>No new runtime dependencies</li>

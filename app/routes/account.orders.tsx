@@ -144,7 +144,7 @@ export default function OrdersPage() {
               Your order history will appear here.
             </p>
             <Link to="/">
-              <Button variant="solid">Start Shopping</Button>
+              <Button variant="primary">Start Shopping</Button>
             </Link>
           </div>
         ) : (
@@ -179,7 +179,7 @@ export default function OrdersPage() {
                         className={`inline-block text-[10px] font-semibold tracking-widest uppercase px-3 py-1 ${
                           fulfillmentStatus === 'FULFILLED'
                             ? 'bg-black text-white'
-                            : 'bg-[#f5f5f5] text-black'
+                            : 'bg-[var(--color-surface)] text-black'
                         }`}
                       >
                         {fulfillmentStatus}
@@ -190,7 +190,7 @@ export default function OrdersPage() {
                   {/* Order items */}
                   <div className="flex gap-4 flex-wrap mb-6">
                     {order.lineItems.nodes.map((item, i) => (
-                      <div key={i} className="w-16 h-16 bg-[#f5f5f5] flex items-center justify-center">
+                      <div key={i} className="w-16 h-16 bg-[var(--color-surface)] flex items-center justify-center">
                         {item.image?.url ? (
                           <img
                             src={item.image.url}

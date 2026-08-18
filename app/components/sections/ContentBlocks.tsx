@@ -82,7 +82,7 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full aspect-[4/3] bg-[#f5f5f5]" />
+                    <div className="w-full aspect-[4/3] bg-[var(--color-surface)]" />
                   )}
                 </div>
                 <div className="md:[direction:ltr]">
@@ -114,7 +114,7 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
 
           case 'cta':
             return (
-              <div key={i} className="bg-black text-white py-16 px-8 text-center">
+              <div key={i} className="bg-black text-[var(--color-text-inverse)] py-16 px-8 text-center">
                 <h3 className="text-2xl md:text-3xl font-normal mb-3">
                   {block.title}
                 </h3>

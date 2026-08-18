@@ -22,7 +22,7 @@ const DEFAULT_ITEMS: Announcement[] = [
  */
 export default function AnnouncementBar({items = DEFAULT_ITEMS}: AnnouncementBarProps) {
   return (
-    <div className="bg-[#1A1A1A] text-[#FAF9F6] overflow-hidden">
+    <div className="bg-[var(--color-foreground)] text-[var(--color-text-inverse)] overflow-hidden">
       <div
         className="flex whitespace-nowrap py-2.5 will-change-transform"
         style={{animation: 'h-announce-scroll 35s linear infinite'}}
@@ -32,16 +32,16 @@ export default function AnnouncementBar({items = DEFAULT_ITEMS}: AnnouncementBar
             {item.link ? (
               <Link
                 to={item.link}
-                className="h-eyebrow font-medium text-[#FAF9F6] hover:text-[#FF3B30] transition-colors"
+                className="h-eyebrow font-medium text-[var(--color-text-inverse)] hover:text-[var(--color-accent)] transition-colors"
               >
                 {item.text}
               </Link>
             ) : (
-              <span className="h-eyebrow font-medium text-[#FAF9F6]/80">
+              <span className="h-eyebrow font-medium text-[var(--color-text-inverse)]/80">
                 {item.text}
               </span>
             )}
-            <span className="text-[#FF3B30] text-xs" aria-hidden="true">✦</span>
+            <span className="text-[var(--color-accent)] text-xs" aria-hidden="true">✦</span>
           </span>
         ))}
       </div>

@@ -265,7 +265,7 @@ export default function SearchPage() {
           <p className="text-sm text-black/40 mb-8">
             Try a different keyword or browse our collections.
           </p>
-          <Button as="link" to="/collections/all-products" variant="solid">
+          <Button as="link" to="/collections/all-products" variant="primary">
             Browse All Products
           </Button>
         </div>

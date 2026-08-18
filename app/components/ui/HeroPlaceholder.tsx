@@ -17,9 +17,9 @@ export default function HeroPlaceholder({
   variant = 'dark',
 }: HeroPlaceholderProps) {
   const isDark = variant === 'dark';
-  const bgClass = isDark ? 'bg-[#1A1A1A]' : 'bg-[#E8E6E1]';
+  const bgClass = isDark ? 'bg-[var(--color-foreground)]' : 'bg-[var(--color-border-subtle)]';
   const stripeOpacity = isDark ? 'opacity-[0.06]' : 'opacity-[0.08]';
-  const glowColor = isDark ? '#FF3B30' : '#1A1A1A';
+  const glowVar = isDark ? 'var(--color-accent)' : 'var(--color-foreground)';
 
   return (
     <div
@@ -45,7 +45,7 @@ export default function HeroPlaceholder({
               y1="0"
               x2="0"
               y2="40"
-              stroke={glowColor}
+              stroke={glowVar}
               strokeWidth="1.5"
             />
           </pattern>
@@ -57,7 +57,7 @@ export default function HeroPlaceholder({
       <div
         className="absolute inset-0 opacity-[0.12]"
         style={{
-          background: `radial-gradient(circle at 30% 40%, ${glowColor} 0%, transparent 55%)`,
+          background: `radial-gradient(circle at 30% 40%, ${glowVar} 0%, transparent 55%)`,
         }}
       />
 
