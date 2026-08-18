@@ -133,13 +133,13 @@ export default function OrdersPage() {
           >
             ← Back to Account
           </Link>
-          <div className="lb-eyebrow mb-3">ORDER HISTORY</div>
+          <div className="h-eyebrow mb-3">ORDER HISTORY</div>
           <h1 className="text-4xl md:text-5xl font-normal">Orders</h1>
         </div>
 
         {orderList.length === 0 ? (
           <div className="text-center py-20 border border-black/10">
-            <p className="lb-eyebrow mb-4 text-black/40">NO ORDERS YET</p>
+            <p className="h-eyebrow mb-4 text-black/40">NO ORDERS YET</p>
             <p className="text-black/60 mb-8">
               Your order history will appear here.
             </p>

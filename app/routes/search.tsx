@@ -9,6 +9,7 @@ import {
 import {useState} from 'react';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Container from '~/components/ui/Container';
+import Button from '~/components/ui/Button';
 import ProductCard from '~/components/ui/ProductCard';
 import {CacheShort} from '~/lib/cache';
 
@@ -212,7 +213,7 @@ export default function SearchPage() {
     return (
       <Container className="py-20">
         <div className="max-w-xl mx-auto text-center">
-          <p className="lb-eyebrow mb-4">SEARCH</p>
+          <p className="h-eyebrow mb-4">SEARCH</p>
           <h1 className="text-4xl font-normal tracking-tight mb-8">
             Find what you're looking for
           </h1>
@@ -247,8 +248,8 @@ export default function SearchPage() {
   return (
     <Container className="py-12">
       <header className="mb-10">
-        <p className="lb-eyebrow mb-3">SEARCH RESULTS</p>
-        <h1 className="text-3xl md:text-4xl font-normal tracking-tight mb-2">
+        <p className="h-eyebrow mb-3">SEARCH RESULTS</p>
+        <h1 className="font-serif text-3xl md:text-4xl font-normal mb-2">
           &ldquo;{query}&rdquo;
         </h1>
         <p className="text-sm text-black/50">
@@ -264,12 +265,9 @@ export default function SearchPage() {
           <p className="text-sm text-black/40 mb-8">
             Try a different keyword or browse our collections.
           </p>
-          <Link
-            to="/collections/all-products"
-            className="inline-block text-xs font-semibold tracking-widest uppercase border-2 border-black px-8 py-3 hover:bg-black hover:text-white transition-colors"
-          >
-            Shop All
-          </Link>
+          <Button as="link" to="/collections/all-products" variant="solid">
+            Browse All Products
+          </Button>
         </div>
       ) : (
         <>
