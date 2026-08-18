@@ -53,15 +53,21 @@ export const links: LinksFunction = () => [
 export const meta: MetaFunction = () => [
   {charSet: 'utf-8'},
   {name: 'viewport', content: 'width=device-width, initial-scale=1'},
-  {title: 'LEGENDARY BRANDING'},
+  {name: 'color-scheme', content: 'dark'},
+  {name: 'theme-color', content: '#0A0A0A'},
+  {title: 'Legendary Branding | Premium Streetwear'},
   {
     name: 'description',
-    content: 'Premium editorial streetwear. Bold, minimal, fast.',
+    content: 'Legendary Branding — premium streetwear built to last. 235GSM+ heavyweight tees, made to order. Shop the collection.',
   },
   {property: 'og:type', content: 'website'},
   {property: 'og:site_name', content: 'Legendary Branding'},
   {property: 'og:url', content: 'https://legendary-branding.com'},
+  {property: 'og:title', content: 'Legendary Branding | Premium Streetwear'},
+  {property: 'og:description', content: 'Premium streetwear built to last. 235GSM+ heavyweight tees, made to order. Shop the collection.'},
   {name: 'twitter:card', content: 'summary_large_image'},
+  {name: 'twitter:title', content: 'Legendary Branding | Premium Streetwear'},
+  {name: 'twitter:description', content: 'Premium streetwear built to last.'},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
