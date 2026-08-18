@@ -35,6 +35,15 @@ export const links: LinksFunction = () => [
     crossOrigin: 'anonymous',
   },
   {
+    rel: 'preconnect',
+    href: 'https://cdn.shopify.com',
+    crossOrigin: 'anonymous',
+  },
+  {
+    rel: 'dns-prefetch',
+    href: 'https://shop.app',
+  },
+  {
     rel: 'stylesheet',
     href: 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap',
   },
@@ -191,19 +200,35 @@ export function ErrorBoundary({error}: {error: unknown}) {
     captureError(error, {route: window.location.pathname});
   }
 
+  // Distinguish 404 from other errors
+  const is404 =
+    error instanceof Response && error.status === 404;
+
   return (
     <div className="min-h-dvh flex items-center justify-center p-8 bg-[#FAF9F6]">
       <div className="max-w-xl text-center">
-        <p className="h-eyebrow mb-6">Something went wrong</p>
+        <p className="h-eyebrow mb-6">
+          {is404 ? '404 — Not Found' : 'Something went wrong'}
+        </p>
         <h1 className="font-serif text-[clamp(3.5rem,8vw,7rem)] leading-[0.95] mb-8 text-[#1A1A1A]">
-          Oops.
+          {is404 ? 'Lost.' : 'Oops.'}
         </h1>
         <p className="text-[#6B6B6B] text-lg mb-12">
-          An unexpected error occurred. Please try again in a few moments.
+          {is404
+            ? 'The page you\'re looking for doesn\'t exist or has been moved.'
+            : 'An unexpected error occurred. Please try again in a few moments.'}
         </p>
-        <a href="/" className="h-btn-primary">
-          Back to Home
-        </a>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="/" className="h-btn-primary">
+            Back to Home
+          </a>
+          <a
+            href="/collections/all-products"
+            className="px-6 py-3 border border-[#1A1A1A] text-sm tracking-wide uppercase hover:bg-[#1A1A1A] hover:text-white transition-colors"
+          >
+            Shop All
+          </a>
+        </div>
       </div>
     </div>
   );

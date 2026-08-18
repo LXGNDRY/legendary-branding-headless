@@ -3,6 +3,7 @@ import {
   type ActionFunctionArgs,
   type MetaFunction,
   useLoaderData,
+  useParams,
   Link,
 } from 'react-router';
 import {useState} from 'react';
@@ -519,5 +520,35 @@ export default function ProductPage() {
       {/* Size guide modal */}
       <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
     </>
+  );
+}
+
+export function ErrorBoundary() {
+  const params = useParams();
+
+  return (
+    <div className="py-24 md:py-32">
+      <div className="max-w-xl mx-auto text-center px-4">
+        <p className="h-eyebrow mb-6">404 — Not Found</p>
+        <h1 className="font-serif text-[clamp(2.5rem,7vw,5rem)] leading-[0.95] mb-6 text-[#1A1A1A]">
+          Sold out.
+        </h1>
+        <p className="text-[#6B6B6B] text-base leading-relaxed mb-10">
+          We couldn&apos;t find the product{params.handle ? ` "${params.handle}"` : ''} you&apos;re
+          looking for. It might have sold out or been removed.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link to="/collections/all-products" className="h-btn-primary">
+            Browse All Products
+          </Link>
+          <Link
+            to="/"
+            className="px-6 py-3 border border-[#1A1A1A] text-sm tracking-wide uppercase hover:bg-[#1A1A1A] hover:text-white transition-colors"
+          >
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }

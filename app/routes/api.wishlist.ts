@@ -1,4 +1,5 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
+import {rateLimitMiddleware} from '~/lib/rate-limit';
 
 /**
  * Wishlist sync API — server-side bridge for Customer Account metafields.
@@ -98,6 +99,10 @@ export async function loader({context}: LoaderFunctionArgs) {
 }
 
 export async function action({request, context}: ActionFunctionArgs) {
+  // Rate limiting — 30 requests per minute per IP (wishlist is frequent)
+  const rateLimitResponse = rateLimitMiddleware(request, 'wishlist', 30);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const {customerAccount} = context;
 
   if (!customerAccount) {

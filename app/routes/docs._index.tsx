@@ -13,6 +13,14 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+const PHASE_7_10_ITEMS = [
+  {
+    title: 'Performance, Errors, Caching & Security',
+    description: 'Combined hardening pass across 4 phases — speed, reliability, caching, and defense-in-depth.',
+    href: '/docs/phase7-10-hardening-changelog',
+  },
+];
+
 const PHASE_6_ITEMS = [
   {
     title: 'Codegen & GraphQL Validation',
@@ -80,7 +88,29 @@ export default function DocsIndex() {
             <h2 className="font-serif text-2xl text-[#1A1A1A]">
               Latest Changelog
             </h2>
-            <span className="h-eyebrow text-[#FF3B30]">Phase 6</span>
+            <span className="h-eyebrow text-[#FF3B30]">Phases 7–10</span>
+          </div>
+          <p className="text-[#6B6B6B] mb-6">
+            Combined hardening pass: performance, error handling, caching, and security.
+          </p>
+          <CardList items={PHASE_7_10_ITEMS} />
+          <div className="mt-6">
+            <Link
+              to="/docs/phase7-10-hardening-changelog"
+              className="h-link inline-flex items-center gap-2"
+            >
+              Read full Phases 7–10 changelog →
+            </Link>
+          </div>
+        </section>
+
+        {/* Phase 6 Changelog */}
+        <section>
+          <div className="flex items-baseline justify-between mb-6">
+            <h2 className="font-serif text-2xl text-[#1A1A1A]">
+              Phase 6 Changelog
+            </h2>
+            <span className="h-eyebrow text-[#9E9C97]">Phase 6</span>
           </div>
           <p className="text-[#6B6B6B] mb-6">
             Codegen &amp; GraphQL validation — turning type-safety into a real CI gate.

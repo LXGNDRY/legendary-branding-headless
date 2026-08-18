@@ -27,8 +27,9 @@ const NAV_GROUPS: NavGroup[] = [
   {
     title: 'Changelogs',
     links: [
-      {label: 'Phase 5 — Functional', href: '/docs/phase5-functional-changelog'},
+      {label: 'Phase 7–10 — Hardening', href: '/docs/phase7-10-hardening-changelog'},
       {label: 'Phase 6 — Codegen', href: '/docs/phase6-codegen-changelog'},
+      {label: 'Phase 5 — Functional', href: '/docs/phase5-functional-changelog'},
     ],
   },
 ];
