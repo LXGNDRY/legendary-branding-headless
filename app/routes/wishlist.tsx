@@ -43,14 +43,14 @@ export default function WishlistPage() {
           {mounted && count > 0 && (
             <button
               onClick={clear}
-              className="text-xs font-medium tracking-widest uppercase text-black/50 hover:text-black transition-colors"
+              className="text-xs font-medium tracking-widest uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
             >
               Clear all
             </button>
           )}
         </div>
         {mounted && (
-          <p className="text-sm text-black/50 mt-2">
+          <p className="text-sm text-[var(--color-text-secondary)] mt-2">
             {count} {count === 1 ? 'item' : 'items'} saved
           </p>
         )}
@@ -72,14 +72,14 @@ export default function WishlistPage() {
       ) : count === 0 ? (
         <div className="py-20 text-center">
           <div className="inline-block mb-6">
-            <svg viewBox="0 0 24 24" className="w-16 h-16 text-black/20" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg viewBox="0 0 24 24" className="w-16 h-16 text-[var(--color-text-tertiary)]" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </div>
           <h2 className="font-serif text-2xl font-normal mb-3">
             Your wishlist is empty
           </h2>
-          <p className="text-sm text-black/50 mb-8 max-w-md mx-auto">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-8 max-w-md mx-auto">
             Save items you love by clicking the heart icon on any product.
             Come back anytime to pick up where you left off.
           </p>
@@ -94,7 +94,7 @@ export default function WishlistPage() {
               {/* Remove button overlay */}
               <button
                 onClick={() => remove(item.handle)}
-                className="absolute top-2 right-2 z-20 bg-white/90 text-black/60 hover:text-black p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 z-20 bg-[var(--color-bg-level-2)]/90 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                 aria-label={`Remove ${item.title} from wishlist`}
               >
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

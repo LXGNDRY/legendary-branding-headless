@@ -65,7 +65,7 @@ export default function EditorialBand({
                 to={primaryHref}
                 variant={theme === 'accent' ? 'outline' : 'primary'}
                 size="md"
-                className={theme === 'accent' ? 'text-white border-white/50 hover:bg-white hover:text-[var(--color-accent)]' : ''}
+                className={theme === 'accent' ? 'text-white border-white/50 hover:bg-[var(--color-bg-level-1)] hover:text-[var(--color-accent)]' : ''}
               >
                 {primaryLabel}
               </Button>

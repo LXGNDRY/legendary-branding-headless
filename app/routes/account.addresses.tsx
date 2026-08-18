@@ -294,7 +294,7 @@ function AddressForm({
             name="firstName"
             defaultValue={address?.firstName || ''}
             required
-            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
         <div>
@@ -305,7 +305,7 @@ function AddressForm({
             name="lastName"
             defaultValue={address?.lastName || ''}
             required
-            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
       </div>
@@ -317,7 +317,7 @@ function AddressForm({
         <input
           name="company"
           defaultValue={address?.company || ''}
-          className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+          className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
         />
       </div>
 
@@ -329,7 +329,7 @@ function AddressForm({
           name="address1"
           defaultValue={address?.address1 || ''}
           required
-          className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+          className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
         />
       </div>
 
@@ -340,7 +340,7 @@ function AddressForm({
         <input
           name="address2"
           defaultValue={address?.address2 || ''}
-          className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+          className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
         />
       </div>
 
@@ -353,7 +353,7 @@ function AddressForm({
             name="city"
             defaultValue={address?.city || ''}
             required
-            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
         <div>
@@ -364,7 +364,7 @@ function AddressForm({
             name="province"
             defaultValue={address?.province || ''}
             required
-            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
       </div>
@@ -378,7 +378,7 @@ function AddressForm({
             name="zip"
             defaultValue={address?.zip || ''}
             required
-            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
         <div>
@@ -389,7 +389,7 @@ function AddressForm({
             name="country"
             defaultValue={address?.country || 'United States'}
             required
-            className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+            className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
       </div>
@@ -402,7 +402,7 @@ function AddressForm({
           name="phoneNumber"
           defaultValue={address?.phoneNumber || ''}
           type="tel"
-          className="w-full px-4 py-2.5 border border-[var(--color-border-subtle)] text-sm bg-white focus:outline-none focus:border-[var(--color-foreground)]"
+          className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
         />
       </div>
 
@@ -413,7 +413,7 @@ function AddressForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-5 py-2.5 border border-[var(--color-border-subtle)] text-sm hover:border-[var(--color-foreground)] transition-colors"
+          className="px-5 py-2.5 border border-[var(--color-border-medium)] text-sm hover:border-[var(--color-foreground)] transition-colors"
         >
           Cancel
         </button>
@@ -436,7 +436,7 @@ function AddressCard({
   const deleteFetcher = useFetcher();
 
   return (
-    <div className="border border-[var(--color-border-subtle)] p-6 md:p-8 bg-white">
+    <div className="border border-[var(--color-border-medium)] p-6 md:p-8 bg-[var(--color-bg-level-1)]">
       {isDefault && (
         <span className="inline-block text-[10px] font-semibold tracking-widest uppercase px-3 py-1 bg-[var(--color-foreground)] text-[var(--color-text-inverse)] mb-4">
           Default
@@ -488,7 +488,7 @@ export default function AddressesPage() {
         <div className="mb-12">
           <Link
             to="/account"
-            className="text-xs tracking-widest uppercase text-black/50 hover:text-black mb-6 inline-block"
+            className="text-xs tracking-widest uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] mb-6 inline-block"
           >
             ← Back to Account
           </Link>
@@ -513,7 +513,7 @@ export default function AddressesPage() {
         )}
 
         {allAddresses.length === 0 && !showAddForm ? (
-          <div className="text-center py-20 border border-[var(--color-border-subtle)] bg-[var(--color-background)]">
+          <div className="text-center py-20 border border-[var(--color-border-medium)] bg-[var(--color-background)]">
             <p className="h-eyebrow mb-4 text-[var(--color-text-tertiary)]">NO ADDRESSES</p>
             <p className="text-[var(--color-text-secondary)] mb-8">
               You haven&apos;t saved any addresses yet.

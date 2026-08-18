@@ -26,9 +26,9 @@ export default function WaitlistForm({
 
   if (submitted) {
     return (
-      <div className="p-4 bg-[var(--color-surface)] rounded-sm border border-[var(--color-border-subtle)]">
+      <div className="p-4 bg-[var(--color-surface)] rounded-sm border border-[var(--color-border-medium)]">
         <p className="text-xs font-medium mb-1">You&apos;re on the list</p>
-        <p className="text-xs text-black/60">
+        <p className="text-xs text-[var(--color-text-secondary)]">
           We&apos;ll email <span className="font-medium">{email}</span> when
           this item is back in stock.
         </p>
@@ -37,7 +37,7 @@ export default function WaitlistForm({
   }
 
   return (
-    <div className="p-4 bg-[var(--color-surface)] rounded-sm border border-[var(--color-border-subtle)]">
+    <div className="p-4 bg-[var(--color-surface)] rounded-sm border border-[var(--color-border-medium)]">
       <p className="text-xs font-medium mb-2">
         Sold out? Get notified when it&apos;s back.
       </p>
@@ -52,16 +52,16 @@ export default function WaitlistForm({
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
           required
-          className="flex-1 border border-[var(--color-border-subtle)] px-3 py-2 text-xs bg-white focus:border-black outline-none transition-colors"
+          className="flex-1 border border-[var(--color-border-medium)] px-3 py-2 text-xs bg-[var(--color-bg-level-1)] focus:border-[var(--color-accent)] outline-none transition-colors"
         />
         <button
           type="submit"
-          className="px-4 py-2 bg-black text-[var(--color-text-inverse)] text-[0.65rem] font-semibold tracking-[0.1em] uppercase hover:bg-black/80 transition-colors"
+          className="px-4 py-2 bg-[var(--color-bg-level-3)] text-[var(--color-text-inverse)] text-[0.65rem] font-semibold tracking-[0.1em] uppercase hover:bg-black/80 transition-colors"
         >
           Notify Me
         </button>
       </form>
-      <p className="text-[0.7rem] text-black/40 mt-2">
+      <p className="text-[0.7rem] text-[var(--color-text-tertiary)] mt-2">
         We&apos;ll only email you about{' '}
         <span className="font-medium">{productTitle}</span>
         {variantTitle ? ` — ${variantTitle}` : ''}.

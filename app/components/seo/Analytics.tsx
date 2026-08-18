@@ -180,7 +180,7 @@ export default function Analytics({
               </button>
               <button
                 onClick={handleAccept}
-                className="text-xs font-semibold tracking-widest uppercase bg-[var(--color-background)] text-[var(--color-foreground)] px-6 py-3 hover:bg-white/90 transition-colors"
+                className="text-xs font-semibold tracking-widest uppercase bg-[var(--color-background)] text-[var(--color-foreground)] px-6 py-3 hover:bg-[var(--color-bg-level-2)]/90 transition-colors"
                 aria-label="Accept all cookies"
               >
                 Accept All

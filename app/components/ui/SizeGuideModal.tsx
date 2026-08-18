@@ -36,7 +36,7 @@ export default function SizeGuideModal({
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-[var(--color-bg-level-1)]0"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -76,7 +76,7 @@ export default function SizeGuideModal({
         </div>
 
         <div className="p-6">
-          <p className="text-xs text-black/60 mb-5">
+          <p className="text-xs text-[var(--color-text-secondary)] mb-5">
             All measurements are in inches. For the best fit, measure a
             similar garment you own and compare.
           </p>
@@ -86,7 +86,7 @@ export default function SizeGuideModal({
             <h4 className="text-xs font-semibold tracking-[0.1em] uppercase mb-3">
               Tops & Outerwear
             </h4>
-            <div className="w-full text-xs border border-[var(--color-border-subtle)] rounded-sm overflow-hidden">
+            <div className="w-full text-xs border border-[var(--color-border-medium)] rounded-sm overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="bg-[var(--color-surface)]">
@@ -114,7 +114,7 @@ export default function SizeGuideModal({
                   ].map((row, i) => (
                     <tr
                       key={row[0]}
-                      className={i % 2 === 0 ? 'bg-white' : 'bg-[var(--color-surface-elevated)]'}
+                      className={i % 2 === 0 ? 'bg-[var(--color-bg-level-2)]' : 'bg-[var(--color-surface-elevated)]'}
                     >
                       <td className="px-3 py-2 font-medium">{row[0]}</td>
                       <td className="px-3 py-2">{row[1]}</td>
@@ -132,7 +132,7 @@ export default function SizeGuideModal({
             <h4 className="text-xs font-semibold tracking-[0.1em] uppercase mb-3">
               Bottoms
             </h4>
-            <div className="w-full text-xs border border-[var(--color-border-subtle)] rounded-sm overflow-hidden">
+            <div className="w-full text-xs border border-[var(--color-border-medium)] rounded-sm overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="bg-[var(--color-surface)]">
@@ -160,7 +160,7 @@ export default function SizeGuideModal({
                   ].map((row, i) => (
                     <tr
                       key={row[0]}
-                      className={i % 2 === 0 ? 'bg-white' : 'bg-[var(--color-surface-elevated)]'}
+                      className={i % 2 === 0 ? 'bg-[var(--color-bg-level-2)]' : 'bg-[var(--color-surface-elevated)]'}
                     >
                       <td className="px-3 py-2 font-medium">{row[0]}</td>
                       <td className="px-3 py-2">{row[1]}</td>
@@ -178,7 +178,7 @@ export default function SizeGuideModal({
             <h4 className="text-xs font-semibold tracking-[0.1em] uppercase mb-3">
               Fit Notes
             </h4>
-            <ul className="text-xs text-black/70 space-y-2 list-disc pl-4">
+            <ul className="text-xs text-[var(--color-text-primary)] space-y-2 list-disc pl-4">
               <li>Fits true to size. For a relaxed fit, size up one.</li>
               <li>Model is 6&apos;1&quot; and wears size M.</li>
               <li>All garments pre-shrunk to minimize shrinkage.</li>

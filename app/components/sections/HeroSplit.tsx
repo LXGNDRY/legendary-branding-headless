@@ -46,7 +46,7 @@ export default function HeroSplit({
             />
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-level-0)] via-[var(--color-bg-level-0)]/40 to-[var(--color-bg-level-0)]/20" />
-            <div className="absolute inset-0 bg-black/30" />
+            <div className="absolute inset-0 bg-[var(--color-bg-level-3)]" />
           </>
         ) : (
           <div className="absolute inset-0 bg-[var(--color-bg-level-1)]" />

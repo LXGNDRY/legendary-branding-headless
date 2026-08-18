@@ -73,7 +73,7 @@ export default function RecentlyViewed({
   if (products.length < 2) return null;
 
   return (
-    <section className="border-t border-black/10">
+    <section className="border-t border-[var(--color-border-muted)]">
       <div className="h-container py-16">
         <h2 className="text-[0.78rem] font-medium tracking-[0.15em] uppercase mb-10">
           Recently Viewed
@@ -96,7 +96,7 @@ export default function RecentlyViewed({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-[10px] text-black/30 uppercase tracking-wider">
+                    <span className="text-[10px] text-[var(--color-text-tertiary)] uppercase tracking-wider">
                       View
                     </span>
                   </div>

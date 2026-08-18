@@ -1,8 +1,6 @@
 import {useState, useEffect, useRef} from 'react';
 import {Link, useNavigate} from 'react-router';
 import {Image} from '@shopify/hydrogen';
-import type {ProductCardFragment} from './ProductCard';
-
 
 interface PredictiveProduct {
   id: string;
@@ -34,11 +32,10 @@ interface SearchTypeaheadProps {
 }
 
 /**
- * Predictive search typeahead component.
+ * Predictive search typeahead component (dark theme).
  *
  * Fetches real-time suggestions from Shopify's Predictive Search API
- * as the user types. Shows product suggestions, collection suggestions,
- * and query suggestions (related search terms).
+ * as the user types. Shows products, collections, and query suggestions.
  */
 export default function SearchTypeahead({
   placeholder = 'Search products...',
@@ -113,26 +110,27 @@ export default function SearchTypeahead({
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && setOpen(true)}
           placeholder={placeholder}
-          className="w-full bg-transparent border-b border-black/20 py-3 text-sm focus:outline-none focus:border-black transition-colors placeholder:text-black/40"
+          className="w-full bg-transparent border-b border-[var(--color-border-medium)] py-3 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-text-tertiary)]"
           autoComplete="off"
           autoFocus
+          aria-label="Search"
         />
         {loading && (
           <div className="absolute right-0 top-1/2 -translate-y-1/2">
-            <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-[var(--color-border-medium)] border-t-[var(--color-accent)] rounded-full animate-spin" />
           </div>
         )}
       </form>
 
       {/* Dropdown */}
       {open && (query.length >= 2) && (
-        <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-black/10 shadow-lg z-50 max-h-[400px] overflow-y-auto">
+        <div className="absolute left-0 right-0 top-full mt-2 bg-[var(--color-bg-level-1)] border border-[var(--color-border-muted)] shadow-xl z-50 max-h-[420px] overflow-y-auto rounded-md">
           {hasResults ? (
-            <div className="p-4 space-y-6">
+            <div className="p-4 space-y-5">
               {/* Query suggestions */}
               {results!.queries.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold tracking-widest uppercase text-black/50 mb-3">
+                  <p className="h-eyebrow text-[var(--color-text-tertiary)] mb-3">
                     Suggested Searches
                   </p>
                   <div className="space-y-2">
@@ -144,7 +142,7 @@ export default function SearchTypeahead({
                           navigate('/search?q=' + encodeURIComponent(q.text));
                           handleSelect();
                         }}
-                        className="block w-full text-left text-sm hover:text-black/60 transition-colors"
+                        className="block w-full text-left text-sm text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
                       >
                         {q.text}
                       </button>
@@ -156,7 +154,7 @@ export default function SearchTypeahead({
               {/* Product suggestions */}
               {results!.products.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold tracking-widest uppercase text-black/50 mb-3">
+                  <p className="h-eyebrow text-[var(--color-text-tertiary)] mb-3">
                     Products
                   </p>
                   <div className="space-y-3">
@@ -165,10 +163,10 @@ export default function SearchTypeahead({
                         key={product.id}
                         to={`/products/${product.handle}`}
                         onClick={handleSelect}
-                        className="flex gap-3 hover:bg-[var(--color-surface-elevated)] -mx-2 px-2 py-1.5 transition-colors"
+                        className="flex gap-3 hover:bg-[var(--color-bg-level-2)] -mx-2 px-2 py-1.5 transition-colors rounded-sm"
                       >
                         {product.featuredImage?.url ? (
-                          <div className="w-12 h-14 bg-[var(--color-surface)] shrink-0 overflow-hidden">
+                          <div className="w-12 h-14 bg-[var(--color-bg-level-2)] shrink-0 overflow-hidden rounded-sm">
                             <img
                               src={product.featuredImage.url}
                               alt={product.featuredImage.altText || product.title}
@@ -177,13 +175,13 @@ export default function SearchTypeahead({
                             />
                           </div>
                         ) : (
-                          <div className="w-12 h-14 bg-[var(--color-surface)] shrink-0" />
+                          <div className="w-12 h-14 bg-[var(--color-bg-level-2)] shrink-0 rounded-sm" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium leading-tight line-clamp-2">
+                          <p className="text-sm text-[var(--color-text-primary)] leading-tight h-truncate-2">
                             {product.title}
                           </p>
-                          <p className="text-xs text-black/50 mt-0.5">
+                          <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">
                             ${product.priceRange.minVariantPrice.amount}
                           </p>
                         </div>
@@ -196,7 +194,7 @@ export default function SearchTypeahead({
               {/* Collection suggestions */}
               {results!.collections.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold tracking-widest uppercase text-black/50 mb-3">
+                  <p className="h-eyebrow text-[var(--color-text-tertiary)] mb-3">
                     Collections
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -205,7 +203,7 @@ export default function SearchTypeahead({
                         key={col.id}
                         to={`/collections/${col.handle}`}
                         onClick={handleSelect}
-                        className="text-xs border border-black/10 px-3 py-1.5 hover:border-black transition-colors"
+                        className="text-xs border border-[var(--color-border-medium)] px-3 py-1.5 text-[var(--color-text-secondary)] hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)] transition-colors rounded-md"
                       >
                         {col.title}
                       </Link>
@@ -215,11 +213,11 @@ export default function SearchTypeahead({
               )}
 
               {/* View all results */}
-              <div className="pt-2 border-t border-black/5">
+              <div className="pt-2 border-t border-[var(--color-border-muted)]">
                 <Link
                   to={`/search?q=${encodeURIComponent(query)}`}
                   onClick={handleSelect}
-                  className="text-xs font-medium tracking-widest uppercase hover:opacity-70 transition-opacity"
+                  className="text-xs font-semibold tracking-[0.12em] uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
                 >
                   View all results →
                 </Link>
@@ -228,7 +226,7 @@ export default function SearchTypeahead({
           ) : (
             !loading && (
               <div className="p-6 text-center">
-                <p className="text-sm text-black/50">
+                <p className="text-sm text-[var(--color-text-tertiary)]">
                   No results for &ldquo;{query}&rdquo;
                 </p>
               </div>
