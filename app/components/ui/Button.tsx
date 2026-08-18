@@ -9,6 +9,7 @@ interface ButtonBaseProps {
   className?: string;
   children: React.ReactNode;
   disabled?: boolean;
+  loading?: boolean;
 }
 
 interface ButtonAsButtonProps extends ButtonBaseProps {
@@ -40,18 +41,18 @@ interface ButtonAsAnchorProps extends ButtonBaseProps {
 type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps | ButtonAsAnchorProps;
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  // Accent red pill — primary CTA
+  // Accent red pill — primary CTA (dark theme)
   primary:
-    'bg-[var(--color-accent)] text-[var(--color-text-inverse)] border-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] hover:border-[var(--color-accent-hover)] hover:-translate-y-px active:translate-y-0',
-  // Off-black outline pill — fills on hover
+    'bg-[var(--color-accent)] text-white border-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] hover:border-[var(--color-accent-hover)] hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(230,57,54,0.25)] active:translate-y-0 active:bg-[var(--color-accent-pressed)] active:border-[var(--color-accent-pressed)]',
+  // Outline pill — secondary CTA on dark backgrounds
   outline:
-    'bg-transparent text-[var(--color-foreground)] border-[var(--color-foreground)] hover:bg-[var(--color-foreground)] hover:text-[var(--color-background)] hover:-translate-y-px active:translate-y-0',
+    'bg-transparent text-[var(--color-text-primary)] border-[var(--color-border-medium)] hover:bg-[var(--color-bg-level-3)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)] hover:-translate-y-px active:translate-y-0',
   // Borderless text link style
   ghost:
-    'bg-transparent text-[var(--color-foreground)] border-transparent hover:text-[var(--color-text-secondary)] underline-offset-4 hover:underline',
-  // Solid dark pill — for dark CTAs on light backgrounds (checkout, etc.)
+    'bg-transparent text-[var(--color-text-primary)] border-transparent hover:text-[var(--color-accent)]',
+  // Solid dark pill — for dark CTAs on light backgrounds
   dark:
-    'bg-[var(--color-foreground)] text-[var(--color-text-inverse)] border-[var(--color-foreground)] hover:bg-[var(--color-border-medium)] hover:border-[var(--color-border-medium)] hover:-translate-y-px active:translate-y-0',
+    'bg-[var(--color-bg-level-4)] text-[var(--color-text-primary)] border-[var(--color-border-medium)] hover:bg-[var(--color-bg-level-3)] hover:border-[var(--color-border-strong)] hover:-translate-y-px active:translate-y-0',
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
@@ -61,12 +62,12 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
 };
 
 const BASE =
-  'inline-flex items-center justify-center gap-2 font-semibold tracking-[0.12em] uppercase border rounded-full transition-all duration-200 ease-[var(--ease-expo)] disabled:opacity-40 disabled:pointer-events-none disabled:transform-none select-none whitespace-nowrap';
+  'inline-flex items-center justify-center gap-2 font-semibold tracking-[0.14em] uppercase border rounded-full transition-all duration-200 ease-[var(--ease-expo)] disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none select-none whitespace-nowrap';
 
 /**
  * Shared button component — single source of truth for all CTA styles.
  *
- * Variants: primary (red), outline (bordered), ghost (text link), dark (solid black)
+ * Variants: primary (accent red), outline (bordered), ghost (text), dark (solid dark)
  * Sizes: sm, md, lg
  *
  * Use as a button, a React Router link (as="link"), or an external anchor (as="a").
@@ -78,15 +79,29 @@ export default function Button({
   className = '',
   children,
   disabled,
+  loading,
   ...rest
 }: ButtonProps) {
+  const isDisabled = disabled || loading;
   const classes = `${BASE} ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`;
+
+  const content = (
+    <>
+      {loading && (
+        <span
+          className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
+          aria-hidden="true"
+        />
+      )}
+      {children}
+    </>
+  );
 
   if (rest.as === 'link') {
     const {to} = rest as ButtonAsLinkProps;
     return (
-      <Link to={to} className={classes}>
-        {children}
+      <Link to={to} className={classes} aria-disabled={isDisabled}>
+        {content}
       </Link>
     );
   }
@@ -94,8 +109,8 @@ export default function Button({
   if (rest.as === 'a') {
     const {href, target, rel} = rest as ButtonAsAnchorProps;
     return (
-      <a href={href} target={target} rel={rel} className={classes}>
-        {children}
+      <a href={href} target={target} rel={rel} className={classes} aria-disabled={isDisabled}>
+        {content}
       </a>
     );
   }
@@ -104,11 +119,12 @@ export default function Button({
   return (
     <button
       type={type}
-      disabled={disabled}
+      disabled={isDisabled}
       onClick={onClick}
       className={classes}
+      aria-busy={loading || undefined}
     >
-      {children}
+      {content}
     </button>
   );
 }

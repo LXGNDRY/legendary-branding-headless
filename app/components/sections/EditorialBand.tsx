@@ -1,5 +1,5 @@
-import {Link} from 'react-router';
 import {useReveal} from '~/hooks/useReveal';
+import Button from '~/components/ui/Button';
 
 interface EditorialBandProps {
   eyebrow?: string;
@@ -9,7 +9,7 @@ interface EditorialBandProps {
   primaryHref?: string;
   secondaryLabel?: string;
   secondaryHref?: string;
-  theme?: 'dark' | 'light';
+  theme?: 'dark' | 'light' | 'accent';
 }
 
 export default function EditorialBand({
@@ -24,47 +24,62 @@ export default function EditorialBand({
 }: EditorialBandProps) {
   const ref = useReveal<HTMLElement>();
 
-  const isDark = theme === 'dark';
-  const bg = isDark ? 'bg-[var(--color-foreground)]' : 'bg-[var(--color-background)]';
-  const eyebrowColor = isDark ? 'text-[var(--color-text-inverse)]/40' : 'text-[var(--color-text-secondary)]';
-  const textColor = isDark ? 'text-[var(--color-text-inverse)]' : 'text-[var(--color-foreground)]';
-  const bodyColor = isDark ? 'text-[var(--color-text-inverse)]/60' : 'text-[var(--color-text-secondary)]';
+  const bgClass =
+    theme === 'accent'
+      ? 'bg-[var(--color-accent)]'
+      : theme === 'light'
+        ? 'bg-[var(--color-bg-level-1)]'
+        : 'bg-[var(--color-bg-level-1)]';
+  const eyebrowClass =
+    theme === 'accent'
+      ? 'text-white/70'
+      : 'text-[var(--color-text-tertiary)]';
+  const headingClass =
+    theme === 'accent'
+      ? 'text-white'
+      : 'text-[var(--color-text-primary)]';
+  const bodyClass =
+    theme === 'accent'
+      ? 'text-white/80'
+      : 'text-[var(--color-text-secondary)]';
 
   return (
-    <section ref={ref} className={`h-reveal h-section ${bg}`}>
+    <section ref={ref} className={`h-reveal h-section ${bgClass} border-t border-b border-[var(--color-border-muted)]`}>
       <div className="h-container max-w-3xl text-center">
         {eyebrow && (
-          <p className={`h-eyebrow mb-5 ${eyebrowColor}`}>{eyebrow}</p>
+          <p className={`h-eyebrow mb-5 ${eyebrowClass}`}>{eyebrow}</p>
         )}
-        <h2 className={`font-serif font-normal text-[clamp(2.5rem,5vw,4.5rem)] leading-[1.05] tracking-[-0.01em] mb-6 ${textColor}`}>
+        <h2 className={`font-serif font-normal text-[clamp(2rem,5vw,4rem)] leading-[1.05] tracking-[-0.01em] mb-6 ${headingClass}`}>
           {heading}
         </h2>
         {body && (
-          <p className={`text-[1rem] leading-relaxed mb-10 max-w-[50ch] mx-auto ${bodyColor}`}>
+          <p className={`text-base md:text-lg leading-relaxed mb-10 max-w-[55ch] mx-auto ${bodyClass}`}>
             {body}
           </p>
         )}
         {(primaryLabel || secondaryLabel) && (
           <div className="flex flex-wrap gap-3 justify-center">
             {primaryLabel && primaryHref && (
-              <Link
+              <Button
+                as="link"
                 to={primaryHref}
-                className={isDark
-                  ? 'inline-flex items-center justify-center gap-2 font-semibold tracking-[0.12em] uppercase border border-[var(--color-text-inverse)] text-[0.75rem] px-7 py-3.5 rounded-full text-[var(--color-text-inverse)] hover:bg-[var(--color-background)] hover:text-[var(--color-foreground)] transition-all duration-200 hover:-translate-y-px'
-                  : 'h-btn-primary'}
+                variant={theme === 'accent' ? 'outline' : 'primary'}
+                size="md"
+                className={theme === 'accent' ? 'text-white border-white/50 hover:bg-[var(--color-bg-level-1)] hover:text-[var(--color-accent)]' : ''}
               >
                 {primaryLabel}
-              </Link>
+              </Button>
             )}
             {secondaryLabel && secondaryHref && (
-              <Link
+              <Button
+                as="link"
                 to={secondaryHref}
-                className={isDark
-                  ? 'inline-flex items-center justify-center gap-2 font-semibold tracking-[0.12em] uppercase text-[0.75rem] px-7 py-3.5 text-[var(--color-text-inverse)]/60 hover:text-[var(--color-text-inverse)] transition-colors underline-offset-4 hover:underline'
-                  : 'h-btn-outline'}
+                variant="outline"
+                size="md"
+                className={theme === 'accent' ? 'text-white border-white/40 hover:bg-white/10 hover:border-white/70' : ''}
               >
                 {secondaryLabel}
-              </Link>
+              </Button>
             )}
           </div>
         )}

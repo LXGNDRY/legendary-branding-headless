@@ -10,34 +10,36 @@ interface AnnouncementBarProps {
 }
 
 const DEFAULT_ITEMS: Announcement[] = [
-  {text: 'Free Shipping on Orders $100+', link: '/collections/all-products'},
+  {text: 'Free Shipping on Orders $150+', link: '/collections/all-products'},
   {text: '235GSM+ Heavyweight Tees — Made to Order'},
   {text: 'New Drops Every Friday', link: '/collections/all-products'},
+  {text: 'Worldwide Shipping Available'},
 ];
 
 /**
- * HANSSEN — Announcement Bar
+ * ONYX — Announcement Bar
  * Top-of-page scrolling marquee with announcements.
- * Uses h-announce-scroll animation from app.css.
+ * Dark theme: subtle dark surface with accent highlights.
  */
 export default function AnnouncementBar({items = DEFAULT_ITEMS}: AnnouncementBarProps) {
   return (
-    <div className="bg-[var(--color-foreground)] text-[var(--color-text-inverse)] overflow-hidden">
+    <div className="bg-[var(--color-bg-level-2)] text-[var(--color-text-primary)] overflow-hidden border-b border-[var(--color-border-muted)]">
       <div
-        className="flex whitespace-nowrap py-2.5 will-change-transform"
-        style={{animation: 'h-announce-scroll 35s linear infinite'}}
+        className="flex whitespace-nowrap py-2 will-change-transform"
+        style={{animation: 'h-announce-scroll 40s linear infinite'}}
+        aria-hidden="true"
       >
         {[...items, ...items, ...items].map((item, i) => (
           <span key={i} className="inline-flex items-center gap-6 mx-8">
             {item.link ? (
               <Link
                 to={item.link}
-                className="h-eyebrow font-medium text-[var(--color-text-inverse)] hover:text-[var(--color-accent)] transition-colors"
+                className="text-[11px] font-medium tracking-[0.1em] uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
               >
                 {item.text}
               </Link>
             ) : (
-              <span className="h-eyebrow font-medium text-[var(--color-text-inverse)]/80">
+              <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-[var(--color-text-tertiary)]">
                 {item.text}
               </span>
             )}

@@ -129,7 +129,7 @@ export default function OrdersPage() {
         <div className="mb-12">
           <Link
             to="/account"
-            className="text-xs tracking-widest uppercase text-black/50 hover:text-black mb-6 inline-block"
+            className="text-xs tracking-widest uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] mb-6 inline-block"
           >
             ← Back to Account
           </Link>
@@ -138,9 +138,9 @@ export default function OrdersPage() {
         </div>
 
         {orderList.length === 0 ? (
-          <div className="text-center py-20 border border-black/10">
-            <p className="h-eyebrow mb-4 text-black/40">NO ORDERS YET</p>
-            <p className="text-black/60 mb-8">
+          <div className="text-center py-20 border border-[var(--color-border-muted)]">
+            <p className="h-eyebrow mb-4 text-[var(--color-text-tertiary)]">NO ORDERS YET</p>
+            <p className="text-[var(--color-text-secondary)] mb-8">
               Your order history will appear here.
             </p>
             <Link to="/">
@@ -156,11 +156,11 @@ export default function OrdersPage() {
               return (
                 <div
                   key={order.id}
-                  className="border border-black/10 p-6 md:p-8"
+                  className="border border-[var(--color-border-muted)] p-6 md:p-8"
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                     <div>
-                      <p className="text-sm text-black/60 mb-1">
+                      <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                         {formatDate(order.processedAt)}
                       </p>
                       <h3 className="text-xl font-normal">
@@ -168,7 +168,7 @@ export default function OrdersPage() {
                       </h3>
                     </div>
                     <div className="mt-4 md:mt-0 text-right">
-                      <p className="text-sm text-black/60 mb-1">
+                      <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                         Total:{' '}
                         {formatMoney(
                           order.totalPrice.amount,
@@ -178,7 +178,7 @@ export default function OrdersPage() {
                       <span
                         className={`inline-block text-[10px] font-semibold tracking-widest uppercase px-3 py-1 ${
                           fulfillmentStatus === 'FULFILLED'
-                            ? 'bg-black text-white'
+                            ? 'bg-[var(--color-bg-level-3)] text-white'
                             : 'bg-[var(--color-surface)] text-black'
                         }`}
                       >
@@ -198,7 +198,7 @@ export default function OrdersPage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="text-[10px] text-black/30 uppercase tracking-wider">
+                          <span className="text-[10px] text-[var(--color-text-tertiary)] uppercase tracking-wider">
                             Item
                           </span>
                         )}
@@ -211,7 +211,7 @@ export default function OrdersPage() {
                       href={order.statusPageUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[0.78rem] font-medium tracking-[0.08em] uppercase border border-black px-6 py-2.5 hover:bg-black hover:text-white transition-all duration-300"
+                      className="text-[0.78rem] font-medium tracking-[0.08em] uppercase border border-[var(--color-border-strong)] px-6 py-2.5 hover:bg-[var(--color-bg-level-3)] hover:text-white transition-all duration-300"
                     >
                       View Order
                     </a>

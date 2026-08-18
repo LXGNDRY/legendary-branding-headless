@@ -95,14 +95,13 @@ function isNew(product: ProductCardFragment) {
 }
 
 /**
- * HANSSEN x LEGENDARY — Product Card
+ * ONYX x LEGENDARY — Product Card
  *
- * Large image, minimal UI. Signature Hanssen style:
+ * Premium dark theme product card. Large image, minimal UI.
  * - Image fills the card, 3/4 aspect
- * - Hover: image zooms in, secondary image fades in
- * - Hover: "Quick add" button slides up from bottom
- * - Below image: title (regular weight, not bold) + price on same line
- * - Wishlist heart appears in top-right on hover
+ * - Hover: subtle image zoom, secondary image crossfades
+ * - Below image: title (serif) + price on same line
+ * - Wishlist heart appears on hover
  */
 export default function ProductCard({
   product,
@@ -135,7 +134,7 @@ export default function ProductCard({
   if (layout === 'list') {
     return (
       <article
-        className={`group flex gap-6 border-b border-[var(--color-border-subtle)] py-6 cursor-pointer ${
+        className={`group flex gap-6 border-b border-[var(--color-border-muted)] py-6 ${
           soldOut ? 'opacity-60' : ''
         }`}
         data-product-id={product.id}
@@ -144,7 +143,7 @@ export default function ProductCard({
         <Link
           to={`/products/${product.handle}`}
           prefetch="intent"
-          className="relative overflow-hidden rounded-lg w-28 h-36 md:w-36 md:h-48 shrink-0 bg-[var(--color-surface)] img-zoom"
+          className="relative overflow-hidden rounded-md w-28 h-36 md:w-36 md:h-48 shrink-0 bg-[var(--color-bg-level-2)]"
         >
           {product.featuredImage ? (
             <Image
@@ -154,7 +153,7 @@ export default function ProductCard({
               height={1067}
               sizes="150px"
               loading={loading}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-500 ease-[var(--ease-expo)] group-hover:scale-105"
             />
           ) : (
             <Placeholder aspect="aspect-[3/4]" label={product.title} />
@@ -165,41 +164,41 @@ export default function ProductCard({
         <div className="flex-1 flex flex-col justify-between py-1">
           <div>
             {showVendor && product.vendor && (
-              <div className="text-eyebrow mb-1">
+              <div className="h-eyebrow mb-1.5">
                 {product.vendor}
               </div>
             )}
             <Link
               to={`/products/${product.handle}`}
               prefetch="intent"
-              className="text-lg font-serif hover:text-[var(--color-text-secondary)] transition-colors block mb-2"
+              className="text-lg font-serif text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors block mb-2"
             >
               {product.title}
             </Link>
-            <p className="text-sm text-[var(--color-text-secondary)] line-clamp-2 hidden md:block">
+            <p className="text-sm text-[var(--color-text-tertiary)] line-clamp-2 hidden md:block">
               {product.tags.slice(0, 3).join(' · ')}
             </p>
           </div>
 
           <div className="flex items-end justify-between">
-            <div className="flex gap-2 items-baseline">
+            <div className="flex gap-2.5 items-baseline">
               <Money
                 data={product.priceRange.minVariantPrice}
-                className="text-lg font-serif text-[var(--color-foreground)]"
+                className="text-lg font-serif text-[var(--color-text-primary)]"
               />
               {onSale && (
                 <Money
                   data={product.compareAtPriceRange.minVariantPrice}
-                  className="text-[var(--color-text-secondary)] line-through font-normal text-sm"
+                  className="text-[var(--color-text-tertiary)] line-through font-normal text-sm"
                 />
               )}
             </div>
             {showQuickAdd && product.availableForSale && (
               <Link
                 to={`/products/${product.handle}`}
-                className="text-caps border-b border-[var(--color-foreground)] pb-0.5 hover:opacity-60 transition-opacity"
+                className="h-eyebrow hover:text-[var(--color-accent)] transition-colors"
               >
-                View
+                View →
               </Link>
             )}
           </div>
@@ -211,17 +210,18 @@ export default function ProductCard({
   // Grid layout (default)
   return (
     <article
-      className={`group flex flex-col gap-3 cursor-pointer ${
+      className={`group flex flex-col gap-3 ${
         soldOut ? 'opacity-60' : ''
       }`}
       data-product-id={product.id}
     >
       {/* Media */}
-      <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-[var(--color-surface)]">
+      <div className="relative overflow-hidden rounded-md aspect-[3/4] bg-[var(--color-bg-level-2)]">
         <Link
           to={`/products/${product.handle}`}
           prefetch="intent"
           className="block h-full"
+          aria-label={product.title}
         >
           {/* Primary image */}
           {product.featuredImage ? (
@@ -230,24 +230,24 @@ export default function ProductCard({
               aspectRatio="3/4"
               width={800}
               height={1067}
-              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
               loading={loading}
-              className="w-full h-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+              className="w-full h-full object-cover transition-transform duration-[550ms] ease-[var(--ease-expo)] group-hover:scale-[1.03]"
             />
           ) : (
             <Placeholder aspect="aspect-[3/4]" label={product.title} />
           )}
 
-          {/* Secondary image (flip on hover) */}
+          {/* Secondary image (crossfade on hover) */}
           {hasSecondImage && (
             <Image
               data={product.images!.nodes[1]}
               aspectRatio="3/4"
               width={800}
               height={1067}
-              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
               loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"
+              className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-[350ms] ease-[var(--ease-expo)] group-hover:opacity-100"
             />
           )}
         </Link>
@@ -257,15 +257,15 @@ export default function ProductCard({
           <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
             {isNewTag && <Badge variant="new">New</Badge>}
             {onSale && <Badge variant="sale">Sale</Badge>}
-            {soldOut && <Badge variant="soldout">Sold out</Badge>}
+            {soldOut && <Badge variant="soldout">Sold Out</Badge>}
           </div>
         )}
 
         {/* Wishlist top-right */}
-        <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <WishlistButton
             size="sm"
-            className="bg-white/90 backdrop-blur-sm rounded-full p-1.5 text-[var(--color-foreground)] hover:text-[var(--color-accent)]"
+            className="bg-[var(--color-bg-level-1)]/90 backdrop-blur-sm rounded-full p-1.5 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] border border-[var(--color-border-muted)]"
             product={{
               id: product.id,
               handle: product.handle,
@@ -276,19 +276,19 @@ export default function ProductCard({
           />
         </div>
 
-        {/* Quick add — slides up on hover */}
+        {/* Quick add — slides up on hover (desktop only) */}
         {showQuickAdd && product.availableForSale && (
-          <div className="absolute bottom-0 left-0 right-0 translate-y-full opacity-0 transition-all duration-[300ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:opacity-100 z-10 p-3">
+          <div className="hidden sm:block absolute bottom-0 left-0 right-0 translate-y-full opacity-0 transition-all duration-[300ms] ease-[var(--ease-expo)] group-hover:translate-y-0 group-hover:opacity-100 z-10 p-3">
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 onQuickAdd?.(product.id);
               }}
-              className="w-full justify-center bg-[var(--color-foreground)] text-[var(--color-text-inverse)] text-caps py-3 hover:bg-[var(--color-accent)] transition-colors duration-200 rounded-full"
-              aria-label={`Quick add ${product.title}`}
+              className="w-full justify-center bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase py-2.5 hover:bg-[var(--color-accent)] hover:text-white transition-colors duration-200 rounded-full"
+              aria-label={`Quick add ${product.title} to bag`}
             >
-              Quick add
+              Add to Bag
             </button>
           </div>
         )}
@@ -297,21 +297,21 @@ export default function ProductCard({
       {/* Info */}
       <div className="flex flex-col gap-1 px-0.5">
         {showVendor && product.vendor && (
-          <div className="text-eyebrow text-[10px]">
+          <div className="h-eyebrow text-[10px]">
             {product.vendor}
           </div>
         )}
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-3">
           <Link
             to={`/products/${product.handle}`}
             prefetch="intent"
-            className="font-serif text-base leading-snug hover:text-[var(--color-text-secondary)] transition-colors"
+            className="font-serif text-base leading-snug text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
           >
             {product.title}
           </Link>
           <Money
             data={product.priceRange.minVariantPrice}
-            className="font-serif text-base text-[var(--color-foreground)] shrink-0"
+            className="font-serif text-base text-[var(--color-text-primary)] shrink-0"
           />
         </div>
       </div>

@@ -136,7 +136,7 @@ export default function AccountEditPage() {
         <div className="mb-10">
           <Link
             to="/account"
-            className="text-xs tracking-widest uppercase text-black/50 hover:text-black mb-6 inline-block"
+            className="text-xs tracking-widest uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] mb-6 inline-block"
           >
             ← Back to Account
           </Link>
@@ -162,7 +162,7 @@ export default function AccountEditPage() {
           <div>
             <label
               htmlFor="firstName"
-              className="block text-sm font-medium text-black mb-2"
+              className="block text-sm font-medium text-[var(--color-text-primary)] mb-2"
             >
               First Name
             </label>
@@ -173,14 +173,14 @@ export default function AccountEditPage() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-black/10 text-sm focus:outline-none focus:border-black transition-colors bg-white"
+              className="w-full px-4 py-3 border border-[var(--color-border-muted)] text-sm focus:outline-none focus:border-[var(--color-accent)] transition-colors bg-[var(--color-bg-level-1)]"
             />
           </div>
 
           <div>
             <label
               htmlFor="lastName"
-              className="block text-sm font-medium text-black mb-2"
+              className="block text-sm font-medium text-[var(--color-text-primary)] mb-2"
             >
               Last Name
             </label>
@@ -191,14 +191,14 @@ export default function AccountEditPage() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-black/10 text-sm focus:outline-none focus:border-black transition-colors bg-white"
+              className="w-full px-4 py-3 border border-[var(--color-border-muted)] text-sm focus:outline-none focus:border-[var(--color-accent)] transition-colors bg-[var(--color-bg-level-1)]"
             />
           </div>
 
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-black mb-2"
+              className="block text-sm font-medium text-[var(--color-text-primary)] mb-2"
             >
               Email
             </label>
@@ -207,9 +207,9 @@ export default function AccountEditPage() {
               type="email"
               value={customer.emailAddress.emailAddress}
               disabled
-              className="w-full px-4 py-3 border border-black/10 text-sm bg-black/5 text-black/50 cursor-not-allowed"
+              className="w-full px-4 py-3 border border-[var(--color-border-muted)] text-sm bg-[var(--color-bg-level-1)] text-[var(--color-text-secondary)] cursor-not-allowed"
             />
-            <p className="mt-2 text-xs text-black/40">
+            <p className="mt-2 text-xs text-[var(--color-text-tertiary)]">
               Email cannot be changed from here.
             </p>
           </div>
