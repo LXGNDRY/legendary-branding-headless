@@ -18,6 +18,11 @@ const INFO_LINKS = [
   {label: 'Journal', href: '/journal'},
 ];
 
+const GUIDES_LINKS = [
+  {label: 'Streetwear Guide', href: '/pages/the-ultimate-streetwear-guide'},
+  {label: 'Oversized Hoodie Guide', href: '/pages/oversized-hoodies-streetwear-the-piece-that-never-loses'},
+];
+
 const LEGAL_LINKS = [
   {label: 'Refund & Returns', href: '/policies/refund-policy'},
   {label: 'Privacy Policy', href: '/policies/privacy-with-legendary-branding'},
@@ -98,9 +103,10 @@ export default function Footer() {
         </div>
 
         {/* Middle: link columns */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-10 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
           <FooterColumn heading="Shop" links={SHOP_LINKS} />
           <FooterColumn heading="Info" links={INFO_LINKS} />
+          <FooterColumn heading="Guides" links={GUIDES_LINKS} />
           <FooterColumn heading="Legal" links={LEGAL_LINKS} />
         </div>
 
