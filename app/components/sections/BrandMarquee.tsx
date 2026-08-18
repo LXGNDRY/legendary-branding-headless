@@ -1,100 +1,37 @@
 interface BrandMarqueeProps {
   items: string[];
-  style?: 'bold' | 'minimal' | 'editorial';
+  style?: 'subtle' | 'bold';
   speed?: number;
-  direction?: 'left' | 'right';
-  showIcon?: boolean;
-  bgColor?: string;
-  textColor?: string;
 }
 
 /**
- * HANSSEN — Brand Marquee Section
- * Infinite scrolling text strip for brand messaging, collabs, press.
- * Uses h-marquee-scroll animation from app.css.
- *
- * Variants:
- * - editorial: off-black on off-white, serif display wordmark, hairline borders
- * - bold: high-contrast, thicker borders (legacy default)
- * - minimal: subtle gray borders (legacy minimal)
+ * ONYX — Brand Marquee
+ * Dark theme scrolling brand claim marquee.
  */
-export default function BrandMarquee({
-  items,
-  style = 'editorial',
-  speed = 40,
-  direction = 'left',
-  showIcon = false,
-  bgColor,
-  textColor,
-}: BrandMarqueeProps) {
-  const repeatItems = [...items, ...items, ...items, ...items, ...items, ...items];
-
-  const containerStyle = {
-    ...(bgColor ? {background: bgColor} : {}),
-    ...(textColor ? {color: textColor} : {}),
-  };
-
-  const trackStyle = {
-    animationDuration: `${speed}s`,
-    animationDirection: direction === 'right' ? 'reverse' : 'normal',
-  };
-
-  const variantClasses = {
-    editorial:
-      'bg-[var(--color-background)] text-[var(--color-foreground)] border-[var(--color-border-subtle)] border-y py-4',
-    bold:
-      'bg-white text-black border-black border-y py-[14px]',
-    minimal:
-      'bg-white text-black border-[var(--color-border-subtle)] border-y py-[14px]',
-  };
-
-  const textClasses = {
-    editorial:
-      'font-serif text-[clamp(1.5rem,3.5vw,2.75rem)] italic leading-none tracking-tight',
-    bold:
-      'text-[0.78rem] font-medium tracking-[0.2em] uppercase',
-    minimal:
-      'text-[0.78rem] font-medium tracking-[0.2em] uppercase',
-  };
+export default function BrandMarquee({items, style = 'subtle', speed = 35}: BrandMarqueeProps) {
+  const colorClass = style === 'bold'
+    ? 'text-[var(--color-text-primary)] border-[var(--color-border-muted)]'
+    : 'text-[var(--color-text-tertiary)] border-[var(--color-border-subtle)]';
+  const bgClass = style === 'bold'
+    ? 'bg-[var(--color-bg-level-1)]'
+    : 'bg-[var(--color-bg-level-0)]';
 
   return (
-    <section
-      className={`overflow-hidden ${variantClasses[style]}`}
-      style={containerStyle}
-      aria-hidden="true"
-    >
+    <div className={`${bgClass} ${colorClass} overflow-hidden border-y`}>
       <div
-        className="flex gap-16 whitespace-nowrap will-change-transform"
-        style={{
-          animation: 'h-marquee-scroll linear infinite',
-          ...trackStyle,
-        }}
+        className="flex whitespace-nowrap py-3 will-change-transform"
+        style={{animation: `h-marquee-scroll ${speed}s linear infinite`}}
+        aria-hidden="true"
       >
-        {repeatItems.map((item, i) => (
-          <div
-            key={i}
-            className={`flex items-center gap-6 flex-shrink-0 ${textClasses[style]}`}
-          >
-            {showIcon && style !== 'editorial' && (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-3 h-3 opacity-60"
-              >
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-              </svg>
-            )}
-            {style === 'editorial' && (
-              <span className="text-[var(--color-accent)] not-italic text-2xl font-serif">✦</span>
-            )}
-            {item}
-          </div>
+        {[...items, ...items, ...items, ...items].map((item, i) => (
+          <span key={i} className="inline-flex items-center gap-8 mx-8">
+            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase">
+              {item}
+            </span>
+            <span className="text-[var(--color-accent)] text-xs" aria-hidden="true">✦</span>
+          </span>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

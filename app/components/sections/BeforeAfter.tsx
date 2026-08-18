@@ -131,13 +131,13 @@ export default function BeforeAfter({
             aria-valuenow={Math.round(position)}
             onKeyDown={onKeyDown}
           >
-            <div className="w-px bg-white/80 flex-1" />
+            <div className="w-px bg-[var(--color-bg-level-2)]/80 flex-1" />
             <div className="w-11 h-11 rounded-full bg-[var(--color-accent)] text-[var(--color-text-inverse)] shadow-lg flex items-center justify-center shrink-0">
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <path d="M7 5L2 10L7 15M13 5L18 10L13 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <div className="w-px bg-white/80 flex-1" />
+            <div className="w-px bg-[var(--color-bg-level-2)]/80 flex-1" />
           </div>
         </div>
       </div>

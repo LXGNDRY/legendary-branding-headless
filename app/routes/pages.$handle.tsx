@@ -117,7 +117,7 @@ export default function PageRoute() {
           // Fallback to body HTML
           page.body && (
             <div
-              className="prose prose-sm max-w-none text-black [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-black/70 [&_h2]:text-2xl [&_h3]:text-xl [&_li]:my-0.5"
+              className="prose prose-sm max-w-none text-[var(--color-text-primary)] [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-[var(--color-text-primary)] [&_h2]:text-2xl [&_h3]:text-xl [&_li]:my-0.5"
               // eslint-disable-next-line react/no-danger
               dangerouslySetInnerHTML={{__html: page.body}}
             />

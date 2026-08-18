@@ -19,12 +19,12 @@ export default function NewArrivalsGrid({
   if (!products.length) return null;
 
   return (
-    <section className="h-section bg-[var(--color-background)]">
+    <section className="h-section bg-[var(--color-bg-level-0)]">
       <div className="h-container">
         <div className="flex items-end justify-between mb-10">
           <div>
             {eyebrow && <p className="h-eyebrow mb-3">{eyebrow}</p>}
-            <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-foreground)]">
+            <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-text-primary)]">
               {heading}
             </h2>
           </div>
@@ -33,16 +33,13 @@ export default function NewArrivalsGrid({
           </Link>
         </div>
 
-        {/* Asymmetric grid — first card spans 2 cols on md+ */}
-        <div ref={ref} className="grid grid-cols-2 md:grid-cols-4 gap-4 h-stagger">
-          {products.slice(0, 5).map((product, i) => (
-            <div
-              key={product.id}
-              className={`h-reveal ${i === 0 ? 'col-span-2 row-span-2' : ''}`}
-            >
+        {/* Product grid */}
+        <div ref={ref} className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 h-stagger">
+          {products.slice(0, 8).map((product, i) => (
+            <div key={product.id} className="h-reveal">
               <ProductCard
                 product={product}
-                loading={i === 0 ? 'eager' : 'lazy'}
+                loading={i < 4 ? 'eager' : 'lazy'}
                 showQuickAdd
                 hoverFlip
               />
@@ -50,8 +47,11 @@ export default function NewArrivalsGrid({
           ))}
         </div>
 
-        <div className="mt-10 text-center">
-          <Link to={viewAllHref} className="h-btn-outline">
+        <div className="mt-12 text-center">
+          <Link
+            to={viewAllHref}
+            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-[var(--color-border-medium)] text-[var(--color-text-primary)] text-[0.75rem] font-semibold tracking-[0.14em] uppercase rounded-full hover:bg-[var(--color-bg-level-2)] hover:border-[var(--color-border-strong)] transition-all"
+          >
             Shop all new arrivals
           </Link>
         </div>

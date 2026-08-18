@@ -15,12 +15,10 @@ interface NewsletterFormProps {
 }
 
 /**
- * Shared newsletter signup form.
+ * Shared newsletter signup form (dark theme).
  *
  * Submits to /api/newsletter via React Router fetcher (no page reload).
- * Works with or without Klaviyo configured — gracefully degrades in dev.
- *
- * All 3 newsletter forms (footer, band, popup) use this component.
+ * Works with or without Klaviyo configured — gracefully degrades.
  */
 export default function NewsletterForm({
   source = 'website',
@@ -42,29 +40,27 @@ export default function NewsletterForm({
 
   const inputStyles =
     variant === 'popup'
-      ? 'flex-1 bg-transparent border border-[var(--color-border-medium)] border-r-0 px-4 py-3.5 text-sm text-[var(--color-text-inverse)] placeholder:text-[var(--color-text-secondary)] outline-none focus:border-[var(--color-accent)] transition-colors'
+      ? 'flex-1 bg-transparent border border-[var(--color-border-medium)] px-4 py-3.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] outline-none focus:border-[var(--color-accent)] transition-colors rounded-l-md'
       : variant === 'footer'
-        ? 'flex-1 border border-[var(--color-border-subtle)] border-r-0 px-4 py-3 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-text-tertiary)] outline-none focus:border-[var(--color-foreground)] transition-colors bg-transparent'
-        : 'flex-1 px-5 py-3.5 bg-[var(--color-background)] border border-[var(--color-border-subtle)] text-[var(--color-foreground)] text-sm placeholder-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-foreground)] transition-colors rounded-full';
+        ? 'flex-1 border border-[var(--color-border-medium)] px-4 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] outline-none focus:border-[var(--color-accent)] transition-colors bg-[var(--color-bg-level-2)] rounded-l-md'
+        : 'flex-1 px-5 py-3.5 bg-[var(--color-bg-level-2)] border border-[var(--color-border-medium)] text-[var(--color-text-primary)] text-sm placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors rounded-l-full sm:rounded-l-full rounded-r-full sm:rounded-r-none';
 
   const buttonStyles =
     variant === 'popup'
-      ? 'px-6 py-3.5 bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap h-eyebrow font-semibold'
+      ? 'px-6 py-3.5 bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap text-[0.7rem] font-semibold tracking-[0.12em] uppercase rounded-r-md'
       : variant === 'footer'
-        ? 'px-5 py-3 bg-[var(--color-foreground)] text-[var(--color-text-inverse)] h-eyebrow font-semibold hover:bg-[var(--color-accent)] transition-colors whitespace-nowrap'
-        : 'h-btn-primary whitespace-nowrap';
+        ? 'px-5 py-3 bg-[var(--color-accent)] text-white text-[0.7rem] font-semibold tracking-[0.12em] uppercase hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap rounded-r-md'
+        : 'px-7 py-3.5 bg-[var(--color-accent)] text-white text-[0.75rem] font-semibold tracking-[0.14em] uppercase hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap rounded-r-full';
 
   const formWrapperClass =
     variant === 'band'
-      ? 'flex flex-col sm:flex-row gap-3 max-w-md mx-auto'
+      ? 'flex flex-col sm:flex-row gap-3 sm:gap-0 max-w-md mx-auto'
       : 'flex';
 
   return (
     <div className={className}>
       {isSuccess ? (
-        <p
-          className={`h-eyebrow ${variant === 'popup' ? 'text-[var(--color-accent)]' : 'text-[var(--color-foreground)]'}`}
-        >
+        <p className="text-sm text-[var(--color-success)] font-medium">
           {fetcher.data?.message || "You're in. Watch your inbox."}
         </p>
       ) : (
@@ -88,7 +84,7 @@ export default function NewsletterForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`${buttonStyles} disabled:opacity-60`}
+            className={`${buttonStyles} disabled:opacity-60 disabled:cursor-not-allowed`}
           >
             {isSubmitting ? 'Joining…' : buttonText}
           </button>
@@ -96,7 +92,7 @@ export default function NewsletterForm({
       )}
       {error && (
         <p
-          className={`mt-2 text-[0.75rem] ${variant === 'popup' ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent)]'}`}
+          className="mt-2 text-xs text-[var(--color-error)]"
           role="alert"
         >
           {error}

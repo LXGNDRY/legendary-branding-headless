@@ -78,7 +78,7 @@ export default function FitCheck({eyebrow, heading, image, hotspots}: FitCheckPr
               </button>
 
               {activeIndex === i && (
-                <div className="absolute z-20 bottom-full mb-3 left-1/2 -translate-x-1/2 w-60 bg-white shadow-lg border border-[var(--color-border-subtle)]">
+                <div className="absolute z-20 bottom-full mb-3 left-1/2 -translate-x-1/2 w-60 bg-[var(--color-bg-level-1)] shadow-lg border border-[var(--color-border-medium)]">
                   <Link
                     to={`/products/${spot.product.handle}`}
                     className="flex items-center gap-4 p-4 hover:bg-[var(--color-surface)] transition-colors"

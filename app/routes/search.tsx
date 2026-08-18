@@ -222,7 +222,7 @@ export default function SearchPage() {
               type="search"
               name="q"
               placeholder="Search products, collections, and more..."
-              className="w-full bg-transparent border-b border-black/20 py-3 text-lg focus:outline-none focus:border-black transition-colors placeholder:text-black/40"
+              className="w-full bg-transparent border-b border-[var(--color-border-medium)] py-3 text-lg text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-text-tertiary)]"
               autoFocus
             />
           </Form>
@@ -252,17 +252,17 @@ export default function SearchPage() {
         <h1 className="font-serif text-3xl md:text-4xl font-normal mb-2">
           &ldquo;{query}&rdquo;
         </h1>
-        <p className="text-sm text-black/50">
+        <p className="text-sm text-[var(--color-text-secondary)]">
           {total} {total === 1 ? 'result' : 'results'} found
         </p>
       </header>
 
       {total === 0 ? (
         <div className="py-16 text-center">
-          <p className="text-lg text-black/60 mb-6">
+          <p className="text-lg text-[var(--color-text-secondary)] mb-6">
             No products match your search.
           </p>
-          <p className="text-sm text-black/40 mb-8">
+          <p className="text-sm text-[var(--color-text-tertiary)] mb-8">
             Try a different keyword or browse our collections.
           </p>
           <Button as="link" to="/collections/all-products" variant="primary">
@@ -273,18 +273,18 @@ export default function SearchPage() {
         <>
           {/* Sort bar */}
           <div className="flex items-center justify-between mb-8">
-            <p className="text-sm text-black/50">
+            <p className="text-sm text-[var(--color-text-tertiary)]">
               Showing {Math.min(products.length, total)} of {total}
             </p>
             <div className="flex items-center gap-3">
-              <label htmlFor="sort" className="text-xs text-black/50 uppercase tracking-wider">
+              <label htmlFor="sort" className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider">
                 Sort
               </label>
               <select
                 id="sort"
                 value={sortValue}
                 onChange={handleSortChange}
-                className="text-sm bg-transparent border border-black/20 px-3 py-1.5 focus:outline-none focus:border-black"
+                className="text-sm bg-transparent border border-[var(--color-border-medium)] text-[var(--color-text-primary)] px-3 py-1.5 rounded-md focus:outline-none focus:border-[var(--color-accent)]"
               >
                 {SORT_OPTIONS.map(opt => (
                   <option key={`${opt.key}-${String(opt.reverse)}`} value={`${opt.key}-${String(opt.reverse)}`}>
@@ -310,7 +310,7 @@ export default function SearchPage() {
 
           {/* Pagination */}
           {search && (search.pageInfo.hasNextPage || search.pageInfo.hasPreviousPage) && (
-            <div className="flex justify-between items-center mt-12 pt-8 border-t border-black/10">
+            <div className="flex justify-between items-center mt-12 pt-8 border-t border-[var(--color-border-muted)]">
               {search.pageInfo.hasPreviousPage ? (
                 <Link
                   to={`/search?q=${encodeURIComponent(query)}&before=${search.pageInfo.startCursor}&sort=${sortKey}&reverse=${reverse}`}
@@ -319,7 +319,7 @@ export default function SearchPage() {
                   ← Previous
                 </Link>
               ) : (
-                <span className="text-xs text-black/30">← Previous</span>
+                <span className="text-xs text-[var(--color-text-tertiary)]">← Previous</span>
               )}
 
               {search.pageInfo.hasNextPage ? (
@@ -330,7 +330,7 @@ export default function SearchPage() {
                   Next →
                 </Link>
               ) : (
-                <span className="text-xs text-black/30">Next →</span>
+                <span className="text-xs text-[var(--color-text-tertiary)]">Next →</span>
               )}
             </div>
           )}

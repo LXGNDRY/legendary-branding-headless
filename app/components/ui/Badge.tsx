@@ -1,22 +1,22 @@
 import type {ReactNode} from 'react';
 
 /**
- * HANSSEN x LEGENDARY — Badge
+ * ONYX x LEGENDARY — Badge
  *
- * Pill-shaped badges for product status indicators.
+ * Pill-shaped badges for product status indicators (dark theme).
  *
  * Variants:
- * - default: off-black background, white text
+ * - default: dark surface, light text
  * - sale: red accent background, white text
- * - new: off-black background, white text
- * - soldout: light gray background, dark text
+ * - new: dark surface, light text
+ * - soldout: dark muted surface, muted text
  */
 
 const variants = {
-  default: 'bg-[var(--color-foreground)] text-[var(--color-text-inverse)]',
-  sale: 'bg-[var(--color-accent)] text-[var(--color-text-inverse)]',
-  new: 'bg-[var(--color-foreground)] text-[var(--color-text-inverse)]',
-  soldout: 'bg-[var(--color-surface)] text-[var(--color-text-secondary)]',
+  default: 'bg-[var(--color-bg-level-3)] text-[var(--color-text-primary)] border border-[var(--color-border-medium)]',
+  sale: 'bg-[var(--color-accent)] text-white',
+  new: 'bg-[var(--color-bg-level-2)] text-[var(--color-text-primary)] border border-[var(--color-border-medium)]',
+  soldout: 'bg-[var(--color-bg-level-2)] text-[var(--color-text-tertiary)] border border-[var(--color-border-muted)]',
 } as const;
 
 interface BadgeProps {
@@ -32,7 +32,7 @@ export default function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center justify-center px-2.5 py-1 text-[10px] font-medium tracking-[0.1em] uppercase rounded-full ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center px-2.5 py-1 text-[10px] font-semibold tracking-[0.1em] uppercase rounded-full ${variants[variant]} ${className}`}
     >
       {children}
     </span>

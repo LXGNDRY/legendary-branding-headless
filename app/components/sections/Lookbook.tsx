@@ -120,7 +120,7 @@ export default function Lookbook({
                       </div>
 
                       {/* Product popup card */}
-                      <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-2 w-64 bg-white p-4 opacity-0 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto flex gap-4 shadow-lg border border-[var(--color-border-subtle)]">
+                      <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-2 w-64 bg-[var(--color-bg-level-1)] p-4 opacity-0 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto flex gap-4 shadow-lg border border-[var(--color-border-medium)]">
                         {item.product.image && (
                           <img
                             src={item.product.image.url}

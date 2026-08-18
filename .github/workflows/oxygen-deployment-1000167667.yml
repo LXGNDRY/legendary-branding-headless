@@ -115,6 +115,7 @@ jobs:
           if [ -f h2_deploy_log.json ]; then
             DEPLOY_URL=$(node -e "
               const log = require('./h2_deploy_log.json');
+              // Try common paths for the deployment URL
               const url = log.url || log.previewUrl || log.deploy_url || (log.deployment && log.deployment.url) || (log.deployments && log.deployments[0] && log.deployments[0].url) || '';
               process.stdout.write(url);
             " 2>/dev/null || echo "")

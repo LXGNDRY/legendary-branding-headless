@@ -1,6 +1,7 @@
 # Legendary Branding Headless — Production Readiness & Release Plan
 
 **Status as of:** 2026-08-18 · **Branch:** `dev` @ `e65c82f`
+**Dark theme branch:** `theme-update` @ current (ready for PR → `dev`)
 **Owner approval required at:** every PR → `dev`, and the final `dev → main` release gate.
 
 This document is the operational plan for taking this repository from its current state to a commercially operational storefront capable of accepting real Shopify orders. It refines the governance framework the owner provided into a plan grounded in what has **actually been verified in this codebase**, not assumed.
@@ -62,7 +63,7 @@ An audit (3 parallel codebase sweeps + manual verification) plus multiple autono
 | Production docs (`ARCHITECTURE.md`, `DEPLOYMENT.md`, `ANALYTICS.md`, `URL_MIGRATION.md`, `LAUNCH_CHECKLIST.md`, `POST_LAUNCH_ROADMAP.md`) | ❌ Not created | Only changelogs and a theme design-system doc exist under `docs/` |
 | Sentry DSN actually configured | ⚠️ Unverified | Code path exists; whether `PUBLIC_SENTRY_DSN` is actually set in the real Oxygen environment has not been confirmed |
 
-**Bottom line:** the engineering/hardening work (Batches 5–10 in the owner's numbering: homepage/nav polish groundwork, SEO, analytics/observability, performance, accessibility, security) is substantially complete. What remains is almost entirely in **Batch 1 (commerce foundation — never actually verified against a real order)**, **content truth**, **E2E test coverage**, **a11y completeness**, and **release documentation/process**. The plan below reorders remaining work accordingly.
+**Bottom line:** the engineering/hardening work (Batches 5–10 in the owner's numbering: homepage/nav polish groundwork, SEO, analytics/observability, performance, accessibility, security) is substantially complete. The dark theme transformation (Onyx design system) is complete on the `theme-update` branch and ready for PR review. What remains is almost entirely in **Batch 1 (commerce foundation — never actually verified against a real order)**, **content truth**, **E2E test coverage**, **a11y completeness**, and **release documentation/process**. The plan below reorders remaining work accordingly.
 
 ---
 
