@@ -1,4 +1,5 @@
 import type {LoaderFunctionArgs} from 'react-router';
+import {rateLimitMiddleware} from '~/lib/rate-limit';
 
 const PREDICTIVE_SEARCH_QUERY = `#graphql
   query PredictiveSearch($query: String!, $limit: Int = 6, $country: CountryCode, $language: LanguageCode)
@@ -39,6 +40,10 @@ const empty = {products: [], collections: [], queries: []};
  * Used by the search typeahead component.
  */
 export async function loader({request, context}: LoaderFunctionArgs) {
+  // Rate limiting — 60 requests per minute per IP
+  const rateLimitResponse = rateLimitMiddleware(request, 'search', 60);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const url = new URL(request.url);
   const q = url.searchParams.get('q')?.trim() ?? '';
 

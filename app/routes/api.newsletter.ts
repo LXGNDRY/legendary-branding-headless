@@ -1,4 +1,5 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
+import {rateLimitMiddleware} from '~/lib/rate-limit';
 
 /**
  * Newsletter subscribe API route.
@@ -7,11 +8,17 @@ import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
  * Server-only — keeps Klaviyo API key out of the client bundle.
  *
  * POST /api/newsletter  { email: string, source?: string }
+ *
+ * Rate limit: 5 requests per minute per IP (spam prevention).
  */
 export async function action({request, context}: ActionFunctionArgs) {
   if (request.method !== 'POST') {
     return Response.json({error: 'Method not allowed'}, {status: 405});
   }
+
+  // Rate limiting — 5 requests per minute per IP
+  const rateLimitResponse = rateLimitMiddleware(request, 'newsletter', 5);
+  if (rateLimitResponse) return rateLimitResponse;
 
   const env = context.env as {
     PRIVATE_KLAVIYO_API_KEY?: string;
@@ -26,8 +33,8 @@ export async function action({request, context}: ActionFunctionArgs) {
   if (contentType.includes('application/json')) {
     try {
       const body = (await request.json()) as {email?: string; source?: string};
-      email = (body.email || '').trim().toLowerCase();
-      source = body.source || 'website';
+      email = sanitizeEmail(body.email);
+      source = sanitizeString(body.source, 50) || 'website';
     } catch {
       return Response.json({error: 'Invalid JSON body'}, {status: 400});
     }
@@ -35,14 +42,14 @@ export async function action({request, context}: ActionFunctionArgs) {
     // form-encoded (from fetcher.Form)
     try {
       const formData = await request.formData();
-      email = String(formData.get('email') || '').trim().toLowerCase();
-      source = String(formData.get('source') || 'website');
+      email = sanitizeString(String(formData.get('email')), 254).trim().toLowerCase();
+      source = sanitizeString(String(formData.get('source')), 50) || 'website';
     } catch {
       return Response.json({error: 'Invalid form data'}, {status: 400});
     }
   }
 
-  if (!email || !email.includes('@') || !email.includes('.')) {
+  if (!isValidEmail(email)) {
     return Response.json(
       {error: 'Please enter a valid email address.'},
       {status: 400},
@@ -134,4 +141,30 @@ export async function action({request, context}: ActionFunctionArgs) {
 
 export function loader(_args: LoaderFunctionArgs) {
   return Response.json({error: 'Method not allowed'}, {status: 405});
+}
+
+// --- helpers ---
+
+function sanitizeString(input: unknown, maxLength: number = 255): string {
+  if (typeof input !== 'string') return '';
+  // Trim, strip control characters, cap length
+  return input
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function sanitizeEmail(input: unknown): string {
+  if (typeof input !== 'string') return '';
+  return input
+    .replace(/[\u0000-\u001F\u007F-\u009F\s]/g, '')
+    .toLowerCase()
+    .slice(0, 254);
+}
+
+function isValidEmail(email: string): boolean {
+  if (!email || email.length > 254) return false;
+  // RFC 5322 simplified — sufficient for input validation, not deliverability
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  return re.test(email);
 }

@@ -68,6 +68,8 @@ export default function StreetHero({
               height={showRight ? 1067 : 900}
               sizes={showRight ? '50vw' : '100vw'}
               loading="eager"
+              fetchPriority="high"
+              decoding="sync"
               className="w-full h-full object-cover"
             />
           ) : (
