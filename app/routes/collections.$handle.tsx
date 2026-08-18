@@ -12,6 +12,8 @@ import ProductCard, {
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
 import {CacheShort} from '~/lib/cache';
+import JsonLd from '~/components/ui/JsonLd';
+import {collectionPageSchema, breadcrumbSchema} from '~/components/seo/SeoSchema';
 
 const COLLECTION_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
@@ -114,10 +116,26 @@ interface CollectionData {
   };
 }
 
-export const meta: MetaFunction<typeof loader> = ({data}) => [
-  {title: `${data?.collection?.title ?? 'Collection'} — LEGENDARY BRANDING`},
-  {name: 'description', content: data?.collection?.description ?? `Shop ${data?.collection?.title ?? 'this collection'}.`},
-];
+export const meta: MetaFunction<typeof loader> = ({data}) => {
+  const collection = data?.collection;
+  const title = `${collection?.title ?? 'Collection'} — LEGENDARY BRANDING`;
+  const description = collection?.description ?? `Shop ${collection?.title ?? 'this collection'}.`;
+  const canonical = `https://legendary-branding.com/collections/${collection?.handle ?? 'all'}`;
+  const ogImage = collection?.image?.url
+    ? `${collection.image.url}&width=1200&height=630`
+    : undefined;
+
+  return [
+    {title},
+    {name: 'description', content: description},
+    {tagName: 'link', rel: 'canonical', href: canonical},
+    {property: 'og:type', content: 'product.group'},
+    {property: 'og:title', content: title},
+    {property: 'og:description', content: description},
+    {property: 'og:url', content: canonical},
+    ...(ogImage ? [{property: 'og:image', content: ogImage}] : []),
+  ];
+};
 
 function buildFilters(searchParams: URLSearchParams): Array<Record<string, unknown>> {
   const filters: Array<Record<string, unknown>> = [];
@@ -221,14 +239,34 @@ export default function CollectionPage() {
     (f) => f.id === 'productType' || f.label.toLowerCase().includes('type'),
   );
 
+  const collectionJsonLd = collectionPageSchema({
+    title: collection.title,
+    handle: collection.handle,
+    description: collection.description,
+    products: collection.products.nodes.map((p) => ({
+      name: p.title,
+      url: `/products/${p.handle}`,
+      image: p.featuredImage?.url ?? '',
+    })),
+  });
+
+  const breadcrumbJsonLd = breadcrumbSchema([
+    {name: 'Collections', url: '/collections'},
+    {name: collection.title},
+  ]);
+
   return (
     <div className="bg-[#FAF9F6]">
+      <JsonLd data={collectionJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       {/* Collection hero */}
       <div className="relative h-[280px] md:h-[420px] bg-[#1A1A1A] overflow-hidden">
         {collection.image?.url ? (
           <Image
             data={collection.image}
             sizes="100vw"
+            width={1600}
+            height={800}
             loading="eager"
             className="absolute inset-0 w-full h-full object-cover opacity-70"
           />

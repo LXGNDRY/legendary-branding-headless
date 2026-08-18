@@ -35,6 +35,8 @@ export default function HeroSplit({
         {leftImage?.url ? (
           <Image
             data={leftImage}
+            width={1200}
+            height={1600}
             className="absolute inset-0 w-full h-full object-cover object-center opacity-90 transition-transform duration-[8s] ease-out hover:scale-[1.03]"
             sizes="(max-width: 1024px) 100vw, 67vw"
             loading="eager"
@@ -62,6 +64,8 @@ export default function HeroSplit({
           <div className="relative flex-1 min-h-[30vh] bg-[#F3F2EE] overflow-hidden">
             <Image
               data={rightImage}
+              width={800}
+              height={1000}
               className="absolute inset-0 w-full h-full object-cover object-center"
               sizes="33vw"
               loading="eager"

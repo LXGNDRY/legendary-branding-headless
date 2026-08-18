@@ -1,4 +1,5 @@
 import {Link} from 'react-router';
+import NewsletterForm from '~/components/ui/NewsletterForm';
 
 const SHOP_LINKS = [
   {label: 'New Drops', href: '/collections/all-products'},
@@ -92,27 +93,7 @@ export default function Footer() {
             <p className="text-sm text-[#6B6B6B] mb-5">
               Get early access to drops, exclusive offers, and behind-the-scenes content.
             </p>
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="flex max-w-sm"
-            >
-              <label htmlFor="footer-email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="footer-email"
-                type="email"
-                placeholder="Enter your email"
-                required
-                className="flex-1 border border-[#E8E6E1] border-r-0 px-4 py-3 text-sm text-[#1A1A1A] placeholder:text-[#9E9C97] outline-none focus:border-[#1A1A1A] transition-colors bg-transparent"
-              />
-              <button
-                type="submit"
-                className="px-5 py-3 bg-[#1A1A1A] text-[#FAF9F6] h-eyebrow font-semibold hover:bg-[#FF3B30] transition-colors whitespace-nowrap"
-              >
-                Join →
-              </button>
-            </form>
+            <NewsletterForm source="footer" variant="footer" buttonText="Join →" placeholder="Enter your email" />
           </div>
         </div>
 

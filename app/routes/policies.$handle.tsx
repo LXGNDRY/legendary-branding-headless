@@ -1,6 +1,8 @@
 import {type LoaderFunctionArgs, type MetaFunction, useLoaderData, Link} from 'react-router';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
+import JsonLd from '~/components/ui/JsonLd';
+import {breadcrumbSchema} from '~/components/seo/SeoSchema';
 
 const PAGE_TITLES: Record<string, string> = {
   'refund-policy': 'Refund & Return Policy',
@@ -49,10 +51,20 @@ type ShopPolicies = {
   privacyPolicy?: ShopPolicy | null;
 };
 
-export const meta: MetaFunction<typeof loader> = ({data}) => [
-  {title: `${data?.title ?? 'Policy'} — LEGENDARY BRANDING`},
-  {name: 'description', content: data?.title ? `${data.title} — Legendary Branding` : 'Legendary Branding policies.'},
-];
+export const meta: MetaFunction<typeof loader> = ({data}) => {
+  const title = `${data?.title ?? 'Policy'} — LEGENDARY BRANDING`;
+  const description = data?.title ? `${data.title} — Legendary Branding` : 'Legendary Branding policies.';
+  const canonical = `https://legendary-branding.com/policies/${data?.handle ?? ''}`;
+
+  return [
+    {title},
+    {name: 'description', content: description},
+    {tagName: 'link', rel: 'canonical', href: canonical},
+    {property: 'og:title', content: title},
+    {property: 'og:description', content: description},
+    {property: 'og:url', content: canonical},
+  ];
+};
 
 export async function loader({params, context}: LoaderFunctionArgs) {
   const handle = params.handle ?? '';
@@ -94,8 +106,14 @@ export async function loader({params, context}: LoaderFunctionArgs) {
 export default function PolicyPage() {
   const {title, bodyHtml, handle} = useLoaderData<typeof loader>();
 
+  const breadcrumbJsonLd = breadcrumbSchema([
+    {name: 'Home', url: '/'},
+    {name: title},
+  ]);
+
   return (
     <Container className="py-16">
+      <JsonLd data={breadcrumbJsonLd} />
       <div className="max-w-2xl mx-auto">
         {/* Breadcrumb */}
         <nav

@@ -4,6 +4,8 @@ import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Placeholder from '~/components/ui/Placeholder';
 import {CacheLong} from '~/lib/cache';
+import JsonLd from '~/components/ui/JsonLd';
+import {breadcrumbSchema} from '~/components/seo/SeoSchema';
 
 type CollectionNode = {
   id: string;
@@ -48,6 +50,9 @@ export const meta: MetaFunction = () => [
   {title: 'Collections — LEGENDARY BRANDING'},
   {name: 'description', content: 'Shop all Legendary Branding collections.'},
   {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/collections'},
+  {property: 'og:title', content: 'Collections — LEGENDARY BRANDING'},
+  {property: 'og:description', content: 'Shop all Legendary Branding collections.'},
+  {property: 'og:url', content: 'https://legendary-branding.com/collections'},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -66,8 +71,14 @@ export async function loader({context}: LoaderFunctionArgs) {
 export default function CollectionsIndex() {
   const {collections} = useLoaderData<typeof loader>();
 
+  const breadcrumbJsonLd = breadcrumbSchema([
+    {name: 'Home', url: '/'},
+    {name: 'Collections'},
+  ]);
+
   return (
     <Container className="py-16">
+      <JsonLd data={breadcrumbJsonLd} />
       <div className="mb-12">
         <p className="text-[10px] font-semibold tracking-widest uppercase text-[#6b6b6b] mb-2">
           Shop
@@ -90,6 +101,8 @@ export default function CollectionsIndex() {
                 <Image
                   data={collection.image}
                   aspectRatio="4/3"
+                  width={800}
+                  height={600}
                   sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                   className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />

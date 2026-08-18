@@ -150,6 +150,8 @@ export default function ProductCard({
             <Image
               data={product.featuredImage}
               aspectRatio="3/4"
+              width={800}
+              height={1067}
               sizes="150px"
               loading={loading}
               className="w-full h-full object-cover"
@@ -226,6 +228,8 @@ export default function ProductCard({
             <Image
               data={product.featuredImage}
               aspectRatio="3/4"
+              width={800}
+              height={1067}
               sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
               loading={loading}
               className="w-full h-full object-cover transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
@@ -239,6 +243,8 @@ export default function ProductCard({
             <Image
               data={product.images!.nodes[1]}
               aspectRatio="3/4"
+              width={800}
+              height={1067}
               sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
               loading="lazy"
               className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100"

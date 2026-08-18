@@ -1,8 +1,20 @@
-import {Link, useNavigate} from 'react-router';
+import {Link, useNavigate, type MetaFunction} from 'react-router';
 import Container from '~/components/ui/Container';
 import {useWishlist} from '~/components/ui/Wishlist';
 import ProductCard from '~/components/ui/ProductCard';
 import {useEffect, useState} from 'react';
+
+export const meta: MetaFunction = () => {
+  const canonical = 'https://legendary-branding.com/wishlist';
+  return [
+    {title: 'Wishlist — LEGENDARY BRANDING'},
+    {name: 'description', content: 'Your saved items from Legendary Branding.'},
+    {tagName: 'link', rel: 'canonical', href: canonical},
+    {property: 'og:title', content: 'Wishlist — LEGENDARY BRANDING'},
+    {property: 'og:description', content: 'Your saved items from Legendary Branding.'},
+    {property: 'og:url', content: canonical},
+  ];
+};
 
 /**
  * Wishlist page — displays all items saved by the user.
