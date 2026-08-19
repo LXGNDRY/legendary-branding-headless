@@ -1,7 +1,7 @@
 # Legendary Branding Headless — Production Readiness & Release Plan
 
-**Status as of:** 2026-08-18 · **Branch:** `dev` @ `e65c82f`
-**Dark theme branch:** `theme-update` @ current (ready for PR → `dev`)
+**Status as of:** 2026-08-19 · **Branch:** `dev` (post PR #47)
+**Dark theme (Onyx):** merged to `dev`.
 **Owner approval required at:** every PR → `dev`, and the final `dev → main` release gate.
 
 This document is the operational plan for taking this repository from its current state to a commercially operational storefront capable of accepting real Shopify orders. It refines the governance framework the owner provided into a plan grounded in what has **actually been verified in this codebase**, not assumed.
@@ -38,9 +38,9 @@ An audit (3 parallel codebase sweeps + manual verification) plus multiple autono
 | CSP | ✅ Tightened | `unsafe-eval` removed from `app/lib/security.ts`; `unsafe-inline` remains (documented, needed for current hydration approach) |
 | Dependency updates | ✅ Automated | `.github/dependabot.yml` — npm + GitHub Actions, weekly |
 | Route/loader test coverage | ✅ Started | `app/__tests__/routes/` — `_index`, `collections.$handle`, `products.$handle`, `search` |
-| Browser E2E coverage | ❌ Not started | No Playwright config, no `test:e2e` script |
+| Browser E2E coverage | ✅ Done | Playwright configured (`playwright.config.ts`), `test:e2e` script, CI `e2e` job runs against a local production build (live Oxygen preview bot-checks automated browsers, so E2E targets `shopify hydrogen preview` locally instead — see PR #44) |
 | Mobile menu focus trap | ✅ Fixed | `app/hooks/useFocusTrap.ts`, wired into `MobileMenu.tsx` |
-| Size guide modal focus trap | ❌ Not done | `SizeGuideModal.tsx` has no `useFocusTrap` usage |
+| Size guide modal focus trap | ✅ Fixed | `SizeGuideModal.tsx` already uses `useFocusTrap` (verified 2026-08-19) — doc previously understated this |
 | JSON-LD (Product/Article/Collection/Breadcrumb) | ✅ Consolidated | Shared generators in `SeoSchema.tsx` now used everywhere; breadcrumbs added site-wide |
 | Meta/canonical/og:image coverage | ✅ Completed | All routes upgraded per `docs/phase5-changelog.md` §5.2 |
 | robots.txt canonical domain | ✅ Fixed | Uses `PUBLIC_CHECKOUT_DOMAIN`, matches sitemap.xml |
@@ -56,7 +56,7 @@ An audit (3 parallel codebase sweeps + manual verification) plus multiple autono
 | 404 / error pages | ✅ Branded | Distinguishes 404 vs 500, route-level PDP error boundary |
 | CCPA "Do Not Sell" link | ✅ Fixed (this session) | Points to the real `/pages/data-sharing-opt-out` Shopify page |
 | Consent banner gating bug | ✅ Fixed (this session) | No longer silently `return null`s when no analytics pixel IDs are configured |
-| Orphaned content pages | ❌ Still unlinked | `the-ultimate-streetwear-guide`, `oversized-hoodies-streetwear-the-piece-that-never-loses` — zero references anywhere in `app/` |
+| Orphaned content pages | ✅ Fixed | Both linked in `Footer.tsx`'s Company column ("Streetwear Guide", "Oversized Hoodie Guide") — verified 2026-08-19 |
 | Content-truth audit (testimonials, shipping claims) | ❌ Not done | Homepage testimonials (`_index.tsx`) and marquee claims ("Free Shipping Over $150", "Made to Order", "Authenticity Guaranteed") have not been checked against actual Shopify configuration/policy |
 | Real checkout / order verification | ❌ **Never done** | No evidence anywhere in the repo or session history of an actual test order being placed and verified in Shopify Admin. This is the single largest remaining unknown. |
 | International market validation | ❌ Not done | `context.ts` hardcodes `country: 'US'` — no other market has been configured or tested |
@@ -90,32 +90,18 @@ This is the highest-risk gap: **no one has confirmed a real Shopify order can be
 ### BATCH 5 (remainder) — Homepage & Content Truth (P0/P1)
 
 **Slice 5.1 — Content-truth audit**
-- Audit every public claim against actual Shopify configuration: "Free Shipping Over $150" (marquee, `_index.tsx`), "Made to Order," "Worldwide Shipping," "Authenticity Guaranteed," "New Drops Every Friday," the three hardcoded testimonials (name/location/quote) in `_index.tsx`.
+- Audit every public claim against actual Shopify configuration: "Free Shipping Over $150" (marquee, `_index.tsx`; note: the $150 figure was made internally consistent site-wide in PR #47, but still needs to be checked against Shopify's actual shipping settings), "Made to Order," "Worldwide Shipping," "Authenticity Guaranteed," "New Drops Every Friday," the three hardcoded testimonials (name/location/quote) in `_index.tsx`.
 - For each: verify against Shopify shipping settings/policies, or remove/rewrite as generic non-committal copy, or replace fabricated testimonials with real ones the owner supplies (or remove the section).
 - **Needs owner input**: which claims are actually true, and whether real customer testimonials exist to substitute.
 
-**Slice 5.2 — Link orphaned pages**
-- `the-ultimate-streetwear-guide` and `oversized-hoodies-streetwear-the-piece-that-never-loses` exist in Shopify but are linked nowhere. Add to Journal index as guide/editorial entries, or a footer "Guides" link — pending a decision on where they belong editorially.
+~~**Slice 5.2 — Link orphaned pages**~~ ✅ Done — both pages already linked in `Footer.tsx`'s Company column.
 
 ### BATCH 6 (remainder) — SizeGuideModal Accessibility (P1)
-- Apply the same `useFocusTrap` hook already used in `MobileMenu.tsx` to `SizeGuideModal.tsx`. Small, isolated, mechanical fix.
+~~Apply the same `useFocusTrap` hook already used in `MobileMenu.tsx` to `SizeGuideModal.tsx`.~~ ✅ Already done — `SizeGuideModal.tsx` uses `useFocusTrap`.
 
-### BATCH 9/12 — E2E Test Coverage (P0 for release confidence)
+### BATCH 9/12 — E2E Test Coverage (P0 for release confidence) — ✅ Done
 
-**Slice 9.1 — Playwright setup**
-- Add `@playwright/test`, `playwright.config.ts` pointed at `shopify hydrogen dev`, `test:e2e` script, and a CI job (only on `dev`/`main` pushes or manually, since it needs a live server — don't block the fast quality gate).
-
-**Slice 9.2 — Golden Customer Journeys as Playwright specs**
-Map directly to the owner's §31 list — these become the actual regression suite:
-1. Homepage → Product → Variant → Add to Cart → Checkout redirect fires
-2. Collection → Filter/sort → Product → Cart → Checkout
-3. Search → Product → Cart → Checkout
-4. Mobile viewport: Menu → Collection → Product → Cart
-5. Customer login → Account → Orders
-6. Sold-out product shows correct state, no add-to-cart
-7. Empty search → recommendations/no-results state
-8. Empty cart state
-9. Invalid product URL → branded 404
+Playwright is set up (`playwright.config.ts`, `test:e2e` script, CI `e2e` job) and the 9 golden-journey specs from the owner's §31 list are implemented in `e2e/golden-journeys.spec.ts` and passing in CI. E2E runs against a locally-served production build rather than the live Oxygen preview URL, because Shopify's `*.myshopify.dev` bot-check intercepts automated Chromium the same way it intercepts curl (see PR #44's description for the full root-cause writeup).
 
 International checkout (journey 6 in the owner's list) is deferred to Batch 13 pending market configuration (see below).
 
@@ -150,7 +136,7 @@ These came up during verification and need an owner answer before a slice can be
 
 ## 5. Immediate Next Slice
 
-Recommend starting with **Slice 6 (SizeGuideModal focus trap)** as a small, fully agent-executable, zero-ambiguity slice to re-establish the vertical-slice/PR/stop rhythm — while the owner answers the six open questions above in parallel, unblocking Batch 1, 5, 13, and 14.
+All previously-identified small, zero-ambiguity, agent-executable slices (SizeGuideModal focus trap, orphaned-page linking, Playwright E2E setup) are now done. Everything genuinely remaining in Batches 1, 5.1, 13, and 14 requires owner input (Shopify Admin access, a real/test order, content/testimonial truth decisions, market scope) before it can be scoped into a slice — see §4. Batch 14 (release docs: `ARCHITECTURE.md`, `DEPLOYMENT.md`, `ANALYTICS.md`, `LAUNCH_CHECKLIST.md`, `POST_LAUNCH_ROADMAP.md`) is the one area that can mostly be drafted from the current codebase without owner input, so it's the best next slice to pick up while awaiting answers to §4.
 
 ---
 
