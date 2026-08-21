@@ -15,19 +15,19 @@ export const SECURITY_HEADERS: Record<string, string> = {
     // Scripts: self + Shopify CDN + inline hydration + consent-gated analytics
     // unsafe-inline: needed for React hydration + inline script preloading
     // unsafe-eval removed: not needed by Hydrogen / React Router / Tailwind
-    "script-src 'self' 'unsafe-inline' cdn.shopify.com shop.app *.shopifypay.com www.googletagmanager.com connect.facebook.net analytics.tiktok.com",
+    "script-src 'self' 'unsafe-inline' cdn.shopify.com shop.app *.shopifypay.com www.googletagmanager.com connect.facebook.net analytics.tiktok.com static.klaviyo.com *.klaviyo.com cdn.judge.me",
     // Styles: inline needed for Tailwind + inline styles
-    "style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.shopify.com",
+    "style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.shopify.com *.klaviyo.com",
     // Fonts: Google Fonts
     "font-src 'self' fonts.gstatic.com fonts.googleapis.com cdn.shopify.com",
-    // Images: product CDNs + analytics pixel beacons
-    "img-src 'self' data: blob: *.shopify.com cdn.shopify.com www.facebook.com www.google-analytics.com",
+    // Images: product CDNs + analytics pixel beacons + review/form assets
+    "img-src 'self' data: blob: *.shopify.com cdn.shopify.com www.facebook.com www.google-analytics.com *.klaviyo.com cdn.judge.me judgeme-review-images-cdn.judge.me",
     // Media
     "media-src 'self' data: blob: *.shopify.com",
-    // Iframe: Shopify checkout, shop pay
-    "frame-src 'self' *.shopify.com shop.app *.shopifypay.com",
+    // Iframe: Shopify checkout, shop pay, Klaviyo onsite forms
+    "frame-src 'self' *.shopify.com shop.app *.shopifypay.com *.klaviyo.com",
     // Connect: API calls, analytics beacons, Sentry, WebSocket for HMR in dev
-    "connect-src 'self' *.shopify.com cdn.shopify.com wss: ws: www.google-analytics.com analytics.google.com www.googletagmanager.com graph.facebook.com analytics.tiktok.com *.sentry.io",
+    "connect-src 'self' *.shopify.com cdn.shopify.com wss: ws: www.google-analytics.com analytics.google.com www.googletagmanager.com graph.facebook.com analytics.tiktok.com *.sentry.io *.klaviyo.com static.klaviyo.com cdn.judge.me api.judge.me judge.me",
     // Form actions
     "form-action 'self' *.shopify.com",
     // Base URI

@@ -152,6 +152,22 @@ export default function App() {
   }
   useWebVitals(import.meta.env.PUBLIC_GA4_MEASUREMENT_ID);
 
+  // Judge.me review widget loader — loaded globally (unconditionally, not
+  // consent-gated) because it renders trusted first-party review content
+  // synced from our own Shopify store via metafields, not third-party
+  // tracking. It is lightweight and required for the badge/widget metafield
+  // HTML on product pages to become interactive.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('judgeme-widget-loader')) return;
+    const script = document.createElement('script');
+    script.id = 'judgeme-widget-loader';
+    script.src = 'https://cdn.judge.me/widget_v3.js';
+    script.async = true;
+    script.setAttribute('data-shop-domain', 'lngndny.myshopify.com');
+    document.head.appendChild(script);
+  }, []);
+
   const cartCount = cart?.totalQuantity ?? 0;
   const isNavigating = navigation.state !== 'idle';
 
@@ -187,11 +203,12 @@ export default function App() {
       </main>
       <Footer />
 
-      {/* Consent-gated analytics (GA4, Meta, TikTok) */}
+      {/* Consent-gated analytics (GA4, Meta, TikTok, Klaviyo on-site embed) */}
       <Analytics
         ga4Id={import.meta.env.PUBLIC_GA4_MEASUREMENT_ID}
         metaPixelId={import.meta.env.PUBLIC_META_PIXEL_ID}
         tiktokPixelId={import.meta.env.PUBLIC_TIKTOK_PIXEL_ID}
+        klaviyoCompanyId={import.meta.env.PUBLIC_KLAVIYO_COMPANY_ID}
       />
 
       <CartDrawer
