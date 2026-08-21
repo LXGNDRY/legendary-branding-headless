@@ -1,5 +1,44 @@
 import {createHydrogenContext} from '@shopify/hydrogen';
+import type {CountryCode} from '@shopify/hydrogen/storefront-api-types';
 import {AppSession} from '~/lib/session';
+
+/**
+ * The subset of Cloudflare's `IncomingRequestCfProperties` we rely on.
+ * The oxygen-workers-types `Request` interface types `cf` as a generic
+ * defaulting to `any`, so we narrow it locally here instead of relying
+ * on that `any` (and instead of reaching for `@ts-ignore`).
+ */
+interface CloudflareRequestCf {
+  /** ISO 3166-1 alpha-2 country code of the visitor, set by Cloudflare's edge. */
+  country?: string;
+}
+
+const DEFAULT_COUNTRY: CountryCode = 'US';
+const VALID_COUNTRY_CODE = /^[A-Z]{2}$/;
+
+/**
+ * Resolve the visitor's market country from Cloudflare's edge-provided
+ * geolocation, falling back to the primary "United States" market.
+ *
+ * Why this exists: the Shopify store has exactly two enabled Markets —
+ * "United States" (primary, region US only) and "International" (region
+ * ~150 other countries) — and both share the same domain with no
+ * country-specific subpath (only language subpaths like /de/, /fr/ exist,
+ * which are unrelated to market resolution). Hardcoding `country: 'US'`
+ * here would silently put every non-US visitor into the wrong market for
+ * pricing/availability/currency. We deliberately do NOT hardcode the
+ * ~150-country International market list — an unrecognized/unsupported
+ * code passed to `@inContext(country: ...)` is handled sensibly by the
+ * Storefront API itself, so a plain 2-letter-code sanity check is enough.
+ */
+export function resolveCountry(request: Request): CountryCode {
+  const cf = (request as Request & {cf?: CloudflareRequestCf}).cf;
+  const country = cf?.country;
+  if (country && VALID_COUNTRY_CODE.test(country)) {
+    return country as CountryCode;
+  }
+  return DEFAULT_COUNTRY;
+}
 
 /**
  * Creates all context objects available to route loaders and actions.
@@ -69,7 +108,11 @@ export async function createAppLoadContext(
     cache,
     waitUntil,
     session,
-    i18n: {language: 'EN', country: 'US', currency: activeCurrency},
+    i18n: {
+      language: 'EN',
+      country: resolveCountry(request),
+      currency: activeCurrency,
+    },
     // Customer Account API is only active when the client ID is configured
     ...(hasCustomerAccount && {
       customerAccount: {
