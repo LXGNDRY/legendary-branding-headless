@@ -13,7 +13,7 @@ const DEFAULT_STATS: Stat[] = [
   {value: '235GSM+', label: 'Fabric Weight'},
   {value: '380-460GSM', label: 'Hoodies'},
   {value: '30 Days', label: 'Free Returns'},
-  {value: '$150+', label: 'Free Shipping'},
+  {value: '$100+', label: 'Free Shipping'},
 ];
 
 /**

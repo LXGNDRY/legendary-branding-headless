@@ -5,8 +5,10 @@ import {CartForm, Image, Money} from '@shopify/hydrogen';
 import type {CartData, CartLineData} from '~/lib/cart';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 
-// Free shipping threshold — match your store's free shipping threshold
-const FREE_SHIPPING_THRESHOLD = 150;
+// Free shipping threshold — verified against the live shipping policy
+// (legendary-branding.com/policies/shipping-policy), which currently reads
+// "Free US Shipping on Orders $100+". Update this if that changes.
+const FREE_SHIPPING_THRESHOLD = 100;
 
 function CloseIcon() {
   return (

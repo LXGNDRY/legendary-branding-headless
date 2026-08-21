@@ -437,7 +437,7 @@ export default function ProductPage() {
 
               {/* Shipping note */}
               <p className="h-eyebrow text-[var(--color-text-tertiary)] text-center">
-                Free shipping over $150 · 30-day returns
+                Free shipping over $100 · 30-day returns
               </p>
 
               {/* Accordions */}
@@ -451,7 +451,7 @@ export default function ProductPage() {
                   </Accordion>
                 )}
                 <Accordion label="Shipping & Returns">
-                  <p>Free shipping on orders over $150. Orders ship within 3–5 business days. Easy 30-day returns on unworn items.</p>
+                  <p>Free shipping on orders over $100. Orders ship within 3–5 business days. Easy 30-day returns on unworn items.</p>
                 </Accordion>
                 {product.metafields?.nodes?.some((m) => m.key === 'care' && m.value) && (
                   <Accordion label="Care Guide">

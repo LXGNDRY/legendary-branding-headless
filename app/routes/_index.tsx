@@ -98,7 +98,7 @@ export async function loader({context}: LoaderFunctionArgs) {
 const MARQUEE_ITEMS = [
   '235GSM+ HEAVYWEIGHT TEES',
   'MADE TO ORDER',
-  'FREE SHIPPING OVER $150',
+  'FREE SHIPPING OVER $100',
   'WORLDWIDE SHIPPING',
   'AUTHENTICITY GUARANTEED',
   'NEW DROPS EVERY FRIDAY',

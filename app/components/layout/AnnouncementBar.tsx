@@ -10,7 +10,7 @@ interface AnnouncementBarProps {
 }
 
 const DEFAULT_ITEMS: Announcement[] = [
-  {text: 'Free Shipping on Orders $150+', link: '/collections/all-products'},
+  {text: 'Free Shipping on Orders $100+', link: '/collections/all-products'},
   {text: '235GSM+ Heavyweight Tees, Made to Order'},
   {text: 'New Drops Every Friday', link: '/collections/all-products'},
   {text: 'Worldwide Shipping Available'},
