@@ -27,6 +27,8 @@ interface Env {
   // Newsletter / Klaviyo (optional — server-only)
   PRIVATE_KLAVIYO_API_KEY: string;
   PUBLIC_KLAVIYO_LIST_ID: string;
+  // Klaviyo on-site embed (public company ID — safe to expose client-side)
+  PUBLIC_KLAVIYO_COMPANY_ID: string;
 }
 
 declare module 'virtual:react-router/server-build' {

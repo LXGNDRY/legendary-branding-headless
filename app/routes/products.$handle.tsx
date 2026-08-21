@@ -6,7 +6,7 @@ import {
   useParams,
   Link,
 } from 'react-router';
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {
   CartForm,
   Image,
@@ -97,6 +97,10 @@ const PRODUCT_QUERY = `#graphql
         {namespace: "custom", key: "fit"}
         {namespace: "custom", key: "care"}
         {namespace: "custom", key: "size_chart"}
+        {namespace: "judgeme", key: "badge"}
+        {namespace: "judgeme", key: "widget"}
+        {namespace: "reviews", key: "rating"}
+        {namespace: "reviews", key: "rating_count"}
       ]) {
         key
         value
@@ -290,6 +294,22 @@ export default function ProductPage() {
 
   const isNew = product.tags.includes('new');
 
+  // Judge.me review metafields — populated by the Judge.me app's ongoing
+  // sync into Shopify metafields; absent until a product has its first
+  // review, so every usage below degrades gracefully to "no reviews yet".
+  const judgemeBadgeHtml = product.metafields?.nodes?.find((m) => m.key === 'badge')?.value;
+  const judgemeWidgetHtml = product.metafields?.nodes?.find((m) => m.key === 'widget')?.value;
+
+  // Re-scan the DOM for Judge.me widgets after client-side navigation
+  // between products — the widget_v3.js loader only auto-scans on a full
+  // page load, so a fresh Storefront API rendered handle needs an explicit
+  // rebuild call. jdgm.batchRebuildWidgets is Judge.me's documented
+  // re-render entry point for this scenario.
+  useEffect(() => {
+    const jdgm = (window as unknown as {jdgm?: {batchRebuildWidgets?: () => void}}).jdgm;
+    jdgm?.batchRebuildWidgets?.();
+  }, [product.handle]);
+
   const productJsonLd = productSchema({
     id: product.id,
     title: product.title,
@@ -352,6 +372,17 @@ export default function ProductPage() {
                 <h1 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.01em] text-[var(--color-text-primary)] mb-3">
                   {product.title}
                 </h1>
+                {judgemeBadgeHtml && (
+                  // Judge.me's compact star-rating badge. Safe to render via
+                  // dangerouslySetInnerHTML: this HTML is our own trusted
+                  // Shopify metafield data synced server-side by the Judge.me
+                  // app, not user-supplied content, and Judge.me's loader
+                  // script requires this exact DOM structure to hydrate it.
+                  <div
+                    className="mb-2"
+                    dangerouslySetInnerHTML={{__html: judgemeBadgeHtml}}
+                  />
+                )}
                 <div className="flex items-baseline gap-3">
                   {selectedVariant ? (
                     <>
@@ -481,6 +512,24 @@ export default function ProductPage() {
             </div>
           </div>
         </div>
+
+        {/* Reviews */}
+        {judgemeWidgetHtml && (
+          <section className="border-t border-[var(--color-border-muted)]">
+            <div className="h-container py-16">
+              <p className="h-eyebrow mb-3">Reviews</p>
+              <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
+                What Customers Are Saying
+              </h2>
+              {/* Judge.me's full review widget. Safe to render via
+                  dangerouslySetInnerHTML: this HTML is our own trusted
+                  Shopify metafield data synced server-side by the Judge.me
+                  app, not user-supplied content, and Judge.me's loader
+                  script requires this exact DOM structure to hydrate it. */}
+              <div dangerouslySetInnerHTML={{__html: judgemeWidgetHtml}} />
+            </div>
+          </section>
+        )}
 
         {/* Related products */}
         {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (

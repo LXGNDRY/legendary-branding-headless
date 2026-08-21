@@ -9,8 +9,16 @@ import {Link} from 'react-router';
  * - PUBLIC_GA4_MEASUREMENT_ID — Google Analytics 4 measurement ID
  * - PUBLIC_META_PIXEL_ID — Meta (Facebook) Pixel ID
  * - PUBLIC_TIKTOK_PIXEL_ID — TikTok Pixel ID
+ * - PUBLIC_KLAVIYO_COMPANY_ID — Klaviyo public API key (on-site embed / popups)
  *
  * If env vars are not set, the scripts simply don't load.
+ *
+ * NOTE: Klaviyo's on-site embed is gated behind the same consent flow as the
+ * other third-party marketing scripts for consistency — the script itself
+ * sets Klaviyo tracking cookies and identifies the visitor the moment it
+ * loads (independent of whether the visitor ever interacts with a form), so
+ * it is treated as marketing/analytics tracking rather than a purely
+ * user-initiated action.
  */
 
 const CONSENT_COOKIE_NAME = 'lb_consent';
@@ -98,16 +106,31 @@ function loadTikTokPixel(pixelId: string) {
   document.head.appendChild(script);
 }
 
+// Klaviyo on-site embed — loads Klaviyo-managed on-site forms/popups
+// (e.g. the "Join the GOAT Club" form) using the account's public API key.
+// Docs: https://help.klaviyo.com/hc/en-us/articles/115005076767
+function loadKlaviyo(companyId: string) {
+  if (typeof document === 'undefined') return;
+
+  const script = document.createElement('script');
+  script.async = true;
+  script.type = 'text/javascript';
+  script.src = `https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=${companyId}`;
+  document.head.appendChild(script);
+}
+
 interface AnalyticsProps {
   ga4Id?: string;
   metaPixelId?: string;
   tiktokPixelId?: string;
+  klaviyoCompanyId?: string;
 }
 
 export default function Analytics({
   ga4Id,
   metaPixelId,
   tiktokPixelId,
+  klaviyoCompanyId,
 }: AnalyticsProps) {
   const [consent, setConsent] = useState<ConsentState>('undecided');
   const [showBanner, setShowBanner] = useState(false);
@@ -124,8 +147,9 @@ export default function Analytics({
       if (ga4Id) loadGA4(ga4Id);
       if (metaPixelId) loadMetaPixel(metaPixelId);
       if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
+      if (klaviyoCompanyId) loadKlaviyo(klaviyoCompanyId);
     }
-  }, [ga4Id, metaPixelId, tiktokPixelId]);
+  }, [ga4Id, metaPixelId, tiktokPixelId, klaviyoCompanyId]);
 
   function handleAccept() {
     setConsent('accepted');
@@ -136,6 +160,7 @@ export default function Analytics({
     if (ga4Id) loadGA4(ga4Id);
     if (metaPixelId) loadMetaPixel(metaPixelId);
     if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
+    if (klaviyoCompanyId) loadKlaviyo(klaviyoCompanyId);
   }
 
   function handleReject() {
