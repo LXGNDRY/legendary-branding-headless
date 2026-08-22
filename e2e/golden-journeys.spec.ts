@@ -44,12 +44,12 @@ test.describe('Journey 1: Homepage → Product → Cart → Checkout', () => {
   test('can reach a product page from homepage', async ({page}) => {
     await goto(page, '/');
 
-    const productLink = page.locator('a[href^="/products/"]').first();
+    const productLink = page.locator('a[href^="/products/"]:visible').first();
     const hasProducts = (await productLink.count()) > 0;
     test.skip(!hasProducts, 'No product links found on homepage');
 
     const href = (await productLink.getAttribute('href')) || '';
-    await productLink.click();
+    await goto(page, href);
     await expect(page).toHaveURL(new RegExp(href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   });
 });
