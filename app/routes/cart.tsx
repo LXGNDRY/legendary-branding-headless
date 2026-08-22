@@ -4,9 +4,11 @@ import {CartForm, Image, Money} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import type {CartData, CartLineData} from '~/lib/cart';
+import {secureCartCheckout} from '~/lib/checkout';
 
 export const meta: MetaFunction = () => [
   {title: 'Cart | LEGENDARY BRANDING'},
+  {name: 'robots', content: 'noindex, nofollow'},
 ];
 
 export async function action({request, context}: ActionFunctionArgs) {
@@ -41,7 +43,9 @@ export async function action({request, context}: ActionFunctionArgs) {
 
 export async function loader({context}: LoaderFunctionArgs) {
   const {cart} = context;
-  return {cart: (await cart.get()) as CartData};
+  return {
+    cart: secureCartCheckout((await cart.get()) as CartData, context.env),
+  };
 }
 
 function MinusIcon() {
@@ -233,6 +237,7 @@ export default function CartPage() {
                 href={cart.checkoutUrl}
                 variant="dark"
                 className="w-full justify-center"
+                testId="cart-checkout"
               >
                 Proceed to Checkout
               </Button>
