@@ -35,7 +35,7 @@ export default defineConfig({
   timeout: 30_000,
 
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.BASE_URL || 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     actionTimeout: 10_000,
@@ -53,7 +53,7 @@ export default defineConfig({
     },
     {
       name: 'mobile',
-      use: {...devices['iPhone 14']},
+      use: {...devices['Pixel 7']},
     },
   ],
 
@@ -64,7 +64,7 @@ export default defineConfig({
     ? undefined
     : {
         command: process.env.CI ? 'npm run preview' : 'npm run dev',
-        url: 'http://localhost:3000',
+        url: 'http://127.0.0.1:3000',
         timeout: 120_000,
         reuseExistingServer: !process.env.CI,
         stdout: 'pipe',
