@@ -66,13 +66,23 @@ export const SECURITY_HEADERS: Record<string, string> = {
  * Apply security headers to a Response.
  * Returns a new Response with headers added (non-mutating).
  */
-export function applySecurityHeaders(response: Response): Response {
+export function applySecurityHeaders(
+  response: Response,
+  request?: Request,
+): Response {
   const newResponse = new Response(response.body, response);
+  const isHttps = !request || new URL(request.url).protocol === 'https:';
 
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    if (!isHttps && name === 'Strict-Transport-Security') continue;
     // Don't overwrite existing headers of the same name
     if (!newResponse.headers.has(name)) {
-      newResponse.headers.set(name, value);
+      newResponse.headers.set(
+        name,
+        !isHttps && name === 'Content-Security-Policy'
+          ? value.replace(/; upgrade-insecure-requests$/, '')
+          : value,
+      );
     }
   }
 
