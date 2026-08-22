@@ -233,6 +233,7 @@ export default function CartPage() {
                 href={cart.checkoutUrl}
                 variant="dark"
                 className="w-full justify-center"
+                testId="cart-checkout"
               >
                 Proceed to Checkout
               </Button>
