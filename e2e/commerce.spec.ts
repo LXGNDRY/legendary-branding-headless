@@ -10,6 +10,13 @@ const TRUSTED_CHECKOUT_HOSTS = new Set([
   'lngndny.myshopify.com',
 ]);
 
+function isCartMutation(response: import('@playwright/test').Response) {
+  return (
+    response.request().method() === 'POST' &&
+    /^\/cart(?:\.data)?$/.test(new URL(response.url()).pathname)
+  );
+}
+
 function expectTrustedCheckout(href: string | null, baseURL?: string) {
   expect(href, 'Shopify returned no checkout URL').toBeTruthy();
   const url = new URL(href!, baseURL);
@@ -31,11 +38,7 @@ test.describe('Golden commerce journey', () => {
     await expect(addToCart).toBeVisible();
     await expect(addToCart).toBeEnabled();
 
-    const addResponse = page.waitForResponse(
-      (response) =>
-        response.request().method() === 'POST' &&
-        new URL(response.url()).pathname === '/cart',
-    );
+    const addResponse = page.waitForResponse(isCartMutation);
     await addToCart.click();
     expect((await addResponse).ok()).toBe(true);
 
@@ -53,11 +56,7 @@ test.describe('Golden commerce journey', () => {
     await expect(page).toHaveURL(/\/cart$/);
     await expect(page.getByText(PRODUCT_TITLE)).toBeVisible();
 
-    const updateResponse = page.waitForResponse(
-      (response) =>
-        response.request().method() === 'POST' &&
-        new URL(response.url()).pathname === '/cart',
-    );
+    const updateResponse = page.waitForResponse(isCartMutation);
     await page.getByRole('button', {name: 'Increase quantity'}).first().click();
     expect((await updateResponse).ok()).toBe(true);
     await expect(page.getByText(/Subtotal \(2 items\)/i)).toBeVisible();
@@ -67,11 +66,7 @@ test.describe('Golden commerce journey', () => {
       baseURL,
     );
 
-    const removeResponse = page.waitForResponse(
-      (response) =>
-        response.request().method() === 'POST' &&
-        new URL(response.url()).pathname === '/cart',
-    );
+    const removeResponse = page.waitForResponse(isCartMutation);
     await page.getByRole('button', {name: 'Remove'}).first().click();
     expect((await removeResponse).ok()).toBe(true);
     await expect(page.getByText(/Your cart is empty/i)).toBeVisible();
