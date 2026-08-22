@@ -4,8 +4,8 @@ Status legend: **✅ verified done** · **⚠️ implemented but unverified in t
 **❌ not done**.
 
 Translated directly from the "Current State Summary" table in
-`docs/PRODUCTION_READINESS.md` §2, as of that document's 2026-08-18 audit (branch `dev` @
-`e65c82f`). Nothing here is marked ✅ unless it was independently verified by file reads and/or a
+`docs/DEV_BASELINE_AUDIT.md`, as of the 2026-08-21 audit (branch `dev` @
+`3f39be7`). Nothing here is marked ✅ unless it was independently verified by file reads and/or a
 passing local `typecheck`/`lint`/`build`/`test` run — not by assumption.
 
 ---
@@ -13,12 +13,12 @@ passing local `typecheck`/`lint`/`build`/`test` run — not by assumption.
 ## Engineering Quality Gate
 
 - [x] ✅ Build, typecheck, lint, and unit tests all pass on `dev` HEAD (`npm run
-      typecheck`/`lint`/`build`/`test`; 51/51 tests at last audit).
+      typecheck`/`lint`/`build`/`test`; 54/54 tests at the baseline audit).
 - [x] ✅ CI quality gate runs build → typecheck → lint → test in the correct order (build before
       typecheck, required for React Router v7 type stub generation), gated before any deploy job.
 - [x] ✅ Post-deploy smoke test exists in the deploy job, checking critical routes after deploy.
-- [ ] ❌ Browser E2E coverage (Playwright) — no config/spec suite confirmed present at last audit;
-      re-verify current state before relying on it (see `docs/DEPLOYMENT.md` §2 note).
+- [ ] ⚠️ Browser E2E infrastructure exists, but the suite does not prove variant selection,
+      a successful cart mutation, or checkout handoff; CI runs Chromium only.
 
 ## Observability & Security
 
@@ -40,8 +40,7 @@ passing local `typecheck`/`lint`/`build`/`test` run — not by assumption.
 ## Accessibility
 
 - [x] ✅ Mobile menu focus trap fixed (`app/hooks/useFocusTrap.ts`, wired into `MobileMenu.tsx`).
-- [ ] ❌ Size guide modal focus trap — `SizeGuideModal.tsx` does not use `useFocusTrap` at last
-      audit; small, isolated fix, not yet done.
+- [x] ✅ Size guide modal uses the shared `useFocusTrap` hook.
 
 ## SEO
 
@@ -59,8 +58,8 @@ passing local `typecheck`/`lint`/`build`/`test` run — not by assumption.
       environment — without them the signup flow degrades to a simulated success. **Needs owner
       confirmation.**
 - [x] ✅ Currency switcher resolved — dead/non-functional UI removed rather than half-wired.
-- [ ] ❌ Multi-currency / multi-market is **not implemented** — `country: 'US'` is hardcoded in
-      `app/lib/context.ts`; only single-market (US) pricing exists today.
+- [ ] ❌ Market/currency validation is incomplete — country is edge-derived with a US fallback,
+      while arbitrary `?currency=` input is stored without allowlist or market validation.
 - [x] ✅ Address CRUD (create/update/delete/set-default) wired against the Customer Account API,
       with a codegen-caught bug fix documented in `docs/phase6-codegen-changelog.md`.
 - [x] ✅ Account profile edit added (`app/routes/account.edit.tsx`), fixing a prior dead link.
@@ -84,9 +83,7 @@ passing local `typecheck`/`lint`/`build`/`test` run — not by assumption.
 
 ## Content Truth
 
-- [ ] ❌ Orphaned content pages (`the-ultimate-streetwear-guide`,
-      `oversized-hoodies-streetwear-the-piece-that-never-loses`) remain unlinked anywhere in
-      `app/`. Not done.
+- [x] ✅ Previously orphaned content pages are linked from the footer.
 - [ ] ❌ Content-truth audit not done — homepage testimonials and marquee claims ("Free Shipping
       Over $150", "Made to Order", "Authenticity Guaranteed", etc. in `_index.tsx`) have not been
       checked against actual Shopify shipping/policy configuration. **Needs owner input** on which
