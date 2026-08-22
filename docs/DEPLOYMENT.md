@@ -72,8 +72,8 @@ The workflow (`Storefront 1000167667`) triggers on `push` to `main`/`dev`, `pull
 6. On failure, uploads per-browser Playwright traces as a build artifact (`playwright-report/`, 7-day
    retention).
 
-The suite includes structural journeys, a deterministic stocked-product commerce journey, and
-WCAG A/AA serious/critical scans for the principal customer routes.
+The suite includes structural journeys and a deterministic stocked-product commerce journey.
+It does not currently run an automated WCAG violation scanner.
 
 ---
 
@@ -90,7 +90,8 @@ Read directly from the workflow file's `secrets.*` references:
 The commerce E2E fixture defaults to the active, stocked
 `legendary-world-round-t-shirt` product. Set the non-secret
 `E2E_PRODUCT_HANDLE` environment variable when deliberately rotating the test
-fixture. The fixture must remain published, available to the Storefront API,
+fixture. The test derives the expected product title from the loaded fixture.
+The fixture must remain published, available to the Storefront API,
 and have an available `Color=Black&Size=S` variant; missing fixture data is a
 test failure, never a skip.
 
