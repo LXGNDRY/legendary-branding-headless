@@ -1,4 +1,8 @@
-import {test, expect} from '@playwright/test';
+import {test, expect, type Page} from '@playwright/test';
+
+function goto(page: Page, path: string) {
+  return page.goto(path, {waitUntil: 'domcontentloaded'});
+}
 
 /**
  * Golden Customer Journeys — E2E smoke tests.
@@ -25,7 +29,7 @@ import {test, expect} from '@playwright/test';
 
 test.describe('Journey 1: Homepage → Product → Cart → Checkout', () => {
   test('homepage renders with key sections', async ({page}) => {
-    await page.goto('/');
+    await goto(page, '/');
     await expect(page).toHaveTitle(/LEGENDARY BRANDING/);
 
     // Main content + footer present
@@ -38,7 +42,7 @@ test.describe('Journey 1: Homepage → Product → Cart → Checkout', () => {
   });
 
   test('can reach a product page from homepage', async ({page}) => {
-    await page.goto('/');
+    await goto(page, '/');
 
     const productLink = page.locator('a[href^="/products/"]').first();
     const hasProducts = (await productLink.count()) > 0;
@@ -52,13 +56,13 @@ test.describe('Journey 1: Homepage → Product → Cart → Checkout', () => {
 
 test.describe('Journey 2: Collection → Product → Cart', () => {
   test('collections listing loads', async ({page}) => {
-    await page.goto('/collections');
+    await goto(page, '/collections');
     await expect(page).toHaveTitle(/collections|shop/i);
     await expect(page.locator('main').first()).toBeVisible();
   });
 
   test('all-products collection loads with product grid', async ({page}) => {
-    await page.goto('/collections/all-products');
+    await goto(page, '/collections/all-products');
     await expect(page.locator('main').first()).toBeVisible();
 
     // Products should be present (grid or list)
@@ -74,7 +78,7 @@ test.describe('Journey 2: Collection → Product → Cart', () => {
 
 test.describe('Journey 3: Search → Product → Cart', () => {
   test('search page loads', async ({page}) => {
-    await page.goto('/search');
+    await goto(page, '/search');
     await expect(page.locator('main').first()).toBeVisible();
     // Search input exists
     const searchInput = page.locator('input[type="search"], input[name="q"], input[placeholder*="search" i]').first();
@@ -86,7 +90,7 @@ test.describe('Journey 4: Mobile — Menu → Collection → Product', () => {
   // Covered by the 'mobile' Playwright project (iPhone 14 viewport).
   // Tests use the same selectors; viewport is the variable.
   test('mobile homepage has accessible menu button', async ({page}) => {
-    await page.goto('/');
+    await goto(page, '/');
 
     // Menu button (hamburger) should exist on mobile
     const menuButton = page.getByRole('button', {name: /menu|open menu|navigation/i}).or(
@@ -108,7 +112,7 @@ test.describe('Journey 5: Customer login', () => {
     // Customer Account API app + a Hydrogen tunnel to test properly, neither
     // of which this CI job has. Assert on the known branded-error response
     // rather than a real login form.
-    const response = await page.goto('/account/login');
+    const response = await goto(page, '/account/login');
     expect(response?.status()).toBeGreaterThanOrEqual(400);
     await expect(page.getByRole('heading', {name: /oops|error/i})).toBeVisible();
   });
@@ -116,7 +120,7 @@ test.describe('Journey 5: Customer login', () => {
 
 test.describe('Journey 7: Empty search state', () => {
   test('search with no results shows appropriate state', async ({page}) => {
-    await page.goto('/search?q=zzzzzzzzzzdefinitelynoproduct');
+    await goto(page, '/search?q=zzzzzzzzzzdefinitelynoproduct');
     await expect(page.locator('main').first()).toBeVisible();
     // Either results or a "no results" message
     const results = page.locator('a[href^="/products/"]');
@@ -130,7 +134,7 @@ test.describe('Journey 7: Empty search state', () => {
 
 test.describe('Journey 8: Empty cart state', () => {
   test('empty cart shows empty state', async ({page}) => {
-    await page.goto('/cart');
+    await goto(page, '/cart');
     await expect(page.locator('main').first()).toBeVisible();
     // Empty cart message or cart items
     const emptyText = page.getByText(/your cart is empty|cart is empty|empty cart|nothing in your cart/i).first();
@@ -147,7 +151,7 @@ test.describe('Journey 8: Empty cart state', () => {
 
 test.describe('Journey 9: Invalid product URL → 404', () => {
   test('nonexistent product shows branded error page', async ({page}) => {
-    await page.goto('/products/this-product-definitely-does-not-exist-12345');
+    await goto(page, '/products/this-product-definitely-does-not-exist-12345');
 
     // Should be a 404 or error state, not a crash
     const title = await page.title();
