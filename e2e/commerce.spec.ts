@@ -42,6 +42,10 @@ test.describe('Golden commerce journey', () => {
     await addToCart.click();
     expect((await addResponse).ok()).toBe(true);
 
+    await page
+      .getByRole('banner')
+      .getByRole('button', {name: /Cart/})
+      .click();
     const drawer = page.getByRole('dialog', {name: 'Shopping cart'});
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText(PRODUCT_TITLE)).toBeVisible();
