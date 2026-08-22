@@ -1,0 +1,10 @@
+# Repository owner approval is required for every production-bound change.
+* @LXGNDRY
+
+# Explicitly identify release-sensitive surfaces.
+/.github/ @LXGNDRY
+/app/lib/security.ts @LXGNDRY
+/app/lib/session.ts @LXGNDRY
+/server.ts @LXGNDRY
+/package.json @LXGNDRY
+/package-lock.json @LXGNDRY
