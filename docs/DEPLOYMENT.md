@@ -4,6 +4,11 @@
 This document expands on that file and on `CLAUDE.md`'s CI/CD section; it does not introduce any
 new claims about behavior that isn't in the workflow file itself.
 
+The pipeline is fail-closed: generated GraphQL drift, any quality failure,
+browser E2E failure, missing Oxygen deployment metadata, missing authentication
+bypass credentials, challenge interception, HTTP failure, or rendered error
+boundary prevents the applicable gate from passing.
+
 ---
 
 ## 1. Branch Strategy
@@ -36,35 +41,32 @@ The workflow (`Storefront 1000167667`) triggers on `push` to `main`/`dev`, `pull
    in CI (this differs from the "continue-on-error" description in `CLAUDE.md`'s aspirational
    pipeline shape; per `docs/PRODUCTION_READINESS.md` §2, `.graphqlrc.ts` was fixed so codegen
    validates for real rather than being a soft-fail step).
-6. **Build** — `npm run build` (must run before typecheck; generates `.react-router/types/`)
-7. **Typecheck** — `npm run typecheck` (`tsc --noEmit`)
-8. **Lint** — `npm run lint`
-9. **Test** — `npm run test`
+6. **Generated drift** — rejects changes to committed Storefront or Customer Account declarations.
+7. **Build** — `npm run build` (must run before typecheck; generates `.react-router/types/`)
+8. **Typecheck** — `npm run typecheck` (`tsc --noEmit`)
+9. **Lint** — `npm run lint`
+10. **Test** — `npm run test`
 
 ### `deploy` (only on `push` to `main` or `dev`, needs `quality` to pass)
 1. Checkout, Node setup, npm cache, `npm ci --legacy-peer-deps`
-2. `npx shopify hydrogen deploy --force`, authenticated via
+2. `npx shopify hydrogen deploy --force --json-output --auth-bypass-token`, authenticated via
    `SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000167667 }}`.
    The job's `environment` is `production` when `github.ref_name == 'main'`, else `preview`.
-3. The deploy step parses `h2_deploy_log.json` (if present) to extract a deployment URL for the
-   smoke test.
+3. The deploy step requires `h2_deploy_log.json`, a valid HTTPS deployment URL, and Shopify's
+   short-lived authentication bypass token. Missing or malformed output fails the job.
 4. **Post-deploy smoke test** — curls `/`, `/collections/all-products`, `/policies/about`,
-   `/sitemap.xml`, `/robots.txt` on the deployed URL with a realistic browser User-Agent. Real
-   failures (non-2xx status, or app error-boundary text present) fail the job. Requests that get
-   intercepted by Shopify's Oxygen preview bot-check (redirect to `accounts.shopify.com`, or a
-   "Verifying your connection..." interstitial) are treated as **inconclusive**, not failures —
-   this is documented in the workflow file as a known Oxygen preview-domain limitation, not an app
-   defect. The job only hard-fails on confirmed application errors.
+   `/sitemap.xml`, `/robots.txt` on the generated Oxygen URL using the bypass-token header.
+   Non-2xx responses, challenge interception, and rendered error-boundary text fail the job.
 
 ### `e2e` (runs on every trigger that runs `quality`, does not gate deploy)
 1. Checkout, Node setup, npm cache, `npm ci --legacy-peer-deps`
-2. Install Playwright Chromium (`npx playwright install --with-deps chromium`)
+2. Install Playwright Chromium and WebKit.
 3. Writes a local `.env` with `SESSION_SECRET`, `PUBLIC_STORE_DOMAIN`,
    `PUBLIC_STOREFRONT_API_TOKEN` — required because `shopify hydrogen preview`/`dev` read env vars
    via Miniflare from a local `.env` file, not from inherited shell/step `env:` (documented
    in-line in the workflow as a fix for a real prior failure mode).
 4. `npm run build`
-5. `npm run test:e2e -- --project=chromium` against a **local** `shopify hydrogen preview` server
+5. `npm run test:e2e` runs desktop Chromium, desktop WebKit, and mobile Chromium against a **local** `shopify hydrogen preview` server
    (per `playwright.config.ts`'s `webServer`), not the live Oxygen deployment — this sidesteps the
    Oxygen preview bot-check entirely.
 6. On failure, uploads Playwright traces as a build artifact (`playwright-report/`, 7-day
@@ -142,8 +144,8 @@ job but does not revert the already-deployed Oxygen build). Automating rollback 
 2. Confirm `quality` completed with success.
 3. Confirm `Deploy to Oxygen` ran (not skipped) with success. If skipped, the triggering event was
    a `pull_request`, not a `push` — only push events to `dev`/`main` deploy.
-4. Check the `Post-deploy smoke test` step's log — it prints per-route HTTP status and flags any
-   `INCONCLUSIVE` (bot-check) routes for manual browser verification.
+4. Check the `Post-deploy smoke test` step's log — every critical route must be verified; bot-check
+   interception is a failure because the deployment uses Shopify's authentication bypass token.
 5. Deployment entries and their preview URLs are also visible in the Shopify Partners dashboard
    under Hydrogen storefront 1000167667 — each successful deploy creates a new entry there.
 
