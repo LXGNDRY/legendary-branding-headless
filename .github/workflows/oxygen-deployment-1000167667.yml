@@ -25,6 +25,7 @@ concurrency:
 jobs:
   quality:
     name: Quality Gate (codegen + typecheck + lint + test + build)
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -58,6 +59,12 @@ jobs:
           PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
           SESSION_SECRET: ci-only-do-not-use
 
+      - name: Reject generated GraphQL drift
+        run: |
+          git diff --exit-code -- \
+            storefrontapi.generated.d.ts \
+            customeraccountapi.generated.d.ts
+
       - name: Build
         run: npm run build
 
@@ -73,7 +80,7 @@ jobs:
   deploy:
     name: Deploy to Oxygen
     if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
-    needs: quality
+    needs: [quality, e2e]
     timeout-minutes: 30
     runs-on: ubuntu-latest
     outputs:
@@ -109,49 +116,29 @@ jobs:
       - name: Build and Publish to Oxygen
         id: deploy
         run: |
-          npx shopify hydrogen deploy --force
-          # Capture the Oxygen preview URL from the deploy log so downstream
-          # steps/jobs (smoke test, E2E) can target the correct deployment.
-          if [ -f h2_deploy_log.json ]; then
-            DEPLOY_URL=$(node -e "
-              const log = require('./h2_deploy_log.json');
-              // Try common paths for the deployment URL
-              const url = log.url || log.previewUrl || log.deploy_url || (log.deployment && log.deployment.url) || (log.deployments && log.deployments[0] && log.deployments[0].url) || '';
-              process.stdout.write(url);
-            " 2>/dev/null || echo "")
-            echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
-            echo "Deploy URL extracted: $DEPLOY_URL"
-          else
-            echo "h2_deploy_log.json not found — smoke test / E2E may not have a target URL"
-          fi
+          npx shopify hydrogen deploy \
+            --force \
+            --json-output \
+            --auth-bypass-token \
+            --auth-bypass-token-duration=1 \
+            --env-branch "$GITHUB_REF_NAME"
+
+          test -s h2_deploy_log.json
+          DEPLOY_URL=$(jq -er '.url | select(type == "string" and startswith("https://"))' h2_deploy_log.json)
+          AUTH_BYPASS_TOKEN=$(jq -er '.authBypassToken | select(type == "string" and length > 0)' h2_deploy_log.json)
+
+          echo "::add-mask::$AUTH_BYPASS_TOKEN"
+          echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "DEPLOY_URL=$DEPLOY_URL" >> "$GITHUB_ENV"
+          echo "AUTH_BYPASS_TOKEN=$AUTH_BYPASS_TOKEN" >> "$GITHUB_ENV"
         env:
           SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000167667 }}
 
       - name: Post-deploy smoke test
-        if: steps.deploy.outputs.url != ''
         run: |
-          DEPLOY_URL="${{ steps.deploy.outputs.url }}"
           echo "Running smoke tests against: $DEPLOY_URL"
-
-          # Shopify's Oxygen preview (*.myshopify.dev) URLs sometimes intercept
-          # automated/non-browser requests with a bot-check interstitial
-          # ("Verifying your connection...", redirecting to
-          # accounts.shopify.com/select) instead of serving the app. This is
-          # infrastructure-level behavior outside the app's control — hammering
-          # the URL with rapid repeated requests (as a tight retry loop does)
-          # appears to make it more likely to trigger, not less. So: use a
-          # realistic browser User-Agent on every request, wait once instead of
-          # polling aggressively, and treat the bot-check page as INCONCLUSIVE
-          # rather than a hard failure — only real app-level errors (5xx,
-          # unexpected 404, or the app's own error-boundary text on a page that
-          # is NOT the challenge page) fail the job.
           BROWSER_UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-
-          echo "Waiting for deployment to settle..."
-          sleep 10
-
           FAILURES=0
-          INCONCLUSIVE=0
           TOTAL=0
 
           check_route() {
@@ -162,18 +149,19 @@ jobs:
             TOTAL=$((TOTAL + 1))
 
             local result status final_url
-            result=$(curl -s -o "$outfile" -w "%{http_code}|%{url_effective}" -L --max-time 20 \
+            result=$(curl --fail-with-body -s -o "$outfile" -w "%{http_code}|%{url_effective}" -L --max-time 30 \
               -H "User-Agent: $BROWSER_UA" \
               -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
-              "$DEPLOY_URL$path")
+              -H "oxygen-auth-bypass-token: $AUTH_BYPASS_TOKEN" \
+              "$DEPLOY_URL$path") || result="000|$DEPLOY_URL$path"
             status="${result%%|*}"
             final_url="${result#*|}"
 
             echo "$label: HTTP $status ($final_url)"
 
             if echo "$final_url" | grep -q "accounts.shopify.com" || grep -qi "verifying your connection" "$outfile" 2>/dev/null; then
-              echo "  INCONCLUSIVE: intercepted by Shopify's bot-check / verification challenge — not an app error, cannot verify via curl"
-              INCONCLUSIVE=$((INCONCLUSIVE + 1))
+              echo "  FAIL: authentication bypass did not reach the Oxygen deployment"
+              FAILURES=$((FAILURES + 1))
               rm -f "$outfile"
               return
             fi
@@ -200,19 +188,23 @@ jobs:
             exit 1
           fi
 
-          if [ "$INCONCLUSIVE" -gt 0 ]; then
-            echo "::warning::Post-deploy smoke test: $INCONCLUSIVE/$TOTAL route(s) were intercepted by Shopify's Oxygen preview bot-check and could not be verified automatically. This is a known infrastructure limitation, not a sign of an application error. Manually verify $DEPLOY_URL in a browser if in doubt."
-            echo "SMOKE TEST INCONCLUSIVE: $INCONCLUSIVE/$TOTAL route(s) could not be verified (Shopify bot-check), 0 confirmed failures"
-            exit 0
-          fi
-
-          echo "All smoke tests passed (0 failures, 0 inconclusive, $TOTAL/$TOTAL routes verified)"
+          echo "All smoke tests passed ($TOTAL/$TOTAL routes verified)"
 
   e2e:
-    name: E2E Tests (Playwright)
+    name: E2E Tests (${{ matrix.project }})
     needs: quality
-    timeout-minutes: 15
+    timeout-minutes: 20
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: chromium
+            browser: chromium
+          - project: webkit
+            browser: webkit
+          - project: mobile
+            browser: chromium
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -236,7 +228,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       # `shopify hydrogen preview` (and `dev`) load env vars via Miniflare
       # from a local `.env` file — they do NOT read inherited shell/step
@@ -263,12 +255,15 @@ jobs:
       # Testing a locally-served production build sidesteps that entirely
       # and removes the dependency on a live deploy succeeding first.
       - name: Run E2E tests against local production build
-        run: npm run test:e2e -- --project=chromium
+        run: npm run test:e2e -- --project=${{ matrix.project }} --workers=1
 
       - name: Upload test results on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: playwright-traces
-          path: playwright-report/
+          name: playwright-traces-${{ matrix.project }}
+          path: |
+            playwright-report/
+            test-results/
           retention-days: 7
+          if-no-files-found: warn

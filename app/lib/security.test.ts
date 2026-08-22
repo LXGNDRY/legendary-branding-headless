@@ -73,6 +73,17 @@ describe('Security headers', () => {
       const secured = applySecurityHeaders(original);
       expect(secured.status).toBe(201);
     });
+
+    it('only emits HTTPS-enforcement directives on HTTPS responses', () => {
+      const secured = applySecurityHeaders(
+        new Response('OK'),
+        new Request('http://127.0.0.1:3000/'),
+      );
+      expect(secured.headers.has('Strict-Transport-Security')).toBe(false);
+      expect(secured.headers.get('Content-Security-Policy')).not.toContain(
+        'upgrade-insecure-requests',
+      );
+    });
   });
 
   describe('isAssetRequest', () => {
