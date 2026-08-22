@@ -191,10 +191,14 @@ jobs:
           echo "All smoke tests passed ($TOTAL/$TOTAL routes verified)"
 
   e2e:
-    name: E2E Tests (Playwright)
+    name: E2E Tests (${{ matrix.project }})
     needs: quality
-    timeout-minutes: 15
+    timeout-minutes: 20
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, webkit, mobile]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -245,13 +249,13 @@ jobs:
       # Testing a locally-served production build sidesteps that entirely
       # and removes the dependency on a live deploy succeeding first.
       - name: Run E2E tests against local production build
-        run: npm run test:e2e
+        run: npm run test:e2e -- --project=${{ matrix.project }} --workers=1
 
       - name: Upload test results on failure
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.project }}
           path: |
             playwright-report/
             test-results/
