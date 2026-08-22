@@ -47,7 +47,7 @@ export default {
 
       // Apply security headers to all non-asset responses
       if (!isAssetRequest(request)) {
-        response = applySecurityHeaders(response);
+        response = applySecurityHeaders(response, request);
       }
 
       // Handle 404s via Shopify redirects (URL redirects from admin)
@@ -60,7 +60,7 @@ export default {
 
         // Re-apply security headers to the redirect response
         if (redirectResponse !== response && !isAssetRequest(request)) {
-          return applySecurityHeaders(redirectResponse);
+          return applySecurityHeaders(redirectResponse, request);
         }
 
         return redirectResponse;
@@ -88,7 +88,7 @@ export default {
         },
       });
 
-      return applySecurityHeaders(response);
+      return applySecurityHeaders(response, request);
     }
   },
 };
