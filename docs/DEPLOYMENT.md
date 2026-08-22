@@ -47,7 +47,7 @@ The workflow (`Storefront 1000167667`) triggers on `push` to `main`/`dev`, `pull
 9. **Lint** — `npm run lint`
 10. **Test** — `npm run test`
 
-### `deploy` (only on `push` to `main` or `dev`, needs `quality` to pass)
+### `deploy` (only on `push` to `main` or `dev`, needs `quality` and the complete `e2e` matrix)
 1. Checkout, Node setup, npm cache, `npm ci --legacy-peer-deps`
 2. `npx shopify hydrogen deploy --force --json-output --auth-bypass-token`, authenticated via
    `SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000167667 }}`.
@@ -58,25 +58,22 @@ The workflow (`Storefront 1000167667`) triggers on `push` to `main`/`dev`, `pull
    `/sitemap.xml`, `/robots.txt` on the generated Oxygen URL using the bypass-token header.
    Non-2xx responses, challenge interception, and rendered error-boundary text fail the job.
 
-### `e2e` (runs on every trigger that runs `quality`, does not gate deploy)
+### `e2e` (runs on every trigger after `quality` and gates deploy)
 1. Checkout, Node setup, npm cache, `npm ci --legacy-peer-deps`
-2. Install Playwright Chromium and WebKit.
+2. Install only the browser required by each isolated matrix job.
 3. Writes a local `.env` with `SESSION_SECRET`, `PUBLIC_STORE_DOMAIN`,
    `PUBLIC_STOREFRONT_API_TOKEN` — required because `shopify hydrogen preview`/`dev` read env vars
    via Miniflare from a local `.env` file, not from inherited shell/step `env:` (documented
    in-line in the workflow as a fix for a real prior failure mode).
 4. `npm run build`
-5. `npm run test:e2e` runs desktop Chromium, desktop WebKit, and mobile Chromium against a **local** `shopify hydrogen preview` server
+5. `npm run test:e2e` runs isolated desktop Chromium, desktop WebKit, and mobile Chromium jobs against a **local** `shopify hydrogen preview` server
    (per `playwright.config.ts`'s `webServer`), not the live Oxygen deployment — this sidesteps the
    Oxygen preview bot-check entirely.
-6. On failure, uploads Playwright traces as a build artifact (`playwright-report/`, 7-day
+6. On failure, uploads per-browser Playwright traces as a build artifact (`playwright-report/`, 7-day
    retention).
 
-Note: per `docs/PRODUCTION_READINESS.md` §2, E2E/Playwright coverage itself was listed as "not
-started" as of that document's last audit — confirm the current state of `playwright.config.ts`
-and `app/__tests__`/`e2e/` specs before relying on this job's coverage being comprehensive; the
-job's existence in the workflow is verified, but the breadth of its test suite is not re-audited
-in this document.
+The suite includes structural journeys, a deterministic stocked-product commerce journey, and
+WCAG A/AA serious/critical scans for the principal customer routes.
 
 ---
 
@@ -89,6 +86,13 @@ Read directly from the workflow file's `secrets.*` references:
 | `OXYGEN_DEPLOYMENT_TOKEN_1000167667` | `deploy` job | Auth token for `shopify hydrogen deploy` (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`) |
 | `PUBLIC_STORE_DOMAIN` | `quality` (codegen), `e2e` | Shopify storefront domain |
 | `PUBLIC_STOREFRONT_API_TOKEN` | `quality` (codegen), `e2e` | Public Storefront API token |
+
+The commerce E2E fixture defaults to the active, stocked
+`legendary-world-round-t-shirt` product. Set the non-secret
+`E2E_PRODUCT_HANDLE` environment variable when deliberately rotating the test
+fixture. The fixture must remain published, available to the Storefront API,
+and have an available `Color=Black&Size=S` variant; missing fixture data is a
+test failure, never a skip.
 
 These three are the only secrets the workflow file itself references. Their presence in the real
 GitHub repository settings is **unverified from this repo — needs owner confirmation.**
