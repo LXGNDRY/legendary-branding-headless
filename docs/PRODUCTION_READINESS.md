@@ -1,6 +1,6 @@
 # Legendary Branding Headless — Production Readiness & Release Plan
 
-**Status as of:** 2026-08-19 · **Branch:** `dev` (post PR #47)
+**Status as of:** 2026-08-21 · **Branch:** `dev` @ `3f39be7`
 **Dark theme (Onyx):** merged to `dev`.
 **Owner approval required at:** every PR → `dev`, and the final `dev → main` release gate.
 
@@ -25,11 +25,14 @@ This document is the operational plan for taking this repository from its curren
 
 ## 2. Current State Summary (verified, not assumed)
 
-An audit (3 parallel codebase sweeps + manual verification) plus multiple autonomous hardening passes have already landed on `dev`. This is materially further along than a fresh Batch-0 audit would assume. Verified via direct file reads, `grep`, and running `typecheck`/`lint`/`build`/`test` locally against `dev` HEAD:
+The current baseline is recorded in `docs/DEV_BASELINE_AUDIT.md`. Direct file
+inspection plus local verification confirms that typecheck, lint, all 54 tests,
+and the production build pass at `3f39be7`. GraphQL codegen remains a required
+CI gate because the local audit environment could not access the Shopify schema.
 
 | Area | State | Evidence |
 |---|---|---|
-| Build/typecheck/lint/test | ✅ Green | `npm run typecheck`, `lint`, `build`, `test` (51/51) all pass on `dev` HEAD |
+| Build/typecheck/lint/test | ✅ Green | Typecheck, lint, build, and 54/54 tests pass at `3f39be7` |
 | CI quality gate | ✅ Correct order | `.github/workflows/oxygen-deployment-1000167667.yml`: build → typecheck → lint → test, deploy gated on quality passing on push to `main`/`dev` only |
 | Post-deploy smoke test | ✅ Added | Same workflow, curls the deployed URL for critical routes after `Deploy to Oxygen` |
 | Server error monitoring | ✅ Wired | `app/lib/sentry.server.ts` (hand-rolled Workers-compatible envelope sender) called from `server.ts`'s catch block |
@@ -38,7 +41,7 @@ An audit (3 parallel codebase sweeps + manual verification) plus multiple autono
 | CSP | ✅ Tightened | `unsafe-eval` removed from `app/lib/security.ts`; `unsafe-inline` remains (documented, needed for current hydration approach) |
 | Dependency updates | ✅ Automated | `.github/dependabot.yml` — npm + GitHub Actions, weekly |
 | Route/loader test coverage | ✅ Started | `app/__tests__/routes/` — `_index`, `collections.$handle`, `products.$handle`, `search` |
-| Browser E2E coverage | ✅ Done | Playwright configured (`playwright.config.ts`), `test:e2e` script, CI `e2e` job runs against a local production build (live Oxygen preview bot-checks automated browsers, so E2E targets `shopify hydrogen preview` locally instead — see PR #44) |
+| Browser E2E coverage | ⚠️ Partial | Playwright exists, but CI runs Chromium only and the suite does not complete variant selection → cart mutation → checkout handoff |
 | Mobile menu focus trap | ✅ Fixed | `app/hooks/useFocusTrap.ts`, wired into `MobileMenu.tsx` |
 | Size guide modal focus trap | ✅ Fixed | `SizeGuideModal.tsx` already uses `useFocusTrap` (verified 2026-08-19) — doc previously understated this |
 | JSON-LD (Product/Article/Collection/Breadcrumb) | ✅ Consolidated | Shared generators in `SeoSchema.tsx` now used everywhere; breadcrumbs added site-wide |
@@ -46,7 +49,7 @@ An audit (3 parallel codebase sweeps + manual verification) plus multiple autono
 | robots.txt canonical domain | ✅ Fixed | Uses `PUBLIC_CHECKOUT_DOMAIN`, matches sitemap.xml |
 | Favicon / PWA manifest | ✅ Full set | `public/favicon-{16,32}.png`, `apple-touch-icon.png`, `icon-{192,512}.png`, `site.webmanifest` |
 | Newsletter → Klaviyo | ✅ Wired | `app/routes/api.newsletter.ts`, shared `NewsletterForm.tsx`; **requires `PRIVATE_KLAVIYO_API_KEY` + `PUBLIC_KLAVIYO_LIST_ID` to be set in the real environment** — currently degrades to simulated success without them |
-| Currency switcher | ✅ Resolved | Dead/non-functional component removed rather than half-wired; country still hardcoded `'US'` in `context.ts` — **multi-currency is not implemented**, only single-market pricing |
+| Market/currency context | ⚠️ Partial | Edge country resolution exists, but arbitrary `?currency=` input is persisted without allowlist validation or market compatibility checks |
 | Address CRUD | ✅ Wired | `account.addresses.tsx` full create/update/delete/set-default against Customer Account API, with a **codegen-caught bug fix** (wrong input types/arg names — see `docs/phase6-codegen-changelog.md`) |
 | Account profile edit | ✅ Added | `app/routes/account.edit.tsx`, fixes prior dead `/account/edit` link |
 | Wishlist persistence | Needs verification | `docs/phase6-codegen-changelog.md` references `app/routes/api.wishlist.ts` syncing to a Customer Account metafield — **not yet independently verified working end-to-end in this doc's audit; treat as unverified until Slice 0.2** |
@@ -59,8 +62,10 @@ An audit (3 parallel codebase sweeps + manual verification) plus multiple autono
 | Orphaned content pages | ✅ Fixed | Both linked in `Footer.tsx`'s Company column ("Streetwear Guide", "Oversized Hoodie Guide") — verified 2026-08-19 |
 | Content-truth audit (testimonials, shipping claims) | ❌ Not done | Homepage testimonials (`_index.tsx`) and marquee claims ("Free Shipping Over $150", "Made to Order", "Authenticity Guaranteed") have not been checked against actual Shopify configuration/policy |
 | Real checkout / order verification | ❌ **Never done** | No evidence anywhere in the repo or session history of an actual test order being placed and verified in Shopify Admin. This is the single largest remaining unknown. |
-| International market validation | ❌ Not done | `context.ts` hardcodes `country: 'US'` — no other market has been configured or tested |
-| Production docs (`ARCHITECTURE.md`, `DEPLOYMENT.md`, `ANALYTICS.md`, `URL_MIGRATION.md`, `LAUNCH_CHECKLIST.md`, `POST_LAUNCH_ROADMAP.md`) | ❌ Not created | Only changelogs and a theme design-system doc exist under `docs/` |
+| International market validation | ❌ Not done | Country is derived from the edge with a US fallback, but configured Shopify Markets and checkout currency behavior have not been verified |
+| Production docs | ⚠️ Partial | Architecture, deployment, analytics, launch and roadmap docs exist; baseline evidence is in `DEV_BASELINE_AUDIT.md`; URL migration remains undecided |
+| Branch governance | ❌ Not enforced | `dev` is unprotected and has no required status checks or review requirement |
+| Crawl architecture | ❌ Needs correction | robots trailing-slash rules miss exact routes, search is in the sitemap, sitemap queries are not paginated, and internal `/docs` routes are indexable |
 | Sentry DSN actually configured | ⚠️ Unverified | Code path exists; whether `PUBLIC_SENTRY_DSN` is actually set in the real Oxygen environment has not been confirmed |
 
 **Bottom line:** the engineering/hardening work (Batches 5–10 in the owner's numbering: homepage/nav polish groundwork, SEO, analytics/observability, performance, accessibility, security) is substantially complete. The dark theme transformation (Onyx design system) is complete on the `theme-update` branch and ready for PR review. What remains is almost entirely in **Batch 1 (commerce foundation — never actually verified against a real order)**, **content truth**, **E2E test coverage**, **a11y completeness**, and **release documentation/process**. The plan below reorders remaining work accordingly.
@@ -99,9 +104,13 @@ This is the highest-risk gap: **no one has confirmed a real Shopify order can be
 ### BATCH 6 (remainder) — SizeGuideModal Accessibility (P1)
 ~~Apply the same `useFocusTrap` hook already used in `MobileMenu.tsx` to `SizeGuideModal.tsx`.~~ ✅ Already done — `SizeGuideModal.tsx` uses `useFocusTrap`.
 
-### BATCH 9/12 — E2E Test Coverage (P0 for release confidence) — ✅ Done
+### BATCH 9/12 — E2E Test Coverage (P0 for release confidence) — ⚠️ Partial
 
-Playwright is set up (`playwright.config.ts`, `test:e2e` script, CI `e2e` job) and the 9 golden-journey specs from the owner's §31 list are implemented in `e2e/golden-journeys.spec.ts` and passing in CI. E2E runs against a locally-served production build rather than the live Oxygen preview URL, because Shopify's `*.myshopify.dev` bot-check intercepts automated Chromium the same way it intercepts curl (see PR #44's description for the full root-cause writeup).
+Playwright is set up, but the present suite is structural smoke coverage rather
+than a complete commerce proof. It must use deterministic Shopify fixtures and
+verify variant selection, cart mutations, quantity/removal, checkout-domain
+handoff, sold-out behavior, persistence, mobile and WebKit. Critical journeys
+must fail when fixtures are missing rather than skip.
 
 International checkout (journey 6 in the owner's list) is deferred to Batch 13 pending market configuration (see below).
 
