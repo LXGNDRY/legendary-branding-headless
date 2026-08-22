@@ -198,7 +198,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [chromium, webkit, mobile]
+        include:
+          - project: chromium
+            browser: chromium
+          - project: webkit
+            browser: webkit
+          - project: mobile
+            browser: chromium
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -222,7 +228,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium webkit
+        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       # `shopify hydrogen preview` (and `dev`) load env vars via Miniflare
       # from a local `.env` file — they do NOT read inherited shell/step
