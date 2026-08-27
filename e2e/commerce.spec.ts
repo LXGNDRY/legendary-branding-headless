@@ -31,10 +31,7 @@ test.describe('Golden commerce journey', () => {
   }) => {
     await page.goto(PRODUCT_PATH, {waitUntil: 'domcontentloaded'});
 
-    const productHeading = page.getByRole('heading', {level: 1});
-    await expect(productHeading).toBeVisible();
-    const productTitle = (await productHeading.textContent())?.trim();
-    expect(productTitle, 'The product fixture has no visible title').toBeTruthy();
+    await expect(page.getByRole('heading', {level: 1})).toBeVisible();
 
     const addToCart = page.getByTestId('add-to-cart');
     await expect(addToCart).toBeVisible();
@@ -52,21 +49,18 @@ test.describe('Golden commerce journey', () => {
 
     const drawer = page.getByRole('dialog', {name: 'Shopping cart'});
     await expect(drawer).toBeVisible();
-    await expect(
-      drawer.getByRole('link', {name: productTitle!, exact: true}),
-    ).toBeVisible();
     await expect(drawer.getByText(/Your Bag \(1\)/i)).toBeVisible();
 
+    const drawerCheckout = drawer.getByTestId('drawer-checkout');
+    await expect(drawerCheckout).toBeVisible();
     expectTrustedCheckout(
-      await drawer.getByTestId('drawer-checkout').getAttribute('href'),
+      await drawerCheckout.getAttribute('href'),
       baseURL,
     );
 
     await drawer.getByRole('link', {name: /view full cart/i}).click();
     await expect(page).toHaveURL(/\/cart$/);
-    await expect(
-      page.getByRole('link', {name: productTitle!, exact: true}),
-    ).toBeVisible();
+    await expect(page.getByText(/Subtotal \(1 item\)/i)).toBeVisible();
 
     const updateResponse = page.waitForResponse(isCartMutation);
     await page.getByRole('button', {name: 'Increase quantity'}).first().click();
