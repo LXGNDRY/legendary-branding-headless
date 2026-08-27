@@ -168,7 +168,11 @@ export default function App() {
     document.head.appendChild(script);
   }, []);
 
-  const cartCount = cart?.totalQuantity ?? 0;
+  const displayedCart = fetchers.reduce<CartData>((latest, fetcher) => {
+    const data = fetcher.data as {cart?: CartData} | undefined;
+    return data?.cart ?? latest;
+  }, cart);
+  const cartCount = displayedCart?.totalQuantity ?? 0;
   const isNavigating = navigation.state !== 'idle';
 
   return (
@@ -212,7 +216,7 @@ export default function App() {
       />
 
       <CartDrawer
-        cart={cart}
+        cart={displayedCart}
         open={cartOpen}
         onClose={() => setCartOpen(false)}
       />
