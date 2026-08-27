@@ -36,7 +36,7 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
 
   const headers = cart.setCartId(result.cart.id);
-  return new Response(null, {status: 200, headers});
+  return Response.json({cart: result.cart}, {status: 200, headers});
 }
 
 export async function loader({context}: LoaderFunctionArgs) {
