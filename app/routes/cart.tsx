@@ -166,7 +166,7 @@ function CartLineRow({line}: {line: CartLineData}) {
 
 export default function CartPage() {
   const {cart} = useLoaderData<typeof loader>();
-  const lines = cart?.lines?.nodes ?? [];
+  const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
 
   return (
