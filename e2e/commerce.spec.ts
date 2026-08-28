@@ -41,9 +41,7 @@ test.describe('Golden commerce journey', () => {
     await addToCart.click();
     const addedCartResponse = await addResponse;
     expect(addedCartResponse.ok()).toBe(true);
-    await expect(addedCartResponse.json()).resolves.toMatchObject({
-      cart: {totalQuantity: 1},
-    });
+    expect(addedCartResponse.headers()['x-cart-quantity']).toBe('1');
 
     const cartButton = page
       .getByRole('banner')
@@ -70,9 +68,7 @@ test.describe('Golden commerce journey', () => {
     await page.getByRole('button', {name: 'Increase quantity'}).first().click();
     const updatedCartResponse = await updateResponse;
     expect(updatedCartResponse.ok()).toBe(true);
-    await expect(updatedCartResponse.json()).resolves.toMatchObject({
-      cart: {totalQuantity: 2},
-    });
+    expect(updatedCartResponse.headers()['x-cart-quantity']).toBe('2');
     await expect(page.getByText(/Subtotal \(2 items\)/i)).toBeVisible();
 
     expectTrustedCheckout(
@@ -84,8 +80,6 @@ test.describe('Golden commerce journey', () => {
     await page.getByRole('button', {name: 'Remove'}).first().click();
     const removedCartResponse = await removeResponse;
     expect(removedCartResponse.ok()).toBe(true);
-    await expect(removedCartResponse.json()).resolves.toMatchObject({
-      cart: {totalQuantity: 0},
-    });
+    expect(removedCartResponse.headers()['x-cart-quantity']).toBe('0');
   });
 });
