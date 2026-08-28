@@ -80,7 +80,10 @@ test.describe('Golden commerce journey', () => {
     );
 
     const removeResponse = page.waitForResponse(isCartMutation);
-    await cartPage.getByRole('button', {name: 'Remove', exact: true}).click();
+    await cartPage
+      .getByRole('button', {name: 'Remove', exact: true})
+      .first()
+      .click();
     const removedCartResponse = await removeResponse;
     expect(removedCartResponse.ok()).toBe(true);
     expect(await removedCartResponse.text()).toMatch(/"totalQuantity",\s*0/);
