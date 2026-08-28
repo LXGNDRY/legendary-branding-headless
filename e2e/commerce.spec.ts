@@ -41,7 +41,7 @@ test.describe('Golden commerce journey', () => {
     await addToCart.click();
     const addedCartResponse = await addResponse;
     expect(addedCartResponse.ok()).toBe(true);
-    expect(addedCartResponse.headers()['x-cart-quantity']).toBe('1');
+    expect(await addedCartResponse.text()).toMatch(/"totalQuantity",\s*1/);
 
     const cartButton = page
       .getByRole('banner')
@@ -68,7 +68,7 @@ test.describe('Golden commerce journey', () => {
     await page.getByRole('button', {name: 'Increase quantity'}).first().click();
     const updatedCartResponse = await updateResponse;
     expect(updatedCartResponse.ok()).toBe(true);
-    expect(updatedCartResponse.headers()['x-cart-quantity']).toBe('2');
+    expect(await updatedCartResponse.text()).toMatch(/"totalQuantity",\s*2/);
     await expect(page.getByText(/Subtotal \(2 items\)/i)).toBeVisible();
 
     expectTrustedCheckout(
@@ -80,6 +80,6 @@ test.describe('Golden commerce journey', () => {
     await page.getByRole('button', {name: 'Remove'}).first().click();
     const removedCartResponse = await removeResponse;
     expect(removedCartResponse.ok()).toBe(true);
-    expect(removedCartResponse.headers()['x-cart-quantity']).toBe('0');
+    expect(await removedCartResponse.text()).toMatch(/"totalQuantity",\s*0/);
   });
 });
