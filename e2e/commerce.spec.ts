@@ -79,13 +79,21 @@ test.describe('Golden commerce journey', () => {
       baseURL,
     );
 
-    const removeResponse = page.waitForResponse(isCartMutation);
-    await cartPage
-      .getByRole('button', {name: 'Remove', exact: true})
-      .first()
-      .click();
-    const removedCartResponse = await removeResponse;
-    expect(removedCartResponse.ok()).toBe(true);
-    expect(await removedCartResponse.text()).toMatch(/"totalQuantity",\s*0/);
+    for (const remainingQuantity of [1, 0]) {
+      const removeResponse = page.waitForResponse(isCartMutation);
+      await cartPage
+        .getByRole('button', {name: 'Remove', exact: true})
+        .first()
+        .click();
+      const removedCartResponse = await removeResponse;
+      expect(removedCartResponse.ok()).toBe(true);
+      expect(await removedCartResponse.text()).toMatch(
+        new RegExp(`"totalQuantity",\\s*${remainingQuantity}`),
+      );
+
+      if (remainingQuantity > 0) {
+        await page.reload({waitUntil: 'domcontentloaded'});
+      }
+    }
   });
 });
