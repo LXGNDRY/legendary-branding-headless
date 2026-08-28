@@ -75,6 +75,7 @@ test.describe('Golden commerce journey', () => {
     const removeResponse = page.waitForResponse(isCartMutation);
     await page.getByRole('button', {name: 'Remove'}).first().click();
     expect((await removeResponse).ok()).toBe(true);
+    await page.reload({waitUntil: 'domcontentloaded'});
     await expect(page.getByText(/Your cart is empty/i)).toBeVisible();
   });
 });
