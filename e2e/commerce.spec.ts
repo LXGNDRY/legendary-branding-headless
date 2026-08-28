@@ -65,7 +65,10 @@ test.describe('Golden commerce journey', () => {
     await expect(page.getByText(/Subtotal \(1 item\)/i)).toBeVisible();
 
     const updateResponse = page.waitForResponse(isCartMutation);
-    await page.getByRole('button', {name: 'Increase quantity'}).first().click();
+    const cartPage = page.locator('#main-content');
+    await cartPage
+      .getByRole('button', {name: 'Increase quantity', exact: true})
+      .click();
     const updatedCartResponse = await updateResponse;
     expect(updatedCartResponse.ok()).toBe(true);
     expect(await updatedCartResponse.text()).toMatch(/"totalQuantity",\s*2/);
@@ -77,7 +80,7 @@ test.describe('Golden commerce journey', () => {
     );
 
     const removeResponse = page.waitForResponse(isCartMutation);
-    await page.getByRole('button', {name: 'Remove'}).first().click();
+    await cartPage.getByRole('button', {name: 'Remove', exact: true}).click();
     const removedCartResponse = await removeResponse;
     expect(removedCartResponse.ok()).toBe(true);
     expect(await removedCartResponse.text()).toMatch(/"totalQuantity",\s*0/);
