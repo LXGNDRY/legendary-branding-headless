@@ -171,7 +171,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   }, [open]);
 
   const currentCart = cartFetcher.data?.cart ?? cart;
-  const lines = currentCart?.lines?.nodes ?? [];
+  const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
   const totalQuantity = currentCart?.totalQuantity ?? 0;
   const subtotal = currentCart?.cost?.subtotalAmount;
   const subtotalValue = subtotal ? parseFloat(subtotal.amount) : 0;
