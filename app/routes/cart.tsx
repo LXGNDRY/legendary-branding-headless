@@ -36,7 +36,6 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
 
   const headers = cart.setCartId(result.cart.id);
-  headers.set('X-Cart-Quantity', String(result.cart.totalQuantity));
   return Response.json({cart: result.cart}, {status: 200, headers});
 }
 
