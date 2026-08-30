@@ -29,9 +29,10 @@ export type CartData = {
   id: string;
   checkoutUrl: string;
   totalQuantity: number;
-  lines: {nodes: CartLineData[]};
+  lines: {edges: Array<{node: CartLineData}>};
   cost: {
     subtotalAmount: CartMoney;
     totalAmount: CartMoney;
   };
+  discountCodes?: {code: string; applicable: boolean}[];
 } | null | undefined;

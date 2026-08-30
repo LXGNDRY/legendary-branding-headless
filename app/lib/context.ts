@@ -1,6 +1,10 @@
 import {createHydrogenContext} from '@shopify/hydrogen';
-import type {CountryCode} from '@shopify/hydrogen/storefront-api-types';
 import {AppSession} from '~/lib/session';
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_LANGUAGE,
+  normalizeCountryCode,
+} from '~/lib/market';
 
 /**
  * The subset of Cloudflare's `IncomingRequestCfProperties` we rely on.
@@ -12,9 +16,6 @@ interface CloudflareRequestCf {
   /** ISO 3166-1 alpha-2 country code of the visitor, set by Cloudflare's edge. */
   country?: string;
 }
-
-const DEFAULT_COUNTRY: CountryCode = 'US';
-const VALID_COUNTRY_CODE = /^[A-Z]{2}$/;
 
 /**
  * Resolve the visitor's market country from Cloudflare's edge-provided
@@ -31,13 +32,9 @@ const VALID_COUNTRY_CODE = /^[A-Z]{2}$/;
  * code passed to `@inContext(country: ...)` is handled sensibly by the
  * Storefront API itself, so a plain 2-letter-code sanity check is enough.
  */
-export function resolveCountry(request: Request): CountryCode {
+export function resolveCountry(request: Request) {
   const cf = (request as Request & {cf?: CloudflareRequestCf}).cf;
-  const country = cf?.country;
-  if (country && VALID_COUNTRY_CODE.test(country)) {
-    return country as CountryCode;
-  }
-  return DEFAULT_COUNTRY;
+  return normalizeCountryCode(cf?.country) ?? DEFAULT_COUNTRY;
 }
 
 /**
@@ -86,15 +83,15 @@ export async function createAppLoadContext(
     AppSession.init(request, [env.SESSION_SECRET]),
   ]);
 
-  // Read currency from URL param or session
+  // Country is the Shopify Markets source of truth. Currency is deliberately
+  // not stored independently: Shopify derives it from the selected market.
   const url = new URL(request.url);
-  const currencyParam = url.searchParams.get('currency');
-  const storedCurrency = session.get('currency');
-  const activeCurrency = currencyParam ?? storedCurrency ?? 'USD';
+  const countryParam = normalizeCountryCode(url.searchParams.get('country'));
+  const storedCountry = normalizeCountryCode(session.get('country'));
+  const activeCountry = countryParam ?? storedCountry ?? resolveCountry(request);
 
-  // If URL param is set, update the session
-  if (currencyParam && currencyParam !== storedCurrency) {
-    session.set('currency', currencyParam);
+  if (countryParam && countryParam !== storedCountry) {
+    session.set('country', countryParam);
   }
 
   // Configure customer account if env vars are present
@@ -109,9 +106,8 @@ export async function createAppLoadContext(
     waitUntil,
     session,
     i18n: {
-      language: 'EN',
-      country: resolveCountry(request),
-      currency: activeCurrency,
+      language: DEFAULT_LANGUAGE,
+      country: activeCountry,
     },
     // Customer Account API is only active when the client ID is configured
     ...(hasCustomerAccount && {

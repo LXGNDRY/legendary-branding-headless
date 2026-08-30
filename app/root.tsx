@@ -22,6 +22,9 @@ import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
 import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
+import {CacheLong} from '~/lib/cache';
+import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
+import {Analytics as HydrogenAnalytics, getShopAnalytics} from '@shopify/hydrogen';
 
 export const links: LinksFunction = () => [
   {rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml'},
@@ -100,11 +103,38 @@ export async function loader({context}: LoaderFunctionArgs) {
     }
   }
 
-  const cartData = await cart.get();
+  const [cartData, localizationResult, shop] = await Promise.all([
+    cart.get(),
+    context.storefront.query(LOCALIZATION_QUERY, {
+      variables: {
+        country: context.storefront.i18n.country,
+        language: context.storefront.i18n.language,
+      },
+      cache: CacheLong(),
+    }),
+    getShopAnalytics({
+      storefront: context.storefront,
+      publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
+    }),
+  ]);
 
   return {
     cart: cartData as CartData,
+    analyticsCart: cartData,
     isLoggedIn,
+    accountsEnabled: Boolean(
+      context.env.PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID &&
+      context.env.PUBLIC_CUSTOMER_ACCOUNT_API_URL,
+    ),
+    localization: localizationResult.localization as LocalizationData,
+    shop,
+    consent: {
+      checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
+      storefrontAccessToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,
+      country: context.storefront.i18n.country,
+      language: context.storefront.i18n.language,
+      withPrivacyBanner: false,
+    },
   };
 }
 
@@ -125,11 +155,15 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart, isLoggedIn} = useLoaderData<typeof loader>();
+  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, shop, consent} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
   const location = useLocation();
   const fetchers = useFetchers();
+  const displayedCart = fetchers.reduce<CartData>((latestCart, fetcher) => {
+    const fetcherCart = (fetcher.data as {cart?: CartData} | undefined)?.cart;
+    return fetcherCart ?? latestCart;
+  }, cart);
 
   // Close cart drawer on route change (e.g. clicking a product or "Start Shopping")
   useEffect(() => {
@@ -168,10 +202,19 @@ export default function App() {
     document.head.appendChild(script);
   }, []);
 
-  const cartCount = cart?.totalQuantity ?? 0;
+  const cartCount = displayedCart?.totalQuantity ?? 0;
   const isNavigating = navigation.state !== 'idle';
 
   return (
+    <HydrogenAnalytics.Provider
+      cart={analyticsCart ?? null}
+      shop={shop}
+      consent={consent}
+      customData={{
+        country: localization.country.isoCode,
+        currency: localization.country.currency.isoCode,
+      }}
+    >
     <WishlistProvider isLoggedIn={isLoggedIn}>
       <div className="flex flex-col min-h-dvh">
       {/* Page-transition progress bar */}
@@ -196,12 +239,13 @@ export default function App() {
       <Header
         cartCount={cartCount}
         isLoggedIn={isLoggedIn}
+        accountsEnabled={accountsEnabled}
         onOpenCart={() => setCartOpen(true)}
       />
       <main id="main-content" className="flex-1">
         <Outlet />
       </main>
-      <Footer />
+      <Footer localization={localization} />
 
       {/* Consent-gated analytics (GA4, Meta, TikTok, Klaviyo on-site embed) */}
       <Analytics
@@ -212,12 +256,13 @@ export default function App() {
       />
 
       <CartDrawer
-        cart={cart}
+        cart={displayedCart}
         open={cartOpen}
         onClose={() => setCartOpen(false)}
       />
       </div>
     </WishlistProvider>
+    </HydrogenAnalytics.Provider>
   );
 }
 

@@ -20,7 +20,7 @@ permissions:
 
 concurrency:
   group: ${{ github.ref }}-deployment
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 jobs:
   quality:
@@ -79,7 +79,11 @@ jobs:
 
   deploy:
     name: Deploy to Oxygen
-    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
+    # Preview deploys automatically from dev. Production requires an explicit
+    # workflow dispatch from main after the promotion PR is green.
+    if: >-
+      (github.event_name == 'push' && github.ref_name == 'dev') ||
+      (github.event_name == 'workflow_dispatch' && github.ref_name == 'main')
     needs: [quality, e2e]
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -112,6 +116,22 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+
+      - name: Validate production environment contract
+        if: github.ref_name == 'main'
+        run: npm run validate:release-env
+        env:
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
+          PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+          PUBLIC_STOREFRONT_ID: ${{ secrets.PUBLIC_STOREFRONT_ID }}
+          PUBLIC_CHECKOUT_DOMAIN: ${{ secrets.PUBLIC_CHECKOUT_DOMAIN }}
+          PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID: ${{ secrets.PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID }}
+          PUBLIC_CUSTOMER_ACCOUNT_API_URL: ${{ secrets.PUBLIC_CUSTOMER_ACCOUNT_API_URL }}
+          PUBLIC_GA4_MEASUREMENT_ID: ${{ secrets.PUBLIC_GA4_MEASUREMENT_ID }}
+          PRIVATE_KLAVIYO_API_KEY: ${{ secrets.PRIVATE_KLAVIYO_API_KEY }}
+          PUBLIC_KLAVIYO_LIST_ID: ${{ secrets.PUBLIC_KLAVIYO_LIST_ID }}
+          PUBLIC_KLAVIYO_WAITLIST_LIST_ID: ${{ secrets.PUBLIC_KLAVIYO_WAITLIST_LIST_ID }}
 
       - name: Build and Publish to Oxygen
         id: deploy

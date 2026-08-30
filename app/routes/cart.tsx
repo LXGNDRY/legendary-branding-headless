@@ -1,15 +1,18 @@
 import type {MetaFunction, LoaderFunctionArgs, ActionFunctionArgs} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
-import {CartForm, Image, Money} from '@shopify/hydrogen';
+import {Analytics, AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import type {CartData, CartLineData} from '~/lib/cart';
+import {requireSameOrigin} from '~/lib/security';
 
 export const meta: MetaFunction = () => [
   {title: 'Cart | LEGENDARY BRANDING'},
 ];
 
 export async function action({request, context}: ActionFunctionArgs) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
   const {cart} = context;
   const formData = await request.formData();
   const {action, inputs} = CartForm.getFormInput(formData);
@@ -31,12 +34,24 @@ export async function action({request, context}: ActionFunctionArgs) {
         inputs.lineIds as Parameters<typeof cart.removeLines>[0],
       );
       break;
+    case CartForm.ACTIONS.DiscountCodesUpdate:
+      result = await cart.updateDiscountCodes(
+        (inputs.discountCodes as string[]).map((code) => code.trim()).filter(Boolean),
+      );
+      break;
     default:
       return new Response('Bad request', {status: 400});
   }
 
   const headers = cart.setCartId(result.cart.id);
-  return new Response(null, {status: 200, headers});
+  return Response.json(
+    {
+      cart: result.cart,
+      errors: result.errors ?? [],
+      warnings: result.warnings ?? [],
+    },
+    {status: 200, headers},
+  );
 }
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -166,10 +181,13 @@ function CartLineRow({line}: {line: CartLineData}) {
 
 export default function CartPage() {
   const {cart} = useLoaderData<typeof loader>();
-  const lines = cart?.lines?.nodes ?? [];
+  const {publish} = useAnalytics();
+  const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
 
   return (
+    <>
+    <Analytics.CartView />
     <Container className="py-16">
       <h1 className="text-3xl font-bold tracking-tight mb-10">Your Cart</h1>
 
@@ -228,14 +246,17 @@ export default function CartPage() {
             </div>
 
             {cart?.checkoutUrl ? (
-              <Button
-                as="a"
-                href={cart.checkoutUrl}
-                variant="dark"
-                className="w-full justify-center"
-              >
-                Proceed to Checkout
-              </Button>
+              <div onClick={() => publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart})}>
+                <Button
+                  as="a"
+                  href={cart.checkoutUrl}
+                  variant="dark"
+                  className="w-full justify-center"
+                  testId="cart-checkout"
+                >
+                  Proceed to Checkout
+                </Button>
+              </div>
             ) : (
               <Button
                 variant="dark"
@@ -254,5 +275,6 @@ export default function CartPage() {
         </div>
       )}
     </Container>
+    </>
   );
 }

@@ -17,14 +17,14 @@ describe('Cart module', () => {
     type CartData = {
       id?: string;
       totalQuantity?: number;
-      lines?: {nodes: unknown[]};
+      lines?: {edges: Array<{node: unknown}>};
       cost?: {totalAmount?: {amount: string; currencyCode: string}};
     };
 
     const mockCart: CartData = {
       id: 'gid://shopify/Cart/abc123',
       totalQuantity: 2,
-      lines: {nodes: []},
+      lines: {edges: []},
       cost: {totalAmount: {amount: '99.00', currencyCode: 'USD'}},
     };
 
@@ -33,9 +33,9 @@ describe('Cart module', () => {
   });
 
   it('empty cart has zero quantity', () => {
-    const emptyCart = {totalQuantity: 0, lines: {nodes: []}};
+    const emptyCart = {totalQuantity: 0, lines: {edges: []}};
     expect(emptyCart.totalQuantity).toBe(0);
-    expect(emptyCart.lines.nodes).toHaveLength(0);
+    expect(emptyCart.lines.edges).toHaveLength(0);
   });
 });
 

@@ -1,4 +1,5 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
+import {requireSameOrigin} from '~/lib/security';
 import {rateLimitMiddleware} from '~/lib/rate-limit';
 
 /**
@@ -99,6 +100,8 @@ export async function loader({context}: LoaderFunctionArgs) {
 }
 
 export async function action({request, context}: ActionFunctionArgs) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
   // Rate limiting — 30 requests per minute per IP (wishlist is frequent)
   const rateLimitResponse = rateLimitMiddleware(request, 'wishlist', 30);
   if (rateLimitResponse) return rateLimitResponse;

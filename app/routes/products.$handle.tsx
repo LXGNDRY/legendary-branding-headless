@@ -12,6 +12,7 @@ import {
   Image,
   Money,
   VariantSelector,
+  Analytics,
   getSelectedProductOptions,
   useOptimisticVariant,
   type VariantOption,
@@ -33,6 +34,7 @@ import ProductCard, {
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
 import {CacheLong} from '~/lib/cache';
+import {requireSameOrigin} from '~/lib/security';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -53,6 +55,7 @@ type ProductFull = {
   descriptionHtml: string;
   tags: string[];
   vendor: string;
+  productType: string;
   metafields: {
     nodes: Array<{key: string; value: string; type: string}>;
   };
@@ -92,6 +95,7 @@ const PRODUCT_QUERY = `#graphql
       descriptionHtml
       tags
       vendor
+      productType
       metafields(identifiers: [
         {namespace: "custom", key: "material"}
         {namespace: "custom", key: "fit"}
@@ -157,6 +161,8 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
 };
 
 export async function action({request, context}: ActionFunctionArgs) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
   const {cart} = context;
   const formData = await request.formData();
   const {action: cartAction, inputs} = CartForm.getFormInput(formData);
@@ -208,7 +214,7 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
       action={CartForm.ACTIONS.LinesAdd}
       inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
     >
-      <button type="submit" className="w-full h-btn-primary">
+      <button type="submit" className="w-full h-btn-primary" data-testid="add-to-cart">
         Add to Bag
       </button>
     </CartForm>
@@ -333,6 +339,22 @@ export default function ProductPage() {
 
   return (
     <>
+      {selectedVariant && (
+        <Analytics.ProductView
+          data={{
+            products: [{
+              id: product.id,
+              title: product.title,
+              vendor: product.vendor,
+              productType: product.productType,
+              variantId: selectedVariant.id,
+              variantTitle: selectedVariant.selectedOptions.map((option) => option.value).join(' / '),
+              price: selectedVariant.price.amount,
+              quantity: 1,
+            }],
+          }}
+        />
+      )}
       <JsonLd data={productJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
       <div className="bg-[var(--color-bg-level-0)]">
@@ -458,8 +480,10 @@ export default function ProductPage() {
                 />
                 {!selectedVariant?.availableForSale && selectedVariant && (
                   <div className="mt-4">
-                    <WaitlistForm
-                      productTitle={product.title}
+                  <WaitlistForm
+                    productId={product.id}
+                    variantId={selectedVariant.id}
+                    productTitle={product.title}
                       variantTitle={selectedVariant.selectedOptions.map((o) => o.value).join(' / ')}
                     />
                   </div>

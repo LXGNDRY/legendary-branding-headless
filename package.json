@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:install": "playwright install --with-deps chromium webkit"
+    "test:e2e:install": "playwright install --with-deps chromium webkit",
+    "validate:release-env": "node scripts/validate-release-env.mjs"
   },
   "type": "module",
   "dependencies": {

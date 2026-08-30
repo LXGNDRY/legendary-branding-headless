@@ -8,6 +8,7 @@ import {
   Link,
   useFetcher,
 } from 'react-router';
+import {requireSameOrigin} from '~/lib/security';
 import {useState} from 'react';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
@@ -138,7 +139,7 @@ export async function loader({context}: LoaderFunctionArgs) {
   const {customerAccount} = context;
 
   if (!customerAccount) {
-    return redirect('/');
+    throw new Response('Customer accounts are unavailable', {status: 503});
   }
 
   const isLoggedIn = await customerAccount.isLoggedIn();
@@ -155,10 +156,12 @@ export async function loader({context}: LoaderFunctionArgs) {
 }
 
 export async function action({request, context}: ActionFunctionArgs) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
   const {customerAccount} = context;
 
   if (!customerAccount) {
-    return redirect('/');
+    throw new Response('Customer accounts are unavailable', {status: 503});
   }
 
   const isLoggedIn = await customerAccount.isLoggedIn();

@@ -180,10 +180,12 @@ function MobileMenu({
   open,
   onClose,
   isLoggedIn,
+  accountsEnabled,
 }: {
   open: boolean;
   onClose: () => void;
   isLoggedIn: boolean;
+  accountsEnabled: boolean;
 }) {
   const {containerRef} = useFocusTrap(open, onClose);
 
@@ -241,13 +243,15 @@ function MobileMenu({
         </ul>
 
         <div className="space-y-5 pt-6 border-t border-[var(--color-border-muted)]">
-          <Link
-            to={isLoggedIn ? '/account' : '/account/login'}
-            onClick={onClose}
-            className="h-eyebrow block text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-          >
-            {isLoggedIn ? 'My Account' : 'Sign In'}
-          </Link>
+          {accountsEnabled && (
+            <Link
+              to={isLoggedIn ? '/account' : '/account/login'}
+              onClick={onClose}
+              className="h-eyebrow block text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              {isLoggedIn ? 'My Account' : 'Sign In'}
+            </Link>
+          )}
           <Link
             to="/wishlist"
             onClick={onClose}
@@ -281,6 +285,7 @@ function MobileMenu({
 interface HeaderProps {
   cartCount?: number;
   isLoggedIn?: boolean;
+  accountsEnabled?: boolean;
   onOpenCart?: () => void;
   transparent?: boolean;
 }
@@ -288,6 +293,7 @@ interface HeaderProps {
 export default function Header({
   cartCount = 0,
   isLoggedIn = false,
+  accountsEnabled = false,
   onOpenCart,
   transparent = false,
 }: HeaderProps) {
@@ -393,13 +399,15 @@ export default function Header({
                 {searchOpen ? <CloseIcon /> : <SearchIcon />}
               </button>
 
-              <Link
-                to={isLoggedIn ? '/account' : '/account/login'}
-                className="hidden sm:flex p-2 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
-                aria-label={isLoggedIn ? 'My Account' : 'Sign In'}
-              >
-                <UserIcon />
-              </Link>
+              {accountsEnabled && (
+                <Link
+                  to={isLoggedIn ? '/account' : '/account/login'}
+                  className="hidden sm:flex p-2 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+                  aria-label={isLoggedIn ? 'My Account' : 'Sign In'}
+                >
+                  <UserIcon />
+                </Link>
+              )}
 
               <Link
                 to="/wishlist"
@@ -449,6 +457,7 @@ export default function Header({
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         isLoggedIn={isLoggedIn}
+        accountsEnabled={accountsEnabled}
       />
     </>
   );

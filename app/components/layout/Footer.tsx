@@ -1,5 +1,7 @@
 import {Link} from 'react-router';
 import NewsletterForm from '~/components/ui/NewsletterForm';
+import MarketSelector from '~/components/ui/MarketSelector';
+import type {LocalizationData} from '~/lib/market';
 
 const SHOP_LINKS = [
   {label: 'All Products', href: '/collections/all-products'},
@@ -72,7 +74,7 @@ function FooterColumn({
  * Premium dark theme footer with brand statement, newsletter,
  * three link columns, social links, and copyright.
  */
-export default function Footer() {
+export default function Footer({localization}: {localization: LocalizationData}) {
   return (
     <footer className="border-t border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] mt-auto">
       <div className="h-container py-16 md:py-24">
@@ -118,6 +120,10 @@ export default function Footer() {
           </p>
 
           <div className="flex items-center gap-6 flex-wrap">
+            <MarketSelector
+              current={localization.country}
+              countries={localization.availableCountries}
+            />
             {SOCIAL_LINKS.map(({label, href}) => (
               <a
                 key={label}

@@ -24,6 +24,8 @@ Disallow: /checkout/
 Disallow: /cart/
 Disallow: /search/
 Disallow: /apis/
+Disallow: /api/
+Disallow: /docs/
 
 # Sitemap
 Sitemap: ${origin}/sitemap.xml

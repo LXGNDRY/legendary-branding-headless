@@ -1,5 +1,6 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
 import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {requireSameOrigin} from '~/lib/security';
 
 /**
  * Newsletter subscribe API route.
@@ -15,6 +16,8 @@ export async function action({request, context}: ActionFunctionArgs) {
   if (request.method !== 'POST') {
     return Response.json({error: 'Method not allowed'}, {status: 405});
   }
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
 
   // Rate limiting — 5 requests per minute per IP
   const rateLimitResponse = rateLimitMiddleware(request, 'newsletter', 5);
@@ -59,18 +62,14 @@ export async function action({request, context}: ActionFunctionArgs) {
   const apiKey = env.PRIVATE_KLAVIYO_API_KEY;
   const listId = env.PUBLIC_KLAVIYO_LIST_ID;
 
-  // If Klaviyo is not configured, return success (graceful degradation).
-  // In dev / preview environments, emails are logged server-side but not sent.
+  // Never simulate success. A storefront must not claim a subscription was
+  // recorded when the provider is unavailable or misconfigured.
   if (!apiKey || !listId) {
-    console.info(
-      `[newsletter] Klaviyo not configured — would subscribe ${email} (source: ${source})`,
+    console.error('[newsletter] Klaviyo is not configured');
+    return Response.json(
+      {error: 'Newsletter signup is temporarily unavailable.'},
+      {status: 503},
     );
-    return Response.json({
-      success: true,
-      subscribed: true,
-      message: "You're in. Watch your inbox.",
-      simulated: true,
-    });
   }
 
   try {

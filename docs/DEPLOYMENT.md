@@ -15,7 +15,7 @@ boundary prevents the applicable gate from passing.
 
 | Branch | Purpose | Deploy target |
 |---|---|---|
-| `main` | Production | Oxygen production deploy on push |
+| `main` | Production | Oxygen production deploy only by manual workflow dispatch |
 | `dev` | Staging / preview | Oxygen preview deploy on push |
 | `claude/*`, `docs/*`, other working branches | Agent/developer working branches | No deploy — PRs only trigger the quality gate |
 
@@ -47,36 +47,36 @@ The workflow (`Storefront 1000167667`) triggers on `push` to `main`/`dev`, `pull
 9. **Lint** — `npm run lint`
 10. **Test** — `npm run test`
 
-### `deploy` (only on `push` to `main` or `dev`, needs `quality` to pass)
+### `deploy` (green `dev` pushes or manual dispatch from `main`; needs `quality` and `e2e`)
 1. Checkout, Node setup, npm cache, `npm ci --legacy-peer-deps`
-2. `npx shopify hydrogen deploy --force --json-output --auth-bypass-token`, authenticated via
+2. On `main`, `npm run validate:release-env` fails closed unless the complete Shopify,
+   Customer Account, GA4, newsletter, and waitlist configuration is present.
+3. `npx shopify hydrogen deploy --force --json-output --auth-bypass-token`, authenticated via
    `SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000167667 }}`.
    The job's `environment` is `production` when `github.ref_name == 'main'`, else `preview`.
-3. The deploy step requires `h2_deploy_log.json`, a valid HTTPS deployment URL, and Shopify's
+4. The deploy step requires `h2_deploy_log.json`, a valid HTTPS deployment URL, and Shopify's
    short-lived authentication bypass token. Missing or malformed output fails the job.
-4. **Post-deploy smoke test** — curls `/`, `/collections/all-products`, `/policies/about`,
+5. **Post-deploy smoke test** — curls `/`, `/collections/all-products`, `/policies/about`,
    `/sitemap.xml`, `/robots.txt` on the generated Oxygen URL using the bypass-token header.
    Non-2xx responses, challenge interception, and rendered error-boundary text fail the job.
 
-### `e2e` (runs on every trigger that runs `quality`, does not gate deploy)
+### `e2e` (runs after `quality` and gates deployment)
 1. Checkout, Node setup, npm cache, `npm ci --legacy-peer-deps`
-2. Install Playwright Chromium and WebKit.
+2. Install the browser required by each isolated Chromium, WebKit, and mobile-Chromium matrix job.
 3. Writes a local `.env` with `SESSION_SECRET`, `PUBLIC_STORE_DOMAIN`,
    `PUBLIC_STOREFRONT_API_TOKEN` — required because `shopify hydrogen preview`/`dev` read env vars
    via Miniflare from a local `.env` file, not from inherited shell/step `env:` (documented
    in-line in the workflow as a fix for a real prior failure mode).
 4. `npm run build`
-5. `npm run test:e2e` runs desktop Chromium, desktop WebKit, and mobile Chromium against a **local** `shopify hydrogen preview` server
+5. `npm run test:e2e` runs its matrix project against a **local** `shopify hydrogen preview` server
    (per `playwright.config.ts`'s `webServer`), not the live Oxygen deployment — this sidesteps the
    Oxygen preview bot-check entirely.
-6. On failure, uploads Playwright traces as a build artifact (`playwright-report/`, 7-day
+6. On failure, uploads per-project Playwright traces as a build artifact (`playwright-report/`, 7-day
    retention).
 
-Note: per `docs/PRODUCTION_READINESS.md` §2, E2E/Playwright coverage itself was listed as "not
-started" as of that document's last audit — confirm the current state of `playwright.config.ts`
-and `app/__tests__`/`e2e/` specs before relying on this job's coverage being comprehensive; the
-job's existence in the workflow is verified, but the breadth of its test suite is not re-audited
-in this document.
+The suite includes a deterministic stocked-product commerce journey covering variant selection,
+cart creation, quantity mutation, checkout URL validation, and removal. It does not place a paid
+order and does not replace a manual payment/refund test before launch.
 
 ---
 
@@ -89,9 +89,18 @@ Read directly from the workflow file's `secrets.*` references:
 | `OXYGEN_DEPLOYMENT_TOKEN_1000167667` | `deploy` job | Auth token for `shopify hydrogen deploy` (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`) |
 | `PUBLIC_STORE_DOMAIN` | `quality` (codegen), `e2e` | Shopify storefront domain |
 | `PUBLIC_STOREFRONT_API_TOKEN` | `quality` (codegen), `e2e` | Public Storefront API token |
+| `SESSION_SECRET` | production validation | Session signing secret |
+| `PUBLIC_STOREFRONT_ID` | production validation | Hydrogen analytics storefront ID |
+| `PUBLIC_CHECKOUT_DOMAIN` | production validation | Trusted Shopify checkout domain |
+| `PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID` | production validation | Customer Account OAuth client |
+| `PUBLIC_CUSTOMER_ACCOUNT_API_URL` | production validation | Customer Account API URL |
+| `PUBLIC_GA4_MEASUREMENT_ID` | production validation | GA4 destination |
+| `PRIVATE_KLAVIYO_API_KEY` | production validation | Server-side Klaviyo API access |
+| `PUBLIC_KLAVIYO_LIST_ID` | production validation | Newsletter list |
+| `PUBLIC_KLAVIYO_WAITLIST_LIST_ID` | production validation | Back-in-stock list |
 
-These three are the only secrets the workflow file itself references. Their presence in the real
-GitHub repository settings is **unverified from this repo — needs owner confirmation.**
+Their presence in the real GitHub repository settings and matching Oxygen runtime environment
+remains an owner-controlled launch check.
 
 ### Vars read by the app but not referenced anywhere in the workflow file
 The app reads several more optional vars at runtime (`app/lib/context.ts`, `env.d.ts`), but the CI
@@ -100,13 +109,13 @@ Oxygen environment (Shopify Admin → Hydrogen → Environments), not via GitHub
 
 - `PUBLIC_SENTRY_DSN` — server/client Sentry wiring (`app/lib/sentry.server.ts`,
   `app/lib/monitoring.ts`) no-ops without it.
-- `PRIVATE_KLAVIYO_API_KEY`, `PUBLIC_KLAVIYO_LIST_ID` — newsletter signup (`api.newsletter.ts`)
-  degrades to a simulated success without them, per `docs/PRODUCTION_READINESS.md` §2.
-- `PUBLIC_GA4_MEASUREMENT_ID`, `PUBLIC_META_PIXEL_ID`, `PUBLIC_TIKTOK_PIXEL_ID` — each pixel in
+- `PUBLIC_META_PIXEL_ID`, `PUBLIC_TIKTOK_PIXEL_ID` — each optional pixel in
   `app/components/seo/Analytics.tsx` simply doesn't load if its ID is unset.
-- `PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID`, `PUBLIC_CUSTOMER_ACCOUNT_API_URL` — `account/*` routes
-  and `api.wishlist.ts` render a "not configured" state without them (both required together, see
-  `app/lib/context.ts`).
+- `PUBLIC_KLAVIYO_COMPANY_ID` — optional consent-gated Klaviyo on-site forms.
+
+Newsletter and waitlist endpoints now fail truthfully with `503` when their required Klaviyo
+configuration is missing. Customer Account navigation is hidden and its routes fail with `503`
+when the required pair is absent.
 
 Whether any of these are actually set in the real Oxygen production/preview environment is
 **unverified — needs owner confirmation.** This is a real operational risk: if
@@ -140,10 +149,12 @@ job but does not revert the already-deployed Oxygen build). Automating rollback 
 
 ## 5. Verifying a Deploy Reached Oxygen
 
-1. GitHub → Actions → the workflow run triggered by the merge push to `dev` or `main`.
+1. GitHub → Actions → the workflow run triggered by the merge push to `dev`, or the explicitly
+   approved manual dispatch from `main`.
 2. Confirm `quality` completed with success.
 3. Confirm `Deploy to Oxygen` ran (not skipped) with success. If skipped, the triggering event was
-   a `pull_request`, not a `push` — only push events to `dev`/`main` deploy.
+   a `pull_request`, or an un-dispatched `main` push. Only a push to `dev` or manual dispatch from
+   `main` deploys.
 4. Check the `Post-deploy smoke test` step's log — every critical route must be verified; bot-check
    interception is a failure because the deployment uses Shopify's authentication bypass token.
 5. Deployment entries and their preview URLs are also visible in the Shopify Partners dashboard

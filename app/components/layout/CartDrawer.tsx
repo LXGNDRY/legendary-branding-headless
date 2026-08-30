@@ -1,7 +1,7 @@
 import {useEffect, useState, useRef} from 'react';
 import {Link, useFetcher} from 'react-router';
 import Button from '~/components/ui/Button';
-import {CartForm, Image, Money} from '@shopify/hydrogen';
+import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import type {CartData, CartLineData} from '~/lib/cart';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 
@@ -164,9 +164,12 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
-  const lines = cart?.lines?.nodes ?? [];
-  const totalQuantity = cart?.totalQuantity ?? 0;
-  const subtotal = cart?.cost?.subtotalAmount;
+  const {publish} = useAnalytics();
+  const cartFetcher = useFetcher<{cart: CartData}>();
+  const currentCart = cartFetcher.data?.cart ?? cart;
+  const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
+  const totalQuantity = currentCart?.totalQuantity ?? 0;
+  const subtotal = currentCart?.cost?.subtotalAmount;
   const subtotalValue = subtotal ? parseFloat(subtotal.amount) : 0;
   // Free shipping progress
   const progress = Math.min((subtotalValue / FREE_SHIPPING_THRESHOLD) * 100, 100);
@@ -176,9 +179,16 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   // Discount code state
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{
+    cart?: {discountCodes?: {code: string; applicable: boolean}[]};
+    errors?: Array<{message?: string}>;
+  }>();
 
   const {containerRef: drawerRef} = useFocusTrap(open, onClose);
+
+  useEffect(() => {
+    if (open) cartFetcher.load('/cart');
+  }, [open]);
 
   // Close on Escape (handled by useFocusTrap, but keep as safety)
   useEffect(() => {
@@ -203,10 +213,32 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
 
   function applyDiscount(e: React.FormEvent) {
     e.preventDefault();
-    // Discount codes are applied at checkout in Shopify
-    setDiscountOpen(false);
-    setDiscountCode('');
+    const code = discountCode.trim();
+    if (!code) return;
+    fetcher.submit(
+      {
+        [CartForm.INPUT_NAME]: JSON.stringify({
+          action: CartForm.ACTIONS.DiscountCodesUpdate,
+          inputs: {discountCodes: [code]},
+        }),
+      },
+      {method: 'post', action: '/cart'},
+    );
   }
+
+  const discountResult = fetcher.data?.cart?.discountCodes?.[0];
+  const discountError =
+    fetcher.data?.errors?.[0]?.message ??
+    (discountResult && !discountResult.applicable
+      ? 'That discount code is not valid for this cart.'
+      : null);
+
+  useEffect(() => {
+    if (fetcher.state === 'idle' && discountResult?.applicable) {
+      setDiscountOpen(false);
+      setDiscountCode('');
+    }
+  }, [discountResult, fetcher.state]);
 
   return (
     <>
@@ -288,7 +320,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         </div>
 
         {/* Footer — subtotal + discount + checkout */}
-        {lines.length > 0 && cart && (
+        {lines.length > 0 && currentCart && (
           <div className="px-6 py-6 border-t border-[var(--color-border-muted)] shrink-0 space-y-4 bg-[var(--color-bg-level-0)]">
             {/* Discount code */}
             {discountOpen ? (
@@ -303,9 +335,10 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 />
                 <button
                   type="submit"
+                  disabled={fetcher.state !== 'idle'}
                   className="text-[11px] font-semibold tracking-widest uppercase bg-[var(--color-bg-level-3)] text-[var(--color-text-primary)] px-4 py-2 rounded-md hover:bg-[var(--color-bg-level-4)] transition-colors"
                 >
-                  Apply
+                  {fetcher.state !== 'idle' ? 'Applying…' : 'Apply'}
                 </button>
                 <button
                   type="button"
@@ -323,26 +356,46 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 + Add discount code
               </button>
             )}
+            {discountError && (
+              <p role="alert" className="text-xs text-[var(--color-error)]">
+                {discountError}
+              </p>
+            )}
+            {currentCart.discountCodes?.filter((code) => code.applicable).map((code) => (
+              <div key={code.code} className="flex items-center justify-between text-xs text-[var(--color-success)]">
+                <span>Discount applied: {code.code}</span>
+                <CartForm
+                  route="/cart"
+                  action={CartForm.ACTIONS.DiscountCodesUpdate}
+                  inputs={{discountCodes: []}}
+                >
+                  <button type="submit" className="underline underline-offset-2">Remove</button>
+                </CartForm>
+              </div>
+            ))}
 
             {/* Subtotal */}
             <div className="flex justify-between items-baseline">
               <span className="text-xs tracking-[0.15em] uppercase text-[var(--color-text-secondary)]">Subtotal</span>
-              <Money data={cart.cost.subtotalAmount} className="text-base font-semibold text-[var(--color-text-primary)]" />
+              <Money data={currentCart.cost.subtotalAmount} className="text-base font-semibold text-[var(--color-text-primary)]" />
             </div>
             <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide">
               Taxes and shipping calculated at checkout
             </p>
 
             {/* Checkout */}
-            <Button
-              as="a"
-              href={cart.checkoutUrl}
-              variant="primary"
-              className="w-full justify-center"
-              size="md"
-            >
-              Checkout
-            </Button>
+            <div onClick={() => publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart: currentCart})}>
+              <Button
+                as="a"
+                href={currentCart.checkoutUrl}
+                variant="primary"
+                className="w-full justify-center"
+                size="md"
+                testId="drawer-checkout"
+              >
+                Checkout
+              </Button>
+            </div>
 
             <div className="flex justify-center pt-1">
               <Link
