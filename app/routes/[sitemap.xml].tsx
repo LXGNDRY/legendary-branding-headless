@@ -23,7 +23,7 @@ const ARTICLES_QUERY = `#graphql
   query SitemapArticles($blogHandle: String!, $country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
     @inContext(country: $country, language: $language) {
     blog(handle: $blogHandle) {
-      articles(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }
+      articles(first: $first, after: $after) { nodes { handle updatedAt: publishedAt } pageInfo { hasNextPage endCursor } }
     }
   }
 ` as const;
