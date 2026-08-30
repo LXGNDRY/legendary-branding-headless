@@ -260,29 +260,31 @@ function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
   return (
     <>
       {discountOpen ? (
-        <form onSubmit={applyDiscount} className="flex gap-2">
+        <form onSubmit={applyDiscount} className="flex flex-wrap gap-2">
           <input
             type="text"
             value={discountCode}
             onChange={(e) => setDiscountCode(e.target.value)}
             placeholder="Discount code"
-            className="flex-1 text-sm border border-[var(--color-border-subtle)] bg-[var(--color-canvas)] px-3 py-2 text-[var(--color-foreground)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-foreground)]"
+            className="flex-1 min-w-0 text-sm border border-[var(--color-border-subtle)] bg-[var(--color-canvas)] px-3 py-2 text-[var(--color-foreground)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-foreground)]"
             autoFocus
           />
-          <button
-            type="submit"
-            disabled={fetcher.state !== 'idle'}
-            className="text-xs font-semibold tracking-widest uppercase bg-[var(--color-foreground)] text-[var(--color-canvas)] px-4 min-h-11 hover:opacity-90 transition-opacity"
-          >
-            {fetcher.state !== 'idle' ? 'Applying…' : 'Apply'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setDiscountOpen(false)}
-            className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors px-2.5 min-h-11"
-          >
-            Cancel
-          </button>
+          <div className="flex gap-2 shrink-0">
+            <button
+              type="submit"
+              disabled={fetcher.state !== 'idle'}
+              className="text-xs font-semibold tracking-widest uppercase bg-[var(--color-foreground)] text-[var(--color-canvas)] px-4 min-h-11 hover:opacity-90 transition-opacity"
+            >
+              {fetcher.state !== 'idle' ? 'Applying…' : 'Apply'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDiscountOpen(false)}
+              className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors px-2.5 min-h-11"
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       ) : (
         <button

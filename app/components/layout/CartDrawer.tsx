@@ -368,29 +368,31 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
           <div className="px-6 py-6 border-t border-[var(--color-border-muted)] shrink-0 space-y-4 bg-[var(--color-bg-level-0)]">
             {/* Discount code */}
             {discountOpen ? (
-              <form onSubmit={applyDiscount} className="flex gap-2">
+              <form onSubmit={applyDiscount} className="flex flex-wrap gap-2">
                 <input
                   type="text"
                   value={discountCode}
                   onChange={(e) => setDiscountCode(e.target.value)}
                   placeholder="Discount code"
-                  className="flex-1 text-sm border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] px-3 py-2 rounded-md text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-accent)]"
+                  className="flex-1 min-w-0 text-sm border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] px-3 py-2 rounded-md text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-accent)]"
                   autoFocus
                 />
-                <button
-                  type="submit"
-                  disabled={fetcher.state !== 'idle'}
-                  className="text-[11px] font-semibold tracking-widest uppercase bg-[var(--color-bg-level-3)] text-[var(--color-text-primary)] px-4 min-h-11 rounded-md hover:bg-[var(--color-bg-level-4)] transition-colors"
-                >
-                  {fetcher.state !== 'idle' ? 'Applying…' : 'Apply'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDiscountOpen(false)}
-                  className="text-[11px] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors px-2.5 min-h-11"
-                >
-                  Cancel
-                </button>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    type="submit"
+                    disabled={fetcher.state !== 'idle'}
+                    className="text-[11px] font-semibold tracking-widest uppercase bg-[var(--color-bg-level-3)] text-[var(--color-text-primary)] px-4 min-h-11 rounded-md hover:bg-[var(--color-bg-level-4)] transition-colors"
+                  >
+                    {fetcher.state !== 'idle' ? 'Applying…' : 'Apply'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDiscountOpen(false)}
+                    className="text-[11px] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors px-2.5 min-h-11"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </form>
             ) : (
               <button
