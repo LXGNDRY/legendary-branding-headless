@@ -297,8 +297,10 @@ export default function ProductCard({
           </div>
         )}
 
-        {/* Wishlist top-right */}
-        <div className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        {/* Wishlist top-right — always visible on touch (no hover state to
+            reveal it), hover-revealed on desktop pointers to keep the card
+            visually quiet until the user shows intent. */}
+        <div className="absolute top-2.5 right-2.5 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
           <WishlistButton
             size="sm"
             className="bg-[var(--color-bg-level-1)]/90 backdrop-blur-sm rounded-full p-1.5 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] border border-[var(--color-border-muted)]"
@@ -312,9 +314,10 @@ export default function ProductCard({
           />
         </div>
 
-        {/* Quick add — slides up on hover (desktop only) */}
+        {/* Quick add — always visible on touch devices (there's no hover
+            state to reveal it from), slides up on hover on desktop pointers. */}
         {showQuickAdd && product.availableForSale && canQuickAdd && (
-          <div className="hidden sm:block absolute bottom-0 left-0 right-0 translate-y-full opacity-0 transition-all duration-[300ms] ease-[var(--ease-expo)] group-hover:translate-y-0 group-hover:opacity-100 z-10 p-3">
+          <div className="absolute bottom-0 left-0 right-0 translate-y-0 opacity-100 sm:translate-y-full sm:opacity-0 transition-all duration-[300ms] ease-[var(--ease-expo)] sm:group-hover:translate-y-0 sm:group-hover:opacity-100 z-10 p-3">
             <button
               type="button"
               onClick={handleQuickAdd}
