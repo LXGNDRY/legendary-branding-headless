@@ -164,7 +164,7 @@ function CartLineRow({line}: {line: CartLineData}) {
             >
               <button
                 type="submit"
-                className="w-9 h-9 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors disabled:opacity-40"
+                className="w-11 h-11 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors disabled:opacity-40"
                 aria-label={`Decrease quantity for ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
                 disabled={quantity <= 1}
               >
@@ -179,7 +179,7 @@ function CartLineRow({line}: {line: CartLineData}) {
             >
               <button
                 type="submit"
-                className="w-9 h-9 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors"
+                className="w-11 h-11 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors"
                 aria-label={`Increase quantity for ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
               >
                 <PlusIcon />
@@ -194,7 +194,7 @@ function CartLineRow({line}: {line: CartLineData}) {
           >
             <button
               type="submit"
-              className="text-xs text-[var(--color-text-secondary)] underline underline-offset-2 hover:text-[var(--color-foreground)] transition-colors"
+              className="text-xs text-[var(--color-text-secondary)] underline underline-offset-2 hover:text-[var(--color-foreground)] transition-colors p-2.5 -m-2.5"
               aria-label={`Remove ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
             >
               Remove
@@ -272,14 +272,14 @@ function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
           <button
             type="submit"
             disabled={fetcher.state !== 'idle'}
-            className="text-xs font-semibold tracking-widest uppercase bg-[var(--color-foreground)] text-[var(--color-canvas)] px-4 py-2 hover:opacity-90 transition-opacity"
+            className="text-xs font-semibold tracking-widest uppercase bg-[var(--color-foreground)] text-[var(--color-canvas)] px-4 min-h-11 hover:opacity-90 transition-opacity"
           >
             {fetcher.state !== 'idle' ? 'Applying…' : 'Apply'}
           </button>
           <button
             type="button"
             onClick={() => setDiscountOpen(false)}
-            className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors"
+            className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors px-2.5 min-h-11"
           >
             Cancel
           </button>
