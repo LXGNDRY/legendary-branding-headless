@@ -125,16 +125,19 @@ export default function SearchTypeahead({
   }, [activeIndex]);
 
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (!open || itemCount === 0) return;
+    if (!open) return;
+    if (e.key === 'Escape') {
+      setOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+    if (itemCount === 0) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setActiveIndex((i) => (i + 1) % itemCount);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActiveIndex((i) => (i <= 0 ? itemCount - 1 : i - 1));
-    } else if (e.key === 'Escape') {
-      setOpen(false);
-      setActiveIndex(-1);
     } else if (e.key === 'Enter' && activeIndex >= 0) {
       e.preventDefault();
       itemRefs.current[activeIndex]?.click();
