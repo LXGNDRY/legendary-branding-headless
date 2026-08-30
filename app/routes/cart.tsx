@@ -139,7 +139,7 @@ function CartLineRow({line}: {line: CartLineData}) {
               <button
                 type="submit"
                 className="w-9 h-9 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors disabled:opacity-40"
-                aria-label="Decrease quantity"
+                aria-label={`Decrease quantity for ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
                 disabled={quantity <= 1}
               >
                 <MinusIcon />
@@ -154,7 +154,7 @@ function CartLineRow({line}: {line: CartLineData}) {
               <button
                 type="submit"
                 className="w-9 h-9 flex items-center justify-center text-[var(--color-foreground)] hover:bg-[var(--color-surface)] transition-colors"
-                aria-label="Increase quantity"
+                aria-label={`Increase quantity for ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
               >
                 <PlusIcon />
               </button>
@@ -169,6 +169,7 @@ function CartLineRow({line}: {line: CartLineData}) {
             <button
               type="submit"
               className="text-xs text-[var(--color-text-secondary)] underline underline-offset-2 hover:text-[var(--color-foreground)] transition-colors"
+              aria-label={`Remove ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
             >
               Remove
             </button>
