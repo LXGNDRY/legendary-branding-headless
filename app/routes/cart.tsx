@@ -78,13 +78,25 @@ function PlusIcon() {
 }
 
 function CartLineRow({line}: {line: CartLineData}) {
-  const {merchandise, quantity, cost} = line;
-  const {product, selectedOptions, image, price} = merchandise;
+  const {merchandise, quantity, cost, discountAllocations} = line;
+  const {product, selectedOptions, image} = merchandise;
 
   const variantLabel = selectedOptions
     .filter((o) => o.value !== 'Default Title')
     .map((o) => o.value)
     .join(' / ');
+
+  // Per-unit price reflects any line-scoped discount (e.g. an automatic
+  // "25% off" collection discount) — `merchandise.price` does not, since
+  // that's the variant's undiscounted list price.
+  const unitPrice = cost.amountPerQuantity ?? merchandise.price;
+  const compareAtUnitPrice = cost.compareAtAmountPerQuantity;
+  const isLineDiscounted =
+    compareAtUnitPrice != null &&
+    parseFloat(compareAtUnitPrice.amount) > parseFloat(unitPrice.amount);
+  const discountLabels = (discountAllocations ?? [])
+    .map((d) => d.code ?? d.title)
+    .filter((label): label is string => Boolean(label));
 
   return (
     <div className="flex gap-5 py-6 border-b border-[var(--color-border-subtle)]">
@@ -121,8 +133,20 @@ function CartLineRow({line}: {line: CartLineData}) {
             {variantLabel && (
               <p className="mt-1 text-xs text-[var(--color-text-secondary)] tracking-wide">{variantLabel}</p>
             )}
-            <div className="mt-1">
-              <Money data={price} className="text-sm font-medium" />
+            {discountLabels.length > 0 && (
+              <p className="mt-1 text-xs text-[var(--color-success)] tracking-wide">
+                {discountLabels.join(' · ')}
+              </p>
+            )}
+            <div className="mt-1 flex items-baseline gap-2">
+              <Money data={unitPrice} className="text-sm font-medium" />
+              {isLineDiscounted && compareAtUnitPrice && (
+                <Money
+                  data={compareAtUnitPrice}
+                  as="s"
+                  className="text-xs text-[var(--color-text-secondary)] line-through"
+                />
+              )}
             </div>
           </div>
           <div className="text-right shrink-0">
