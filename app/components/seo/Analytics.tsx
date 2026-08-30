@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {AnalyticsEvent, useAnalytics} from '@shopify/hydrogen';
 
 declare global {
@@ -152,41 +152,84 @@ export default function Analytics({
 }: AnalyticsProps) {
   const {customerPrivacy} = useAnalytics();
   const [showBanner, setShowBanner] = useState(false);
+  const scriptsLoadedRef = useRef(false);
 
-  useEffect(() => {
-    if (!customerPrivacy) return;
-    const visitorConsent = customerPrivacy.currentVisitorConsent();
-    const current = visitorConsent.analytics === true
-      ? 'accepted'
-      : visitorConsent.analytics === false
-        ? 'rejected'
-        : 'undecided';
-
-    // Show banner if undecided
-    if (current === 'undecided') {
-      setShowBanner(true);
-    } else if (current === 'accepted') {
-      // Load analytics scripts
-      if (ga4Id) loadGA4(ga4Id);
-      if (metaPixelId) loadMetaPixel(metaPixelId);
-      if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
-      if (klaviyoCompanyId) loadKlaviyo(klaviyoCompanyId);
-    }
-  }, [customerPrivacy, ga4Id, metaPixelId, tiktokPixelId, klaviyoCompanyId]);
-
-  function handleAccept() {
-    if (!customerPrivacy) return;
-    setShowBanner(false);
-    customerPrivacy.setTrackingConsent(
-      {analytics: true, marketing: true, preferences: true, sale_of_data: false},
-      (result) => result?.error && console.error('[privacy] Unable to save consent'),
-    );
-
-    // Load analytics
+  const loadScriptsOnce = useCallback(() => {
+    // Ref-guarded rather than state-guarded: this runs from an effect body
+    // (see below), and under StrictMode's dev double-invoke a state-updater
+    // guard can still let both passes through before either commit lands,
+    // loading every script twice. A ref reads/writes synchronously, so the
+    // second pass always sees the first pass's write.
+    if (scriptsLoadedRef.current) return;
+    scriptsLoadedRef.current = true;
     if (ga4Id) loadGA4(ga4Id);
     if (metaPixelId) loadMetaPixel(metaPixelId);
     if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
     if (klaviyoCompanyId) loadKlaviyo(klaviyoCompanyId);
+  }, [ga4Id, metaPixelId, tiktokPixelId, klaviyoCompanyId]);
+
+  useEffect(() => {
+    if (!customerPrivacy) return;
+    let cancelled = false;
+    // On a fresh page load, the Shopify Customer Privacy API still needs to
+    // sync previously-saved consent in from the checkout domain (a
+    // cross-domain round trip) before `currentVisitorConsent()` reflects
+    // it -- reading it synchronously right here can catch it mid-sync and
+    // see the "undecided" default even though the visitor already
+    // accepted, which is what made the banner reappear on every refresh.
+    // Give that sync a brief window to land before treating "undecided" as
+    // real and showing the banner, so a returning visitor doesn't see it
+    // flash back in; the API's own `visitorConsentCollected` event (fired
+    // once the sync -- or a new `setTrackingConsent` call -- completes)
+    // cancels the wait early whenever it arrives sooner.
+    let undecidedTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const apply = (current: 'accepted' | 'rejected' | 'undecided') => {
+      if (cancelled) return;
+      if (current === 'undecided') {
+        if (undecidedTimer) return;
+        undecidedTimer = setTimeout(() => {
+          if (!cancelled) setShowBanner(true);
+        }, 500);
+        return;
+      }
+      if (undecidedTimer) {
+        clearTimeout(undecidedTimer);
+        undecidedTimer = null;
+      }
+      setShowBanner(false);
+      if (current === 'accepted') loadScriptsOnce();
+    };
+
+    const evaluate = () => {
+      const visitorConsent = customerPrivacy.currentVisitorConsent();
+      const current = visitorConsent.analytics === true
+        ? 'accepted'
+        : visitorConsent.analytics === false
+          ? 'rejected'
+          : 'undecided';
+      apply(current);
+    };
+
+    evaluate();
+    document.addEventListener('visitorConsentCollected', evaluate);
+    return () => {
+      cancelled = true;
+      if (undecidedTimer) clearTimeout(undecidedTimer);
+      document.removeEventListener('visitorConsentCollected', evaluate);
+    };
+  }, [customerPrivacy, loadScriptsOnce]);
+
+  function handleAccept() {
+    if (!customerPrivacy) return;
+    setShowBanner(false);
+    // Script loading is handled by the `visitorConsentCollected` listener
+    // above, which this call triggers -- keeps a single source of truth so
+    // scripts don't load twice.
+    customerPrivacy.setTrackingConsent(
+      {analytics: true, marketing: true, preferences: true, sale_of_data: false},
+      (result) => result?.error && console.error('[privacy] Unable to save consent'),
+    );
   }
 
   function handleReject() {

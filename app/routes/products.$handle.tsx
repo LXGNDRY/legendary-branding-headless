@@ -262,7 +262,7 @@ function MobilePurchaseBar({
           <button
             type="button"
             onClick={() => document.getElementById(needsSelection ? 'variant-options' : 'restock-signup')?.scrollIntoView({behavior: 'smooth', block: 'center'})}
-            className="h-btn-primary whitespace-nowrap px-5"
+            className={`h-btn-primary whitespace-nowrap px-5 ${needsSelection ? 'h-wiggle-bounce' : ''}`}
           >
             {needsSelection ? 'Choose options' : 'Notify Me'}
           </button>
