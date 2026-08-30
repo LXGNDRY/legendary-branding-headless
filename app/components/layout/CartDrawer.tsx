@@ -390,6 +390,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                   value={discountCode}
                   onChange={(e) => setDiscountCode(e.target.value)}
                   placeholder="Discount code"
+                  aria-label="Discount code"
                   className="flex-1 min-w-0 text-sm border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] px-3 py-2 rounded-md text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-accent)]"
                   autoFocus
                 />

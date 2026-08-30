@@ -51,6 +51,7 @@ export default function ProductGallery({
       >
         <Image
           data={active}
+          alt={active.altText || title}
           aspectRatio="3/4"
           width={900}
           height={1200}
