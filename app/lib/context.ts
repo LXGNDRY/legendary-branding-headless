@@ -5,6 +5,7 @@ import {
   DEFAULT_LANGUAGE,
   normalizeCountryCode,
 } from '~/lib/market';
+import {CART_QUERY_FRAGMENT, CART_MUTATE_FRAGMENT} from '~/lib/fragments';
 
 /**
  * The subset of Cloudflare's `IncomingRequestCfProperties` we rely on.
@@ -98,6 +99,10 @@ export async function createAppLoadContext(
     i18n: {
       language: DEFAULT_LANGUAGE,
       country: activeCountry,
+    },
+    cart: {
+      queryFragment: CART_QUERY_FRAGMENT,
+      mutateFragment: CART_MUTATE_FRAGMENT,
     },
     // Customer Account API is only active when the client ID is configured
     ...(hasCustomerAccount && {

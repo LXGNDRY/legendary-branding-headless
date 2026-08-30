@@ -2,7 +2,8 @@ import {useEffect, useState, useRef} from 'react';
 import {Link, useFetcher} from 'react-router';
 import Button from '~/components/ui/Button';
 import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
-import type {CartData, CartLineData} from '~/lib/cart';
+import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
+import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 
 // Free shipping threshold — verified against the live shipping policy
@@ -169,6 +170,15 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
   const totalQuantity = currentCart?.totalQuantity ?? 0;
   const subtotal = currentCart?.cost?.subtotalAmount;
+  const discountAllocations = currentCart?.discountAllocations ?? [];
+  const totalDiscountAmount = discountAllocations.reduce(
+    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
+    0,
+  );
+  const discountCurrencyCode: CurrencyCode =
+    discountAllocations[0]?.discountedAmount.currencyCode ??
+    subtotal?.currencyCode ??
+    'USD';
   const subtotalValue = subtotal ? parseFloat(subtotal.amount) : 0;
   // Free shipping progress
   const progress = Math.min((subtotalValue / FREE_SHIPPING_THRESHOLD) * 100, 100);
@@ -179,7 +189,10 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
   const fetcher = useFetcher<{
-    cart?: {discountCodes?: {code: string; applicable: boolean}[]};
+    cart?: {
+      discountCodes?: {code: string; applicable: boolean}[];
+      discountAllocations?: CartDiscountAllocation[];
+    };
     errors?: Array<{message?: string}>;
   }>();
 
@@ -237,25 +250,35 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — timing ported from the live theme's dialog backdrop
+          (--animation-speed: 0.125s, --animation-easing: ease-in-out). */}
       <div
-        className={`fixed inset-0 z-[490] bg-black/60 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[490] bg-black/60 transition-opacity duration-[125ms] ease-in-out ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         aria-hidden="true"
         onClick={onClose}
       />
 
-      {/* Drawer */}
+      {/* Drawer — slide-in timing ported from the live theme's
+          "spring" cart-content entrance (--spring-d280-b0-duration: 0.4648s,
+          with its exact linear() overshoot easing) applied here to this
+          panel's translateX, since our drawer is a right-docked panel and
+          keeps that entrance direction rather than the theme's vertical pop. */}
       <div
         ref={drawerRef}
         role="dialog"
         aria-modal="true"
         aria-label="Shopping cart"
         aria-hidden={!open}
-        className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform duration-300 ease-[var(--ease-expo)] ${
+        className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{
+          transitionDuration: '465ms',
+          transitionTimingFunction:
+            'linear(0, 0.0044, 0.0164 1.85%, 0.085 4.63%, 0.4571 14.81%, 0.575 18.52%, 0.6505, 0.7148 24.07%, 0.7849, 0.8393, 0.8809 35.18%, 0.9189, 0.9453 44.44%, 0.9662, 0.9793 55.55%, 0.9894 62.95%, 0.995 71.28%, 0.9982 82.39%, 0.9997 99.98%)',
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 h-16 border-b border-[var(--color-border-muted)] shrink-0">
@@ -374,6 +397,26 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
               <span className="text-xs tracking-[0.15em] uppercase text-[var(--color-text-secondary)]">Subtotal</span>
               <Money data={currentCart.cost.subtotalAmount} className="text-base font-semibold text-[var(--color-text-primary)]" />
             </div>
+
+            {/* Discount amount */}
+            {totalDiscountAmount > 0 && (
+              <div className="flex justify-between items-baseline">
+                <span className="text-xs tracking-[0.15em] uppercase text-[var(--color-text-secondary)]">
+                  {discountAllocations.length === 1
+                    ? discountAllocations[0].code
+                      ? `Discount (${discountAllocations[0].code})`
+                      : (discountAllocations[0].title ?? 'Discount')
+                    : 'Discount'}
+                </span>
+                <Money
+                  data={{
+                    amount: (-totalDiscountAmount).toFixed(2),
+                    currencyCode: discountCurrencyCode,
+                  }}
+                  className="text-sm font-semibold text-[var(--color-success)]"
+                />
+              </div>
+            )}
             <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide">
               Taxes and shipping calculated at checkout
             </p>

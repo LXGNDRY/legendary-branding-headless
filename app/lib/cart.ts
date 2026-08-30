@@ -25,6 +25,14 @@ export type CartLineData = {
   cost: {totalAmount: CartMoney};
 };
 
+export type CartDiscountAllocation = {
+  discountedAmount: CartMoney;
+  /** Present for a code-based discount (`CartCodeDiscountAllocation`). */
+  code?: string;
+  /** Present for automatic/custom discounts (`CartAutomaticDiscountAllocation` / `CartCustomDiscountAllocation`). */
+  title?: string;
+};
+
 export type CartData = {
   id: string;
   checkoutUrl: string;
@@ -35,4 +43,5 @@ export type CartData = {
     totalAmount: CartMoney;
   };
   discountCodes?: {code: string; applicable: boolean}[];
+  discountAllocations?: CartDiscountAllocation[];
 } | null | undefined;
