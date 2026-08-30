@@ -17,9 +17,9 @@ export const SECURITY_HEADERS: Record<string, string> = {
     // unsafe-eval removed: not needed by Hydrogen / React Router / Tailwind
     "script-src 'self' 'unsafe-inline' cdn.shopify.com shop.app *.shopifypay.com www.googletagmanager.com connect.facebook.net analytics.tiktok.com static.klaviyo.com *.klaviyo.com cdn.judge.me",
     // Styles: inline needed for Tailwind + inline styles
-    "style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.shopify.com *.klaviyo.com",
-    // Fonts: Google Fonts
-    "font-src 'self' fonts.gstatic.com fonts.googleapis.com cdn.shopify.com",
+    "style-src 'self' 'unsafe-inline' cdn.shopify.com *.klaviyo.com",
+    // Fonts: self-hosted (see app.css's @font-face rules) + Shopify CDN
+    "font-src 'self' cdn.shopify.com",
     // Images: product CDNs + analytics pixel beacons + review/form assets
     "img-src 'self' data: blob: *.shopify.com cdn.shopify.com www.facebook.com www.google-analytics.com *.klaviyo.com cdn.judge.me judgeme-review-images-cdn.judge.me",
     // Media

@@ -32,12 +32,6 @@ export const links: LinksFunction = () => [
   {rel: 'icon', href: '/favicon-16.png', sizes: '16x16', type: 'image/png'},
   {rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180'},
   {rel: 'manifest', href: '/site.webmanifest'},
-  {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
-  {
-    rel: 'preconnect',
-    href: 'https://fonts.gstatic.com',
-    crossOrigin: 'anonymous',
-  },
   {
     rel: 'preconnect',
     href: 'https://cdn.shopify.com',
@@ -47,9 +41,22 @@ export const links: LinksFunction = () => [
     rel: 'dns-prefetch',
     href: 'https://shop.app',
   },
+  // Self-hosted fonts (see app.css's @font-face rules) -- preload the two
+  // most likely to be needed for first paint (Inter body text, Instrument
+  // Serif headings), both immediately above the fold on every page.
   {
-    rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap',
+    rel: 'preload',
+    href: '/fonts/inter-latin.woff2',
+    as: 'font',
+    type: 'font/woff2',
+    crossOrigin: 'anonymous',
+  },
+  {
+    rel: 'preload',
+    href: '/fonts/instrument-serif-normal-latin.woff2',
+    as: 'font',
+    type: 'font/woff2',
+    crossOrigin: 'anonymous',
   },
   {rel: 'stylesheet', href: styles},
 ];
