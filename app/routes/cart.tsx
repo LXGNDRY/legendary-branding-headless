@@ -36,7 +36,7 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
 
   const headers = cart.setCartId(result.cart.id);
-  return new Response(null, {status: 200, headers});
+  return Response.json({cart: result.cart}, {status: 200, headers});
 }
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -166,7 +166,7 @@ function CartLineRow({line}: {line: CartLineData}) {
 
 export default function CartPage() {
   const {cart} = useLoaderData<typeof loader>();
-  const lines = cart?.lines?.nodes ?? [];
+  const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
 
   return (
@@ -233,6 +233,7 @@ export default function CartPage() {
                 href={cart.checkoutUrl}
                 variant="dark"
                 className="w-full justify-center"
+                testId="cart-checkout"
               >
                 Proceed to Checkout
               </Button>

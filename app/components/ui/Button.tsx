@@ -10,6 +10,7 @@ interface ButtonBaseProps {
   children: React.ReactNode;
   disabled?: boolean;
   loading?: boolean;
+  testId?: string;
 }
 
 interface ButtonAsButtonProps extends ButtonBaseProps {
@@ -80,6 +81,7 @@ export default function Button({
   children,
   disabled,
   loading,
+  testId,
   ...rest
 }: ButtonProps) {
   const isDisabled = disabled || loading;
@@ -100,7 +102,7 @@ export default function Button({
   if (rest.as === 'link') {
     const {to} = rest as ButtonAsLinkProps;
     return (
-      <Link to={to} className={classes} aria-disabled={isDisabled}>
+      <Link to={to} className={classes} aria-disabled={isDisabled} data-testid={testId}>
         {content}
       </Link>
     );
@@ -109,7 +111,7 @@ export default function Button({
   if (rest.as === 'a') {
     const {href, target, rel} = rest as ButtonAsAnchorProps;
     return (
-      <a href={href} target={target} rel={rel} className={classes} aria-disabled={isDisabled}>
+      <a href={href} target={target} rel={rel} className={classes} aria-disabled={isDisabled} data-testid={testId}>
         {content}
       </a>
     );
@@ -123,6 +125,7 @@ export default function Button({
       onClick={onClick}
       className={classes}
       aria-busy={loading || undefined}
+      data-testid={testId}
     >
       {content}
     </button>

@@ -164,9 +164,16 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
-  const lines = cart?.lines?.nodes ?? [];
-  const totalQuantity = cart?.totalQuantity ?? 0;
-  const subtotal = cart?.cost?.subtotalAmount;
+  const cartFetcher = useFetcher<{cart: CartData}>();
+
+  useEffect(() => {
+    if (open) cartFetcher.load('/cart');
+  }, [open]);
+
+  const currentCart = cartFetcher.data?.cart ?? cart;
+  const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
+  const totalQuantity = currentCart?.totalQuantity ?? 0;
+  const subtotal = currentCart?.cost?.subtotalAmount;
   const subtotalValue = subtotal ? parseFloat(subtotal.amount) : 0;
   // Free shipping progress
   const progress = Math.min((subtotalValue / FREE_SHIPPING_THRESHOLD) * 100, 100);
@@ -176,7 +183,6 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   // Discount code state
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
-  const fetcher = useFetcher();
 
   const {containerRef: drawerRef} = useFocusTrap(open, onClose);
 
@@ -251,9 +257,9 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
               <TruckIcon />
               <span className="text-[11px] tracking-wide text-[var(--color-text-secondary)]">
                 {hasFreeShipping ? (
-                  <span className="font-medium text-[var(--color-success)]">You qualify for free shipping</span>
+                  <span className="font-medium text-[var(--color-success)]">US orders of $100+ qualify for free shipping</span>
                 ) : (
-                  <>Add <span className="font-medium text-[var(--color-text-primary)]">${remaining.toFixed(2)}</span> for free shipping</>
+                  <>US orders: add <span className="font-medium text-[var(--color-text-primary)]">${remaining.toFixed(2)}</span> for free shipping</>
                 )}
               </span>
             </div>
@@ -288,7 +294,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         </div>
 
         {/* Footer — subtotal + discount + checkout */}
-        {lines.length > 0 && cart && (
+        {lines.length > 0 && currentCart && (
           <div className="px-6 py-6 border-t border-[var(--color-border-muted)] shrink-0 space-y-4 bg-[var(--color-bg-level-0)]">
             {/* Discount code */}
             {discountOpen ? (
@@ -327,7 +333,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
             {/* Subtotal */}
             <div className="flex justify-between items-baseline">
               <span className="text-xs tracking-[0.15em] uppercase text-[var(--color-text-secondary)]">Subtotal</span>
-              <Money data={cart.cost.subtotalAmount} className="text-base font-semibold text-[var(--color-text-primary)]" />
+              <Money data={currentCart.cost.subtotalAmount} className="text-base font-semibold text-[var(--color-text-primary)]" />
             </div>
             <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide">
               Taxes and shipping calculated at checkout
@@ -336,10 +342,11 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
             {/* Checkout */}
             <Button
               as="a"
-              href={cart.checkoutUrl}
+              href={currentCart.checkoutUrl}
               variant="primary"
               className="w-full justify-center"
               size="md"
+              testId="drawer-checkout"
             >
               Checkout
             </Button>

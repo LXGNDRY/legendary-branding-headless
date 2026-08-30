@@ -208,7 +208,11 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
       action={CartForm.ACTIONS.LinesAdd}
       inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
     >
-      <button type="submit" className="w-full h-btn-primary">
+      <button
+        type="submit"
+        className="w-full h-btn-primary"
+        data-testid="add-to-cart"
+      >
         Add to Bag
       </button>
     </CartForm>
