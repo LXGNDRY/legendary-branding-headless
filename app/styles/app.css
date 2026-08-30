@@ -36,7 +36,7 @@
   /* ── Text / Foreground ──────────────────────────────────────────────── */
   --color-text-primary: #F5F5F3;     /* primary text — warm off-white */
   --color-text-secondary: #A3A29E;   /* secondary text — muted gray */
-  --color-text-tertiary: #6B6A66;    /* tertiary / metadata */
+  --color-text-tertiary: #868481;    /* tertiary / metadata -- WCAG AA (4.5:1+) against all bg-level-0/1/2 */
   --color-text-inverse: #0A0A0A;     /* text on accent / light surfaces */
   --color-text-disabled: #3D3C38;
 
