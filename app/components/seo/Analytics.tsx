@@ -207,33 +207,73 @@ export default function Analytics({
     if (stored === 'accepted') {
       setShowBanner(false);
       loadScriptsOnce();
-    } else if (stored === 'rejected') {
-      setShowBanner(false);
-    } else {
-      // No stored choice yet -- this is a genuinely new visitor (or one
-      // who cleared storage), so show the banner.
-      setShowBanner(true);
+      return;
     }
+    if (stored === 'rejected') {
+      setShowBanner(false);
+      return;
+    }
+    // No local record yet. This could be a genuinely new visitor, or one
+    // who already accepted/rejected under the previous Shopify-only flow
+    // (before this localStorage-based fix shipped) -- in which case
+    // Shopify's API still knows their choice even though we don't yet.
+    // Give the reconciliation effect below a brief window to migrate that
+    // value in before defaulting to "show the banner", so those visitors
+    // aren't re-prompted during the rollout.
+    let cancelled = false;
+    const fallback = setTimeout(() => {
+      if (!cancelled && !readStoredConsent()) setShowBanner(true);
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(fallback);
+    };
   }, [loadScriptsOnce]);
 
-  // Keep Shopify's Customer Privacy API informed of an already-known choice
-  // once it becomes available, without gating our own banner UI on it --
-  // it may load asynchronously after this component has already decided
-  // (from localStorage) not to show the banner.
+  // Reconciles our first-party record against Shopify's Customer Privacy
+  // API in both directions: migrates in a decision made under the old
+  // flow (or elsewhere, e.g. Shopify's own consent UI) that we don't have
+  // locally yet, and pushes our own decision to Shopify when it has none.
+  // Runs on mount and again whenever Shopify reports a change, so a newer
+  // decision made outside this banner (a later rejection, an expired
+  // consent) overrides a stale local copy rather than the reverse.
   useEffect(() => {
     if (!customerPrivacy) return;
-    const stored = readStoredConsent();
-    if (!stored) return;
-    customerPrivacy.setTrackingConsent(
-      {
-        analytics: stored === 'accepted',
-        marketing: stored === 'accepted',
-        preferences: stored === 'accepted',
-        sale_of_data: false,
-      },
-      (result) => result?.error && console.error('[privacy] Unable to sync stored consent'),
-    );
-  }, [customerPrivacy]);
+
+    const reconcile = () => {
+      const visitorConsent = customerPrivacy.currentVisitorConsent();
+      const shopifyState: StoredConsent | null =
+        visitorConsent.analytics === true
+          ? 'accepted'
+          : visitorConsent.analytics === false
+            ? 'rejected'
+            : null;
+      const stored = readStoredConsent();
+
+      if (shopifyState && shopifyState !== stored) {
+        writeStoredConsent(shopifyState);
+        setShowBanner(false);
+        if (shopifyState === 'accepted') loadScriptsOnce();
+        return;
+      }
+
+      if (stored && !shopifyState) {
+        customerPrivacy.setTrackingConsent(
+          {
+            analytics: stored === 'accepted',
+            marketing: stored === 'accepted',
+            preferences: stored === 'accepted',
+            sale_of_data: false,
+          },
+          (result) => result?.error && console.error('[privacy] Unable to sync stored consent'),
+        );
+      }
+    };
+
+    reconcile();
+    document.addEventListener('visitorConsentCollected', reconcile);
+    return () => document.removeEventListener('visitorConsentCollected', reconcile);
+  }, [customerPrivacy, loadScriptsOnce]);
 
   function handleAccept() {
     writeStoredConsent('accepted');
