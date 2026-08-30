@@ -17,17 +17,24 @@
  * Wired into `createHydrogenContext` in `~/lib/context`.
  */
 
-// Shared field selection reused by both fragments below. Hydrogen requires
-// the query fragment to be named exactly `CartApiQuery` and the mutation
-// fragment exactly `CartApiMutation` — reusing one fragment body under both
-// names (as this session's research note suggested) makes Hydrogen's own
-// composed operations fail server-side with "Fragment CartApiMutation was
-// used, but not defined" / "Fragment CartApiQuery was defined, but not
-// used", confirmed against a live build. So the field selection is shared
-// as a template fragment, but each entry point below declares its own
-// distinctly-named top-level fragment.
-function cartFields(linesFirst: string) {
-  return `
+// Hydrogen requires the query fragment to be named exactly `CartApiQuery`
+// and the mutation fragment exactly `CartApiMutation` — reusing one
+// fragment body under both names makes Hydrogen's own composed operations
+// fail server-side with "Fragment CartApiMutation was used, but not
+// defined" / "Fragment CartApiQuery was defined, but not used", confirmed
+// against a live build. So both fragments below declare the same field
+// selection independently rather than sharing it through a helper: the
+// `shopify hydrogen codegen` step statically parses `#graphql` tagged
+// templates and cannot resolve a function call inside one (confirmed via
+// CI: it fails with "Syntax Error: Expected Name" on the unresolved call) —
+// unlike a plain runtime build, which evaluates the template literal
+// normally. Keeping both as flat literals avoids that entirely.
+//
+// The read fragment paginates lines with the `$numCartLines` variable
+// Hydrogen's `cart` query operation declares (defaulted by Hydrogen itself
+// when `context.cart.get()` is called without an explicit `numCartLines`).
+export const CART_QUERY_FRAGMENT = `#graphql
+  fragment CartApiQuery on Cart {
     updatedAt
     id
     checkoutUrl
@@ -44,62 +51,62 @@ function cartFields(linesFirst: string) {
       email
       phone
     }
-    lines(first: ${linesFirst}) {
+    lines(first: $numCartLines) {
       edges {
         node {
-        id
-        quantity
-        attributes {
-          key
-          value
-        }
-        cost {
-          totalAmount {
-            amount
-            currencyCode
+          id
+          quantity
+          attributes {
+            key
+            value
           }
-          amountPerQuantity {
-            amount
-            currencyCode
-          }
-          compareAtAmountPerQuantity {
-            amount
-            currencyCode
-          }
-        }
-        merchandise {
-          ... on ProductVariant {
-            id
-            availableForSale
-            compareAtPrice {
+          cost {
+            totalAmount {
               amount
               currencyCode
             }
-            price {
+            amountPerQuantity {
               amount
               currencyCode
             }
-            requiresShipping
-            title
-            image {
+            compareAtAmountPerQuantity {
+              amount
+              currencyCode
+            }
+          }
+          merchandise {
+            ... on ProductVariant {
               id
-              url
-              altText
-              width
-              height
-            }
-            product {
-              handle
+              availableForSale
+              compareAtPrice {
+                amount
+                currencyCode
+              }
+              price {
+                amount
+                currencyCode
+              }
+              requiresShipping
               title
-              id
-              vendor
-            }
-            selectedOptions {
-              name
-              value
+              image {
+                id
+                url
+                altText
+                width
+                height
+              }
+              product {
+                handle
+                title
+                id
+                vendor
+              }
+              selectedOptions {
+                name
+                value
+              }
             }
           }
-        }
         }
       }
     }
@@ -153,20 +160,11 @@ function cartFields(linesFirst: string) {
         currencyCode
       }
     }
-`;
-}
-
-// The read fragment paginates lines with the `$numCartLines` variable
-// Hydrogen's `cart` query operation declares (defaulted by Hydrogen itself
-// when `context.cart.get()` is called without an explicit `numCartLines`).
-export const CART_QUERY_FRAGMENT = `#graphql
-  fragment CartApiQuery on Cart {
-    ${cartFields('$numCartLines')}
   }
 ` as const;
 
-// Mutations (addLines/updateLines/removeLines/updateDiscountCodes) reuse the
-// same full field selection so every cart action returns the complete cart
+// Mutations (addLines/updateLines/removeLines/updateDiscountCodes) select
+// the same full field set so every cart action returns the complete cart
 // shape the UI needs — not just Hydrogen's crippled 3-field mutation
 // default — but must be declared under the `CartApiMutation` fragment name
 // Hydrogen's own generated mutation documents reference. Unlike the `cart`
@@ -177,6 +175,130 @@ export const CART_QUERY_FRAGMENT = `#graphql
 // `$cartId`/`$lines`/visitor-consent variables.
 export const CART_MUTATE_FRAGMENT = `#graphql
   fragment CartApiMutation on Cart {
-    ${cartFields('250')}
+    updatedAt
+    id
+    checkoutUrl
+    totalQuantity
+    buyerIdentity {
+      countryCode
+      customer {
+        id
+        email
+        firstName
+        lastName
+        displayName
+      }
+      email
+      phone
+    }
+    lines(first: 250) {
+      edges {
+        node {
+          id
+          quantity
+          attributes {
+            key
+            value
+          }
+          cost {
+            totalAmount {
+              amount
+              currencyCode
+            }
+            amountPerQuantity {
+              amount
+              currencyCode
+            }
+            compareAtAmountPerQuantity {
+              amount
+              currencyCode
+            }
+          }
+          merchandise {
+            ... on ProductVariant {
+              id
+              availableForSale
+              compareAtPrice {
+                amount
+                currencyCode
+              }
+              price {
+                amount
+                currencyCode
+              }
+              requiresShipping
+              title
+              image {
+                id
+                url
+                altText
+                width
+                height
+              }
+              product {
+                handle
+                title
+                id
+                vendor
+              }
+              selectedOptions {
+                name
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+    cost {
+      subtotalAmount {
+        amount
+        currencyCode
+      }
+      totalAmount {
+        amount
+        currencyCode
+      }
+      totalDutyAmount {
+        amount
+        currencyCode
+      }
+      totalTaxAmount {
+        amount
+        currencyCode
+      }
+    }
+    note
+    attributes {
+      key
+      value
+    }
+    discountCodes {
+      applicable
+      code
+    }
+    discountAllocations {
+      discountedAmount {
+        amount
+        currencyCode
+      }
+      ... on CartCodeDiscountAllocation {
+        code
+      }
+      ... on CartAutomaticDiscountAllocation {
+        title
+      }
+      ... on CartCustomDiscountAllocation {
+        title
+      }
+    }
+    appliedGiftCards {
+      id
+      lastCharacters
+      amountUsed {
+        amount
+        currencyCode
+      }
+    }
   }
 ` as const;
