@@ -144,6 +144,39 @@ function CommerceAnalyticsBridge() {
   return null;
 }
 
+// Our own first-party record of the visitor's choice, source of truth for
+// whether the banner shows. Previously this relied entirely on Shopify's
+// Customer Privacy API (`currentVisitorConsent()`/`visitorConsentCollected`)
+// reflecting a prior `setTrackingConsent()` call by the time this component
+// re-mounts on the next page load -- in practice that kept reporting
+// "undecided" on refresh regardless of timing workarounds, so the banner
+// never stayed dismissed. Storing our own flag removes that dependency
+// entirely for the UI decision; `setTrackingConsent` is still called so
+// Shopify's own consent-gated behavior (analytics processing, etc.) is
+// still informed of the choice.
+const CONSENT_STORAGE_KEY = 'lb_cookie_consent';
+type StoredConsent = 'accepted' | 'rejected';
+
+function readStoredConsent(): StoredConsent | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const value = window.localStorage.getItem(CONSENT_STORAGE_KEY);
+    return value === 'accepted' || value === 'rejected' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredConsent(value: StoredConsent) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(CONSENT_STORAGE_KEY, value);
+  } catch {
+    // Storage unavailable (private browsing, quota) -- the banner will just
+    // show again next visit, which is the safe direction to fail in.
+  }
+}
+
 export default function Analytics({
   ga4Id,
   metaPixelId,
@@ -155,11 +188,12 @@ export default function Analytics({
   const scriptsLoadedRef = useRef(false);
 
   const loadScriptsOnce = useCallback(() => {
-    // Ref-guarded rather than state-guarded: this runs from an effect body
-    // (see below), and under StrictMode's dev double-invoke a state-updater
-    // guard can still let both passes through before either commit lands,
-    // loading every script twice. A ref reads/writes synchronously, so the
-    // second pass always sees the first pass's write.
+    // Ref-guarded rather than state-guarded: this can be invoked from more
+    // than one place (initial mount, handleAccept), and under StrictMode's
+    // dev double-invoke a state-updater guard can still let both passes
+    // through before either commit lands, loading every script twice. A
+    // ref reads/writes synchronously, so the second call always sees the
+    // first call's write.
     if (scriptsLoadedRef.current) return;
     scriptsLoadedRef.current = true;
     if (ga4Id) loadGA4(ga4Id);
@@ -169,73 +203,52 @@ export default function Analytics({
   }, [ga4Id, metaPixelId, tiktokPixelId, klaviyoCompanyId]);
 
   useEffect(() => {
-    if (!customerPrivacy) return;
-    let cancelled = false;
-    // On a fresh page load, the Shopify Customer Privacy API still needs to
-    // sync previously-saved consent in from the checkout domain (a
-    // cross-domain round trip) before `currentVisitorConsent()` reflects
-    // it -- reading it synchronously right here can catch it mid-sync and
-    // see the "undecided" default even though the visitor already
-    // accepted, which is what made the banner reappear on every refresh.
-    // Give that sync a brief window to land before treating "undecided" as
-    // real and showing the banner, so a returning visitor doesn't see it
-    // flash back in; the API's own `visitorConsentCollected` event (fired
-    // once the sync -- or a new `setTrackingConsent` call -- completes)
-    // cancels the wait early whenever it arrives sooner.
-    let undecidedTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const apply = (current: 'accepted' | 'rejected' | 'undecided') => {
-      if (cancelled) return;
-      if (current === 'undecided') {
-        if (undecidedTimer) return;
-        undecidedTimer = setTimeout(() => {
-          if (!cancelled) setShowBanner(true);
-        }, 500);
-        return;
-      }
-      if (undecidedTimer) {
-        clearTimeout(undecidedTimer);
-        undecidedTimer = null;
-      }
+    const stored = readStoredConsent();
+    if (stored === 'accepted') {
       setShowBanner(false);
-      if (current === 'accepted') loadScriptsOnce();
-    };
+      loadScriptsOnce();
+    } else if (stored === 'rejected') {
+      setShowBanner(false);
+    } else {
+      // No stored choice yet -- this is a genuinely new visitor (or one
+      // who cleared storage), so show the banner.
+      setShowBanner(true);
+    }
+  }, [loadScriptsOnce]);
 
-    const evaluate = () => {
-      const visitorConsent = customerPrivacy.currentVisitorConsent();
-      const current = visitorConsent.analytics === true
-        ? 'accepted'
-        : visitorConsent.analytics === false
-          ? 'rejected'
-          : 'undecided';
-      apply(current);
-    };
-
-    evaluate();
-    document.addEventListener('visitorConsentCollected', evaluate);
-    return () => {
-      cancelled = true;
-      if (undecidedTimer) clearTimeout(undecidedTimer);
-      document.removeEventListener('visitorConsentCollected', evaluate);
-    };
-  }, [customerPrivacy, loadScriptsOnce]);
+  // Keep Shopify's Customer Privacy API informed of an already-known choice
+  // once it becomes available, without gating our own banner UI on it --
+  // it may load asynchronously after this component has already decided
+  // (from localStorage) not to show the banner.
+  useEffect(() => {
+    if (!customerPrivacy) return;
+    const stored = readStoredConsent();
+    if (!stored) return;
+    customerPrivacy.setTrackingConsent(
+      {
+        analytics: stored === 'accepted',
+        marketing: stored === 'accepted',
+        preferences: stored === 'accepted',
+        sale_of_data: false,
+      },
+      (result) => result?.error && console.error('[privacy] Unable to sync stored consent'),
+    );
+  }, [customerPrivacy]);
 
   function handleAccept() {
-    if (!customerPrivacy) return;
+    writeStoredConsent('accepted');
     setShowBanner(false);
-    // Script loading is handled by the `visitorConsentCollected` listener
-    // above, which this call triggers -- keeps a single source of truth so
-    // scripts don't load twice.
-    customerPrivacy.setTrackingConsent(
+    loadScriptsOnce();
+    customerPrivacy?.setTrackingConsent(
       {analytics: true, marketing: true, preferences: true, sale_of_data: false},
       (result) => result?.error && console.error('[privacy] Unable to save consent'),
     );
   }
 
   function handleReject() {
-    if (!customerPrivacy) return;
+    writeStoredConsent('rejected');
     setShowBanner(false);
-    customerPrivacy.setTrackingConsent(
+    customerPrivacy?.setTrackingConsent(
       {analytics: false, marketing: false, preferences: false, sale_of_data: false},
       (result) => result?.error && console.error('[privacy] Unable to save consent'),
     );
