@@ -13,6 +13,7 @@ import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import ProductCard from '~/components/ui/ProductCard';
 import {CacheShort} from '~/lib/cache';
+import {useFocusTrap} from '~/hooks/useFocusTrap';
 
 const SEARCH_QUERY = `#graphql
   query Search(
@@ -228,6 +229,7 @@ export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sortValue, setSortValue] = useState(`${sortKey}-${String(reverse)}`);
   const [filterOpen, setFilterOpen] = useState(false);
+  const {containerRef: filterDrawerRef} = useFocusTrap(filterOpen, () => setFilterOpen(false));
 
   // No query — show search form
   if (!query) {
@@ -261,6 +263,24 @@ export default function SearchPage() {
   const vendorFilter = productFilters.find(
     (f) => f.id === 'productVendor' || f.label.toLowerCase().includes('brand') || f.label.toLowerCase().includes('vendor'),
   );
+
+  // The Storefront API's facet `label` is a display string that can differ
+  // from the actual field value it filters on (normalization, casing,
+  // localization) -- `input` is the API's own JSON-encoded representation
+  // of the filter and is the value that's actually safe to round-trip
+  // through the URL and back into $productType/$productVendor. If a
+  // facet's input isn't the expected JSON shape, fall back to the raw
+  // input string itself rather than guessing from the label.
+  function filterInputValue(input: string, key: string): string {
+    try {
+      const parsed = JSON.parse(input) as Record<string, unknown>;
+      const value = parsed[key];
+      if (typeof value === 'string') return value;
+    } catch {
+      // fall through to the raw-input fallback below
+    }
+    return input;
+  }
 
   function handleSortChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const [newSortKey, newReverse] = e.target.value.split('-');
@@ -351,14 +371,15 @@ export default function SearchPage() {
                   <p className="h-eyebrow mb-4 text-[var(--color-foreground)]">{typeFilter.label}</p>
                   <div className="space-y-2.5">
                     {typeFilter.values.slice(0, 15).map((v) => {
-                      const isActive = searchParams.get('type') === v.label;
+                      const value = filterInputValue(v.input, 'productType');
+                      const isActive = searchParams.get('type') === value;
                       return (
                         <label key={v.label} className="flex items-center justify-between text-[0.85rem] cursor-pointer hover:text-[var(--color-text-secondary)] transition-colors">
                           <div className="flex items-center gap-2.5">
                             <input
                               type="checkbox"
                               checked={isActive}
-                              onChange={() => handleFilterChange('type', isActive ? null : v.label)}
+                              onChange={() => handleFilterChange('type', isActive ? null : value)}
                               className="w-4 h-4 accent-[var(--color-foreground)]"
                             />
                             {v.label}
@@ -376,14 +397,15 @@ export default function SearchPage() {
                   <p className="h-eyebrow mb-4 text-[var(--color-foreground)]">{vendorFilter.label}</p>
                   <div className="space-y-2.5">
                     {vendorFilter.values.slice(0, 15).map((v) => {
-                      const isActive = searchParams.get('vendor') === v.label;
+                      const value = filterInputValue(v.input, 'productVendor');
+                      const isActive = searchParams.get('vendor') === value;
                       return (
                         <label key={v.label} className="flex items-center justify-between text-[0.85rem] cursor-pointer hover:text-[var(--color-text-secondary)] transition-colors">
                           <div className="flex items-center gap-2.5">
                             <input
                               type="checkbox"
                               checked={isActive}
-                              onChange={() => handleFilterChange('vendor', isActive ? null : v.label)}
+                              onChange={() => handleFilterChange('vendor', isActive ? null : value)}
                               className="w-4 h-4 accent-[var(--color-foreground)]"
                             />
                             {v.label}
@@ -533,9 +555,12 @@ export default function SearchPage() {
 
       {/* Mobile filter drawer */}
       {filterOpen && (
-        <div className="fixed inset-0 z-[500] lg:hidden">
+        <div className="fixed inset-0 z-[500] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
           <div className="absolute inset-0 bg-[var(--color-foreground)]/40" onClick={() => setFilterOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col">
+          <div
+            ref={filterDrawerRef}
+            className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col"
+          >
             <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border-subtle)]">
               <p className="h-eyebrow text-[var(--color-foreground)]">Filters</p>
               <button onClick={() => setFilterOpen(false)} aria-label="Close filters" className="p-1 text-[var(--color-foreground)]">
@@ -560,14 +585,15 @@ export default function SearchPage() {
                   <p className="h-eyebrow mb-4 text-[var(--color-foreground)]">{typeFilter.label}</p>
                   <div className="space-y-3">
                     {typeFilter.values.slice(0, 20).map((v) => {
-                      const isActive = searchParams.get('type') === v.label;
+                      const value = filterInputValue(v.input, 'productType');
+                      const isActive = searchParams.get('type') === value;
                       return (
                         <label key={v.label} className="flex items-center justify-between text-sm cursor-pointer">
                           <div className="flex items-center gap-2.5">
                             <input
                               type="checkbox"
                               checked={isActive}
-                              onChange={() => handleFilterChange('type', isActive ? null : v.label)}
+                              onChange={() => handleFilterChange('type', isActive ? null : value)}
                               className="w-4 h-4 accent-[var(--color-foreground)]"
                             />
                             {v.label}
@@ -584,14 +610,15 @@ export default function SearchPage() {
                   <p className="h-eyebrow mb-4 text-[var(--color-foreground)]">{vendorFilter.label}</p>
                   <div className="space-y-3">
                     {vendorFilter.values.slice(0, 20).map((v) => {
-                      const isActive = searchParams.get('vendor') === v.label;
+                      const value = filterInputValue(v.input, 'productVendor');
+                      const isActive = searchParams.get('vendor') === value;
                       return (
                         <label key={v.label} className="flex items-center justify-between text-sm cursor-pointer">
                           <div className="flex items-center gap-2.5">
                             <input
                               type="checkbox"
                               checked={isActive}
-                              onChange={() => handleFilterChange('vendor', isActive ? null : v.label)}
+                              onChange={() => handleFilterChange('vendor', isActive ? null : value)}
                               className="w-4 h-4 accent-[var(--color-foreground)]"
                             />
                             {v.label}
