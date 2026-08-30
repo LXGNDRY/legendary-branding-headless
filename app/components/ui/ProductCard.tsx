@@ -1,5 +1,5 @@
 import {Link, useFetcher} from 'react-router';
-import {Image, Money} from '@shopify/hydrogen';
+import {CartForm, Image, Money} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Badge from '~/components/ui/Badge';
 import WishlistButton from '~/components/ui/WishlistButton';
@@ -38,6 +38,10 @@ export type ProductCardFragment = {
     minVariantPrice: MoneyFragment;
   };
   tags: string[];
+  selectedOrFirstAvailableVariant?: {
+    id: string;
+    availableForSale: boolean;
+  } | null;
 };
 
 export const PRODUCT_CARD_FRAGMENT = `#graphql
@@ -80,6 +84,18 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
       }
     }
     tags
+    # Used by the product card's "Quick Add" button to add a variant to the
+    # cart without navigating to the PDP. Falls back to the first available
+    # variant when no options are pre-selected — correct for the common case
+    # of single-variant products or a "just add the default" quick action.
+    selectedOrFirstAvailableVariant(
+      selectedOptions: []
+      ignoreUnknownOptions: true
+      caseInsensitiveMatch: true
+    ) {
+      id
+      availableForSale
+    }
   }
 ` as const;
 
@@ -110,7 +126,6 @@ export default function ProductCard({
   showQuickAdd = true,
   hoverFlip = true,
   layout = 'grid',
-  onQuickAdd,
 }: {
   product: ProductCardFragment;
   loading?: 'eager' | 'lazy';
@@ -118,8 +133,6 @@ export default function ProductCard({
   showQuickAdd?: boolean;
   hoverFlip?: boolean;
   layout?: 'grid' | 'list';
-  /** Called when quick add is clicked (first variant by default) */
-  onQuickAdd?: (productId: string) => void;
 }) {
   const onSale = isOnSale(product);
   const soldOut = !product.availableForSale;
@@ -129,6 +142,29 @@ export default function ProductCard({
     product.images?.nodes &&
     product.images.nodes.length > 1 &&
     product.images.nodes[1];
+
+  const quickAddVariant = product.selectedOrFirstAvailableVariant;
+  const canQuickAdd = Boolean(quickAddVariant?.id && quickAddVariant.availableForSale);
+  const quickAddFetcher = useFetcher<{errors?: Array<{message?: string}>}>();
+  const isAdding = quickAddFetcher.state !== 'idle';
+  const justAdded =
+    quickAddFetcher.state === 'idle' &&
+    quickAddFetcher.data != null &&
+    !quickAddFetcher.data.errors?.length;
+
+  function handleQuickAdd(e: React.MouseEvent) {
+    e.preventDefault();
+    if (!quickAddVariant?.id || isAdding) return;
+    quickAddFetcher.submit(
+      {
+        [CartForm.INPUT_NAME]: JSON.stringify({
+          action: CartForm.ACTIONS.LinesAdd,
+          inputs: {lines: [{merchandiseId: quickAddVariant.id, quantity: 1}]},
+        }),
+      },
+      {method: 'post', action: '/cart'},
+    );
+  }
 
   // List layout
   if (layout === 'list') {
@@ -277,18 +313,16 @@ export default function ProductCard({
         </div>
 
         {/* Quick add — slides up on hover (desktop only) */}
-        {showQuickAdd && product.availableForSale && (
+        {showQuickAdd && product.availableForSale && canQuickAdd && (
           <div className="hidden sm:block absolute bottom-0 left-0 right-0 translate-y-full opacity-0 transition-all duration-[300ms] ease-[var(--ease-expo)] group-hover:translate-y-0 group-hover:opacity-100 z-10 p-3">
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                onQuickAdd?.(product.id);
-              }}
-              className="w-full justify-center bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase py-2.5 hover:bg-[var(--color-accent)] hover:text-white transition-colors duration-200 rounded-full"
+              onClick={handleQuickAdd}
+              disabled={isAdding}
+              className="w-full justify-center bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase py-2.5 hover:bg-[var(--color-accent)] hover:text-white transition-colors duration-200 rounded-full disabled:opacity-60"
               aria-label={`Quick add ${product.title} to bag`}
             >
-              Add to Bag
+              {isAdding ? 'Adding…' : justAdded ? 'Added ✓' : 'Add to Bag'}
             </button>
           </div>
         )}
