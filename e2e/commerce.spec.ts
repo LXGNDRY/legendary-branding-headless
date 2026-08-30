@@ -78,10 +78,18 @@ test.describe('Golden commerce journey', () => {
       baseURL,
     );
 
+    // Shopify may represent quantity two as one line with quantity=2 or as
+    // two equivalent quantity-one lines. Exercise the correct decrement path
+    // for either valid cart representation.
+    const enabledDecrease = cartPage.locator(
+      'button[aria-label="Decrease quantity"]:not([disabled])',
+    );
     const decrementResponse = page.waitForResponse(isCartMutation);
-    await cartPage
-      .getByRole('button', {name: 'Decrease quantity', exact: true})
-      .click();
+    if (await enabledDecrease.count()) {
+      await enabledDecrease.first().click();
+    } else {
+      await cartPage.getByRole('button', {name: 'Remove', exact: true}).first().click();
+    }
     const decrementedCartResponse = await decrementResponse;
     expect(decrementedCartResponse.ok()).toBe(true);
     expect(await decrementedCartResponse.text()).toMatch(/"totalQuantity",\s*1/);
