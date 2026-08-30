@@ -55,6 +55,19 @@ export default defineConfig({
       name: 'mobile',
       use: {...devices['Pixel 7']},
     },
+    {
+      // Real iOS Safari coverage, distinct from the Android/Chrome
+      // emulation above. iOS Safari is the single largest share of real
+      // mobile shopper traffic and has its own quirks (dvh units,
+      // position:sticky/fixed behavior, hover/pointer media-query
+      // reporting, autofocus-triggered keyboard behavior) that Chromium's
+      // mobile emulation does not reproduce -- several bugs fixed in this
+      // codebase's mobile-optimization pass (hover-hidden controls,
+      // viewport-meta handling) were exactly this class of issue, so this
+      // project exists to actually catch that class going forward.
+      name: 'mobile-safari',
+      use: {...devices['iPhone 14']},
+    },
   ],
 
   /* Local server — always used unless BASE_URL points at an external
