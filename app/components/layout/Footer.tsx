@@ -79,7 +79,7 @@ export default function Footer({localization}: {localization: LocalizationData})
     <footer className="border-t border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] mt-auto">
       <div className="h-container py-16 md:py-24">
         {/* Top: brand statement + newsletter */}
-        <div className="grid md:grid-cols-[1.2fr_1fr] gap-12 lg:gap-20 mb-16 pb-16 border-b border-[var(--color-border-muted)]">
+        <div className="grid lg:grid-cols-[1.2fr_1fr] gap-10 lg:gap-20 mb-12 lg:mb-16 pb-12 lg:pb-16 border-b border-[var(--color-border-muted)]">
           <div className="max-w-lg">
             <Link
               to="/"
@@ -106,7 +106,7 @@ export default function Footer({localization}: {localization: LocalizationData})
         </div>
 
         {/* Middle: link columns */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 mb-12 lg:mb-16">
           <FooterColumn heading="Shop" links={SHOP_LINKS} />
           <FooterColumn heading="Help" links={HELP_LINKS} />
           <FooterColumn heading="Company" links={COMPANY_LINKS} />

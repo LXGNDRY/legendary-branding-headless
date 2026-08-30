@@ -346,10 +346,10 @@ export default function Header({
         }`}
       >
         <div className="h-container">
-          <div className="flex items-center justify-between h-[60px] md:h-[68px] gap-4">
+          <div className="flex items-center justify-between h-[60px] lg:h-[68px] gap-4">
             {/* Mobile: hamburger */}
             <button
-              className="md:hidden p-1.5 text-[var(--color-text-primary)] hover:text-[var(--color-text-secondary)] transition-colors"
+              className="lg:hidden p-1.5 text-[var(--color-text-primary)] hover:text-[var(--color-text-secondary)] transition-colors"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
               aria-expanded={mobileOpen}
@@ -360,14 +360,14 @@ export default function Header({
             {/* Wordmark */}
             <Link
               to="/"
-              className="font-serif text-[1.25rem] md:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
+              className="font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
             >
               LEGENDARY
             </Link>
 
             {/* Desktop nav */}
             <nav
-              className="hidden md:flex items-center gap-8 flex-1 justify-center"
+              className="hidden lg:flex items-center gap-8 flex-1 justify-center"
               aria-label="Main"
             >
               {NAV.map((item) => (
