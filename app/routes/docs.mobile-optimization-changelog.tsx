@@ -5,11 +5,18 @@ export const meta: MetaFunction = () => {
   const canonical = 'https://legendary-branding.com/docs/mobile-optimization-changelog';
   return [
     {title: 'Mobile Optimization Pass — LEGENDARY BRANDING'},
-    {name: 'description', content: 'Ten vertical slices hardening the storefront for real mobile devices — touch targets, hover-capability bugs, a site-wide viewport-meta fix, checkout handoff, accessibility, performance, and device/browser coverage.'},
+    {name: 'description', content: 'Seven vertical slices hardening the storefront for real mobile devices — touch targets, hover-capability bugs, a site-wide viewport-meta fix, checkout handoff, accessibility, performance, and device/browser coverage.'},
     {tagName: 'link', rel: 'canonical', href: canonical},
     {property: 'og:title', content: 'Mobile Optimization Pass'},
-    {property: 'og:description', content: 'Ten vertical slices hardening the storefront for real mobile devices.'},
+    {property: 'og:description', content: 'Seven vertical slices hardening the storefront for real mobile devices.'},
     {property: 'og:url', content: canonical},
+    // This leaf route's own meta export replaces (rather than merges with)
+    // docs.tsx's parent meta -- the exact React Router v7 behavior this
+    // page documents as the root cause of the site-wide viewport-meta bug
+    // (see Slice 6 below). Without this, the parent's `noindex, nofollow`
+    // directive would be silently dropped and this internal docs page
+    // would become indexable.
+    {name: 'robots', content: 'noindex, nofollow'},
   ];
 };
 
@@ -63,15 +70,17 @@ export default function MobileOptimizationChangelogPage() {
       <div>
         <p className="h-eyebrow text-[var(--color-accent)] mb-4">MOBILE OPTIMIZATION</p>
         <h1 className="font-serif text-4xl md:text-5xl font-normal text-[var(--color-foreground)] mb-4 leading-tight">
-          Ten Slices, Ten PRs,
+          Seven Slices, Seven PRs,
           <br />
           One Real Mobile Storefront
         </h1>
         <p className="text-lg text-[var(--color-text-secondary)] leading-relaxed mb-8 max-w-2xl">
-          Each slice branched from <InlineCode>dev</InlineCode>, reviewed by
-          Codex, CI-gated, and merged individually. This page is the
-          release-facing summary — each PR&apos;s own description has the
-          full technical detail and verification steps.
+          Slices 5–11 of the original 11-slice plan (slices 1–4 were
+          foundational work completed earlier and aren&apos;t covered here),
+          PRs #67–#73, each branched from <InlineCode>dev</InlineCode>,
+          reviewed by Codex, CI-gated, and merged individually. This page is
+          the release-facing summary — each PR&apos;s own description has
+          the full technical detail and verification steps.
         </p>
 
         <SectionHeading id="why">Why this pass happened</SectionHeading>

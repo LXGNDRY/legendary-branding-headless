@@ -109,7 +109,7 @@ export default function DocsIndex() {
             <span className="h-eyebrow text-[var(--color-accent)]">Mobile Optimization</span>
           </div>
           <p className="text-[var(--color-text-secondary)] mb-6">
-            Ten vertical slices hardening the storefront for real mobile devices --
+            Seven vertical slices hardening the storefront for real mobile devices --
             touch targets, hover-capability bugs, a site-wide viewport-meta fix,
             checkout handoff, accessibility, performance, and device/browser coverage.
           </p>

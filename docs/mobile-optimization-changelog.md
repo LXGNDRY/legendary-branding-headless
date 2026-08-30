@@ -1,10 +1,10 @@
 # Mobile Optimization Pass — Changelog
 
-Ten vertical slices, ten PRs (#66–#72, one slice — Cart drawer/page — split
-across two PRs for touch targets and a follow-up), each branched from `dev`,
-reviewed by Codex, CI-gated, and merged individually. This document is the
-release-facing summary; each PR's own description has the full technical
-detail and verification steps.
+Seven vertical slices (numbered 5–11 in the original 11-slice plan; slices
+1–4 were foundational work completed earlier and aren't covered here), seven
+PRs (#67–#73), each branched from `dev`, reviewed by Codex, CI-gated, and
+merged individually. This document is the release-facing summary; each PR's
+own description has the full technical detail and verification steps.
 
 ## Why this pass happened
 
