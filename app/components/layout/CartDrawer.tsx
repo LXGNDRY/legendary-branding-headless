@@ -112,7 +112,7 @@ function CartLineItem({line}: {line: CartLineData}) {
               <button
                 type="submit"
                 className="w-7 h-7 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors disabled:opacity-30"
-                aria-label="Decrease quantity"
+                aria-label={`Decrease quantity for ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
                 disabled={quantity <= 1}
               >
                 <MinusIcon />
@@ -127,7 +127,7 @@ function CartLineItem({line}: {line: CartLineData}) {
               <button
                 type="submit"
                 className="w-7 h-7 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors"
-                aria-label="Increase quantity"
+                aria-label={`Increase quantity for ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
               >
                 <PlusIcon />
               </button>
