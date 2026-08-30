@@ -214,6 +214,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   // Discount code state
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
+  const [checkingOut, setCheckingOut] = useState(false);
   const fetcher = useFetcher<{
     cart?: {
       discountCodes?: {code: string; applicable: boolean}[];
@@ -450,18 +451,39 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
             </p>
 
             {/* Checkout */}
-            <div onClick={() => publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart: currentCart})}>
+            {currentCart.checkoutUrl ? (
+              <div
+                onClick={() => {
+                  if (checkingOut) return;
+                  setCheckingOut(true);
+                  publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart: currentCart});
+                }}
+                className={checkingOut ? 'pointer-events-none' : undefined}
+              >
+                <Button
+                  as="a"
+                  href={currentCart.checkoutUrl}
+                  variant="primary"
+                  className="w-full justify-center"
+                  size="md"
+                  loading={checkingOut}
+                  testId="drawer-checkout"
+                >
+                  {checkingOut ? 'Redirecting…' : 'Checkout'}
+                </Button>
+              </div>
+            ) : (
               <Button
-                as="a"
-                href={currentCart.checkoutUrl}
                 variant="primary"
+                type="button"
                 className="w-full justify-center"
                 size="md"
-                testId="drawer-checkout"
+                disabled
+                ariaLabel="Checkout unavailable -- your cart is still loading"
               >
                 Checkout
               </Button>
-            </div>
+            )}
 
             <div className="flex justify-center pt-1">
               <Link

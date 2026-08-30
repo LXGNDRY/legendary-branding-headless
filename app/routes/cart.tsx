@@ -338,6 +338,7 @@ export default function CartPage() {
   const {publish} = useAnalytics();
   const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
+  const [checkingOut, setCheckingOut] = useState(false);
 
   return (
     <>
@@ -401,15 +402,23 @@ export default function CartPage() {
             </div>
 
             {cart?.checkoutUrl ? (
-              <div onClick={() => publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart})}>
+              <div
+                onClick={() => {
+                  if (checkingOut) return;
+                  setCheckingOut(true);
+                  publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart});
+                }}
+                className={checkingOut ? 'pointer-events-none' : undefined}
+              >
                 <Button
                   as="a"
                   href={cart.checkoutUrl}
                   variant="dark"
                   className="w-full justify-center"
+                  loading={checkingOut}
                   testId="cart-checkout"
                 >
-                  Proceed to Checkout
+                  {checkingOut ? 'Redirecting…' : 'Proceed to Checkout'}
                 </Button>
               </div>
             ) : (
@@ -418,6 +427,7 @@ export default function CartPage() {
                 type="button"
                 className="w-full justify-center"
                 disabled
+                ariaLabel="Checkout unavailable -- your cart is still loading"
               >
                 Proceed to Checkout
               </Button>

@@ -11,6 +11,7 @@ interface ButtonBaseProps {
   disabled?: boolean;
   loading?: boolean;
   testId?: string;
+  ariaLabel?: string;
 }
 
 interface ButtonAsButtonProps extends ButtonBaseProps {
@@ -82,6 +83,7 @@ export default function Button({
   disabled,
   loading,
   testId,
+  ariaLabel,
   ...rest
 }: ButtonProps) {
   const isDisabled = disabled || loading;
@@ -102,7 +104,7 @@ export default function Button({
   if (rest.as === 'link') {
     const {to} = rest as ButtonAsLinkProps;
     return (
-      <Link to={to} className={classes} aria-disabled={isDisabled} data-testid={testId}>
+      <Link to={to} className={classes} aria-disabled={isDisabled} aria-label={ariaLabel} data-testid={testId}>
         {content}
       </Link>
     );
@@ -111,7 +113,7 @@ export default function Button({
   if (rest.as === 'a') {
     const {href, target, rel} = rest as ButtonAsAnchorProps;
     return (
-      <a href={href} target={target} rel={rel} className={classes} aria-disabled={isDisabled} data-testid={testId}>
+      <a href={href} target={target} rel={rel} className={classes} aria-disabled={isDisabled} aria-label={ariaLabel} data-testid={testId}>
         {content}
       </a>
     );
@@ -125,6 +127,7 @@ export default function Button({
       onClick={onClick}
       className={classes}
       aria-busy={loading || undefined}
+      aria-label={ariaLabel}
       data-testid={testId}
     >
       {content}
