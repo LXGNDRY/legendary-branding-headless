@@ -96,7 +96,11 @@ export default function CollectionGrid({
                       {productCount} {productCount === 1 ? 'item' : 'items'}
                     </p>
                   </div>
-                  <span className="h-eyebrow opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {/* Always visible on devices that can't hover (any touch
+                      device, regardless of viewport width); reveals on hover
+                      only for devices with an actual fine pointer, matching
+                      the ProductCard Quick Add/Wishlist pattern. */}
+                  <span className="h-eyebrow opacity-100 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 transition-opacity duration-300">
                     Shop →
                   </span>
                 </div>
