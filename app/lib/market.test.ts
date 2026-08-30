@@ -21,6 +21,10 @@ describe('market country validation', () => {
     expect(normalizeCountryCode(null)).toBeNull();
   });
 
+  it('rejects unknown two-letter regions before they reach Shopify GraphQL', () => {
+    expect(normalizeCountryCode('ZZ')).toBeNull();
+  });
+
   it('accepts only countries Shopify reports as available', () => {
     expect(isAvailableCountry('CA', markets)).toBe(true);
     expect(isAvailableCountry('FR', markets)).toBe(false);

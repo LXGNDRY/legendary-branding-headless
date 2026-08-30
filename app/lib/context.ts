@@ -23,14 +23,10 @@ interface CloudflareRequestCf {
  *
  * Why this exists: the Shopify store has exactly two enabled Markets —
  * "United States" (primary, region US only) and "International" (region
- * ~150 other countries) — and both share the same domain with no
- * country-specific subpath (only language subpaths like /de/, /fr/ exist,
- * which are unrelated to market resolution). Hardcoding `country: 'US'`
- * here would silently put every non-US visitor into the wrong market for
- * pricing/availability/currency. We deliberately do NOT hardcode the
- * ~150-country International market list — an unrecognized/unsupported
- * code passed to `@inContext(country: ...)` is handled sensibly by the
- * Storefront API itself, so a plain 2-letter-code sanity check is enough.
+ * ~150 other countries) — and both share the same domain. Hardcoding
+ * `country: 'US'` here would silently put every non-US visitor into the wrong
+ * market for pricing, availability, and currency. Country values are checked
+ * as known regions before they can enter Shopify's GraphQL context.
  */
 export function resolveCountry(request: Request) {
   const cf = (request as Request & {cf?: CloudflareRequestCf}).cf;
@@ -85,14 +81,8 @@ export async function createAppLoadContext(
 
   // Country is the Shopify Markets source of truth. Currency is deliberately
   // not stored independently: Shopify derives it from the selected market.
-  const url = new URL(request.url);
-  const countryParam = normalizeCountryCode(url.searchParams.get('country'));
   const storedCountry = normalizeCountryCode(session.get('country'));
-  const activeCountry = countryParam ?? storedCountry ?? resolveCountry(request);
-
-  if (countryParam && countryParam !== storedCountry) {
-    session.set('country', countryParam);
-  }
+  const activeCountry = storedCountry ?? resolveCountry(request);
 
   // Configure customer account if env vars are present
   const hasCustomerAccount = Boolean(

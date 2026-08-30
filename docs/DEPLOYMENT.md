@@ -68,15 +68,16 @@ The workflow (`Storefront 1000167667`) triggers on `push` to `main`/`dev`, `pull
    via Miniflare from a local `.env` file, not from inherited shell/step `env:` (documented
    in-line in the workflow as a fix for a real prior failure mode).
 4. `npm run build`
-5. `npm run test:e2e` runs its matrix project against a **local** `shopify hydrogen preview` server
+5. `npm run test:e2e` runs isolated desktop Chromium, desktop WebKit, and mobile Chromium jobs against a **local** `shopify hydrogen preview` server
    (per `playwright.config.ts`'s `webServer`), not the live Oxygen deployment — this sidesteps the
    Oxygen preview bot-check entirely.
 6. On failure, uploads per-project Playwright traces as a build artifact (`playwright-report/`, 7-day
    retention).
 
-The suite includes a deterministic stocked-product commerce journey covering variant selection,
-cart creation, quantity mutation, checkout URL validation, and removal. It does not place a paid
-order and does not replace a manual payment/refund test before launch.
+The suite includes structural journeys and a deterministic stocked-product commerce journey
+covering variant selection, cart creation, quantity mutation, checkout URL validation, and
+removal. It does not place a paid order, replace a manual payment/refund test before launch, or
+currently run an automated WCAG violation scanner.
 
 ---
 
@@ -101,6 +102,14 @@ Read directly from the workflow file's `secrets.*` references:
 
 Their presence in the real GitHub repository settings and matching Oxygen runtime environment
 remains an owner-controlled launch check.
+
+The commerce E2E fixture defaults to the active, stocked
+`legendary-world-round-t-shirt` product. Set the non-secret
+`E2E_PRODUCT_HANDLE` environment variable when deliberately rotating the test
+fixture. The test derives the expected product title from the loaded fixture.
+The fixture must remain published, available to the Storefront API,
+and have an available `Color=Black&Size=S` variant; missing fixture data is a
+test failure, never a skip.
 
 ### Vars read by the app but not referenced anywhere in the workflow file
 The app reads several more optional vars at runtime (`app/lib/context.ts`, `env.d.ts`), but the CI

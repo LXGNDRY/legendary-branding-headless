@@ -160,10 +160,6 @@ export default function App() {
   const navigation = useNavigation();
   const location = useLocation();
   const fetchers = useFetchers();
-  const displayedCart = fetchers.reduce<CartData>((latestCart, fetcher) => {
-    const fetcherCart = (fetcher.data as {cart?: CartData} | undefined)?.cart;
-    return fetcherCart ?? latestCart;
-  }, cart);
 
   // Close cart drawer on route change (e.g. clicking a product or "Start Shopping")
   useEffect(() => {
@@ -202,7 +198,7 @@ export default function App() {
     document.head.appendChild(script);
   }, []);
 
-  const cartCount = displayedCart?.totalQuantity ?? 0;
+  const cartCount = cart?.totalQuantity ?? 0;
   const isNavigating = navigation.state !== 'idle';
 
   return (
@@ -256,7 +252,7 @@ export default function App() {
       />
 
       <CartDrawer
-        cart={displayedCart}
+        cart={cart}
         open={cartOpen}
         onClose={() => setCartOpen(false)}
       />

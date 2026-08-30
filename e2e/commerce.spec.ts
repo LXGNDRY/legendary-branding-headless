@@ -54,7 +54,10 @@ test.describe('Golden commerce journey', () => {
 
     const drawerCheckout = drawer.getByTestId('drawer-checkout');
     await expect(drawerCheckout).toBeVisible();
-    expectTrustedCheckout(await drawerCheckout.getAttribute('href'), baseURL);
+    expectTrustedCheckout(
+      await drawerCheckout.getAttribute('href'),
+      baseURL,
+    );
 
     await drawer.getByRole('link', {name: /view full cart/i}).click();
     await expect(page).toHaveURL(/\/cart$/);
@@ -62,26 +65,33 @@ test.describe('Golden commerce journey', () => {
 
     const updateResponse = page.waitForResponse(isCartMutation);
     const cartPage = page.locator('#main-content');
-    await cartPage.getByRole('button', {name: 'Increase quantity', exact: true}).click();
+    await cartPage
+      .getByRole('button', {name: 'Increase quantity', exact: true})
+      .click();
     const updatedCartResponse = await updateResponse;
     expect(updatedCartResponse.ok()).toBe(true);
     expect(await updatedCartResponse.text()).toMatch(/"totalQuantity",\s*2/);
     await expect(page.getByText(/Subtotal \(2 items\)/i)).toBeVisible();
 
-    expectTrustedCheckout(await page.getByTestId('cart-checkout').getAttribute('href'), baseURL);
+    expectTrustedCheckout(
+      await page.getByTestId('cart-checkout').getAttribute('href'),
+      baseURL,
+    );
 
-    for (const remainingQuantity of [1, 0]) {
-      const removeResponse = page.waitForResponse(isCartMutation);
-      await cartPage.getByRole('button', {name: 'Remove', exact: true}).first().click();
-      const removedCartResponse = await removeResponse;
-      expect(removedCartResponse.ok()).toBe(true);
-      expect(await removedCartResponse.text()).toMatch(
-        new RegExp(`"totalQuantity",\\s*${remainingQuantity}`),
-      );
+    const decrementResponse = page.waitForResponse(isCartMutation);
+    await cartPage
+      .getByRole('button', {name: 'Decrease quantity', exact: true})
+      .click();
+    const decrementedCartResponse = await decrementResponse;
+    expect(decrementedCartResponse.ok()).toBe(true);
+    expect(await decrementedCartResponse.text()).toMatch(/"totalQuantity",\s*1/);
+    await expect(page.getByText(/Subtotal \(1 item\)/i)).toBeVisible();
 
-      if (remainingQuantity > 0) {
-        await page.reload({waitUntil: 'domcontentloaded'});
-      }
-    }
+    const removeResponse = page.waitForResponse(isCartMutation);
+    await cartPage.getByRole('button', {name: 'Remove', exact: true}).first().click();
+    const removedCartResponse = await removeResponse;
+    expect(removedCartResponse.ok()).toBe(true);
+    expect(await removedCartResponse.text()).toMatch(/"totalQuantity",\s*0/);
+    await expect(page.getByText(/Your cart is empty/i)).toBeVisible();
   });
 });

@@ -165,8 +165,7 @@ interface CartDrawerProps {
 
 export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   const {publish} = useAnalytics();
-  const cartFetcher = useFetcher<{cart: CartData}>();
-  const currentCart = cartFetcher.data?.cart ?? cart;
+  const currentCart = cart;
   const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
   const totalQuantity = currentCart?.totalQuantity ?? 0;
   const subtotal = currentCart?.cost?.subtotalAmount;
@@ -185,10 +184,6 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   }>();
 
   const {containerRef: drawerRef} = useFocusTrap(open, onClose);
-
-  useEffect(() => {
-    if (open) cartFetcher.load('/cart');
-  }, [open]);
 
   // Close on Escape (handled by useFocusTrap, but keep as safety)
   useEffect(() => {
@@ -283,9 +278,9 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
               <TruckIcon />
               <span className="text-[11px] tracking-wide text-[var(--color-text-secondary)]">
                 {hasFreeShipping ? (
-                  <span className="font-medium text-[var(--color-success)]">You qualify for free shipping</span>
+                  <span className="font-medium text-[var(--color-success)]">US orders of $100+ qualify for free shipping</span>
                 ) : (
-                  <>Add <span className="font-medium text-[var(--color-text-primary)]">${remaining.toFixed(2)}</span> for free shipping</>
+                  <>US orders: add <span className="font-medium text-[var(--color-text-primary)]">${remaining.toFixed(2)}</span> for free shipping</>
                 )}
               </span>
             </div>

@@ -8,6 +8,7 @@ export const DEFAULT_COUNTRY: CountryCode = 'US';
 export const DEFAULT_LANGUAGE: LanguageCode = 'EN';
 
 const COUNTRY_CODE = /^[A-Z]{2}$/;
+const REGION_NAMES = new Intl.DisplayNames(['en'], {type: 'region'});
 
 export interface MarketCountry {
   isoCode: CountryCode;
@@ -26,7 +27,12 @@ export interface LocalizationData {
 export function normalizeCountryCode(value: unknown): CountryCode | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toUpperCase();
-  return COUNTRY_CODE.test(normalized) ? (normalized as CountryCode) : null;
+  if (!COUNTRY_CODE.test(normalized)) return null;
+  const regionName = REGION_NAMES.of(normalized);
+  if (!regionName || regionName === normalized || regionName === 'Unknown Region') {
+    return null;
+  }
+  return normalized as CountryCode;
 }
 
 export function isAvailableCountry(
