@@ -55,13 +55,27 @@ function TruckIcon() {
 }
 
 function CartLineItem({line}: {line: CartLineData}) {
-  const {merchandise, quantity, cost} = line;
-  const {product, selectedOptions, image, price} = merchandise;
+  const {merchandise, quantity, cost, discountAllocations} = line;
+  const {product, selectedOptions, image} = merchandise;
 
   const variantLabel = selectedOptions
     .filter((o) => o.value !== 'Default Title')
     .map((o) => o.value)
     .join(' / ');
+
+  // Per-unit price reflects any line-scoped discount (e.g. an automatic
+  // "25% off" collection discount) — `merchandise.price` does not, since
+  // that's the variant's undiscounted list price. Falls back to it when
+  // the line cost fields aren't present (shouldn't happen with the app's
+  // cart fragment, but keeps this resilient to a partial cart response).
+  const unitPrice = cost.amountPerQuantity ?? merchandise.price;
+  const compareAtUnitPrice = cost.compareAtAmountPerQuantity;
+  const isLineDiscounted =
+    compareAtUnitPrice != null &&
+    parseFloat(compareAtUnitPrice.amount) > parseFloat(unitPrice.amount);
+  const discountLabels = (discountAllocations ?? [])
+    .map((d) => d.code ?? d.title)
+    .filter((label): label is string => Boolean(label));
 
   return (
     <div className="flex gap-4 py-5 border-b border-[var(--color-border-muted)]">
@@ -97,8 +111,20 @@ function CartLineItem({line}: {line: CartLineData}) {
           {variantLabel && (
             <p className="mt-1 text-[11px] text-[var(--color-text-tertiary)] tracking-wide">{variantLabel}</p>
           )}
-          <div className="mt-1.5">
-            <Money data={price} className="text-sm font-medium text-[var(--color-text-primary)]" />
+          {discountLabels.length > 0 && (
+            <p className="mt-1 text-[11px] text-[var(--color-success)] tracking-wide">
+              {discountLabels.join(' · ')}
+            </p>
+          )}
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <Money data={unitPrice} className="text-sm font-medium text-[var(--color-text-primary)]" />
+            {isLineDiscounted && compareAtUnitPrice && (
+              <Money
+                data={compareAtUnitPrice}
+                as="s"
+                className="text-xs text-[var(--color-text-tertiary)] line-through"
+              />
+            )}
           </div>
         </div>
 
