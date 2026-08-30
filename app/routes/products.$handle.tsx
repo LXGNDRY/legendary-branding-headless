@@ -203,7 +203,7 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
         disabled
         className="w-full h-btn-primary opacity-40 cursor-not-allowed"
       >
-        {unavailable ? 'Select Options' : 'Sold Out'}
+        {unavailable ? 'Choose an option' : 'Sold Out — join the waitlist below'}
       </button>
     );
   }
@@ -222,6 +222,53 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
         Add to Bag
       </button>
     </CartForm>
+  );
+}
+
+function MobilePurchaseBar({
+  variant,
+  quantity,
+}: {
+  variant?: ProductVariantFragment | null;
+  quantity: number;
+}) {
+  const available = Boolean(variant?.availableForSale);
+  const needsSelection = !variant;
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border-medium)] bg-[var(--color-bg-level-0)] p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)] lg:hidden">
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          {available && variant ? (
+            <Money data={variant.price} className="block text-sm font-semibold text-[var(--color-text-primary)]" />
+          ) : (
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">{needsSelection ? 'Choose an option' : 'Sold out'}</p>
+          )}
+          <p className="truncate text-[0.65rem] uppercase tracking-[0.1em] text-[var(--color-text-tertiary)]">
+            {available ? 'Ready to ship' : needsSelection ? 'Select size and color' : 'Get notified on restock'}
+          </p>
+        </div>
+        {available && variant ? (
+          <CartForm
+            route="/cart"
+            action={CartForm.ACTIONS.LinesAdd}
+            inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
+          >
+            <button type="submit" className="h-btn-primary whitespace-nowrap px-5">
+              Add to Bag
+            </button>
+          </CartForm>
+        ) : (
+          <button
+            type="button"
+            onClick={() => document.getElementById(needsSelection ? 'variant-options' : 'restock-signup')?.scrollIntoView({behavior: 'smooth', block: 'center'})}
+            className="h-btn-primary whitespace-nowrap px-5"
+          >
+            {needsSelection ? 'Choose options' : 'Notify Me'}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -361,7 +408,7 @@ export default function ProductPage() {
       )}
       <JsonLd data={productJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
-      <div className="bg-[var(--color-bg-level-0)]">
+      <div className="bg-[var(--color-bg-level-0)] pb-24 lg:pb-0">
         <div className="h-container py-10 md:py-14">
           {/* Breadcrumb */}
           <nav className="h-eyebrow text-[var(--color-text-tertiary)] mb-8" aria-label="Breadcrumb">
@@ -378,7 +425,7 @@ export default function ProductPage() {
             <span className="text-[var(--color-foreground)]">{product.title}</span>
           </nav>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
             {/* Gallery */}
             <ProductGallery images={product.images.nodes} title={product.title} />
 
@@ -424,8 +471,9 @@ export default function ProductPage() {
               </div>
 
               {/* Variant selector */}
-              <VariantSelector
-                handle={product.handle}
+              <div id="variant-options">
+                <VariantSelector
+                  handle={product.handle}
                 options={product.options as Parameters<typeof VariantSelector>[0]['options']}
                 variants={product.variants.nodes as Parameters<typeof VariantSelector>[0]['variants']}
                 selectedVariant={selectedVariant as Parameters<typeof VariantSelector>[0]['selectedVariant']}
@@ -445,30 +493,43 @@ export default function ProductPage() {
                       )}
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      {option.values.map(({value, isActive, isAvailable, to}) => (
-                        <Link
-                          key={value}
-                          to={to}
-                          replace
-                          preventScrollReset
-                          prefetch="intent"
-                          className={`min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-md ${
+                      {option.values.map(({value, isActive, isAvailable, to}) => {
+                        const optionClass = `min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-md ${
                             isActive
                               ? 'border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)]'
                               : isAvailable
                                 ? 'border-[var(--color-border-medium)] text-[var(--color-text-primary)] hover:border-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-2)]'
                                 : 'border-[var(--color-border-muted)] text-[var(--color-text-tertiary)] cursor-not-allowed line-through opacity-50'
-                          }`}
-                          aria-disabled={!isAvailable}
-                          aria-label={`${option.name}: ${value}${!isAvailable ? ' (unavailable)' : ''}`}
-                        >
-                          {value}
-                        </Link>
-                      ))}
+                          }`;
+
+                        return isAvailable ? (
+                          <Link
+                            key={value}
+                            to={to}
+                            replace
+                            preventScrollReset
+                            prefetch="intent"
+                            className={optionClass}
+                            aria-label={`${option.name}: ${value}`}
+                          >
+                            {value}
+                          </Link>
+                        ) : (
+                          <span
+                            key={value}
+                            className={optionClass}
+                            aria-disabled="true"
+                            aria-label={`${option.name}: ${value} (unavailable)`}
+                          >
+                            {value}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
-              </VariantSelector>
+                </VariantSelector>
+              </div>
 
               {/* Quantity + Add to cart */}
               <div className="space-y-3 pt-2">
@@ -483,14 +544,18 @@ export default function ProductPage() {
                   quantity={quantity}
                 />
                 {!selectedVariant?.availableForSale && selectedVariant && (
-                  <div className="mt-4">
-                  <WaitlistForm
-                    productId={product.id}
-                    variantId={selectedVariant.id}
-                    productTitle={product.title}
+                  <section id="restock-signup" className="rounded-md border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] p-1">
+                    <div className="px-3 pt-3">
+                      <p className="text-sm font-medium text-[var(--color-text-primary)]">Get first access when this variant returns.</p>
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-secondary)]">We&apos;ll only contact you about this product and size.</p>
+                    </div>
+                    <WaitlistForm
+                      productId={product.id}
+                      variantId={selectedVariant.id}
+                      productTitle={product.title}
                       variantTitle={selectedVariant.selectedOptions.map((o) => o.value).join(' / ')}
                     />
-                  </div>
+                  </section>
                 )}
               </div>
 
@@ -574,12 +639,14 @@ export default function ProductPage() {
                   View All
                 </Button>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:grid lg:grid-cols-4 lg:overflow-visible">
                 {(relatedProducts.products.nodes as ProductCardFragment[])
                   .filter((p) => p.id !== product.id)
                   .slice(0, 4)
                   .map((p, i) => (
-                    <ProductCard key={p.id} product={p} loading={i < 2 ? 'eager' : 'lazy'} hoverFlip showQuickAdd />
+                    <div key={p.id} className="w-[72vw] max-w-[18rem] shrink-0 snap-start lg:w-auto lg:max-w-none">
+                      <ProductCard product={p} loading={i < 2 ? 'eager' : 'lazy'} hoverFlip showQuickAdd />
+                    </div>
                   ))}
               </div>
             </div>
@@ -594,6 +661,8 @@ export default function ProductPage() {
         currentProductTitle={product.title}
         currentProductImage={product.images?.nodes?.[0]?.url}
       />
+
+      <MobilePurchaseBar variant={selectedVariant} quantity={quantity} />
 
       {/* Size guide modal */}
       <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
