@@ -1,5 +1,4 @@
 import {Image} from '@shopify/hydrogen';
-import Button from '~/components/ui/Button';
 
 interface BrandStoryImage {
   url: string;
@@ -18,6 +17,10 @@ interface BrandStoryProps {
   imagePosition?: 'left' | 'right';
 }
 
+/**
+ * HANSSEN — Brand Story Section
+ * Editorial image + text split with serif display heading.
+ */
 export default function BrandStory({
   eyebrow,
   heading,
@@ -30,45 +33,46 @@ export default function BrandStory({
   const contentOrder = imagePosition === 'right' ? 'md:order-first' : '';
 
   return (
-    <section className="lb-section bg-white overflow-hidden">
-      <div
-        className={`grid md:grid-cols-2 min-h-[480px] ${imagePosition === 'right' ? 'md:flex-row-reverse' : ''}`}
-      >
-        {/* Image */}
-        <div className={`relative bg-[#f5f5f5] overflow-hidden min-h-[360px] md:min-h-0 ${imagePosition === 'right' ? 'md:order-last' : ''}`}>
-          {image?.url ? (
-            <Image
-              data={image}
-              className="absolute inset-0 w-full h-full object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-[#f0ede8] flex items-center justify-center">
-              <span className="text-[10px] tracking-widest uppercase text-[#999]">
-                Brand Image
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Content */}
+    <section className="h-section bg-[var(--color-background)] h-reveal overflow-hidden">
+      <div className="h-container">
         <div
-          className={`flex flex-col justify-center px-8 md:px-16 py-14 ${contentOrder}`}
+          className={`grid md:grid-cols-2 gap-12 md:gap-20 items-center`}
         >
-          {eyebrow && (
-            <p className="lb-eyebrow mb-4">{eyebrow}</p>
-          )}
-          <h2 className="text-3xl md:text-4xl font-normal leading-tight mb-6">
-            {heading}
-          </h2>
-          <p className="text-black/60 leading-relaxed mb-8 max-w-md">{body}</p>
-          {buttonLabel && buttonLink && (
-            <div>
-              <Button as="link" to={buttonLink} variant="solid" size="md">
+          {/* Image */}
+          <div className={`relative overflow-hidden rounded-lg aspect-[4/5] ${imagePosition === 'right' ? 'md:order-last' : ''}`}>
+            {image?.url ? (
+              <Image
+                data={image}
+                aspectRatio="4/5"
+                width={800}
+                height={1000}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.02]"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[var(--color-surface)] flex items-center justify-center">
+                <span className="h-eyebrow">Brand Image</span>
+              </div>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className={`flex flex-col justify-center ${contentOrder}`}>
+            {eyebrow && (
+              <p className="h-eyebrow mb-5">{eyebrow}</p>
+            )}
+            <h2 className="text-[clamp(2rem,4vw,3.5rem)] leading-[1.05] font-serif font-normal mb-6">
+              {heading}
+            </h2>
+            <p className="text-[var(--color-text-secondary)] leading-relaxed mb-8 max-w-md text-[1rem]">
+              {body}
+            </p>
+            {buttonLabel && buttonLink && (
+              <a href={buttonLink} className="h-btn-primary w-fit">
                 {buttonLabel}
-              </Button>
-            </div>
-          )}
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </section>

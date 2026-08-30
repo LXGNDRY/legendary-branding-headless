@@ -30,80 +30,93 @@ interface FitCheckProps {
   hotspots: Hotspot[];
 }
 
+/**
+ * HANSSEN — Fit Check / Hotspot Image Section
+ * Full-width image with clickable hotspots showing product info.
+ */
 export default function FitCheck({eyebrow, heading, image, hotspots}: FitCheckProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
-    <section className="lb-section bg-white">
-      {(eyebrow || heading) && (
-        <div className="lb-container mb-8">
-          {eyebrow && <div className="lb-eyebrow mb-2">{eyebrow}</div>}
-          {heading && <h2>{heading}</h2>}
-        </div>
-      )}
-
-      <div className="relative w-full">
-        <Image
-          data={image}
-          className="w-full max-h-[80vh] object-cover"
-          sizes="100vw"
-        />
-
-        {hotspots.map((spot, i) => (
-          <div
-            key={i}
-            className="absolute"
-            style={{left: `${spot.x}%`, top: `${spot.y}%`}}
-          >
-            <button
-              className={`relative w-8 h-8 rounded-full border-2 border-white bg-black/60 flex items-center justify-center transition-all duration-200 ${activeIndex === i ? 'scale-110' : 'hover:scale-105'}`}
-              onClick={() => setActiveIndex(activeIndex === i ? null : i)}
-              aria-expanded={activeIndex === i}
-              aria-label={`View ${spot.product.title}`}
-            >
-              <span className="absolute inset-0 rounded-full border border-white/40 animate-ping opacity-40" />
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="white" aria-hidden="true">
-                <circle cx="5" cy="5" r="4" />
-              </svg>
-            </button>
-
-            {activeIndex === i && (
-              <div className="absolute z-20 bottom-full mb-2 left-1/2 -translate-x-1/2 w-52 bg-white shadow-xl">
-                <Link
-                  to={`/products/${spot.product.handle}`}
-                  className="flex items-center gap-3 p-3 hover:bg-[#f5f5f5] transition-colors"
-                  onClick={() => setActiveIndex(null)}
-                >
-                  {spot.product.image ? (
-                    <Image
-                      data={spot.product.image}
-                      className="w-14 h-14 object-cover shrink-0"
-                      sizes="56px"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 bg-[#f0ede8] shrink-0" />
-                  )}
-                  <div className="min-w-0">
-                    {spot.label && (
-                      <p className="text-[9px] tracking-widest uppercase text-[#6b6b6b] mb-0.5">
-                        {spot.label}
-                      </p>
-                    )}
-                    <p className="text-xs font-medium text-[#0a0a0a] truncate leading-snug">
-                      {spot.product.title}
-                    </p>
-                    <p className="text-xs text-[#6b6b6b] mt-0.5">
-                      {new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: spot.product.price.currencyCode,
-                      }).format(parseFloat(spot.product.price.amount))}
-                    </p>
-                  </div>
-                </Link>
-              </div>
+    <section className="h-section bg-[var(--color-background)] h-reveal">
+      <div className="h-container">
+        {(eyebrow || heading) && (
+          <div className="mb-10">
+            {eyebrow && <p className="h-eyebrow mb-3">{eyebrow}</p>}
+            {heading && (
+              <h2 className="text-[clamp(2rem,4vw,3.5rem)] leading-[1.05] font-serif font-normal">
+                {heading}
+              </h2>
             )}
           </div>
-        ))}
+        )}
+
+        <div className="relative w-full">
+          <Image
+            data={image}
+            aspectRatio="3/4"
+            width={800}
+            height={1067}
+            className="w-full max-h-[80vh] object-cover"
+            sizes="100vw"
+          />
+
+          {hotspots.map((spot, i) => (
+            <div
+              key={i}
+              className="absolute"
+              style={{left: `${spot.x}%`, top: `${spot.y}%`}}
+            >
+              <button
+                className={`relative w-9 h-9 rounded-full border-2 border-[var(--color-text-inverse)] bg-[var(--color-accent)] flex items-center justify-center transition-all duration-200 ${activeIndex === i ? 'scale-110' : 'hover:scale-105'}`}
+                onClick={() => setActiveIndex(activeIndex === i ? null : i)}
+                aria-expanded={activeIndex === i}
+                aria-label={`View ${spot.product.title}`}
+              >
+                <span className="absolute inset-0 rounded-full border-2 border-[var(--color-accent)]/40 animate-ping" />
+                <span className="relative w-2 h-2 rounded-full bg-[var(--color-background)]" />
+              </button>
+
+              {activeIndex === i && (
+                <div className="absolute z-20 bottom-full mb-3 left-1/2 -translate-x-1/2 w-60 bg-[var(--color-bg-level-1)] shadow-lg border border-[var(--color-border-medium)]">
+                  <Link
+                    to={`/products/${spot.product.handle}`}
+                    className="flex items-center gap-4 p-4 hover:bg-[var(--color-surface)] transition-colors"
+                    onClick={() => setActiveIndex(null)}
+                  >
+                    {spot.product.image ? (
+                      <Image
+                        data={spot.product.image}
+                        width={56}
+                        height={64}
+                        className="w-14 h-16 object-cover rounded-lg shrink-0"
+                        sizes="56px"
+                      />
+                    ) : (
+                      <div className="w-14 h-16 rounded-lg bg-[var(--color-surface)] shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      {spot.label && (
+                        <p className="h-eyebrow mb-1">
+                          {spot.label}
+                        </p>
+                      )}
+                      <p className="text-sm font-serif text-[var(--color-foreground)] truncate leading-snug">
+                        {spot.product.title}
+                      </p>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                        {new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: spot.product.price.currencyCode,
+                        }).format(parseFloat(spot.product.price.amount))}
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

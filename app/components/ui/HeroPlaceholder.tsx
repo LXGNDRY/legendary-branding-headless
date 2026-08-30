@@ -1,86 +1,83 @@
 interface HeroPlaceholderProps {
   className?: string;
+  variant?: 'dark' | 'light';
 }
 
 /**
- * Legendary Branding — hero placeholder background (CSS/SVG only)
- * Bold editorial streetwear aesthetic: diagonal stripe pattern,
- * radial glow, black background, subtle grain feel.
+ * HANSSEN x LEGENDARY — hero placeholder background (CSS/SVG only)
+ *
+ * Two variants:
+ * - dark: off-black base with diagonal stripes + radial glow + red accent
+ * - light: off-white/cream base with subtle pattern
  *
  * Just the background — content overlay is provided by the parent component.
- * Used while real product/campaign images are being set up.
  */
 export default function HeroPlaceholder({
   className = '',
+  variant = 'dark',
 }: HeroPlaceholderProps) {
+  const isDark = variant === 'dark';
+  const bgClass = isDark ? 'bg-[var(--color-foreground)]' : 'bg-[var(--color-border-subtle)]';
+  const stripeOpacity = isDark ? 'opacity-[0.06]' : 'opacity-[0.08]';
+  const glowVar = isDark ? 'var(--color-accent)' : 'var(--color-foreground)';
+
   return (
     <div
-      className={`relative w-full h-full overflow-hidden bg-black ${className}`}
+      className={`relative w-full h-full overflow-hidden ${bgClass} ${className}`}
       aria-hidden="true"
     >
-      {/* Diagonal stripe pattern (brutalist/streetwear) */}
+      {/* Diagonal stripe pattern */}
       <svg
-        className="absolute inset-0 w-full h-full opacity-[0.07]"
+        className={`absolute inset-0 w-full h-full ${stripeOpacity}`}
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="none"
       >
         <defs>
           <pattern
-            id="lb-hero-stripes"
+            id="diagStripes"
             patternUnits="userSpaceOnUse"
-            width="120"
-            height="120"
+            width="40"
+            height="40"
             patternTransform="rotate(45)"
           >
             <line
               x1="0"
               y1="0"
               x2="0"
-              y2="120"
-              stroke="white"
+              y2="40"
+              stroke={glowVar}
               strokeWidth="1.5"
             />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#lb-hero-stripes)" />
+        <rect width="100%" height="100%" fill="url(#diagStripes)" />
       </svg>
 
-      {/* Radial glow — warm spotlight from the right */}
+      {/* Radial glow accent */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 opacity-[0.12]"
         style={{
-          background:
-            'radial-gradient(ellipse at 70% 40%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 30%, transparent 65%)',
+          background: `radial-gradient(circle at 30% 40%, ${glowVar} 0%, transparent 55%)`,
         }}
       />
 
-      {/* Subtle vignette — dark edges */}
+      {/* Film grain / noise */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
         style={{
-          background:
-            'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%)',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
         }}
       />
 
-      {/* Horizontal film grain / scan line overlay */}
-      <svg
-        className="absolute inset-0 w-full h-full opacity-[0.03]"
-        xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <pattern
-            id="lb-hero-grain"
-            patternUnits="userSpaceOnUse"
-            width="4"
-            height="4"
-          >
-            <rect width="4" height="1" fill="white" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#lb-hero-grain)" />
-      </svg>
+      {/* Vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: isDark
+            ? 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%)'
+            : 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.08) 100%)',
+        }}
+      />
     </div>
   );
 }

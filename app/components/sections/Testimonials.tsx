@@ -1,4 +1,6 @@
-interface Testimonial {
+import {useRevealChildren} from '~/hooks/useReveal';
+
+interface TestimonialItem {
   quote: string;
   name: string;
   location?: string;
@@ -8,74 +10,80 @@ interface Testimonial {
 interface TestimonialsProps {
   eyebrow?: string;
   heading?: string;
-  items: Testimonial[];
+  items: TestimonialItem[];
 }
 
-function StarRating({count}: {count: number}) {
+function StarIcon({filled = true}: {filled?: boolean}) {
   return (
-    <div className="flex gap-0.5 mb-4" aria-label={`${count} out of 5 stars`}>
-      {Array.from({length: 5}).map((_, i) => (
-        <svg
-          key={i}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <polygon
-            points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
-            fill={i < count ? '#C9A84C' : 'transparent'}
-            stroke="#C9A84C"
-            strokeWidth="1.5"
-          />
-        </svg>
-      ))}
-    </div>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="1"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M7 1l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9L3.4 12l.7-4L1.2 5.2l4-.6L7 1z" />
+    </svg>
   );
 }
 
+/**
+ * ONYX — Testimonials Section
+ * Dark theme customer testimonials.
+ */
 export default function Testimonials({
-  eyebrow = 'Customer Reviews',
-  heading,
+  eyebrow = 'Reviews',
+  heading = 'The Culture Speaks',
   items,
 }: TestimonialsProps) {
+  const ref = useRevealChildren<HTMLDivElement>();
   if (!items.length) return null;
 
   return (
-    <section className="lb-section bg-[#0a0a0a]">
-      <div className="lb-container">
-        <div className="lb-section-header mb-12">
-          <div>
-            {eyebrow && (
-              <div className="lb-eyebrow mb-2 text-white/40">{eyebrow}</div>
-            )}
-            {heading && (
-              <h2 className="text-white">{heading}</h2>
-            )}
-          </div>
+    <section className="h-section bg-[var(--color-bg-level-1)] border-t border-b border-[var(--color-border-muted)]">
+      <div className="h-container">
+        <div className="text-center mb-12">
+          {eyebrow && <p className="h-eyebrow mb-3">{eyebrow}</p>}
+          <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-text-primary)]">
+            {heading}
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {items.map((t, i) => (
-            <blockquote
+        <div ref={ref} className="grid grid-cols-1 md:grid-cols-3 gap-6 h-stagger">
+          {items.map((item, i) => (
+            <div
               key={i}
-              className="bg-[#111] border-l-2 border-white/10 p-7 flex flex-col gap-4"
+              className="h-reveal p-6 md:p-8 bg-[var(--color-bg-level-0)] border border-[var(--color-border-muted)] rounded-lg"
             >
-              {(t.stars ?? 5) > 0 && <StarRating count={t.stars ?? 5} />}
-              <p className="text-white/80 text-sm leading-relaxed flex-1">
-                &ldquo;{t.quote}&rdquo;
+              {/* Stars */}
+              {item.stars && (
+                <div className="flex gap-0.5 mb-4 text-[var(--color-accent)]">
+                  {Array.from({length: 5}).map((_, si) => (
+                    <StarIcon key={si} filled={si < (item.stars || 0)} />
+                  ))}
+                </div>
+              )}
+
+              {/* Quote */}
+              <p className="text-[var(--color-text-secondary)] leading-relaxed mb-6 italic">
+                "{item.quote}"
               </p>
-              <footer>
-                <cite className="text-white text-xs font-semibold tracking-[0.12em] uppercase not-italic">
-                  {t.name}
-                </cite>
-                {t.location && (
-                  <span className="block text-white/40 text-[10px] tracking-widest uppercase mt-0.5">
-                    {t.location}
-                  </span>
+
+              {/* Author */}
+              <div className="border-t border-[var(--color-border-muted)] pt-4">
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                  {item.name}
+                </p>
+                {item.location && (
+                  <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">
+                    {item.location}
+                  </p>
                 )}
-              </footer>
-            </blockquote>
+              </div>
+            </div>
           ))}
         </div>
       </div>

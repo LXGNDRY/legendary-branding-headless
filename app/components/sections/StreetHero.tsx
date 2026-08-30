@@ -56,7 +56,7 @@ export default function StreetHero({
       >
         {/* Left / main image */}
         <div
-          className={`relative overflow-hidden bg-[#f5f5f5] ${
+          className={`relative overflow-hidden bg-[var(--color-surface)] ${
             showRight ? 'md:w-1/2' : 'w-full'
           }`}
         >
@@ -64,8 +64,12 @@ export default function StreetHero({
             <Image
               data={imageLeft!}
               aspectRatio={showRight ? '3/4' : '16/9'}
+              width={showRight ? 800 : 1600}
+              height={showRight ? 1067 : 900}
               sizes={showRight ? '50vw' : '100vw'}
               loading="eager"
+              fetchPriority="high"
+              decoding="sync"
               className="w-full h-full object-cover"
             />
           ) : (
@@ -75,10 +79,12 @@ export default function StreetHero({
 
         {/* Right image (split layout) */}
         {showRight && imageRight && (
-          <div className="relative overflow-hidden bg-[#f5f5f5] md:w-1/2 hidden md:block">
+          <div className="relative overflow-hidden bg-[var(--color-surface)] md:w-1/2 hidden md:block">
             <Image
               data={imageRight}
               aspectRatio="3/4"
+              width={800}
+              height={1067}
               sizes="50vw"
               loading="lazy"
               className="w-full h-full object-cover"
@@ -95,7 +101,7 @@ export default function StreetHero({
             : 'justify-end pb-16 md:pb-24 pl-6 md:pl-16 pr-6'
         } pointer-events-none`}
       >
-        <div className="pointer-events-auto text-white max-w-2xl">
+        <div className="pointer-events-auto text-[var(--color-text-inverse)] max-w-2xl">
           {eyebrow && (
             <div className="mb-4 text-[0.78rem] font-medium tracking-[0.2em] uppercase opacity-90">
               {eyebrow}
@@ -108,7 +114,7 @@ export default function StreetHero({
             </p>
           )}
           {buttonLabel && buttonLink && (
-            <Button as="link" to={buttonLink} variant="solid" size="lg">
+            <Button as="link" to={buttonLink} variant="primary" size="lg">
               {buttonLabel}
             </Button>
           )}

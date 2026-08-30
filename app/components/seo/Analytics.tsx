@@ -1,4 +1,12 @@
-import {useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {AnalyticsEvent, useAnalytics} from '@shopify/hydrogen';
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+import {Link} from 'react-router';
 
 /**
  * Analytics component — loads GA4, Meta Pixel, and other tracking scripts
@@ -8,37 +16,17 @@ import {useEffect, useState} from 'react';
  * - PUBLIC_GA4_MEASUREMENT_ID — Google Analytics 4 measurement ID
  * - PUBLIC_META_PIXEL_ID — Meta (Facebook) Pixel ID
  * - PUBLIC_TIKTOK_PIXEL_ID — TikTok Pixel ID
+ * - PUBLIC_KLAVIYO_COMPANY_ID — Klaviyo public API key (on-site embed / popups)
  *
  * If env vars are not set, the scripts simply don't load.
+ *
+ * NOTE: Klaviyo's on-site embed is gated behind the same consent flow as the
+ * other third-party marketing scripts for consistency — the script itself
+ * sets Klaviyo tracking cookies and identifies the visitor the moment it
+ * loads (independent of whether the visitor ever interacts with a form), so
+ * it is treated as marketing/analytics tracking rather than a purely
+ * user-initiated action.
  */
-
-const CONSENT_COOKIE_NAME = 'lb_consent';
-
-type ConsentState = 'accepted' | 'rejected' | 'undecided';
-
-function getConsentFromCookie(): ConsentState {
-  if (typeof document === 'undefined') return 'undecided';
-  const match = document.cookie.match(
-    new RegExp('(^| )' + CONSENT_COOKIE_NAME + '=([^;]+)'),
-  );
-  const value = match ? decodeURIComponent(match[2]) : '';
-  if (value === 'accepted') return 'accepted';
-  if (value === 'rejected') return 'rejected';
-  return 'undecided';
-}
-
-function setConsentCookie(value: ConsentState) {
-  if (typeof document === 'undefined') return;
-  const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
-  document.cookie =
-    CONSENT_COOKIE_NAME +
-    '=' +
-    encodeURIComponent(value) +
-    '; expires=' +
-    expires +
-    '; path=/; SameSite=Lax' +
-    (location.protocol === 'https:' ? '; Secure' : '');
-}
 
 // GA4 script
 function loadGA4(measurementId: string) {
@@ -55,6 +43,7 @@ function loadGA4(measurementId: string) {
   const gtag = (...args: unknown[]) => {
     ((window as {dataLayer?: unknown[]}).dataLayer as unknown[]).push(args);
   };
+  window.gtag = gtag;
   gtag('js', new Date());
   gtag('config', measurementId, {
     anonymize_ip: true,
@@ -97,78 +86,200 @@ function loadTikTokPixel(pixelId: string) {
   document.head.appendChild(script);
 }
 
+// Klaviyo on-site embed — loads Klaviyo-managed on-site forms/popups
+// (e.g. the "Join the GOAT Club" form) using the account's public API key.
+// Docs: https://help.klaviyo.com/hc/en-us/articles/115005076767
+function loadKlaviyo(companyId: string) {
+  if (typeof document === 'undefined') return;
+
+  const script = document.createElement('script');
+  script.async = true;
+  script.type = 'text/javascript';
+  script.src = `https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=${companyId}`;
+  document.head.appendChild(script);
+}
+
 interface AnalyticsProps {
   ga4Id?: string;
   metaPixelId?: string;
   tiktokPixelId?: string;
+  klaviyoCompanyId?: string;
+}
+
+function CommerceAnalyticsBridge() {
+  const {subscribe, register} = useAnalytics();
+
+  useEffect(() => {
+    const {ready} = register('legendary-commerce-bridge');
+    const emit = (event: string, payload: Record<string, unknown>) => {
+      if (window.gtag) window.gtag('event', event, payload);
+    };
+
+    subscribe(AnalyticsEvent.PRODUCT_VIEWED, (payload) =>
+      emit('view_item', {items: payload.products}),
+    );
+    subscribe(AnalyticsEvent.COLLECTION_VIEWED, (payload) =>
+      emit('view_item_list', {item_list_id: payload.collection.id, item_list_name: payload.collection.handle}),
+    );
+    subscribe(AnalyticsEvent.SEARCH_VIEWED, (payload) =>
+      emit('search', {search_term: payload.searchTerm}),
+    );
+    subscribe(AnalyticsEvent.CART_VIEWED, (payload) =>
+      emit('view_cart', {cart: payload.cart}),
+    );
+    subscribe(AnalyticsEvent.PRODUCT_ADD_TO_CART, (payload) =>
+      emit('add_to_cart', {cart: payload.cart, item: payload.currentLine}),
+    );
+    subscribe(AnalyticsEvent.PRODUCT_REMOVED_FROM_CART, (payload) =>
+      emit('remove_from_cart', {cart: payload.cart, item: payload.prevLine}),
+    );
+    subscribe(AnalyticsEvent.CUSTOM_EVENT, (payload) => {
+      if (payload.eventName === 'begin_checkout') {
+        emit('begin_checkout', {cart: payload.cart});
+      }
+    });
+    ready();
+  }, [register, subscribe]);
+
+  return null;
 }
 
 export default function Analytics({
   ga4Id,
   metaPixelId,
   tiktokPixelId,
+  klaviyoCompanyId,
 }: AnalyticsProps) {
-  const [consent, setConsent] = useState<ConsentState>('undecided');
+  const {customerPrivacy} = useAnalytics();
   const [showBanner, setShowBanner] = useState(false);
+  const scriptsLoadedRef = useRef(false);
 
-  useEffect(() => {
-    const current = getConsentFromCookie();
-    setConsent(current);
-
-    // Show banner if undecided
-    if (current === 'undecided') {
-      setShowBanner(true);
-    } else if (current === 'accepted') {
-      // Load analytics scripts
-      if (ga4Id) loadGA4(ga4Id);
-      if (metaPixelId) loadMetaPixel(metaPixelId);
-      if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
-    }
-  }, [ga4Id, metaPixelId, tiktokPixelId]);
-
-  function handleAccept() {
-    setConsent('accepted');
-    setConsentCookie('accepted');
-    setShowBanner(false);
-
-    // Load analytics
+  const loadScriptsOnce = useCallback(() => {
+    // Ref-guarded rather than state-guarded: this runs from an effect body
+    // (see below), and under StrictMode's dev double-invoke a state-updater
+    // guard can still let both passes through before either commit lands,
+    // loading every script twice. A ref reads/writes synchronously, so the
+    // second pass always sees the first pass's write.
+    if (scriptsLoadedRef.current) return;
+    scriptsLoadedRef.current = true;
     if (ga4Id) loadGA4(ga4Id);
     if (metaPixelId) loadMetaPixel(metaPixelId);
     if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
+    if (klaviyoCompanyId) loadKlaviyo(klaviyoCompanyId);
+  }, [ga4Id, metaPixelId, tiktokPixelId, klaviyoCompanyId]);
+
+  useEffect(() => {
+    if (!customerPrivacy) return;
+    let cancelled = false;
+    // On a fresh page load, the Shopify Customer Privacy API still needs to
+    // sync previously-saved consent in from the checkout domain (a
+    // cross-domain round trip) before `currentVisitorConsent()` reflects
+    // it -- reading it synchronously right here can catch it mid-sync and
+    // see the "undecided" default even though the visitor already
+    // accepted, which is what made the banner reappear on every refresh.
+    // Give that sync a brief window to land before treating "undecided" as
+    // real and showing the banner, so a returning visitor doesn't see it
+    // flash back in; the API's own `visitorConsentCollected` event (fired
+    // once the sync -- or a new `setTrackingConsent` call -- completes)
+    // cancels the wait early whenever it arrives sooner.
+    let undecidedTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const apply = (current: 'accepted' | 'rejected' | 'undecided') => {
+      if (cancelled) return;
+      if (current === 'undecided') {
+        if (undecidedTimer) return;
+        undecidedTimer = setTimeout(() => {
+          if (!cancelled) setShowBanner(true);
+        }, 500);
+        return;
+      }
+      if (undecidedTimer) {
+        clearTimeout(undecidedTimer);
+        undecidedTimer = null;
+      }
+      setShowBanner(false);
+      if (current === 'accepted') loadScriptsOnce();
+    };
+
+    const evaluate = () => {
+      const visitorConsent = customerPrivacy.currentVisitorConsent();
+      const current = visitorConsent.analytics === true
+        ? 'accepted'
+        : visitorConsent.analytics === false
+          ? 'rejected'
+          : 'undecided';
+      apply(current);
+    };
+
+    evaluate();
+    document.addEventListener('visitorConsentCollected', evaluate);
+    return () => {
+      cancelled = true;
+      if (undecidedTimer) clearTimeout(undecidedTimer);
+      document.removeEventListener('visitorConsentCollected', evaluate);
+    };
+  }, [customerPrivacy, loadScriptsOnce]);
+
+  function handleAccept() {
+    if (!customerPrivacy) return;
+    setShowBanner(false);
+    // Script loading is handled by the `visitorConsentCollected` listener
+    // above, which this call triggers -- keeps a single source of truth so
+    // scripts don't load twice.
+    customerPrivacy.setTrackingConsent(
+      {analytics: true, marketing: true, preferences: true, sale_of_data: false},
+      (result) => result?.error && console.error('[privacy] Unable to save consent'),
+    );
   }
 
   function handleReject() {
-    setConsent('rejected');
-    setConsentCookie('rejected');
+    if (!customerPrivacy) return;
     setShowBanner(false);
+    customerPrivacy.setTrackingConsent(
+      {analytics: false, marketing: false, preferences: false, sale_of_data: false},
+      (result) => result?.error && console.error('[privacy] Unable to save consent'),
+    );
   }
-
-  // Don't show banner if no analytics IDs configured
-  if (!ga4Id && !metaPixelId && !tiktokPixelId) return null;
 
   return (
     <>
+      <CommerceAnalyticsBridge />
       {/* Consent banner */}
       {showBanner && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black text-white p-4 md:p-6">
-          <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--color-foreground)] text-[var(--color-text-inverse)] p-4 md:p-6"
+          role="dialog"
+          aria-live="polite"
+          aria-label="Cookie consent"
+        >
+          <div className="h-container flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
             <div className="flex-1">
               <p className="text-sm font-medium mb-1">We value your privacy</p>
-              <p className="text-xs text-white/70">
+              <p className="text-xs text-[var(--color-text-inverse)]/70 leading-relaxed">
                 We use cookies and similar technologies to analyze traffic and improve your experience.
                 You can accept or reject non-essential tracking.
+                {' '}
+                <Link
+                  to="/policies/privacy-with-legendary-branding"
+                  className="underline underline-offset-2 hover:text-[var(--color-text-inverse)] transition-colors"
+                >
+                  Learn more
+                </Link>
+                .
               </p>
             </div>
             <div className="flex gap-3 shrink-0">
               <button
                 onClick={handleReject}
-                className="text-xs font-medium tracking-widest uppercase border border-white/30 px-6 py-3 hover:bg-white/10 transition-colors"
+                className="text-xs font-medium tracking-widest uppercase border border-[var(--color-text-inverse)]/30 px-6 py-3 hover:bg-[var(--color-background)]/10 transition-colors"
+                aria-label="Reject non-essential cookies"
               >
                 Reject
               </button>
               <button
                 onClick={handleAccept}
-                className="text-xs font-semibold tracking-widest uppercase bg-white text-black px-6 py-3 hover:bg-white/90 transition-colors"
+                className="text-xs font-semibold tracking-widest uppercase bg-[var(--color-background)] text-[var(--color-foreground)] px-6 py-3 hover:bg-[var(--color-bg-level-2)]/90 transition-colors"
+                aria-label="Accept all cookies"
               >
                 Accept All
               </button>

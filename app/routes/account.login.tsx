@@ -1,7 +1,7 @@
 import {redirect, type LoaderFunctionArgs, type MetaFunction} from 'react-router';
 
 export const meta: MetaFunction = () => [
-  {title: 'Login — LEGENDARY BRANDING'},
+  {title: 'Login | LEGENDARY BRANDING'},
   {name: 'description', content: 'Sign in to your Legendary Branding account.'},
 ];
 
@@ -13,7 +13,7 @@ export async function loader({context}: LoaderFunctionArgs) {
   const {customerAccount} = context;
 
   if (!customerAccount) {
-    return redirect('/');
+    throw new Response('Customer accounts are unavailable', {status: 503});
   }
 
   // If already logged in, go to account dashboard

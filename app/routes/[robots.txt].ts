@@ -5,9 +5,15 @@ import type {LoaderFunctionArgs} from 'react-router';
  *
  * Generates a robots.txt with sitemap link.
  * Blocks checkout and account routes, allows everything else.
+ * Uses PUBLIC_CHECKOUT_DOMAIN when available so the Sitemap URL always points
+ * to the canonical domain rather than the Oxygen preview origin (consistent
+ * with [sitemap.xml].tsx).
  */
-export async function loader({request}: LoaderFunctionArgs) {
-  const origin = new URL(request.url).origin;
+export async function loader({request, context}: LoaderFunctionArgs) {
+  const env = context.env as {PUBLIC_CHECKOUT_DOMAIN?: string};
+  const origin = env.PUBLIC_CHECKOUT_DOMAIN
+    ? `https://${env.PUBLIC_CHECKOUT_DOMAIN}`
+    : new URL(request.url).origin;
 
   const robots = `User-agent: *
 Allow: /
@@ -18,6 +24,8 @@ Disallow: /checkout/
 Disallow: /cart/
 Disallow: /search/
 Disallow: /apis/
+Disallow: /api/
+Disallow: /docs/
 
 # Sitemap
 Sitemap: ${origin}/sitemap.xml

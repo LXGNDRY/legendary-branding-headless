@@ -1,6 +1,8 @@
 import {type LoaderFunctionArgs, type MetaFunction, useLoaderData, Link} from 'react-router';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
+import JsonLd from '~/components/ui/JsonLd';
+import {breadcrumbSchema} from '~/components/seo/SeoSchema';
 
 const PAGE_TITLES: Record<string, string> = {
   'refund-policy': 'Refund & Return Policy',
@@ -49,10 +51,20 @@ type ShopPolicies = {
   privacyPolicy?: ShopPolicy | null;
 };
 
-export const meta: MetaFunction<typeof loader> = ({data}) => [
-  {title: `${data?.title ?? 'Policy'} — LEGENDARY BRANDING`},
-  {name: 'description', content: data?.title ? `${data.title} — Legendary Branding` : 'Legendary Branding policies.'},
-];
+export const meta: MetaFunction<typeof loader> = ({data}) => {
+  const title = `${data?.title ?? 'Policy'} | LEGENDARY BRANDING`;
+  const description = data?.title ? `${data.title} | Legendary Branding` : 'Legendary Branding policies.';
+  const canonical = `https://legendary-branding.com/policies/${data?.handle ?? ''}`;
+
+  return [
+    {title},
+    {name: 'description', content: description},
+    {tagName: 'link', rel: 'canonical', href: canonical},
+    {property: 'og:title', content: title},
+    {property: 'og:description', content: description},
+    {property: 'og:url', content: canonical},
+  ];
+};
 
 export async function loader({params, context}: LoaderFunctionArgs) {
   const handle = params.handle ?? '';
@@ -94,19 +106,25 @@ export async function loader({params, context}: LoaderFunctionArgs) {
 export default function PolicyPage() {
   const {title, bodyHtml, handle} = useLoaderData<typeof loader>();
 
+  const breadcrumbJsonLd = breadcrumbSchema([
+    {name: 'Home', url: '/'},
+    {name: title},
+  ]);
+
   return (
     <Container className="py-16">
+      <JsonLd data={breadcrumbJsonLd} />
       <div className="max-w-2xl mx-auto">
         {/* Breadcrumb */}
         <nav
-          className="mb-8 text-[11px] tracking-widest uppercase text-[#6b6b6b]"
+          className="mb-8 text-[11px] tracking-widest uppercase text-[var(--color-text-secondary)]"
           aria-label="Breadcrumb"
         >
-          <Link to="/" className="hover:text-[#0a0a0a] transition-colors">
+          <Link to="/" className="hover:text-[var(--color-foreground)] transition-colors">
             Home
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-[#0a0a0a]">{title}</span>
+          <span className="text-[var(--color-foreground)]">{title}</span>
         </nav>
 
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-10">
@@ -116,33 +134,33 @@ export default function PolicyPage() {
         {bodyHtml ? (
           <div
             className="prose prose-sm max-w-none
-              [&_p]:text-sm [&_p]:text-[#0a0a0a] [&_p]:leading-relaxed [&_p]:mb-4
+              [&_p]:text-sm [&_p]:text-[var(--color-foreground)] [&_p]:leading-relaxed [&_p]:mb-4
               [&_h2]:text-lg [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-3
               [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2
-              [&_ul]:pl-5 [&_ul]:mb-4 [&_li]:text-sm [&_li]:text-[#0a0a0a] [&_li]:mb-1
+              [&_ul]:pl-5 [&_ul]:mb-4 [&_li]:text-sm [&_li]:text-[var(--color-foreground)] [&_li]:mb-1
               [&_ol]:pl-5 [&_ol]:mb-4
-              [&_a]:underline [&_a]:underline-offset-2 [&_a]:hover:text-[#6b6b6b]
+              [&_a]:underline [&_a]:underline-offset-2 [&_a]:hover:text-[var(--color-text-secondary)]
               [&_strong]:font-semibold"
             // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{__html: bodyHtml}}
           />
         ) : (
-          <div className="py-16 text-center border-y border-[#e5e5e5]">
-            <p className="text-sm text-[#6b6b6b] tracking-wide">
+          <div className="py-16 text-center border-y border-[var(--color-border-subtle)]">
+            <p className="text-sm text-[var(--color-text-secondary)] tracking-wide">
               Content for this page is not available.
             </p>
           </div>
         )}
 
         {handle === 'contact' && (
-          <div className="mt-12 p-8 bg-[#f7f7f7]">
+          <div className="mt-12 p-8 bg-[var(--color-surface)]">
             <h2 className="text-xs font-semibold tracking-widest uppercase mb-6">Get in Touch</h2>
-            <div className="space-y-3 text-sm text-[#6b6b6b]">
+            <div className="space-y-3 text-sm text-[var(--color-text-secondary)]">
               <p>
                 For order inquiries, email us at{' '}
                 <a
                   href="mailto:lb@legendary-branding.com"
-                  className="underline underline-offset-2 hover:text-[#0a0a0a] transition-colors"
+                  className="underline underline-offset-2 hover:text-[var(--color-foreground)] transition-colors"
                 >
                   lb@legendary-branding.com
                 </a>

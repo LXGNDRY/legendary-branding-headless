@@ -1,8 +1,21 @@
-import {Link, useNavigate} from 'react-router';
+import {Link, useNavigate, type MetaFunction} from 'react-router';
 import Container from '~/components/ui/Container';
+import Button from '~/components/ui/Button';
 import {useWishlist} from '~/components/ui/Wishlist';
 import ProductCard from '~/components/ui/ProductCard';
 import {useEffect, useState} from 'react';
+
+export const meta: MetaFunction = () => {
+  const canonical = 'https://legendary-branding.com/wishlist';
+  return [
+    {title: 'Wishlist | LEGENDARY BRANDING'},
+    {name: 'description', content: 'Your saved items from Legendary Branding.'},
+    {tagName: 'link', rel: 'canonical', href: canonical},
+    {property: 'og:title', content: 'Wishlist | LEGENDARY BRANDING'},
+    {property: 'og:description', content: 'Your saved items from Legendary Branding.'},
+    {property: 'og:url', content: canonical},
+  ];
+};
 
 /**
  * Wishlist page — displays all items saved by the user.
@@ -22,22 +35,22 @@ export default function WishlistPage() {
   return (
     <Container className="py-12">
       <header className="mb-10">
-        <p className="lb-eyebrow mb-3">WISHLIST</p>
+        <p className="h-eyebrow mb-3">WISHLIST</p>
         <div className="flex items-end justify-between flex-wrap gap-4">
-          <h1 className="text-3xl md:text-4xl font-normal tracking-tight">
+          <h1 className="font-serif text-3xl md:text-4xl font-normal">
             Saved Items
           </h1>
           {mounted && count > 0 && (
             <button
               onClick={clear}
-              className="text-xs font-medium tracking-widest uppercase text-black/50 hover:text-black transition-colors"
+              className="text-xs font-medium tracking-widest uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
             >
               Clear all
             </button>
           )}
         </div>
         {mounted && (
-          <p className="text-sm text-black/50 mt-2">
+          <p className="text-sm text-[var(--color-text-secondary)] mt-2">
             {count} {count === 1 ? 'item' : 'items'} saved
           </p>
         )}
@@ -48,10 +61,10 @@ export default function WishlistPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="space-y-3">
-              <div className="aspect-[3/4] bg-[#f5f5f5] animate-pulse" />
+              <div className="aspect-[3/4] bg-[var(--color-surface)] animate-pulse" />
               <div className="space-y-1.5">
-                <div className="h-4 w-3/4 bg-[#f5f5f5] animate-pulse" />
-                <div className="h-3 w-1/3 bg-[#f5f5f5] animate-pulse" />
+                <div className="h-4 w-3/4 bg-[var(--color-surface)] animate-pulse" />
+                <div className="h-3 w-1/3 bg-[var(--color-surface)] animate-pulse" />
               </div>
             </div>
           ))}
@@ -59,21 +72,20 @@ export default function WishlistPage() {
       ) : count === 0 ? (
         <div className="py-20 text-center">
           <div className="inline-block mb-6">
-            <svg viewBox="0 0 24 24" className="w-16 h-16 text-black/20" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg viewBox="0 0 24 24" className="w-16 h-16 text-[var(--color-text-tertiary)]" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-normal mb-3">Your wishlist is empty</h2>
-          <p className="text-sm text-black/50 mb-8 max-w-md mx-auto">
+          <h2 className="font-serif text-2xl font-normal mb-3">
+            Your wishlist is empty
+          </h2>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-8 max-w-md mx-auto">
             Save items you love by clicking the heart icon on any product.
             Come back anytime to pick up where you left off.
           </p>
-          <Link
-            to="/collections/all-products"
-            className="inline-block text-xs font-semibold tracking-widest uppercase border-2 border-black px-8 py-3 hover:bg-black hover:text-white transition-colors"
-          >
-            Shop All
-          </Link>
+          <Button as="link" to="/collections/all-products" variant="primary">
+            Shop All Products
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
@@ -82,7 +94,7 @@ export default function WishlistPage() {
               {/* Remove button overlay */}
               <button
                 onClick={() => remove(item.handle)}
-                className="absolute top-2 right-2 z-20 bg-white/90 text-black/60 hover:text-black p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 z-20 bg-[var(--color-bg-level-2)]/90 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                 aria-label={`Remove ${item.title} from wishlist`}
               >
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

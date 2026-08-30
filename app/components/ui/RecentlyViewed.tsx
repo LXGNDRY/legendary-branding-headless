@@ -73,20 +73,20 @@ export default function RecentlyViewed({
   if (products.length < 2) return null;
 
   return (
-    <section className="border-t border-black/10">
-      <div className="max-w-screen-xl mx-auto px-[clamp(1rem,4vw,2.5rem)] py-16">
-        <h2 className="text-[0.78rem] font-medium tracking-[0.15em] uppercase mb-10">
+    <section className="border-t border-[var(--color-border-muted)]">
+      <div className="h-container py-12 lg:py-16">
+        <h2 className="text-[0.78rem] font-medium tracking-[0.15em] uppercase mb-6 lg:mb-10">
           Recently Viewed
         </h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:grid lg:grid-cols-4 lg:overflow-visible">
           {products.map((p) => (
             <Link
               key={p.id}
               to={`/products/${p.handle}`}
-              className="group"
+              className="group w-[56vw] max-w-[14rem] shrink-0 snap-start lg:w-auto lg:max-w-none"
             >
-              <div className="aspect-[3/4] bg-[#f5f5f5] mb-3 overflow-hidden">
+              <div className="aspect-[3/4] bg-[var(--color-surface)] mb-3 overflow-hidden">
                 {p.image ? (
                   <img
                     src={p.image}
@@ -96,7 +96,7 @@ export default function RecentlyViewed({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-[10px] text-black/30 uppercase tracking-wider">
+                    <span className="text-[10px] text-[var(--color-text-tertiary)] uppercase tracking-wider">
                       View
                     </span>
                   </div>

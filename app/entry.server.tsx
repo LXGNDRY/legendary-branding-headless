@@ -25,7 +25,14 @@ export default async function handleRequest(
     await body.allReady;
   }
 
-  responseHeaders.set('Content-Type', 'text/html');
+  // Without an explicit charset, browsers guess the document's encoding —
+  // commonly falling back to Latin-1/Windows-1252 in its absence, which
+  // mangles any multi-byte UTF-8 character (e.g. product titles/descriptions
+  // from the Storefront API containing accented letters) into mojibake
+  // ("é" -> "Ã©"). The <meta charset> tag in root.tsx's <head> is the
+  // browser-facing signal; this header is the authoritative one the HTTP
+  // spec expects and takes precedence when present.
+  responseHeaders.set('Content-Type', 'text/html; charset=utf-8');
 
   return new Response(body, {
     headers: responseHeaders,

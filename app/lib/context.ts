@@ -1,5 +1,38 @@
 import {createHydrogenContext} from '@shopify/hydrogen';
 import {AppSession} from '~/lib/session';
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_LANGUAGE,
+  normalizeCountryCode,
+} from '~/lib/market';
+import {CART_QUERY_FRAGMENT, CART_MUTATE_FRAGMENT} from '~/lib/fragments';
+
+/**
+ * The subset of Cloudflare's `IncomingRequestCfProperties` we rely on.
+ * The oxygen-workers-types `Request` interface types `cf` as a generic
+ * defaulting to `any`, so we narrow it locally here instead of relying
+ * on that `any` (and instead of reaching for `@ts-ignore`).
+ */
+interface CloudflareRequestCf {
+  /** ISO 3166-1 alpha-2 country code of the visitor, set by Cloudflare's edge. */
+  country?: string;
+}
+
+/**
+ * Resolve the visitor's market country from Cloudflare's edge-provided
+ * geolocation, falling back to the primary "United States" market.
+ *
+ * Why this exists: the Shopify store has exactly two enabled Markets —
+ * "United States" (primary, region US only) and "International" (region
+ * ~150 other countries) — and both share the same domain. Hardcoding
+ * `country: 'US'` here would silently put every non-US visitor into the wrong
+ * market for pricing, availability, and currency. Country values are checked
+ * as known regions before they can enter Shopify's GraphQL context.
+ */
+export function resolveCountry(request: Request) {
+  const cf = (request as Request & {cf?: CloudflareRequestCf}).cf;
+  return normalizeCountryCode(cf?.country) ?? DEFAULT_COUNTRY;
+}
 
 /**
  * Creates all context objects available to route loaders and actions.
@@ -23,8 +56,21 @@ export async function createAppLoadContext(
   if (!env.PUBLIC_STOREFRONT_API_TOKEN) {
     throw new Error('PUBLIC_STOREFRONT_API_TOKEN environment variable is not set');
   }
-  if (!env.PRIVATE_STOREFRONT_API_TOKEN) {
-    throw new Error('PRIVATE_STOREFRONT_API_TOKEN environment variable is not set');
+  // PRIVATE_STOREFRONT_API_TOKEN is optional — Hydrogen falls back to the public token
+
+  // Customer Account API: both-or-neither validation.
+  // A half-configured setup (one set, one missing) would fail deep in /account/* routes.
+  // Fail fast at boot so the issue is obvious immediately.
+  const hasClientId = !!env.PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID;
+  const hasApiUrl = !!env.PUBLIC_CUSTOMER_ACCOUNT_API_URL;
+  if (hasClientId !== hasApiUrl) {
+    throw new Error(
+      'Customer Account API is half-configured: ' +
+        (hasClientId
+          ? 'PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID is set but PUBLIC_CUSTOMER_ACCOUNT_API_URL is missing'
+          : 'PUBLIC_CUSTOMER_ACCOUNT_API_URL is set but PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID is missing') +
+        '. Set both or neither.',
+    );
   }
 
   const waitUntil = executionContext.waitUntil.bind(executionContext);
@@ -34,16 +80,10 @@ export async function createAppLoadContext(
     AppSession.init(request, [env.SESSION_SECRET]),
   ]);
 
-  // Read currency from URL param or session
-  const url = new URL(request.url);
-  const currencyParam = url.searchParams.get('currency');
-  const storedCurrency = session.get('currency');
-  const activeCurrency = currencyParam ?? storedCurrency ?? 'USD';
-
-  // If URL param is set, update the session
-  if (currencyParam && currencyParam !== storedCurrency) {
-    session.set('currency', currencyParam);
-  }
+  // Country is the Shopify Markets source of truth. Currency is deliberately
+  // not stored independently: Shopify derives it from the selected market.
+  const storedCountry = normalizeCountryCode(session.get('country'));
+  const activeCountry = storedCountry ?? resolveCountry(request);
 
   // Configure customer account if env vars are present
   const hasCustomerAccount = Boolean(
@@ -56,7 +96,14 @@ export async function createAppLoadContext(
     cache,
     waitUntil,
     session,
-    i18n: {language: 'EN', country: 'US', currency: activeCurrency},
+    i18n: {
+      language: DEFAULT_LANGUAGE,
+      country: activeCountry,
+    },
+    cart: {
+      queryFragment: CART_QUERY_FRAGMENT,
+      mutateFragment: CART_MUTATE_FRAGMENT,
+    },
     // Customer Account API is only active when the client ID is configured
     ...(hasCustomerAccount && {
       customerAccount: {

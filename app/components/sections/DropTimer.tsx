@@ -1,6 +1,5 @@
 import {useEffect, useState} from 'react';
 import {Image} from '@shopify/hydrogen';
-import Button from '~/components/ui/Button';
 
 type ImageData = {
   url: string;
@@ -13,7 +12,7 @@ interface DropTimerProps {
   eyebrow?: string;
   heading: string;
   description?: string;
-  dropDate: string; // ISO date string
+  dropDate: string;
   buttonLabel?: string;
   buttonLink?: string;
   backgroundImage?: ImageData;
@@ -21,12 +20,11 @@ interface DropTimerProps {
 }
 
 /**
- * LEGENDARY STREETWEAR — Drop Timer Section
- * Limited-edition countdown timer for product drops and restocks.
- * Ported from sections/lb-drop-timer.liquid
+ * HANSSEN — Drop Timer Section
+ * Editorial countdown with serif display numbers, dark background, red accent.
  */
 export default function DropTimer({
-  eyebrow = 'LIMITED DROP',
+  eyebrow = 'Limited Drop',
   heading,
   description,
   dropDate,
@@ -55,30 +53,30 @@ export default function DropTimer({
     : {};
 
   return (
-    <section className="lb-section">
-      <div className="lb-container">
+    <section className="h-section h-reveal">
+      <div className="h-container">
         <div
-          className="relative rounded-lg overflow-hidden bg-black text-white bg-cover bg-center min-h-[360px]"
+          className="relative overflow-hidden bg-[var(--color-foreground)] text-[var(--color-text-inverse)] bg-cover bg-center"
           style={bgStyle}
         >
           {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-black/90 to-black/60 z-0" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-foreground)]/95 to-[var(--color-foreground)]/70 z-0" />
 
-          <div className="relative z-10 grid md:grid-cols-[1.5fr_1fr] gap-12 items-center p-12 md:px-16 md:py-24">
+          <div className="relative z-10 grid md:grid-cols-[1.5fr_1fr] gap-12 items-center px-8 md:px-16 py-16 md:py-24">
             {/* Text side */}
             <div className="flex flex-col gap-4">
-              <div className="lb-eyebrow !text-white/80">{eyebrow}</div>
-              <h2 className="!text-white !text-[clamp(2rem,5vw,4.5rem)] uppercase font-bold tracking-tight leading-none">
+              <p className="h-eyebrow text-[var(--color-text-tertiary)]">{eyebrow}</p>
+              <h2 className="text-[clamp(2rem,5vw,4.5rem)] leading-[0.95] font-serif font-normal">
                 {heading}
               </h2>
               {description && (
-                <p className="text-white/75 max-w-[50ch] leading-relaxed">
+                <p className="text-[var(--color-text-inverse)]/70 max-w-[50ch] leading-relaxed">
                   {description}
                 </p>
               )}
 
               {/* Timer */}
-              <div className="flex gap-3 items-start mt-4">
+              <div className="flex gap-2 md:gap-4 items-start mt-4">
                 <TimerUnit value={pad(timeLeft.days)} label="Days" />
                 <TimerSep />
                 <TimerUnit value={pad(timeLeft.hours)} label="Hours" />
@@ -89,10 +87,10 @@ export default function DropTimer({
               </div>
 
               {buttonLabel && buttonLink && (
-                <div className="mt-3">
-                  <Button as="link" to={buttonLink} variant="solid" size="md">
+                <div className="mt-4">
+                  <a href={buttonLink} className="h-btn-primary">
                     {buttonLabel}
-                  </Button>
+                  </a>
                 </div>
               )}
             </div>
@@ -103,9 +101,11 @@ export default function DropTimer({
                 <Image
                   data={productImage}
                   aspectRatio="1/1"
+                  width={600}
+                  height={600}
                   sizes="(max-width: 768px) 200px, 400px"
                   loading="lazy"
-                  className="max-h-[340px] w-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
+                  className="max-h-[340px] w-auto object-contain rounded-lg"
                 />
               </div>
             )}
@@ -119,10 +119,10 @@ export default function DropTimer({
 function TimerUnit({value, label}: {value: string; label: string}) {
   return (
     <div className="flex flex-col items-center gap-1 min-w-[60px]">
-      <span className="font-mono text-[clamp(1.5rem,4vw,3rem)] font-semibold leading-none tracking-tight text-white">
+      <span className="text-[clamp(2rem,5vw,3.5rem)] font-serif leading-none text-[var(--color-accent)]">
         {value}
       </span>
-      <span className="text-[0.65rem] uppercase tracking-[0.15em] opacity-50">
+      <span className="h-eyebrow text-[var(--color-text-tertiary)]">
         {label}
       </span>
     </div>
@@ -131,7 +131,7 @@ function TimerUnit({value, label}: {value: string; label: string}) {
 
 function TimerSep() {
   return (
-    <span className="font-mono text-2xl opacity-30 leading-none mt-1">:</span>
+    <span className="text-2xl font-serif text-[var(--color-text-tertiary)] leading-none mt-2">:</span>
   );
 }
 

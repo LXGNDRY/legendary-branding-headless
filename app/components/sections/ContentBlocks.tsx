@@ -46,7 +46,7 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
                   {block.title}
                 </h2>
                 {block.text && (
-                  <p className="mt-4 text-black/60 text-sm leading-relaxed">
+                  <p className="mt-4 text-[var(--color-text-secondary)] text-sm leading-relaxed">
                     {block.text}
                   </p>
                 )}
@@ -57,7 +57,7 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
             return (
               <div
                 key={i}
-                className="max-w-3xl mx-auto prose prose-sm max-w-none text-black [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-black/70 [&_h2]:text-2xl [&_h3]:text-xl [&_li]:my-0.5"
+                className="max-w-3xl mx-auto prose prose-sm max-w-none text-[var(--color-text-primary)] [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-[var(--color-text-primary)] [&_h2]:text-2xl [&_h3]:text-xl [&_li]:my-0.5"
                 // eslint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{
                   __html: block.text || '',
@@ -82,7 +82,7 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full aspect-[4/3] bg-[#f5f5f5]" />
+                    <div className="w-full aspect-[4/3] bg-[var(--color-surface)]" />
                   )}
                 </div>
                 <div className="md:[direction:ltr]">
@@ -90,7 +90,7 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
                     <h3 className="text-2xl font-normal mb-3">{block.title}</h3>
                   )}
                   {block.text && (
-                    <p className="text-sm text-black/60 leading-relaxed">
+                    <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
                       {block.text}
                     </p>
                   )}
@@ -105,8 +105,8 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
                   &ldquo;{block.quote}&rdquo;
                 </blockquote>
                 {block.attribution && (
-                  <figcaption className="mt-4 text-xs tracking-widest uppercase text-black/50">
-                    — {block.attribution}
+                  <figcaption className="mt-4 text-xs tracking-widest uppercase text-[var(--color-text-secondary)]">
+                    - {block.attribution}
                   </figcaption>
                 )}
               </figure>
@@ -114,7 +114,7 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
 
           case 'cta':
             return (
-              <div key={i} className="bg-black text-white py-16 px-8 text-center">
+              <div key={i} className="bg-[var(--color-bg-level-3)] text-[var(--color-text-inverse)] py-16 px-8 text-center">
                 <h3 className="text-2xl md:text-3xl font-normal mb-3">
                   {block.title}
                 </h3>
@@ -126,7 +126,7 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
                 {block.button_text && block.button_link && (
                   <Link
                     to={block.button_link}
-                    className="inline-block text-xs font-semibold tracking-widest uppercase border-2 border-white px-8 py-4 hover:bg-white hover:text-black transition-colors"
+                    className="inline-block text-xs font-semibold tracking-widest uppercase border-2 border-white px-8 py-4 hover:bg-[var(--color-bg-level-1)] hover:text-[var(--color-accent)] transition-colors"
                   >
                     {block.button_text}
                   </Link>

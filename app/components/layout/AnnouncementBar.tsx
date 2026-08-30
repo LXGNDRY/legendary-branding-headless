@@ -10,42 +10,43 @@ interface AnnouncementBarProps {
 }
 
 const DEFAULT_ITEMS: Announcement[] = [
-  {text: 'FREE SHIPPING ON ORDERS $100+', link: '/collections/all-products'},
-  {text: '235GSM+ HEAVYWEIGHT TEES — MADE TO ORDER'},
-  {text: 'NEW DROPS EVERY FRIDAY', link: '/collections/all-products'},
+  {text: 'Free Shipping on Orders $100+', link: '/collections/all-products'},
+  {text: '235GSM+ Heavyweight Tees, Made to Order'},
+  {text: 'New Drops Every Friday', link: '/collections/all-products'},
+  {text: 'Worldwide Shipping Available'},
 ];
 
+/**
+ * ONYX — Announcement Bar
+ * Top-of-page scrolling marquee with announcements.
+ * Dark theme: subtle dark surface with accent highlights.
+ */
 export default function AnnouncementBar({items = DEFAULT_ITEMS}: AnnouncementBarProps) {
   return (
-    <div className="bg-[#0a0a0a] text-white overflow-hidden">
+    <div className="bg-[var(--color-bg-level-2)] text-[var(--color-text-primary)] overflow-hidden border-b border-[var(--color-border-muted)]">
       <div
         className="flex whitespace-nowrap py-2 will-change-transform"
-        style={{animation: 'lb-announce-scroll 30s linear infinite'}}
+        style={{animation: 'h-announce-scroll 40s linear infinite'}}
+        aria-hidden="true"
       >
-        {[...items, ...items].map((item, i) => (
-          <span key={i} className="inline-flex items-center gap-6 mx-6">
+        {[...items, ...items, ...items].map((item, i) => (
+          <span key={i} className="inline-flex items-center gap-6 mx-8">
             {item.link ? (
               <Link
                 to={item.link}
-                className="text-[10px] font-medium tracking-[0.2em] uppercase hover:text-white/70 transition-colors"
+                className="text-[11px] font-medium tracking-[0.1em] uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
               >
                 {item.text}
               </Link>
             ) : (
-              <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-white/80">
+              <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-[var(--color-text-tertiary)]">
                 {item.text}
               </span>
             )}
-            <span className="text-white/30 text-[8px]" aria-hidden="true">✦</span>
+            <span className="text-[var(--color-accent)] text-xs" aria-hidden="true">✦</span>
           </span>
         ))}
       </div>
-      <style>{`
-        @keyframes lb-announce-scroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-      `}</style>
     </div>
   );
 }
