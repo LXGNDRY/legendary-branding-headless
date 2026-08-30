@@ -188,9 +188,11 @@ export default function App() {
     if (addingFetcher) setCartOpen(true);
   }, [fetchers]);
 
-  // Sentry init + web vitals (guard: only on client)
+  // Sentry init + web vitals (guard: only on client). Fire-and-forget --
+  // initSentry dynamically imports @sentry/react only when a DSN is
+  // configured, so most deployments never pay for that bundle at all.
   if (typeof window !== 'undefined') {
-    initSentry(import.meta.env.PUBLIC_SENTRY_DSN);
+    void initSentry(import.meta.env.PUBLIC_SENTRY_DSN);
   }
   useWebVitals(import.meta.env.PUBLIC_GA4_MEASUREMENT_ID);
 

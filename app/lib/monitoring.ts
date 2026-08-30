@@ -6,27 +6,38 @@
  *
  * Both sides read PUBLIC_SENTRY_DSN from env.
  * If no DSN is configured, everything no-ops safely.
+ *
+ * @sentry/react is loaded via a dynamic import gated on a DSN actually
+ * being present, rather than a static top-level import -- most storefronts
+ * running this code won't have PUBLIC_SENTRY_DSN configured, and a static
+ * import ships and parses the full Sentry client bundle regardless of
+ * whether it will ever be used.
  */
 
 import {useEffect} from 'react';
-import * as SentryBrowser from '@sentry/react';
 import {onLCP, onFCP, onCLS, onINP} from 'web-vitals';
 
-// Re-export for convenience (server-side uses direct import)
-export {SentryBrowser as Sentry};
+type SentryModule = typeof import('@sentry/react');
 
 let clientInitialized = false;
+let clientInitializing = false;
+let sentryModule: SentryModule | null = null;
 
 /**
  * Initialize Sentry on the client (browser).
- * Call once from root.tsx in a useEffect.
- * Safe to call with no DSN — no-ops.
+ * Called from root.tsx's render body (not a useEffect), which can invoke
+ * this more than once before the dynamic import below resolves -- guarded
+ * separately from clientInitialized so a second call while the first is
+ * still in flight doesn't kick off a duplicate import/init.
+ * Safe to call with no DSN — no-ops without ever importing @sentry/react.
  */
-export function initSentry(dsn: string | undefined) {
-  if (!dsn || typeof window === 'undefined' || clientInitialized) return;
+export async function initSentry(dsn: string | undefined) {
+  if (!dsn || typeof window === 'undefined' || clientInitialized || clientInitializing) return;
+  clientInitializing = true;
 
   try {
-    SentryBrowser.init({
+    const Sentry = await import('@sentry/react');
+    Sentry.init({
       dsn,
       environment: import.meta.env.MODE || 'production',
       release: 'legendary-headless@' + (import.meta.env.VITE_APP_VERSION || '1.0.0'),
@@ -43,10 +54,13 @@ export function initSentry(dsn: string | undefined) {
         return event;
       },
     });
+    sentryModule = Sentry;
     clientInitialized = true;
   } catch (err) {
     // Never let Sentry init break the app
     console.warn('[monitoring] Sentry init failed:', err);
+  } finally {
+    clientInitializing = false;
   }
 }
 
@@ -54,13 +68,14 @@ export function initSentry(dsn: string | undefined) {
  * Capture an error — sends to Sentry on the client, or console in dev.
  */
 export function captureError(error: unknown, context?: Record<string, unknown>) {
-  if (typeof window !== 'undefined' && clientInitialized) {
-    SentryBrowser.captureException(error instanceof Error ? error : new Error(String(error)), {
+  if (typeof window !== 'undefined' && clientInitialized && sentryModule) {
+    sentryModule.captureException(error instanceof Error ? error : new Error(String(error)), {
       extra: context,
     });
     return;
   }
-  // Fallback: console (also used server-side before Sentry init)
+  // Fallback: console (also used server-side before Sentry init, and on
+  // the client if an error fires before the dynamic import resolves)
   console.error('[monitoring]', context ?? '', error);
 }
 
@@ -68,8 +83,8 @@ export function captureError(error: unknown, context?: Record<string, unknown>) 
  * Capture a message to Sentry.
  */
 export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info') {
-  if (typeof window !== 'undefined' && clientInitialized) {
-    SentryBrowser.captureMessage(message, level);
+  if (typeof window !== 'undefined' && clientInitialized && sentryModule) {
+    sentryModule.captureMessage(message, level);
     return;
   }
   console[level === 'error' ? 'error' : level === 'warning' ? 'warn' : 'log']('[monitoring]', message);
@@ -98,8 +113,8 @@ export function useWebVitals(ga4Id?: string) {
       }
 
       // Send to Sentry as a measurement
-      if (clientInitialized) {
-        SentryBrowser.metrics.distribution(
+      if (clientInitialized && sentryModule) {
+        sentryModule.metrics.distribution(
           `web_vitals.${metric.name.toLowerCase()}`,
           metric.value,
           {unit: metric.name === 'CLS' ? 'unitless' : 'millisecond'},
