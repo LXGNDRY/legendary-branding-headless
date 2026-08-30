@@ -17,7 +17,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@graphql-codegen/cli": "7.2.0",
+    "@graphql-codegen/cli": "7.3.1",
     "@sentry/react": "10.70.0",
     "@shopify/cli": "3.94.3",
     "@shopify/hydrogen": "2026.4.4",
