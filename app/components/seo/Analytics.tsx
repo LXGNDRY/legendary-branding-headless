@@ -1,4 +1,11 @@
 import {useEffect, useState} from 'react';
+import {AnalyticsEvent, useAnalytics} from '@shopify/hydrogen';
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
 import {Link} from 'react-router';
 
 /**
@@ -21,34 +28,6 @@ import {Link} from 'react-router';
  * user-initiated action.
  */
 
-const CONSENT_COOKIE_NAME = 'lb_consent';
-
-type ConsentState = 'accepted' | 'rejected' | 'undecided';
-
-function getConsentFromCookie(): ConsentState {
-  if (typeof document === 'undefined') return 'undecided';
-  const match = document.cookie.match(
-    new RegExp('(^| )' + CONSENT_COOKIE_NAME + '=([^;]+)'),
-  );
-  const value = match ? decodeURIComponent(match[2]) : '';
-  if (value === 'accepted') return 'accepted';
-  if (value === 'rejected') return 'rejected';
-  return 'undecided';
-}
-
-function setConsentCookie(value: ConsentState) {
-  if (typeof document === 'undefined') return;
-  const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
-  document.cookie =
-    CONSENT_COOKIE_NAME +
-    '=' +
-    encodeURIComponent(value) +
-    '; expires=' +
-    expires +
-    '; path=/; SameSite=Lax' +
-    (location.protocol === 'https:' ? '; Secure' : '');
-}
-
 // GA4 script
 function loadGA4(measurementId: string) {
   if (typeof document === 'undefined') return;
@@ -64,6 +43,7 @@ function loadGA4(measurementId: string) {
   const gtag = (...args: unknown[]) => {
     ((window as {dataLayer?: unknown[]}).dataLayer as unknown[]).push(args);
   };
+  window.gtag = gtag;
   gtag('js', new Date());
   gtag('config', measurementId, {
     anonymize_ip: true,
@@ -126,18 +106,61 @@ interface AnalyticsProps {
   klaviyoCompanyId?: string;
 }
 
+function CommerceAnalyticsBridge() {
+  const {subscribe, register} = useAnalytics();
+
+  useEffect(() => {
+    const {ready} = register('legendary-commerce-bridge');
+    const emit = (event: string, payload: Record<string, unknown>) => {
+      if (window.gtag) window.gtag('event', event, payload);
+    };
+
+    subscribe(AnalyticsEvent.PRODUCT_VIEWED, (payload) =>
+      emit('view_item', {items: payload.products}),
+    );
+    subscribe(AnalyticsEvent.COLLECTION_VIEWED, (payload) =>
+      emit('view_item_list', {item_list_id: payload.collection.id, item_list_name: payload.collection.handle}),
+    );
+    subscribe(AnalyticsEvent.SEARCH_VIEWED, (payload) =>
+      emit('search', {search_term: payload.searchTerm}),
+    );
+    subscribe(AnalyticsEvent.CART_VIEWED, (payload) =>
+      emit('view_cart', {cart: payload.cart}),
+    );
+    subscribe(AnalyticsEvent.PRODUCT_ADD_TO_CART, (payload) =>
+      emit('add_to_cart', {cart: payload.cart, item: payload.currentLine}),
+    );
+    subscribe(AnalyticsEvent.PRODUCT_REMOVED_FROM_CART, (payload) =>
+      emit('remove_from_cart', {cart: payload.cart, item: payload.prevLine}),
+    );
+    subscribe(AnalyticsEvent.CUSTOM_EVENT, (payload) => {
+      if (payload.eventName === 'begin_checkout') {
+        emit('begin_checkout', {cart: payload.cart});
+      }
+    });
+    ready();
+  }, [register, subscribe]);
+
+  return null;
+}
+
 export default function Analytics({
   ga4Id,
   metaPixelId,
   tiktokPixelId,
   klaviyoCompanyId,
 }: AnalyticsProps) {
-  const [consent, setConsent] = useState<ConsentState>('undecided');
+  const {customerPrivacy} = useAnalytics();
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    const current = getConsentFromCookie();
-    setConsent(current);
+    if (!customerPrivacy) return;
+    const visitorConsent = customerPrivacy.currentVisitorConsent();
+    const current = visitorConsent.analytics === true
+      ? 'accepted'
+      : visitorConsent.analytics === false
+        ? 'rejected'
+        : 'undecided';
 
     // Show banner if undecided
     if (current === 'undecided') {
@@ -149,12 +172,15 @@ export default function Analytics({
       if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
       if (klaviyoCompanyId) loadKlaviyo(klaviyoCompanyId);
     }
-  }, [ga4Id, metaPixelId, tiktokPixelId, klaviyoCompanyId]);
+  }, [customerPrivacy, ga4Id, metaPixelId, tiktokPixelId, klaviyoCompanyId]);
 
   function handleAccept() {
-    setConsent('accepted');
-    setConsentCookie('accepted');
+    if (!customerPrivacy) return;
     setShowBanner(false);
+    customerPrivacy.setTrackingConsent(
+      {analytics: true, marketing: true, preferences: true, sale_of_data: false},
+      (result) => result?.error && console.error('[privacy] Unable to save consent'),
+    );
 
     // Load analytics
     if (ga4Id) loadGA4(ga4Id);
@@ -164,13 +190,17 @@ export default function Analytics({
   }
 
   function handleReject() {
-    setConsent('rejected');
-    setConsentCookie('rejected');
+    if (!customerPrivacy) return;
     setShowBanner(false);
+    customerPrivacy.setTrackingConsent(
+      {analytics: false, marketing: false, preferences: false, sale_of_data: false},
+      (result) => result?.error && console.error('[privacy] Unable to save consent'),
+    );
   }
 
   return (
     <>
+      <CommerceAnalyticsBridge />
       {/* Consent banner */}
       {showBanner && (
         <div

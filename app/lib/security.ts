@@ -98,3 +98,15 @@ export function isAssetRequest(request: Request): boolean {
   const staticExtensions = /\.(css|js|woff2?|ttf|otf|eot|png|jpg|jpeg|gif|svg|webp|avif|ico|mp4|webm|mp3|wav|pdf)$/i;
   return staticExtensions.test(url.pathname);
 }
+
+/** Reject cross-origin browser mutations while allowing same-origin requests
+ * and non-browser clients that omit Origin. This complements SameSite cookies
+ * and prevents a third-party site from submitting authenticated cart/account
+ * forms on a customer's behalf. */
+export function requireSameOrigin(request: Request): Response | null {
+  const origin = request.headers.get('Origin');
+  if (!origin) return null;
+  const requestOrigin = new URL(request.url).origin;
+  if (origin === requestOrigin) return null;
+  return Response.json({error: 'Cross-origin request rejected'}, {status: 403});
+}

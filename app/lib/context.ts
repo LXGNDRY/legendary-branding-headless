@@ -1,6 +1,10 @@
 import {createHydrogenContext} from '@shopify/hydrogen';
-import type {CountryCode} from '@shopify/hydrogen/storefront-api-types';
 import {AppSession} from '~/lib/session';
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_LANGUAGE,
+  normalizeCountryCode,
+} from '~/lib/market';
 
 /**
  * The subset of Cloudflare's `IncomingRequestCfProperties` we rely on.
@@ -13,31 +17,20 @@ interface CloudflareRequestCf {
   country?: string;
 }
 
-const DEFAULT_COUNTRY: CountryCode = 'US';
-const VALID_COUNTRY_CODE = /^[A-Z]{2}$/;
-
 /**
  * Resolve the visitor's market country from Cloudflare's edge-provided
  * geolocation, falling back to the primary "United States" market.
  *
  * Why this exists: the Shopify store has exactly two enabled Markets —
  * "United States" (primary, region US only) and "International" (region
- * ~150 other countries) — and both share the same domain with no
- * country-specific subpath (only language subpaths like /de/, /fr/ exist,
- * which are unrelated to market resolution). Hardcoding `country: 'US'`
- * here would silently put every non-US visitor into the wrong market for
- * pricing/availability/currency. We deliberately do NOT hardcode the
- * ~150-country International market list — an unrecognized/unsupported
- * code passed to `@inContext(country: ...)` is handled sensibly by the
- * Storefront API itself, so a plain 2-letter-code sanity check is enough.
+ * ~150 other countries) — and both share the same domain. Hardcoding
+ * `country: 'US'` here would silently put every non-US visitor into the wrong
+ * market for pricing, availability, and currency. Country values are checked
+ * as known regions before they can enter Shopify's GraphQL context.
  */
-export function resolveCountry(request: Request): CountryCode {
+export function resolveCountry(request: Request) {
   const cf = (request as Request & {cf?: CloudflareRequestCf}).cf;
-  const country = cf?.country;
-  if (country && VALID_COUNTRY_CODE.test(country)) {
-    return country as CountryCode;
-  }
-  return DEFAULT_COUNTRY;
+  return normalizeCountryCode(cf?.country) ?? DEFAULT_COUNTRY;
 }
 
 /**
@@ -86,16 +79,10 @@ export async function createAppLoadContext(
     AppSession.init(request, [env.SESSION_SECRET]),
   ]);
 
-  // Read currency from URL param or session
-  const url = new URL(request.url);
-  const currencyParam = url.searchParams.get('currency');
-  const storedCurrency = session.get('currency');
-  const activeCurrency = currencyParam ?? storedCurrency ?? 'USD';
-
-  // If URL param is set, update the session
-  if (currencyParam && currencyParam !== storedCurrency) {
-    session.set('currency', currencyParam);
-  }
+  // Country is the Shopify Markets source of truth. Currency is deliberately
+  // not stored independently: Shopify derives it from the selected market.
+  const storedCountry = normalizeCountryCode(session.get('country'));
+  const activeCountry = storedCountry ?? resolveCountry(request);
 
   // Configure customer account if env vars are present
   const hasCustomerAccount = Boolean(
@@ -109,9 +96,8 @@ export async function createAppLoadContext(
     waitUntil,
     session,
     i18n: {
-      language: 'EN',
-      country: resolveCountry(request),
-      currency: activeCurrency,
+      language: DEFAULT_LANGUAGE,
+      country: activeCountry,
     },
     // Customer Account API is only active when the client ID is configured
     ...(hasCustomerAccount && {

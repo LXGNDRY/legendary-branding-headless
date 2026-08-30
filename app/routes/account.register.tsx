@@ -18,7 +18,7 @@ export async function loader({context}: LoaderFunctionArgs) {
   const {customerAccount} = context;
 
   if (!customerAccount) {
-    return redirect('/');
+    throw new Response('Customer accounts are unavailable', {status: 503});
   }
 
   const isLoggedIn = await customerAccount.isLoggedIn();

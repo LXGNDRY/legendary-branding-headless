@@ -34,4 +34,5 @@ export type CartData = {
     subtotalAmount: CartMoney;
     totalAmount: CartMoney;
   };
+  discountCodes?: {code: string; applicable: boolean}[];
 } | null | undefined;

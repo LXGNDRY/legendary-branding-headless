@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {applySecurityHeaders, isAssetRequest, SECURITY_HEADERS} from './security';
+import {applySecurityHeaders, isAssetRequest, requireSameOrigin, SECURITY_HEADERS} from './security';
 
 describe('Security headers', () => {
   describe('SECURITY_HEADERS constants', () => {
@@ -116,5 +116,23 @@ describe('Security headers', () => {
     it('does not classify API calls as assets', () => {
       expect(isAssetRequest(makeRequest('https://example.com/api/search?q=hoodie'))).toBe(false);
     });
+  });
+});
+
+describe('requireSameOrigin', () => {
+  it('allows same-origin browser mutations', () => {
+    const request = new Request('https://legendary-branding.com/cart', {
+      method: 'POST',
+      headers: {Origin: 'https://legendary-branding.com'},
+    });
+    expect(requireSameOrigin(request)).toBeNull();
+  });
+
+  it('rejects cross-origin browser mutations', () => {
+    const request = new Request('https://legendary-branding.com/cart', {
+      method: 'POST',
+      headers: {Origin: 'https://attacker.example'},
+    });
+    expect(requireSameOrigin(request)?.status).toBe(403);
   });
 });
