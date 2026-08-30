@@ -23,6 +23,29 @@ let clientInitialized = false;
 let clientInitializing = false;
 let sentryModule: SentryModule | null = null;
 
+// Errors captured while the dynamic import is still in flight (most
+// notably a hydration failure, which can throw before the import
+// resolves) -- flushed to Sentry once init completes so they aren't
+// silently dropped to the console fallback only.
+type PendingCapture =
+  | {kind: 'exception'; error: unknown; context?: Record<string, unknown>}
+  | {kind: 'message'; message: string; level: 'info' | 'warning' | 'error'};
+const pendingCaptures: PendingCapture[] = [];
+
+function flushPendingCaptures() {
+  if (!sentryModule) return;
+  for (const capture of pendingCaptures.splice(0)) {
+    if (capture.kind === 'exception') {
+      sentryModule.captureException(
+        capture.error instanceof Error ? capture.error : new Error(String(capture.error)),
+        {extra: capture.context},
+      );
+    } else {
+      sentryModule.captureMessage(capture.message, capture.level);
+    }
+  }
+}
+
 /**
  * Initialize Sentry on the client (browser).
  * Called from root.tsx's render body (not a useEffect), which can invoke
@@ -56,6 +79,7 @@ export async function initSentry(dsn: string | undefined) {
     });
     sentryModule = Sentry;
     clientInitialized = true;
+    flushPendingCaptures();
   } catch (err) {
     // Never let Sentry init break the app
     console.warn('[monitoring] Sentry init failed:', err);
@@ -74,9 +98,14 @@ export function captureError(error: unknown, context?: Record<string, unknown>) 
     });
     return;
   }
-  // Fallback: console (also used server-side before Sentry init, and on
-  // the client if an error fires before the dynamic import resolves)
+  // Still logged to console immediately (so nothing is silent even if
+  // init never completes -- e.g. no DSN configured), but if the dynamic
+  // import is in flight, also queue it to flush to Sentry once init
+  // resolves, since a hydration-time error can fire before that happens.
   console.error('[monitoring]', context ?? '', error);
+  if (typeof window !== 'undefined' && clientInitializing) {
+    pendingCaptures.push({kind: 'exception', error, context});
+  }
 }
 
 /**
@@ -88,6 +117,9 @@ export function captureMessage(message: string, level: 'info' | 'warning' | 'err
     return;
   }
   console[level === 'error' ? 'error' : level === 'warning' ? 'warn' : 'log']('[monitoring]', message);
+  if (typeof window !== 'undefined' && clientInitializing) {
+    pendingCaptures.push({kind: 'message', message, level});
+  }
 }
 
 /**

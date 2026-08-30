@@ -6,14 +6,15 @@ import tailwindcss from '@tailwindcss/vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  // Vite's default envPrefix is 'VITE_' only. Every client-side analytics/
-  // monitoring env var in this app (PUBLIC_SENTRY_DSN, PUBLIC_GA4_
-  // MEASUREMENT_ID, PUBLIC_META_PIXEL_ID, PUBLIC_TIKTOK_PIXEL_ID,
-  // PUBLIC_KLAVIYO_COMPANY_ID) is read via `import.meta.env.PUBLIC_*` in
-  // root.tsx, so without 'PUBLIC_' also allowed here, every one of those
-  // values is silently undefined at build time regardless of what's
-  // configured in .env or Oxygen's environment variables -- none of that
-  // client-side tracking has ever actually initialized.
+  // Vite's default envPrefix is 'VITE_' only. root.tsx's client-side
+  // analytics/monitoring config is now threaded through the root loader
+  // from context.env (the Oxygen worker's runtime environment) rather than
+  // read via import.meta.env.PUBLIC_* -- that's required for values that
+  // are only ever set as Oxygen runtime env vars, since import.meta.env is
+  // resolved at Vite build time. 'PUBLIC_' is kept here too so any
+  // genuinely build-time PUBLIC_ value (set in a local .env for `vite
+  // build`) is still exposed, but it is not what makes the Oxygen-deployed
+  // analytics IDs work -- the loader threading is.
   envPrefix: ['VITE_', 'PUBLIC_'],
   plugins: [
     tailwindcss(),
