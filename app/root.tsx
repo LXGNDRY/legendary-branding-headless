@@ -55,10 +55,11 @@ export const links: LinksFunction = () => [
 ];
 
 export const meta: MetaFunction = () => [
-  {charSet: 'utf-8'},
-  {name: 'viewport', content: 'width=device-width, initial-scale=1'},
-  {name: 'color-scheme', content: 'dark'},
-  {name: 'theme-color', content: '#0A0A0A'},
+  // charSet, viewport, color-scheme, and theme-color are hardcoded directly
+  // in the Layout component's <head> below instead of here -- React Router
+  // v7 doesn't merge a leaf route's `meta` array with its parents', so any
+  // route with its own `meta` export (most of them) would otherwise drop
+  // these silently.
   {title: 'Legendary Branding | Premium Streetwear'},
   {
     name: 'description',
@@ -143,6 +144,16 @@ export function Layout({children}: {children: React.ReactNode}) {
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
+        {/* Hardcoded here rather than in the `meta` export below: React
+            Router v7 does not merge a leaf route's `meta` array with its
+            parents' by default -- any route defining its own `meta` export
+            (most of them do, for page titles/descriptions) silently drops
+            root's viewport tag, leaving mobile browsers to fall back to a
+            ~980px desktop-width layout viewport. Same reasoning as the
+            hardcoded charSet above it. */}
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="dark" />
+        <meta name="theme-color" content="#0A0A0A" />
         <Meta />
         <Links />
       </head>
