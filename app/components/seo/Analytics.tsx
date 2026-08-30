@@ -152,41 +152,61 @@ export default function Analytics({
 }: AnalyticsProps) {
   const {customerPrivacy} = useAnalytics();
   const [showBanner, setShowBanner] = useState(false);
+  const [scriptsLoaded, setScriptsLoaded] = useState(false);
 
   useEffect(() => {
     if (!customerPrivacy) return;
-    const visitorConsent = customerPrivacy.currentVisitorConsent();
-    const current = visitorConsent.analytics === true
-      ? 'accepted'
-      : visitorConsent.analytics === false
-        ? 'rejected'
-        : 'undecided';
 
-    // Show banner if undecided
-    if (current === 'undecided') {
-      setShowBanner(true);
-    } else if (current === 'accepted') {
-      // Load analytics scripts
-      if (ga4Id) loadGA4(ga4Id);
-      if (metaPixelId) loadMetaPixel(metaPixelId);
-      if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
-      if (klaviyoCompanyId) loadKlaviyo(klaviyoCompanyId);
-    }
+    // On a fresh page load, the Shopify Customer Privacy API still needs to
+    // sync previously-saved consent in from the checkout domain (a
+    // cross-domain round trip) before `currentVisitorConsent()` reflects it
+    // -- reading it synchronously right here can catch it mid-sync and see
+    // the "undecided" default even though the visitor already accepted,
+    // which is what made the banner reappear on every refresh. The API
+    // fires a `visitorConsentCollected` DOM event once that sync (or a new
+    // `setTrackingConsent` call) actually completes, so that's the signal
+    // this reads from instead of trusting the very first synchronous read.
+    const evaluate = () => {
+      const visitorConsent = customerPrivacy.currentVisitorConsent();
+      const current = visitorConsent.analytics === true
+        ? 'accepted'
+        : visitorConsent.analytics === false
+          ? 'rejected'
+          : 'undecided';
+
+      if (current === 'undecided') {
+        setShowBanner(true);
+      } else {
+        setShowBanner(false);
+        if (current === 'accepted') {
+          setScriptsLoaded((already) => {
+            if (!already) {
+              if (ga4Id) loadGA4(ga4Id);
+              if (metaPixelId) loadMetaPixel(metaPixelId);
+              if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
+              if (klaviyoCompanyId) loadKlaviyo(klaviyoCompanyId);
+            }
+            return true;
+          });
+        }
+      }
+    };
+
+    evaluate();
+    document.addEventListener('visitorConsentCollected', evaluate);
+    return () => document.removeEventListener('visitorConsentCollected', evaluate);
   }, [customerPrivacy, ga4Id, metaPixelId, tiktokPixelId, klaviyoCompanyId]);
 
   function handleAccept() {
     if (!customerPrivacy) return;
     setShowBanner(false);
+    // Script loading is handled by the `visitorConsentCollected` listener
+    // above, which this call triggers -- keeps a single source of truth so
+    // scripts don't load twice.
     customerPrivacy.setTrackingConsent(
       {analytics: true, marketing: true, preferences: true, sale_of_data: false},
       (result) => result?.error && console.error('[privacy] Unable to save consent'),
     );
-
-    // Load analytics
-    if (ga4Id) loadGA4(ga4Id);
-    if (metaPixelId) loadMetaPixel(metaPixelId);
-    if (tiktokPixelId) loadTikTokPixel(tiktokPixelId);
-    if (klaviyoCompanyId) loadKlaviyo(klaviyoCompanyId);
   }
 
   function handleReject() {
