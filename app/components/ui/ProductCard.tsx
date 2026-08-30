@@ -300,10 +300,14 @@ export default function ProductCard({
         {/* Wishlist top-right — always visible when the device can't hover
             (touch phones, but also touch tablets/landscape phones at wider
             viewports, which a `sm:` breakpoint alone would incorrectly hide
-            again), hover-revealed only for fine-pointer devices that can
-            actually trigger group-hover, to keep the card visually quiet
-            until the user shows intent. */}
-        <div className="absolute top-2.5 right-2.5 z-10 opacity-100 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 transition-opacity duration-200">
+            again), hover-revealed only for devices whose primary pointer is
+            fine AND that have no coarse pointer at all — excluding
+            `any-pointer: coarse` keeps this visible on hybrid devices like
+            touchscreen laptops, where the primary pointer is a mouse/
+            trackpad but a touch user still needs to reach the control
+            directly, to keep the card visually quiet until the user shows
+            intent. */}
+        <div className="absolute top-2.5 right-2.5 z-10 opacity-100 [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:opacity-0 [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:group-hover:opacity-100 transition-opacity duration-200">
           <WishlistButton
             size="sm"
             className="bg-[var(--color-bg-level-1)]/90 backdrop-blur-sm rounded-full p-1.5 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] border border-[var(--color-border-muted)]"
@@ -320,10 +324,15 @@ export default function ProductCard({
         {/* Quick add — always visible on any device that can't hover
             (gated on hover/pointer capability, not viewport width, since a
             touch tablet or landscape phone can be wider than a `sm:`
-            breakpoint and still have no way to trigger group-hover), slides
-            up on hover only for devices with an actual fine pointer. */}
+            breakpoint and still have no way to trigger group-hover). Also
+            excludes `any-pointer: coarse` so hybrid devices (a touchscreen
+            laptop with a mouse/trackpad as primary pointer) don't get the
+            hover-hidden treatment either — a touch user there still needs
+            to reach the control directly. Slides up on hover only for
+            devices with an actual fine pointer and no coarse pointer at
+            all. */}
         {showQuickAdd && product.availableForSale && canQuickAdd && (
-          <div className="absolute bottom-0 left-0 right-0 translate-y-0 opacity-100 transition-all duration-[300ms] ease-[var(--ease-expo)] [@media(hover:hover)_and_(pointer:fine)]:translate-y-full [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-y-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 z-10 p-3">
+          <div className="absolute bottom-0 left-0 right-0 translate-y-0 opacity-100 transition-all duration-[300ms] ease-[var(--ease-expo)] [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:translate-y-full [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:opacity-0 [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:group-hover:translate-y-0 [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:group-hover:opacity-100 z-10 p-3">
             <button
               type="button"
               onClick={handleQuickAdd}

@@ -364,7 +364,7 @@ export default function CollectionPage() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setFilterOpen(true)}
-                  className="lg:hidden flex items-center gap-2 h-eyebrow text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors"
+                  className="lg:hidden flex items-center gap-2 h-eyebrow text-[var(--color-foreground)] hover:text-[var(--color-text-secondary)] transition-colors min-h-11 py-2 -my-2"
                 >
                   <FilterIcon />
                   Filters
