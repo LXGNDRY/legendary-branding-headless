@@ -136,6 +136,18 @@ export async function loader({context}: LoaderFunctionArgs) {
     ),
     localization: localizationResult.localization as LocalizationData,
     shop,
+    // Read from context.env (the Oxygen worker's runtime environment),
+    // not import.meta.env -- these are runtime-configured secrets/IDs on
+    // Oxygen, not values baked in at Vite build time, so import.meta.env
+    // reads of PUBLIC_* client analytics vars are always undefined in the
+    // deployed build regardless of Vite's envPrefix config.
+    analyticsConfig: {
+      ga4Id: context.env.PUBLIC_GA4_MEASUREMENT_ID || undefined,
+      metaPixelId: context.env.PUBLIC_META_PIXEL_ID || undefined,
+      tiktokPixelId: context.env.PUBLIC_TIKTOK_PIXEL_ID || undefined,
+      klaviyoCompanyId: context.env.PUBLIC_KLAVIYO_COMPANY_ID || undefined,
+      sentryDsn: context.env.PUBLIC_SENTRY_DSN || undefined,
+    },
     consent: {
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storefrontAccessToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,
@@ -174,7 +186,7 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, shop, consent} = useLoaderData<typeof loader>();
+  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, shop, analyticsConfig, consent} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
   const location = useLocation();
@@ -195,11 +207,13 @@ export default function App() {
     if (addingFetcher) setCartOpen(true);
   }, [fetchers]);
 
-  // Sentry init + web vitals (guard: only on client)
+  // Sentry init + web vitals (guard: only on client). Fire-and-forget --
+  // initSentry dynamically imports @sentry/react only when a DSN is
+  // configured, so most deployments never pay for that bundle at all.
   if (typeof window !== 'undefined') {
-    initSentry(import.meta.env.PUBLIC_SENTRY_DSN);
+    void initSentry(analyticsConfig.sentryDsn);
   }
-  useWebVitals(import.meta.env.PUBLIC_GA4_MEASUREMENT_ID);
+  useWebVitals(analyticsConfig.ga4Id);
 
   // Judge.me's widget script is loaded only on product pages that actually
   // have badge/widget metafield HTML to render -- see products.$handle.tsx.
@@ -255,10 +269,10 @@ export default function App() {
 
       {/* Consent-gated analytics (GA4, Meta, TikTok, Klaviyo on-site embed) */}
       <Analytics
-        ga4Id={import.meta.env.PUBLIC_GA4_MEASUREMENT_ID}
-        metaPixelId={import.meta.env.PUBLIC_META_PIXEL_ID}
-        tiktokPixelId={import.meta.env.PUBLIC_TIKTOK_PIXEL_ID}
-        klaviyoCompanyId={import.meta.env.PUBLIC_KLAVIYO_COMPANY_ID}
+        ga4Id={analyticsConfig.ga4Id}
+        metaPixelId={analyticsConfig.metaPixelId}
+        tiktokPixelId={analyticsConfig.tiktokPixelId}
+        klaviyoCompanyId={analyticsConfig.klaviyoCompanyId}
       />
 
       <CartDrawer
