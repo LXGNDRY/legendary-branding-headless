@@ -225,6 +225,21 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
 
   const {containerRef: drawerRef} = useFocusTrap(open, onClose);
 
+  // A shopper hitting Back from Shopify's hosted checkout can restore this
+  // page from the bfcache with React state intact, leaving `checkingOut`
+  // stuck true and the checkout link permanently blocked. Also reset on
+  // reopen, since the drawer can remain mounted across navigations.
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setCheckingOut(false);
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+  useEffect(() => {
+    if (open) setCheckingOut(false);
+  }, [open]);
+
   // Close on Escape (handled by useFocusTrap, but keep as safety)
   useEffect(() => {
     if (!open) return;
@@ -453,10 +468,14 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
             {/* Checkout */}
             {currentCart.checkoutUrl ? (
               <div
-                onClick={() => {
+                onClick={(e: React.MouseEvent) => {
                   if (checkingOut) return;
-                  setCheckingOut(true);
                   publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart: currentCart});
+                  // A modifier/middle-click opens checkout in a new tab and
+                  // leaves the drawer open -- don't lock the button, or the
+                  // shopper can never retry without closing/reopening it.
+                  const opensNewTab = e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
+                  if (!opensNewTab) setCheckingOut(true);
                 }}
                 className={checkingOut ? 'pointer-events-none' : undefined}
               >

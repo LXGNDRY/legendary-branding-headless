@@ -340,6 +340,17 @@ export default function CartPage() {
   const isEmpty = lines.length === 0;
   const [checkingOut, setCheckingOut] = useState(false);
 
+  // A shopper hitting Back from Shopify's hosted checkout can restore this
+  // page from the bfcache with React state intact, leaving `checkingOut`
+  // stuck true and the checkout link permanently blocked.
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setCheckingOut(false);
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+
   return (
     <>
     <Analytics.CartView />
@@ -403,10 +414,14 @@ export default function CartPage() {
 
             {cart?.checkoutUrl ? (
               <div
-                onClick={() => {
+                onClick={(e: React.MouseEvent) => {
                   if (checkingOut) return;
-                  setCheckingOut(true);
                   publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart});
+                  // A modifier/middle-click opens checkout in a new tab and
+                  // leaves this page in place -- don't lock the button, or
+                  // the shopper can never retry in this tab.
+                  const opensNewTab = e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
+                  if (!opensNewTab) setCheckingOut(true);
                 }}
                 className={checkingOut ? 'pointer-events-none' : undefined}
               >
