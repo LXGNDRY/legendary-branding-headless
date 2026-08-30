@@ -31,7 +31,7 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@react-router/dev": "7.18.2",
-    "@react-router/fs-routes": "7.18.2",
+    "@react-router/fs-routes": "8.3.0",
     "@shopify/hydrogen-codegen": "0.3.3",
     "@shopify/mini-oxygen": "4.2.1",
     "@shopify/oxygen-workers-types": "4.2.0",
