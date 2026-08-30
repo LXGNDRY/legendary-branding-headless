@@ -56,15 +56,20 @@ export default defineConfig({
       use: {...devices['Pixel 7']},
     },
     {
-      // Real iOS Safari coverage, distinct from the Android/Chrome
-      // emulation above. iOS Safari is the single largest share of real
-      // mobile shopper traffic and has its own quirks (dvh units,
-      // position:sticky/fixed behavior, hover/pointer media-query
-      // reporting, autofocus-triggered keyboard behavior) that Chromium's
-      // mobile emulation does not reproduce -- several bugs fixed in this
-      // codebase's mobile-optimization pass (hover-hidden controls,
-      // viewport-meta handling) were exactly this class of issue, so this
-      // project exists to actually catch that class going forward.
+      // Mobile WebKit-engine coverage, distinct from the Android/Chrome
+      // emulation above. This runs Playwright's Linux WebKit build with an
+      // iPhone-like viewport/UA/touch profile (devices['iPhone 14']) -- it
+      // is NOT literally iOS or Mobile Safari (no real device, no Apple's
+      // own OS/Safari integration, no on-screen-keyboard behavior), but it
+      // does exercise the real WebKit rendering/JS engine, which has its
+      // own quirks (dvh units, position:sticky/fixed behavior, hover/
+      // pointer media-query reporting) that Chromium's mobile emulation
+      // does not reproduce at all. Several bugs fixed in this codebase's
+      // mobile-optimization pass (hover-hidden controls, viewport-meta
+      // handling) were exactly this class of issue, so this project exists
+      // to catch that class going forward. A real-device/cloud Safari
+      // runner would be needed to close the remaining gap (actual iOS/
+      // Safari-specific integration behavior).
       name: 'mobile-safari',
       use: {...devices['iPhone 14']},
     },
