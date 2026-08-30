@@ -1,9 +1,11 @@
 import type {MetaFunction, LoaderFunctionArgs, ActionFunctionArgs} from 'react-router';
-import {useLoaderData, Link} from 'react-router';
+import {useLoaderData, useFetcher, Link} from 'react-router';
 import {Analytics, AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
+import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
+import {useEffect, useState} from 'react';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
-import type {CartData, CartLineData} from '~/lib/cart';
+import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
 import {requireSameOrigin} from '~/lib/security';
 
 export const meta: MetaFunction = () => [
@@ -180,6 +182,131 @@ function CartLineRow({line}: {line: CartLineData}) {
   );
 }
 
+/** Applied-code / apply-form / discount-amount UI for the Order Summary. */
+function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const [discountCode, setDiscountCode] = useState('');
+  const fetcher = useFetcher<{
+    cart?: {
+      discountCodes?: {code: string; applicable: boolean}[];
+      discountAllocations?: CartDiscountAllocation[];
+    };
+    errors?: Array<{message?: string}>;
+  }>();
+
+  function applyDiscount(e: React.FormEvent) {
+    e.preventDefault();
+    const code = discountCode.trim();
+    if (!code) return;
+    fetcher.submit(
+      {
+        [CartForm.INPUT_NAME]: JSON.stringify({
+          action: CartForm.ACTIONS.DiscountCodesUpdate,
+          inputs: {discountCodes: [code]},
+        }),
+      },
+      {method: 'post', action: '/cart'},
+    );
+  }
+
+  const discountResult = fetcher.data?.cart?.discountCodes?.[0];
+  const discountError =
+    fetcher.data?.errors?.[0]?.message ??
+    (discountResult && !discountResult.applicable
+      ? 'That discount code is not valid for this cart.'
+      : null);
+
+  useEffect(() => {
+    if (fetcher.state === 'idle' && discountResult?.applicable) {
+      setDiscountOpen(false);
+      setDiscountCode('');
+    }
+  }, [discountResult, fetcher.state]);
+
+  const discountAllocations = cart.discountAllocations ?? [];
+  const totalDiscountAmount = discountAllocations.reduce(
+    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
+    0,
+  );
+  const discountCurrencyCode: CurrencyCode =
+    discountAllocations[0]?.discountedAmount.currencyCode ??
+    cart.cost.subtotalAmount.currencyCode ??
+    'USD';
+
+  return (
+    <>
+      {discountOpen ? (
+        <form onSubmit={applyDiscount} className="flex gap-2">
+          <input
+            type="text"
+            value={discountCode}
+            onChange={(e) => setDiscountCode(e.target.value)}
+            placeholder="Discount code"
+            className="flex-1 text-sm border border-[var(--color-border-subtle)] bg-[var(--color-canvas)] px-3 py-2 text-[var(--color-foreground)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-foreground)]"
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={fetcher.state !== 'idle'}
+            className="text-xs font-semibold tracking-widest uppercase bg-[var(--color-foreground)] text-[var(--color-canvas)] px-4 py-2 hover:opacity-90 transition-opacity"
+          >
+            {fetcher.state !== 'idle' ? 'Applying…' : 'Apply'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setDiscountOpen(false)}
+            className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors"
+          >
+            Cancel
+          </button>
+        </form>
+      ) : (
+        <button
+          onClick={() => setDiscountOpen(true)}
+          className="text-xs tracking-wide text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] underline underline-offset-2 transition-colors"
+        >
+          + Add discount code
+        </button>
+      )}
+      {discountError && (
+        <p role="alert" className="text-xs text-[var(--color-error)]">
+          {discountError}
+        </p>
+      )}
+      {cart.discountCodes?.filter((code) => code.applicable).map((code) => (
+        <div key={code.code} className="flex items-center justify-between text-xs text-[var(--color-success)]">
+          <span>Discount applied: {code.code}</span>
+          <CartForm
+            route="/cart"
+            action={CartForm.ACTIONS.DiscountCodesUpdate}
+            inputs={{discountCodes: []}}
+          >
+            <button type="submit" className="underline underline-offset-2">Remove</button>
+          </CartForm>
+        </div>
+      ))}
+      {totalDiscountAmount > 0 && (
+        <div className="flex justify-between text-sm">
+          <span className="text-[var(--color-text-secondary)] tracking-widest uppercase text-xs">
+            {discountAllocations.length === 1
+              ? discountAllocations[0].code
+                ? `Discount (${discountAllocations[0].code})`
+                : (discountAllocations[0].title ?? 'Discount')
+              : 'Discount'}
+          </span>
+          <Money
+            data={{
+              amount: (-totalDiscountAmount).toFixed(2),
+              currencyCode: discountCurrencyCode,
+            }}
+            className="font-medium text-[var(--color-success)]"
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function CartPage() {
   const {cart} = useLoaderData<typeof loader>();
   const {publish} = useAnalytics();
@@ -225,7 +352,7 @@ export default function CartPage() {
             </h2>
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm">
-                <span className="text-[var(--color-text-secondary)]">
+                <span className="text-[var(--color-text-secondary)] tracking-widest uppercase text-xs">
                   Subtotal ({cart?.totalQuantity} {cart?.totalQuantity === 1 ? 'item' : 'items'})
                 </span>
                 {cart?.cost.subtotalAmount && (
@@ -233,13 +360,14 @@ export default function CartPage() {
                 )}
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-[var(--color-text-secondary)]">Shipping</span>
+                <span className="text-[var(--color-text-secondary)] tracking-widest uppercase text-xs">Shipping</span>
                 <span className="text-[var(--color-text-secondary)]">Calculated at checkout</span>
               </div>
+              {cart && <CartDiscountSection cart={cart} />}
             </div>
             <div className="border-t border-[var(--color-border-subtle)] pt-4 mb-8">
               <div className="flex justify-between font-medium text-sm">
-                <span>Estimated Total</span>
+                <span className="tracking-widest uppercase text-xs">Estimated Total</span>
                 {cart?.cost.totalAmount && (
                   <Money data={cart.cost.totalAmount} />
                 )}
