@@ -266,6 +266,7 @@ function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
             value={discountCode}
             onChange={(e) => setDiscountCode(e.target.value)}
             placeholder="Discount code"
+            aria-label="Discount code"
             className="flex-1 min-w-0 text-sm border border-[var(--color-border-subtle)] bg-[var(--color-canvas)] px-3 py-2 text-[var(--color-foreground)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-foreground)]"
             autoFocus
           />
