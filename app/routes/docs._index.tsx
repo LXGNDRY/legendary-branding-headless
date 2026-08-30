@@ -13,6 +13,24 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+const MOBILE_OPTIMIZATION_ITEMS = [
+  {
+    title: 'Site-Wide Viewport Meta Bug',
+    description: 'React Router v7 silently dropped root\'s viewport/color-scheme/theme-color meta on every route with its own meta export -- fixed by hardcoding them in the head.',
+    href: '/docs/mobile-optimization-changelog#slice-6',
+  },
+  {
+    title: 'Hover-Capability vs. Viewport Width',
+    description: 'Quick Add, Wishlist, and collection CTAs were hidden by sm: breakpoints instead of actual hover/pointer capability -- fixed across every touch device, including hybrids.',
+    href: '/docs/mobile-optimization-changelog#slice-5',
+  },
+  {
+    title: 'Checkout Handoff Bfcache Lockout',
+    description: 'Hitting Back from Shopify checkout could permanently disable the checkout button via a stale React state restored from the bfcache.',
+    href: '/docs/mobile-optimization-changelog#slice-7',
+  },
+];
+
 const PHASE_7_10_ITEMS = [
   {
     title: 'Performance, Errors, Caching & Security',
@@ -88,7 +106,31 @@ export default function DocsIndex() {
             <h2 className="font-serif text-2xl text-[var(--color-foreground)]">
               Latest Changelog
             </h2>
-            <span className="h-eyebrow text-[var(--color-accent)]">Phases 7–10</span>
+            <span className="h-eyebrow text-[var(--color-accent)]">Mobile Optimization</span>
+          </div>
+          <p className="text-[var(--color-text-secondary)] mb-6">
+            Ten vertical slices hardening the storefront for real mobile devices --
+            touch targets, hover-capability bugs, a site-wide viewport-meta fix,
+            checkout handoff, accessibility, performance, and device/browser coverage.
+          </p>
+          <CardList items={MOBILE_OPTIMIZATION_ITEMS} />
+          <div className="mt-6">
+            <Link
+              to="/docs/mobile-optimization-changelog"
+              className="h-link inline-flex items-center gap-2"
+            >
+              Read full Mobile Optimization changelog →
+            </Link>
+          </div>
+        </section>
+
+        {/* Phase 7–10 Changelog */}
+        <section>
+          <div className="flex items-baseline justify-between mb-6">
+            <h2 className="font-serif text-2xl text-[var(--color-foreground)]">
+              Phase 7–10 Changelog
+            </h2>
+            <span className="h-eyebrow text-[var(--color-text-tertiary)]">Phases 7–10</span>
           </div>
           <p className="text-[var(--color-text-secondary)] mb-6">
             Combined hardening pass: performance, error handling, caching, and security.
