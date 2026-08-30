@@ -357,15 +357,36 @@ export default function ProductPage() {
   const judgemeBadgeHtml = product.metafields?.nodes?.find((m) => m.key === 'badge')?.value;
   const judgemeWidgetHtml = product.metafields?.nodes?.find((m) => m.key === 'widget')?.value;
 
-  // Re-scan the DOM for Judge.me widgets after client-side navigation
-  // between products — the widget_v3.js loader only auto-scans on a full
-  // page load, so a fresh Storefront API rendered handle needs an explicit
-  // rebuild call. jdgm.batchRebuildWidgets is Judge.me's documented
-  // re-render entry point for this scenario.
+  // Load Judge.me's widget script only when this product actually has
+  // badge/widget metafield HTML to render, instead of unconditionally on
+  // every route (which used to cost every visitor a third-party request
+  // and script parse/exec on pages with no review content at all).
+  // On client-side navigation between products, the script may already be
+  // loaded -- in that case just re-scan the DOM via jdgm.batchRebuildWidgets
+  // (widget_v3.js's documented re-render entry point), since it only
+  // auto-scans on a full page load.
   useEffect(() => {
-    const jdgm = (window as unknown as {jdgm?: {batchRebuildWidgets?: () => void}}).jdgm;
-    jdgm?.batchRebuildWidgets?.();
-  }, [product.handle]);
+    if (typeof document === 'undefined') return;
+    if (!judgemeBadgeHtml && !judgemeWidgetHtml) return;
+
+    function rebuild() {
+      const jdgm = (window as unknown as {jdgm?: {batchRebuildWidgets?: () => void}}).jdgm;
+      jdgm?.batchRebuildWidgets?.();
+    }
+
+    if (document.getElementById('judgeme-widget-loader')) {
+      rebuild();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'judgeme-widget-loader';
+    script.src = 'https://cdn.judge.me/widget_v3.js';
+    script.async = true;
+    script.setAttribute('data-shop-domain', 'lngndny.myshopify.com');
+    script.onload = rebuild;
+    document.head.appendChild(script);
+  }, [product.handle, judgemeBadgeHtml, judgemeWidgetHtml]);
 
   const productJsonLd = productSchema({
     id: product.id,

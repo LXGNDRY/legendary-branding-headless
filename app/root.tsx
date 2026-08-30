@@ -194,21 +194,12 @@ export default function App() {
   }
   useWebVitals(import.meta.env.PUBLIC_GA4_MEASUREMENT_ID);
 
-  // Judge.me review widget loader — loaded globally (unconditionally, not
-  // consent-gated) because it renders trusted first-party review content
-  // synced from our own Shopify store via metafields, not third-party
-  // tracking. It is lightweight and required for the badge/widget metafield
-  // HTML on product pages to become interactive.
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    if (document.getElementById('judgeme-widget-loader')) return;
-    const script = document.createElement('script');
-    script.id = 'judgeme-widget-loader';
-    script.src = 'https://cdn.judge.me/widget_v3.js';
-    script.async = true;
-    script.setAttribute('data-shop-domain', 'lngndny.myshopify.com');
-    document.head.appendChild(script);
-  }, []);
+  // Judge.me's widget script is loaded only on product pages that actually
+  // have badge/widget metafield HTML to render -- see products.$handle.tsx.
+  // It used to load unconditionally here on every route (home, cart,
+  // journal, etc.), which meant every visitor paid for an unnecessary
+  // third-party request and script parse/exec on pages with no review
+  // content at all.
 
   const cartCount = cart?.totalQuantity ?? 0;
   const isNavigating = navigation.state !== 'idle';

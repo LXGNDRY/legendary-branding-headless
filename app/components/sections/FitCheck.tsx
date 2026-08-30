@@ -87,6 +87,8 @@ export default function FitCheck({eyebrow, heading, image, hotspots}: FitCheckPr
                     {spot.product.image ? (
                       <Image
                         data={spot.product.image}
+                        width={56}
+                        height={64}
                         className="w-14 h-16 object-cover rounded-lg shrink-0"
                         sizes="56px"
                       />
