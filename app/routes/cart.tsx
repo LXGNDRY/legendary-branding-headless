@@ -338,6 +338,18 @@ export default function CartPage() {
   const {publish} = useAnalytics();
   const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
+  const [checkingOut, setCheckingOut] = useState(false);
+
+  // A shopper hitting Back from Shopify's hosted checkout can restore this
+  // page from the bfcache with React state intact, leaving `checkingOut`
+  // stuck true and the checkout link permanently blocked.
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setCheckingOut(false);
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
 
   return (
     <>
@@ -401,15 +413,27 @@ export default function CartPage() {
             </div>
 
             {cart?.checkoutUrl ? (
-              <div onClick={() => publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart})}>
+              <div
+                onClick={(e: React.MouseEvent) => {
+                  if (checkingOut) return;
+                  publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart});
+                  // A modifier/middle-click opens checkout in a new tab and
+                  // leaves this page in place -- don't lock the button, or
+                  // the shopper can never retry in this tab.
+                  const opensNewTab = e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
+                  if (!opensNewTab) setCheckingOut(true);
+                }}
+                className={checkingOut ? 'pointer-events-none' : undefined}
+              >
                 <Button
                   as="a"
                   href={cart.checkoutUrl}
                   variant="dark"
                   className="w-full justify-center"
+                  loading={checkingOut}
                   testId="cart-checkout"
                 >
-                  Proceed to Checkout
+                  {checkingOut ? 'Redirecting…' : 'Proceed to Checkout'}
                 </Button>
               </div>
             ) : (
@@ -418,6 +442,7 @@ export default function CartPage() {
                 type="button"
                 className="w-full justify-center"
                 disabled
+                ariaLabel="Checkout unavailable -- your cart is still loading"
               >
                 Proceed to Checkout
               </Button>

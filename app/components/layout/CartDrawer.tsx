@@ -214,6 +214,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   // Discount code state
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
+  const [checkingOut, setCheckingOut] = useState(false);
   const fetcher = useFetcher<{
     cart?: {
       discountCodes?: {code: string; applicable: boolean}[];
@@ -223,6 +224,21 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   }>();
 
   const {containerRef: drawerRef} = useFocusTrap(open, onClose);
+
+  // A shopper hitting Back from Shopify's hosted checkout can restore this
+  // page from the bfcache with React state intact, leaving `checkingOut`
+  // stuck true and the checkout link permanently blocked. Also reset on
+  // reopen, since the drawer can remain mounted across navigations.
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setCheckingOut(false);
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+  useEffect(() => {
+    if (open) setCheckingOut(false);
+  }, [open]);
 
   // Close on Escape (handled by useFocusTrap, but keep as safety)
   useEffect(() => {
@@ -450,18 +466,43 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
             </p>
 
             {/* Checkout */}
-            <div onClick={() => publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart: currentCart})}>
+            {currentCart.checkoutUrl ? (
+              <div
+                onClick={(e: React.MouseEvent) => {
+                  if (checkingOut) return;
+                  publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart: currentCart});
+                  // A modifier/middle-click opens checkout in a new tab and
+                  // leaves the drawer open -- don't lock the button, or the
+                  // shopper can never retry without closing/reopening it.
+                  const opensNewTab = e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
+                  if (!opensNewTab) setCheckingOut(true);
+                }}
+                className={checkingOut ? 'pointer-events-none' : undefined}
+              >
+                <Button
+                  as="a"
+                  href={currentCart.checkoutUrl}
+                  variant="primary"
+                  className="w-full justify-center"
+                  size="md"
+                  loading={checkingOut}
+                  testId="drawer-checkout"
+                >
+                  {checkingOut ? 'Redirecting…' : 'Checkout'}
+                </Button>
+              </div>
+            ) : (
               <Button
-                as="a"
-                href={currentCart.checkoutUrl}
                 variant="primary"
+                type="button"
                 className="w-full justify-center"
                 size="md"
-                testId="drawer-checkout"
+                disabled
+                ariaLabel="Checkout unavailable -- your cart is still loading"
               >
                 Checkout
               </Button>
-            </div>
+            )}
 
             <div className="flex justify-center pt-1">
               <Link
