@@ -297,8 +297,13 @@ export default function ProductCard({
           </div>
         )}
 
-        {/* Wishlist top-right */}
-        <div className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        {/* Wishlist top-right — always visible when the device can't hover
+            (touch phones, but also touch tablets/landscape phones at wider
+            viewports, which a `sm:` breakpoint alone would incorrectly hide
+            again), hover-revealed only for fine-pointer devices that can
+            actually trigger group-hover, to keep the card visually quiet
+            until the user shows intent. */}
+        <div className="absolute top-2.5 right-2.5 z-10 opacity-100 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 transition-opacity duration-200">
           <WishlistButton
             size="sm"
             className="bg-[var(--color-bg-level-1)]/90 backdrop-blur-sm rounded-full p-1.5 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] border border-[var(--color-border-muted)]"
@@ -312,9 +317,13 @@ export default function ProductCard({
           />
         </div>
 
-        {/* Quick add — slides up on hover (desktop only) */}
+        {/* Quick add — always visible on any device that can't hover
+            (gated on hover/pointer capability, not viewport width, since a
+            touch tablet or landscape phone can be wider than a `sm:`
+            breakpoint and still have no way to trigger group-hover), slides
+            up on hover only for devices with an actual fine pointer. */}
         {showQuickAdd && product.availableForSale && canQuickAdd && (
-          <div className="hidden sm:block absolute bottom-0 left-0 right-0 translate-y-full opacity-0 transition-all duration-[300ms] ease-[var(--ease-expo)] group-hover:translate-y-0 group-hover:opacity-100 z-10 p-3">
+          <div className="absolute bottom-0 left-0 right-0 translate-y-0 opacity-100 transition-all duration-[300ms] ease-[var(--ease-expo)] [@media(hover:hover)_and_(pointer:fine)]:translate-y-full [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-y-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 z-10 p-3">
             <button
               type="button"
               onClick={handleQuickAdd}
