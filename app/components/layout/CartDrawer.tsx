@@ -3,6 +3,7 @@ import {Link, useFetcher} from 'react-router';
 import Button from '~/components/ui/Button';
 import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
+import {withCheckoutLocale} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 
@@ -482,7 +483,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
               >
                 <Button
                   as="a"
-                  href={currentCart.checkoutUrl}
+                  href={withCheckoutLocale(currentCart.checkoutUrl)}
                   variant="primary"
                   className="w-full justify-center"
                   size="md"
