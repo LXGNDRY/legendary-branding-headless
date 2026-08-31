@@ -133,6 +133,39 @@ own logs, not in Sentry.
 
 ---
 
+## 3a. Dependabot PRs — CI is structurally red, this is expected
+
+`.github/dependabot.yml` targets `dev` (via `target-branch: "dev"`), matching this repo's
+dev-first branch policy. But every Dependabot-authored PR's CI will still show the `e2e` jobs
+failing with `PUBLIC_STORE_DOMAIN environment variable is not set` — **this is a GitHub Actions
+platform restriction, not a bug in this repo or in the dependency bump itself.** GitHub does not
+expose repository secrets to workflow runs triggered by Dependabot-authored pull requests
+(`pull_request` events where the actor is `dependabot[bot]`), as a security measure against a
+malicious dependency update exfiltrating secrets through CI. `target-branch` does not change this;
+neither does re-running the job.
+
+**Do not merge a Dependabot PR on the strength of its own CI**, and do not "fix" this by switching
+the workflow trigger to `pull_request_target` — that grants secrets to a workflow that also checks
+out the PR's (dependency-modified) code, which is the exact attack this restriction exists to
+prevent, and is not worth the risk for routine dependency bumps.
+
+Instead, to actually land a Dependabot bump:
+1. Read the diff (it's almost always just `package.json`/`package-lock.json`) and judge patch/minor
+   (generally safe) vs. major (needs a deliberate migration, not a dependency-bump merge).
+2. For a safe bump: check out the Dependabot branch locally, apply just the `package.json` /
+   `package-lock.json` diff onto current `dev` (`git checkout <dependabot-branch> -- package.json
+   package-lock.json`), then run `npm ci --legacy-peer-deps && npm run build && npm run typecheck
+   && npm run lint && npm run test` locally with real secrets (and `npm run codegen` too, if the
+   bump touches `@graphql-codegen/*` or `@shopify/hydrogen-codegen`, checking for drift against the
+   committed generated types).
+3. Push that validated change as a new branch/PR (not Dependabot-authored, so its CI runs with real
+   secrets and is trustworthy), merge it, then close the original Dependabot PR referencing the
+   replacement.
+4. For a major bump: close it with a comment explaining why (breaking changes needing a dedicated
+   migration), rather than merging or leaving it to rot unaddressed.
+
+---
+
 ## 4. Rollback Procedure
 
 **There is no automated rollback in this pipeline.** The workflow file has no rollback job, no
