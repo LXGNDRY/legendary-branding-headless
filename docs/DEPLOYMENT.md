@@ -135,32 +135,45 @@ own logs, not in Sentry.
 
 ## 3a. Dependabot PRs — CI is structurally red, this is expected
 
-`.github/dependabot.yml` targets `dev` (via `target-branch: "dev"`), matching this repo's
-dev-first branch policy. But every Dependabot-authored PR's CI will still show the `e2e` jobs
-failing with `PUBLIC_STORE_DOMAIN environment variable is not set` — **this is a GitHub Actions
-platform restriction, not a bug in this repo or in the dependency bump itself.** GitHub does not
-expose repository secrets to workflow runs triggered by Dependabot-authored pull requests
-(`pull_request` events where the actor is `dependabot[bot]`), as a security measure against a
-malicious dependency update exfiltrating secrets through CI. `target-branch` does not change this;
-neither does re-running the job.
+`.github/dependabot.yml` sets `target-branch: "dev"` for both the `npm` and `github-actions`
+update blocks, matching this repo's dev-first branch policy for **routine, non-security** updates.
+But every Dependabot-authored PR's CI will still show the `e2e` jobs failing with
+`PUBLIC_STORE_DOMAIN environment variable is not set` — **this is a GitHub Actions platform
+restriction, not a bug in this repo or in the dependency bump itself.** GitHub does not expose
+repository secrets to workflow runs triggered by Dependabot-authored pull requests (`pull_request`
+events where the actor is `dependabot[bot]`), as a security measure against a malicious dependency
+update exfiltrating secrets through CI. `target-branch` does not change this; neither does
+re-running the job.
+
+**`target-branch` does not apply to Dependabot *security* updates** (vulnerability alerts) —
+Dependabot always opens those against the repository's default branch regardless of config. If the
+default branch is `main`, a security-update PR still bypasses `dev` and will fail this repo's
+PR-governance check (which only permits `dev` as a head targeting `main`). Handle one exactly like
+a routine bump below, just push the replacement PR at `dev` yourself since Dependabot won't; don't
+retarget the original security PR's base in place, since GitHub ties security-update metadata
+(the linked advisory) to it opening against the default branch.
 
 **Do not merge a Dependabot PR on the strength of its own CI**, and do not "fix" this by switching
 the workflow trigger to `pull_request_target` — that grants secrets to a workflow that also checks
 out the PR's (dependency-modified) code, which is the exact attack this restriction exists to
 prevent, and is not worth the risk for routine dependency bumps.
 
-Instead, to actually land a Dependabot bump:
-1. Read the diff (it's almost always just `package.json`/`package-lock.json`) and judge patch/minor
-   (generally safe) vs. major (needs a deliberate migration, not a dependency-bump merge).
-2. For a safe bump: check out the Dependabot branch locally, apply just the `package.json` /
-   `package-lock.json` diff onto current `dev` (`git checkout <dependabot-branch> -- package.json
-   package-lock.json`), then run `npm ci --legacy-peer-deps && npm run build && npm run typecheck
-   && npm run lint && npm run test` locally with real secrets (and `npm run codegen` too, if the
-   bump touches `@graphql-codegen/*` or `@shopify/hydrogen-codegen`, checking for drift against the
-   committed generated types).
-3. Push that validated change as a new branch/PR (not Dependabot-authored, so its CI runs with real
-   secrets and is trustworthy), merge it, then close the original Dependabot PR referencing the
-   replacement.
+Instead, to actually land a Dependabot bump (routine or security):
+1. Read the diff and judge patch/minor (generally safe) vs. major (needs a deliberate migration,
+   not a dependency-bump merge). The changed files depend on the ecosystem: `npm` updates touch
+   `package.json`/`package-lock.json`; `github-actions` updates touch the referenced
+   `.github/workflows/*.yml` files (an action's pinned SHA/version, not any npm manifest).
+2. For a safe bump: check out the Dependabot branch locally, apply the actual changed files from
+   its diff onto current `dev` (`git checkout <dependabot-branch> -- <the changed files>` — e.g.
+   `package.json package-lock.json` for an `npm` update, or the specific workflow file(s) for a
+   `github-actions` update), then validate: `npm ci --legacy-peer-deps && npm run build && npm run
+   typecheck && npm run lint && npm run test` locally with real secrets for an `npm` update (plus
+   `npm run codegen`, checking for drift, if it touches `@graphql-codegen/*` or
+   `@shopify/hydrogen-codegen`); for a `github-actions` update, inspect the workflow diff by hand
+   (there's no local runner) and confirm the referenced action version/SHA is real.
+3. Push that validated change as a new branch/PR targeting `dev` (not Dependabot-authored, so its
+   CI runs with real secrets and is trustworthy), merge it, then close the original Dependabot PR
+   referencing the replacement.
 4. For a major bump: close it with a comment explaining why (breaking changes needing a dedicated
    migration), rather than merging or leaving it to rot unaddressed.
 
