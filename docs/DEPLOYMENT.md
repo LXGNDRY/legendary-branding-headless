@@ -15,7 +15,7 @@ boundary prevents the applicable gate from passing.
 
 | Branch | Purpose | Deploy target |
 |---|---|---|
-| `main` | Production | Oxygen production deploy only by manual workflow dispatch |
+| `main` | Production | Oxygen production deploy automatically on push (i.e. every merged release PR); manual workflow dispatch also available as a fallback |
 | `dev` | Staging / preview | Oxygen preview deploy on push |
 | `claude/*`, `docs/*`, other working branches | Agent/developer working branches | No deploy — PRs only trigger the quality gate |
 
@@ -47,7 +47,7 @@ The workflow (`Storefront 1000167667`) triggers on `push` to `main`/`dev`, `pull
 9. **Lint** — `npm run lint`
 10. **Test** — `npm run test`
 
-### `deploy` (green `dev` pushes or manual dispatch from `main`; needs `quality` and `e2e`)
+### `deploy` (green pushes to `dev` or `main`, or manual dispatch from `main`; needs `quality` and `e2e`)
 1. Checkout, Node setup, npm cache, `npm ci --legacy-peer-deps`
 2. On `main`, `npm run validate:release-env` fails closed unless the complete Shopify,
    Customer Account, GA4, newsletter, and waitlist configuration is present.
@@ -158,12 +158,12 @@ job but does not revert the already-deployed Oxygen build). Automating rollback 
 
 ## 5. Verifying a Deploy Reached Oxygen
 
-1. GitHub → Actions → the workflow run triggered by the merge push to `dev`, or the explicitly
-   approved manual dispatch from `main`.
+1. GitHub → Actions → the workflow run triggered by the merge push to `dev` or `main`, or a manual
+   dispatch from `main`.
 2. Confirm `quality` completed with success.
 3. Confirm `Deploy to Oxygen` ran (not skipped) with success. If skipped, the triggering event was
-   a `pull_request`, or an un-dispatched `main` push. Only a push to `dev` or manual dispatch from
-   `main` deploys.
+   a `pull_request` — the only case that doesn't deploy. A push to `dev`, a push to `main`, or a
+   manual dispatch from `main` all deploy.
 4. Check the `Post-deploy smoke test` step's log — every critical route must be verified; bot-check
    interception is a failure because the deployment uses Shopify's authentication bypass token.
 5. Deployment entries and their preview URLs are also visible in the Shopify Partners dashboard
