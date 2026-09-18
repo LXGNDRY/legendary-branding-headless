@@ -79,10 +79,13 @@ jobs:
 
   deploy:
     name: Deploy to Oxygen
-    # Preview deploys automatically from dev. Production requires an explicit
-    # workflow dispatch from main after the promotion PR is green.
+    # Preview deploys automatically on every push to dev. Production deploys
+    # automatically on every push to main (i.e. every merged release PR),
+    # matching CLAUDE.md's documented pipeline -- a manual workflow_dispatch
+    # on main is also supported as a fallback (e.g. to redeploy without a
+    # new commit).
     if: >-
-      (github.event_name == 'push' && github.ref_name == 'dev') ||
+      (github.event_name == 'push' && (github.ref_name == 'dev' || github.ref_name == 'main')) ||
       (github.event_name == 'workflow_dispatch' && github.ref_name == 'main')
     needs: [quality, e2e]
     timeout-minutes: 30
