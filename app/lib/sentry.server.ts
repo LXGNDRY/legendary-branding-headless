@@ -43,6 +43,15 @@ export function captureServerError(
   options?: {
     request?: Request;
     extra?: Record<string, unknown>;
+    /**
+     * Cloudflare Workers' ExecutionContext.waitUntil, bound to the current
+     * request. Without this, the fire-and-forget fetch below to Sentry's
+     * envelope endpoint is not registered with the isolate -- once the
+     * fetch handler returns its response (typically the 500 this is called
+     * from), the runtime can terminate the request before the envelope
+     * actually reaches Sentry, silently dropping production error reports.
+     */
+    waitUntil?: (promise: Promise<unknown>) => void;
   },
 ) {
   const err = error instanceof Error ? error : new Error(String(error));
@@ -114,8 +123,10 @@ export function captureServerError(
     const itemHeader = JSON.stringify({type: 'event', length: JSON.stringify(event).length});
     const envelope = `${header}\n${itemHeader}\n${JSON.stringify(event)}`;
 
-    // Fire-and-forget: don't await, don't let Sentry break the request
-    fetch(`https://${parsed.host}/api/${parsed.projectId}/envelope/`, {
+    // Fire-and-forget from this function's own return, but registered with
+    // waitUntil (when the caller provides it) so the Workers isolate keeps
+    // the request alive long enough for the envelope to actually send.
+    const send = fetch(`https://${parsed.host}/api/${parsed.projectId}/envelope/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-sentry-envelope',
@@ -125,6 +136,7 @@ export function captureServerError(
     }).catch(() => {
       // swallow — Sentry failure should never break the app
     });
+    options?.waitUntil?.(send);
   } catch {
     // swallow any Sentry errors
   }
@@ -136,6 +148,7 @@ export function captureServerError(
 export function captureServerMessage(
   message: string,
   level: 'info' | 'warning' | 'error' = 'info',
+  waitUntil?: (promise: Promise<unknown>) => void,
 ) {
   if (!dsn) {
     console[level === 'error' ? 'error' : level === 'warning' ? 'warn' : 'log']('[sentry]', message);
@@ -145,5 +158,5 @@ export function captureServerMessage(
   // Reuse captureServerError with a synthetic error
   const err = new Error(message);
   err.name = 'Message';
-  captureServerError(err, {extra: {level}});
+  captureServerError(err, {extra: {level}, waitUntil});
 }
