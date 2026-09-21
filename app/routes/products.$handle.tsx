@@ -480,12 +480,28 @@ export default function ProductPage() {
                     dangerouslySetInnerHTML={{__html: judgemeBadgeHtml}}
                   />
                 )}
-                <div className="flex items-baseline gap-3">
+                <div className="flex items-baseline gap-3 flex-wrap">
                   {selectedVariant ? (
                     <>
                       <Money data={selectedVariant.price} className="text-[1.1rem] font-medium text-[var(--color-text-primary)]" />
                       {isOnSale && selectedVariant.compareAtPrice && (
-                        <Money data={selectedVariant.compareAtPrice} className="text-sm text-[var(--color-text-tertiary)] line-through font-normal" />
+                        <>
+                          <Money data={selectedVariant.compareAtPrice} className="text-sm text-[var(--color-text-tertiary)] line-through font-normal" />
+                          <span className="inline-flex items-center rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
+                            Save{' '}
+                            <Money
+                              data={{
+                                amount: (
+                                  parseFloat(selectedVariant.compareAtPrice.amount) -
+                                  parseFloat(selectedVariant.price.amount)
+                                ).toString(),
+                                currencyCode: selectedVariant.price.currencyCode,
+                              }}
+                              className="ml-1"
+                              as="span"
+                            />
+                          </span>
+                        </>
                       )}
                     </>
                   ) : (
