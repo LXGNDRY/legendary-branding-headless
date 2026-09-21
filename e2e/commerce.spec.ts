@@ -42,12 +42,10 @@ test.describe('Golden commerce journey', () => {
     expect(addedCartResponse.ok()).toBe(true);
     expect(await addedCartResponse.text()).toMatch(/"totalQuantity",\s*1/);
 
-    const cartButton = page
-      .getByRole('banner')
-      .getByRole('button', {name: 'Cart (1 items)'});
-    await expect(cartButton).toBeVisible();
-    await cartButton.click();
-
+    // Adding to cart auto-opens the drawer (see root.tsx's fetcher-driven
+    // effect) -- it's already open here, so clicking the header cart button
+    // would just hit the drawer's own overlay instead of the button behind
+    // it. Verify the auto-open worked rather than re-triggering it.
     const drawer = page.getByRole('dialog', {name: 'Shopping cart'});
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText(/Your Bag \(1\)/i)).toBeVisible();
