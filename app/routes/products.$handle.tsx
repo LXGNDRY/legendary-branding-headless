@@ -29,6 +29,7 @@ import {
   breadcrumbSchema,
 } from '~/components/seo/SeoSchema';
 import SizeGuideModal from '~/components/ui/SizeGuideModal';
+import TrustStrip from '~/components/ui/TrustStrip';
 import WaitlistForm from '~/components/ui/WaitlistForm';
 import RecentlyViewed from '~/components/ui/RecentlyViewed';
 import ProductCard, {
@@ -587,6 +588,8 @@ export default function ProductPage() {
               <p className="h-eyebrow text-[var(--color-text-tertiary)] text-center">
                 Free shipping over $100 · 30-day returns
               </p>
+
+              <TrustStrip />
 
               {/* Accordions */}
               <div className="border-t border-[var(--color-border-muted)] pt-4">
