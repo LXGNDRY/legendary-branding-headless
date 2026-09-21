@@ -1,6 +1,7 @@
 import {Link} from 'react-router';
 import NewsletterForm from '~/components/ui/NewsletterForm';
 import MarketSelector from '~/components/ui/MarketSelector';
+import GoatMark from '~/components/ui/GoatMark';
 import type {LocalizationData} from '~/lib/market';
 
 const SHOP_LINKS = [
@@ -83,8 +84,9 @@ export default function Footer({localization}: {localization: LocalizationData})
           <div className="max-w-lg">
             <Link
               to="/"
-              className="inline-block text-[clamp(2rem,4vw,3rem)] font-serif leading-none text-[var(--color-text-primary)] select-none"
+              className="inline-flex items-center gap-3 text-[clamp(2rem,4vw,3rem)] font-serif leading-none text-[var(--color-text-primary)] select-none"
             >
+              <GoatMark className="h-[0.85em] w-[0.85em] shrink-0" />
               LEGENDARY
             </Link>
             <p className="mt-5 text-[var(--color-text-secondary)] leading-relaxed">
