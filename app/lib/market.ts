@@ -42,6 +42,27 @@ export function isAvailableCountry(
   return availableCountries.some((candidate) => candidate.isoCode === country);
 }
 
+// ISO 3166-1 alpha-2 codes only -- names are derived via Intl.DisplayNames
+// (below) rather than hardcoded, so they always match the runtime's locale
+// data. Used for the account address form's country <select>: submitting
+// the code directly (instead of a free-text country name) removes the need
+// to guess a territoryCode from user-typed text, which was silently wrong
+// for most non-US countries (e.g. "Germany" -> "GE" Georgia).
+const COUNTRY_CODES = [
+  'US', 'CA', 'MX', 'GB', 'IE', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'BE',
+  'LU', 'CH', 'AT', 'DK', 'SE', 'NO', 'FI', 'IS', 'PL', 'CZ', 'SK', 'HU',
+  'RO', 'BG', 'GR', 'HR', 'SI', 'EE', 'LV', 'LT', 'MT', 'CY', 'AU', 'NZ',
+  'JP', 'KR', 'CN', 'HK', 'TW', 'SG', 'MY', 'TH', 'VN', 'PH', 'ID', 'IN',
+  'PK', 'BD', 'AE', 'SA', 'IL', 'TR', 'ZA', 'NG', 'EG', 'KE', 'BR', 'AR',
+  'CL', 'CO', 'PE', 'UY', 'EC', 'CR', 'PA', 'DO', 'JM', 'TT',
+] as const;
+
+export function getCountryOptions(): {code: CountryCode; name: string}[] {
+  return COUNTRY_CODES
+    .map((code) => ({code, name: REGION_NAMES.of(code) ?? code}))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export const LOCALIZATION_QUERY = `#graphql
   query StorefrontLocalization($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {

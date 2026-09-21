@@ -4,6 +4,8 @@ import {
   type MetaFunction,
   useLoaderData,
   useParams,
+  useRouteError,
+  isRouteErrorResponse,
   Link,
 } from 'react-router';
 import {useState, useEffect} from 'react';
@@ -35,6 +37,7 @@ import ProductCard, {
 } from '~/components/ui/ProductCard';
 import {CacheLong} from '~/lib/cache';
 import {requireSameOrigin} from '~/lib/security';
+import {captureError} from '~/lib/monitoring';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -693,6 +696,43 @@ export default function ProductPage() {
 
 export function ErrorBoundary() {
   const params = useParams();
+  const error = useRouteError();
+  const is404 = isRouteErrorResponse(error) && error.status === 404;
+
+  // A real 500-class error (Storefront API failure, a render exception,
+  // etc.) was previously presented as this same "sold out / not found"
+  // page and never reported -- report it and show a generic failure
+  // message instead, reserving this copy for an actual 404.
+  if (!is404 && typeof window !== 'undefined') {
+    captureError(error, {route: window.location.pathname});
+  }
+
+  if (!is404) {
+    return (
+      <div className="py-24 md:py-32">
+        <div className="max-w-xl mx-auto text-center px-4">
+          <p className="h-eyebrow mb-6">Something went wrong</p>
+          <h1 className="font-serif text-[clamp(2.5rem,7vw,5rem)] leading-[0.95] mb-6 text-[var(--color-text-primary)]">
+            Oops.
+          </h1>
+          <p className="text-[var(--color-text-secondary)] text-base leading-relaxed mb-10">
+            An unexpected error occurred loading this product. Please try again in a few moments.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/collections/all-products" className="h-btn-primary">
+              Browse All Products
+            </Link>
+            <Link
+              to="/"
+              className="px-6 py-3 border border-[var(--color-foreground)] text-sm tracking-wide uppercase hover:bg-[var(--color-foreground)] hover:text-white transition-colors"
+            >
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-24 md:py-32">
