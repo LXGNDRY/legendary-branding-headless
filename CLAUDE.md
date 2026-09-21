@@ -219,11 +219,11 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 | 6 | Journal / Blog — index + article template | ✅ Complete |
 | 7 | Policy pages, 404, robots.txt, sitemap.xml | ✅ Complete |
 | 8 | SEO/JSON-LD, OG meta, canonical URLs, Oxygen preview deploy | ✅ Complete |
-| 9 | Safety hardening — production request handler, error boundary, pinned deps, CI gate, env validation | ⬜ Next |
-| 10 | Compliance — Shopify Analytics.Provider + cookie consent banner (GDPR/CCPA) | ⬜ Queued |
-| 11 | Codegen — generate + commit `storefrontapi.generated.d.ts`, wire into CI | ⬜ Queued |
+| 9 | Safety hardening — production request handler, error boundary, pinned deps, CI gate, env validation | ✅ Complete |
+| 10 | Compliance — Shopify Analytics.Provider + cookie consent banner (GDPR/CCPA) | ✅ Complete |
+| 11 | Codegen — generate + commit `storefrontapi.generated.d.ts`, wire into CI | ✅ Complete |
 | 12 | Content — real imagery replacing all `<Placeholder>` usage; full visual QA | ⏳ Blocked on theme import |
-| 13 | Hardening — smoke tests (vitest), tsconfig cleanup, zip removal post-theme-import | ⬜ Post-launch |
+| 13 | Hardening — smoke tests (vitest) ✅, tsconfig cleanup, zip removal post-theme-import | ⏳ In progress |
 
 ---
 
