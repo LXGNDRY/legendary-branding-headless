@@ -29,7 +29,7 @@
     "web-vitals": "6.2.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@react-router/dev": "7.18.2",
     "@react-router/fs-routes": "7.18.2",
     "@shopify/hydrogen-codegen": "0.3.3",
