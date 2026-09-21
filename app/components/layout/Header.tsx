@@ -2,6 +2,7 @@ import {Link, useLocation} from 'react-router';
 import {useState, useEffect, useRef} from 'react';
 import {useWishlist} from '~/components/ui/Wishlist';
 import SearchTypeahead from '~/components/ui/SearchTypeahead';
+import GoatMark from '~/components/ui/GoatMark';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 
 /* ── Nav data ──────────────────────────────────────────────────────────── */
@@ -213,8 +214,9 @@ function MobileMenu({
         <Link
           to="/"
           onClick={onClose}
-          className="font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
+          className="flex items-center gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
         >
+          <GoatMark className="h-6 w-6 shrink-0" />
           LEGENDARY
         </Link>
         <button
@@ -360,8 +362,9 @@ export default function Header({
             {/* Wordmark */}
             <Link
               to="/"
-              className="font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
+              className="flex items-center gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
             >
+              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0" />
               LEGENDARY
             </Link>
 
