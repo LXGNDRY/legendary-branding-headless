@@ -171,7 +171,7 @@ agent branch (claude/*)
         └─► merge        # owner or agent merges when CI green
               └─► Oxygen preview deploy (automatic via CI on push to dev)
                     └─► owner reviews preview URL
-                          └─► PR: dev → main    # owner merges
+                          └─► PR: dev → main    # owner or agent merges when CI green (or owner says so)
                                 └─► Oxygen production deploy (automatic via CI on push to main)
 ```
 
