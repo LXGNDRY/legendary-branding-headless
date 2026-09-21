@@ -119,7 +119,17 @@ const PRODUCT_QUERY = `#graphql
       options {
         id
         name
-        optionValues { name }
+        optionValues {
+          name
+          swatch {
+            color
+            image {
+              previewImage {
+                url
+              }
+            }
+          }
+        }
       }
       selectedVariant: variantBySelectedOptions(
         selectedOptions: $selectedOptions
@@ -517,38 +527,79 @@ export default function ProductPage() {
                       )}
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      {option.values.map(({value, isActive, isAvailable, to}) => {
-                        const optionClass = `min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-md ${
-                            isActive
-                              ? 'border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)]'
-                              : isAvailable
-                                ? 'border-[var(--color-border-medium)] text-[var(--color-text-primary)] hover:border-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-2)]'
-                                : 'border-[var(--color-border-muted)] text-[var(--color-text-tertiary)] cursor-not-allowed line-through opacity-50'
-                          }`;
+                      {(() => {
+                        const isColor = ['color', 'colour'].includes(option.name.toLowerCase());
+                        return option.values.map(({value, isActive, isAvailable, to, optionValue}) => {
+                          const swatch = (optionValue as {swatch?: {color?: string | null; image?: {previewImage?: {url?: string | null} | null} | null} | null} | undefined)?.swatch;
+                          const swatchStyle = swatch?.image?.previewImage?.url
+                            ? {backgroundImage: `url(${swatch.image.previewImage.url})`, backgroundSize: 'cover', backgroundPosition: 'center'}
+                            : {backgroundColor: swatch?.color || value.toLowerCase().replace(/\s+/g, '-')};
 
-                        return isAvailable ? (
-                          <Link
-                            key={value}
-                            to={to}
-                            replace
-                            preventScrollReset
-                            prefetch="intent"
-                            className={optionClass}
-                            aria-label={`${option.name}: ${value}`}
-                          >
-                            {value}
-                          </Link>
-                        ) : (
-                          <span
-                            key={value}
-                            className={optionClass}
-                            aria-disabled="true"
-                            aria-label={`${option.name}: ${value} (unavailable)`}
-                          >
-                            {value}
-                          </span>
-                        );
-                      })}
+                          if (isColor) {
+                            const swatchClass = `relative h-9 w-9 rounded-full border-2 transition-all duration-150 shrink-0 ${
+                              isActive
+                                ? 'border-[var(--color-text-primary)] ring-2 ring-offset-2 ring-[var(--color-text-primary)]'
+                                : isAvailable
+                                  ? 'border-[var(--color-border-medium)] hover:border-[var(--color-text-primary)]'
+                                  : 'border-[var(--color-border-muted)] opacity-40 cursor-not-allowed'
+                            }`;
+
+                            return isAvailable ? (
+                              <Link
+                                key={value}
+                                to={to}
+                                replace
+                                preventScrollReset
+                                prefetch="intent"
+                                className={swatchClass}
+                                style={swatchStyle}
+                                aria-label={`${option.name}: ${value}`}
+                                title={value}
+                              />
+                            ) : (
+                              <span
+                                key={value}
+                                className={`${swatchClass} after:absolute after:inset-0 after:m-auto after:h-[1px] after:w-full after:-rotate-45 after:bg-[var(--color-text-tertiary)]`}
+                                style={swatchStyle}
+                                aria-disabled="true"
+                                aria-label={`${option.name}: ${value} (unavailable)`}
+                                title={`${value} — Sold out`}
+                              />
+                            );
+                          }
+
+                          const optionClass = `min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-md ${
+                              isActive
+                                ? 'border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)]'
+                                : isAvailable
+                                  ? 'border-[var(--color-border-medium)] text-[var(--color-text-primary)] hover:border-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-2)]'
+                                  : 'border-[var(--color-border-muted)] text-[var(--color-text-tertiary)] cursor-not-allowed line-through opacity-50'
+                            }`;
+
+                          return isAvailable ? (
+                            <Link
+                              key={value}
+                              to={to}
+                              replace
+                              preventScrollReset
+                              prefetch="intent"
+                              className={optionClass}
+                              aria-label={`${option.name}: ${value}`}
+                            >
+                              {value}
+                            </Link>
+                          ) : (
+                            <span
+                              key={value}
+                              className={optionClass}
+                              aria-disabled="true"
+                              aria-label={`${option.name}: ${value} (unavailable)`}
+                            >
+                              {value}
+                            </span>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 )}
