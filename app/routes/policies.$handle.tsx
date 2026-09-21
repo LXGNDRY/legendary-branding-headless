@@ -2,7 +2,7 @@ import {type LoaderFunctionArgs, type MetaFunction, useLoaderData, Link} from 'r
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
-import {breadcrumbSchema} from '~/components/seo/SeoSchema';
+import {breadcrumbSchema, faqPageSchema, parseFaqFromHtml} from '~/components/seo/SeoSchema';
 
 const PAGE_TITLES: Record<string, string> = {
   'refund-policy': 'Refund & Return Policy',
@@ -111,9 +111,13 @@ export default function PolicyPage() {
     {name: title},
   ]);
 
+  const faqItems = bodyHtml ? parseFaqFromHtml(bodyHtml) : [];
+  const faqJsonLd = faqItems.length ? faqPageSchema(faqItems) : null;
+
   return (
     <Container className="py-16">
       <JsonLd data={breadcrumbJsonLd} />
+      {faqJsonLd && <JsonLd data={faqJsonLd} />}
       <div className="max-w-2xl mx-auto">
         {/* Breadcrumb */}
         <nav

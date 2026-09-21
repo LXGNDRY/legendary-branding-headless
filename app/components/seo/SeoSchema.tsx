@@ -54,6 +54,50 @@ export function breadcrumbSchema(items: Array<{name: string; url?: string}>) {
   };
 }
 
+export function faqPageSchema(items: Array<{question: string; answer: string}>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
+}
+
+/**
+ * Extracts question/answer pairs from a Shopify page body built with
+ * <details><summary>Question</summary>...answer markup...</details>
+ * blocks (the shape the FAQ page's content uses). Returns an empty array
+ * for any other page shape, so callers can render FAQPage schema only
+ * when it's genuinely backed by structured Q&A content rather than
+ * guessing structure out of arbitrary rich text.
+ */
+export function parseFaqFromHtml(html: string): Array<{question: string; answer: string}> {
+  const stripTags = (fragment: string) =>
+    fragment
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&#8217;|&rsquo;/g, '’')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const items: Array<{question: string; answer: string}> = [];
+  const detailsPattern = /<details[^>]*>\s*<summary[^>]*>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/g;
+  let match: RegExpExecArray | null;
+  while ((match = detailsPattern.exec(html)) !== null) {
+    const question = stripTags(match[1]);
+    const answer = stripTags(match[2]);
+    if (question && answer) items.push({question, answer});
+  }
+  return items;
+}
+
 export function collectionPageSchema({
   title,
   handle,
