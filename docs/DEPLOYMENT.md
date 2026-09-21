@@ -93,18 +93,19 @@ Read directly from the workflow file's `secrets.*` references:
 | `PUBLIC_STOREFRONT_API_TOKEN` | `quality` (codegen), `e2e` | Public Storefront API token |
 | `SESSION_SECRET` | production validation | Session signing secret |
 | `PUBLIC_STOREFRONT_ID` | production validation | Hydrogen analytics storefront ID |
-| `PUBLIC_CHECKOUT_DOMAIN` | production validation | Trusted Shopify checkout domain |
 | `PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID` | production validation | Customer Account OAuth client |
 | `PUBLIC_CUSTOMER_ACCOUNT_API_URL` | production validation | Customer Account API URL |
-| `PUBLIC_GA4_MEASUREMENT_ID` | production validation | GA4 destination |
 
 Their presence in the real GitHub repository settings and matching Oxygen runtime environment
 remains an owner-controlled launch check.
 
-`PRIVATE_KLAVIYO_API_KEY`, `PUBLIC_KLAVIYO_LIST_ID`, and `PUBLIC_KLAVIYO_WAITLIST_LIST_ID` are
-**not** part of the production-validation contract — Klaviyo isn't live yet. The newsletter and
-back-in-stock waitlist routes already degrade gracefully without them (a clear no-op/503, not a
-crash); add them to the contract in `scripts/validate-release-env.mjs` once Klaviyo is turned on.
+`PRIVATE_KLAVIYO_API_KEY`, `PUBLIC_KLAVIYO_LIST_ID`, `PUBLIC_KLAVIYO_WAITLIST_LIST_ID`,
+`PUBLIC_CHECKOUT_DOMAIN`, and `PUBLIC_GA4_MEASUREMENT_ID` are **not** part of the
+production-validation contract, per explicit owner request — none of these features are live yet.
+The app already degrades gracefully without each of them (a clear no-op/503 for the Klaviyo
+routes, GA4 simply not loading, robots.txt/sitemap.xml falling back cleanly without a checkout
+domain), never crashing. Add any of them back to the contract in `scripts/validate-release-env.mjs`
+once that feature is actually turned on.
 
 The commerce E2E fixture defaults to the active, stocked
 `legendary-world-round-t-shirt` product. Set the non-secret
