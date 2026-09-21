@@ -8,7 +8,7 @@ import {
   isRouteErrorResponse,
   Link,
 } from 'react-router';
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import {
   CartForm,
   Image,
@@ -275,6 +275,57 @@ function MobilePurchaseBar({
   );
 }
 
+function StickyBuyBar({
+  title,
+  variant,
+  quantity,
+  visible,
+}: {
+  title: string;
+  variant?: ProductVariantFragment | null;
+  quantity: number;
+  visible: boolean;
+}) {
+  const available = Boolean(variant?.availableForSale);
+
+  return (
+    <div
+      className={`fixed inset-x-0 top-0 z-40 hidden border-b border-[var(--color-border-medium)] bg-[var(--color-bg-level-0)]/95 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-transform duration-200 lg:block ${
+        visible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+      aria-hidden={!visible}
+    >
+      <div className="h-container flex items-center justify-between gap-6 py-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">{title}</p>
+        </div>
+        {variant && (
+          <Money data={variant.price} className="shrink-0 text-sm font-semibold text-[var(--color-text-primary)]" />
+        )}
+        {available && variant ? (
+          <CartForm
+            route="/cart"
+            action={CartForm.ACTIONS.LinesAdd}
+            inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
+          >
+            <button type="submit" className="h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs">
+              Add to Bag
+            </button>
+          </CartForm>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs opacity-40 cursor-not-allowed"
+          >
+            {variant ? 'Sold Out' : 'Choose an option'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function QuantitySelector({value, onChange}: {value: number; onChange: (v: number) => void}) {
   return (
     <div className="flex items-center border border-[var(--color-border-medium)] rounded-md overflow-hidden bg-[var(--color-bg-level-2)]">
@@ -342,6 +393,19 @@ export default function ProductPage() {
   const {product, relatedProducts} = useLoaderData<typeof loader>();
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const buyBoxSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const sentinel = buyBoxSentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      {rootMargin: '-64px 0px 0px 0px'},
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
 
   const selectedVariant = useOptimisticVariant(
     product.selectedVariant as ProductVariantFragment | undefined,
@@ -465,7 +529,7 @@ export default function ProductPage() {
               )}
 
               {/* Title + price */}
-              <div>
+              <div ref={buyBoxSentinelRef}>
                 <h1 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.01em] text-[var(--color-text-primary)] mb-3">
                   {product.title}
                 </h1>
@@ -687,6 +751,12 @@ export default function ProductPage() {
       />
 
       <MobilePurchaseBar variant={selectedVariant} quantity={quantity} />
+      <StickyBuyBar
+        title={product.title}
+        variant={selectedVariant}
+        quantity={quantity}
+        visible={showStickyBar}
+      />
 
       {/* Size guide modal */}
       <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
