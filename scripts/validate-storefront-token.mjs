@@ -13,15 +13,24 @@
 // flow downstream.
 
 export async function checkStorefrontToken(
-  {domain, token, apiVersion = '2026-04'},
+  {domain, token, apiVersion = '2026-04', timeoutMs = 10_000},
   fetchImpl = fetch,
 ) {
   if (!domain || !token) {
+    // GitHub Actions supplies empty values for repo secrets on
+    // Dependabot-authored and forked pull_request runs (documented in
+    // docs/DEPLOYMENT.md) -- that's an expected, known platform
+    // restriction, not a credential problem this check exists to catch.
+    // Skipping (rather than failing) here keeps build/typecheck/lint/test
+    // running on those PRs exactly as they did before this check existed;
+    // only a present-but-invalid credential should fail the job.
     return {
-      ok: false,
+      ok: true,
+      skipped: true,
       message:
-        'PUBLIC_STORE_DOMAIN and/or PUBLIC_STOREFRONT_API_TOKEN is missing. ' +
-        'Check that both repo secrets are set (Settings -> Secrets and variables -> Actions).',
+        'Skipping Storefront API credential check: PUBLIC_STORE_DOMAIN and/or ' +
+        'PUBLIC_STOREFRONT_API_TOKEN is not available to this run (expected for ' +
+        'Dependabot-authored and forked pull requests, which never receive repo secrets).',
     };
   }
 
@@ -36,11 +45,15 @@ export async function checkStorefrontToken(
         'X-Shopify-Storefront-Access-Token': token,
       },
       body: JSON.stringify({query: '{ shop { name } }'}),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (error) {
+    const timedOut = error instanceof Error && error.name === 'TimeoutError';
     return {
       ok: false,
-      message: `Could not reach the Storefront API at ${url}: ${error instanceof Error ? error.message : String(error)}`,
+      message: timedOut
+        ? `Storefront API request to ${url} did not respond within ${timeoutMs}ms.`
+        : `Could not reach the Storefront API at ${url}: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 

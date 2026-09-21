@@ -10,10 +10,24 @@ function fakeFetch(status, body) {
 }
 
 describe('checkStorefrontToken', () => {
-  it('fails when domain or token is missing', async () => {
+  it('skips (does not fail) when domain or token is missing, e.g. Dependabot/fork PRs', async () => {
     const result = await checkStorefrontToken({domain: '', token: ''});
+    expect(result.ok).toBe(true);
+    expect(result.skipped).toBe(true);
+    expect(result.message).toMatch(/Skipping/);
+  });
+
+  it('fails with a timeout-specific message when the request times out', async () => {
+    const result = await checkStorefrontToken(
+      {domain: 'example.myshopify.com', token: 'token', timeoutMs: 5},
+      async () => {
+        const error = new Error('The operation was aborted');
+        error.name = 'TimeoutError';
+        throw error;
+      },
+    );
     expect(result.ok).toBe(false);
-    expect(result.message).toMatch(/is missing/);
+    expect(result.message).toMatch(/did not respond within/);
   });
 
   it('fails with an actionable message on 401', async () => {
