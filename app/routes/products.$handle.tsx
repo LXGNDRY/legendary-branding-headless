@@ -301,8 +301,8 @@ function StickyBuyBar({
 
   return (
     <div
-      className={`fixed inset-x-0 top-0 z-40 hidden border-b border-[var(--color-border-medium)] bg-[var(--color-bg-level-0)]/95 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-transform duration-200 lg:block ${
-        visible ? 'translate-y-0' : '-translate-y-full'
+      className={`fixed inset-x-0 top-0 z-40 hidden border-b border-[var(--color-border-medium)] bg-[var(--color-bg-level-0)]/95 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-transform duration-200 lg:top-[68px] lg:block ${
+        visible ? 'translate-y-0 visible' : '-translate-y-full invisible'
       }`}
       aria-hidden={!visible}
     >
@@ -635,11 +635,22 @@ export default function ProductPage() {
                         const isColor = ['color', 'colour'].includes(option.name.toLowerCase());
                         return option.values.map(({value, isActive, isAvailable, to, optionValue}) => {
                           const swatch = (optionValue as {swatch?: {color?: string | null; image?: {previewImage?: {url?: string | null} | null} | null} | null} | undefined)?.swatch;
-                          const swatchStyle = swatch?.image?.previewImage?.url
-                            ? {backgroundImage: `url(${swatch.image.previewImage.url})`, backgroundSize: 'cover', backgroundPosition: 'center'}
-                            : {backgroundColor: swatch?.color || value.toLowerCase().replace(/\s+/g, '-')};
+                          const swatchImageUrl = swatch?.image?.previewImage?.url;
+                          const swatchStyle = swatchImageUrl
+                            ? {backgroundImage: `url(${swatchImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center'}
+                            : swatch?.color
+                              ? {backgroundColor: swatch.color}
+                              : undefined;
 
-                          if (isColor) {
+                          // Only render the circular swatch treatment when
+                          // Shopify actually has swatch metadata configured
+                          // for this value. Guessing a CSS color from
+                          // arbitrary merchandising text (e.g. "Heather
+                          // Grey") produces invalid CSS and an unlabeled,
+                          // invisible circle -- falling through to the
+                          // normal labeled text pill below is always
+                          // legible instead.
+                          if (isColor && swatchStyle) {
                             const swatchClass = `relative h-9 w-9 rounded-full border-2 transition-all duration-150 shrink-0 ${
                               isActive
                                 ? 'border-[var(--color-text-primary)] ring-2 ring-offset-2 ring-[var(--color-text-primary)]'
