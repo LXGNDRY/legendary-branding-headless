@@ -10,11 +10,18 @@ function fakeFetch(status, body) {
 }
 
 describe('checkStorefrontToken', () => {
-  it('skips (does not fail) when domain or token is missing, e.g. Dependabot/fork PRs', async () => {
-    const result = await checkStorefrontToken({domain: '', token: ''});
+  it('skips (does not fail) when domain or token is missing and skip is explicitly allowed, e.g. Dependabot/fork PRs', async () => {
+    const result = await checkStorefrontToken({domain: '', token: '', allowSkipWhenMissing: true});
     expect(result.ok).toBe(true);
     expect(result.skipped).toBe(true);
     expect(result.message).toMatch(/Skipping/);
+  });
+
+  it('fails when domain or token is missing and skip is not allowed, e.g. a push to dev/main', async () => {
+    const result = await checkStorefrontToken({domain: '', token: ''});
+    expect(result.ok).toBe(false);
+    expect(result.skipped).toBeUndefined();
+    expect(result.message).toMatch(/not set for this run/);
   });
 
   it('fails with a timeout-specific message when the request times out', async () => {

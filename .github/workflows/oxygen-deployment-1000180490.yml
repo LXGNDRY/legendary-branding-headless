@@ -57,6 +57,11 @@ jobs:
         env:
           PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
           PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+          # Only genuinely untrusted PRs (Dependabot or a fork) ever have
+          # repo secrets withheld by GitHub -- a push to dev/main or a
+          # same-repo PR with missing credentials means real
+          # misconfiguration and must fail here rather than skip.
+          ALLOW_CREDENTIAL_SKIP: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
 
       - name: Codegen + GraphQL validation (Storefront & Customer Account)
         run: npm run codegen
@@ -264,6 +269,12 @@ jobs:
         env:
           PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
           PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+          # Only genuinely untrusted PRs (Dependabot or a fork) ever have
+          # repo secrets withheld by GitHub -- a push to dev/main or a
+          # same-repo PR with missing credentials means real
+          # misconfiguration and must fail here rather than skip the whole
+          # E2E matrix and let an unvalidated build through.
+          ALLOW_CREDENTIAL_SKIP: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
 
       # GitHub never grants repository secrets to Dependabot-authored or
       # forked pull_request runs (a platform restriction, not a bug) --
