@@ -57,6 +57,11 @@ jobs:
         env:
           PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
           PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+          # Only genuinely untrusted PRs (Dependabot or a fork) ever have
+          # repo secrets withheld by GitHub -- a push to dev/main or a
+          # same-repo PR with missing credentials means real
+          # misconfiguration and must fail here rather than skip.
+          ALLOW_CREDENTIAL_SKIP: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
 
       - name: Codegen + GraphQL validation (Storefront & Customer Account)
         run: npm run codegen
@@ -259,12 +264,33 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Verify Storefront API credentials
+        id: verify-creds
         run: node scripts/validate-storefront-token.mjs
         env:
           PUBLIC_STORE_DOMAIN: ${{ secrets.PUBLIC_STORE_DOMAIN }}
           PUBLIC_STOREFRONT_API_TOKEN: ${{ secrets.PUBLIC_STOREFRONT_API_TOKEN }}
+          # Only genuinely untrusted PRs (Dependabot or a fork) ever have
+          # repo secrets withheld by GitHub -- a push to dev/main or a
+          # same-repo PR with missing credentials means real
+          # misconfiguration and must fail here rather than skip the whole
+          # E2E matrix and let an unvalidated build through.
+          ALLOW_CREDENTIAL_SKIP: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
+
+      # GitHub never grants repository secrets to Dependabot-authored or
+      # forked pull_request runs (a platform restriction, not a bug) --
+      # PUBLIC_STORE_DOMAIN/PUBLIC_STOREFRONT_API_TOKEN come through empty,
+      # the local preview server 500s on every request, and Playwright's
+      # webServer never comes up, timing out the whole job 20 minutes later
+      # with a misleading "Timed out waiting 120000ms" instead of the real
+      # cause. The credentials step above already detects and skips this
+      # case in seconds; skip the rest of the job the same way instead of
+      # letting it run toward a guaranteed, uninformative timeout.
+      - name: Report E2E skipped (no Storefront API credentials available)
+        if: steps.verify-creds.outputs.skipped == 'true'
+        run: echo "::notice::Skipping E2E — no Storefront API credentials available to this run (expected for Dependabot/fork PRs)."
 
       - name: Install Playwright browsers
+        if: steps.verify-creds.outputs.skipped != 'true'
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       # `shopify hydrogen preview` (and `dev`) load env vars via Miniflare
@@ -273,6 +299,7 @@ jobs:
       # this, the preview server 500s on every request with "SESSION_SECRET
       # environment variable is not set" even though the step below sets it.
       - name: Create .env for local preview server
+        if: steps.verify-creds.outputs.skipped != 'true'
         run: |
           cat > .env <<EOF
           SESSION_SECRET=ci-only-do-not-use
@@ -281,6 +308,7 @@ jobs:
           EOF
 
       - name: Build
+        if: steps.verify-creds.outputs.skipped != 'true'
         run: npm run build
 
       # Runs against a local `shopify hydrogen preview` server (see
@@ -292,6 +320,7 @@ jobs:
       # Testing a locally-served production build sidesteps that entirely
       # and removes the dependency on a live deploy succeeding first.
       - name: Run E2E tests against local production build
+        if: steps.verify-creds.outputs.skipped != 'true'
         run: npm run test:e2e -- --project=${{ matrix.project }} --workers=1
 
       - name: Upload test results on failure

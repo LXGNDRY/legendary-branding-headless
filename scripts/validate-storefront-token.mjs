@@ -13,24 +13,39 @@
 // flow downstream.
 
 export async function checkStorefrontToken(
-  {domain, token, apiVersion = '2026-04', timeoutMs = 10_000},
+  {domain, token, apiVersion = '2026-04', timeoutMs = 10_000, allowSkipWhenMissing = false},
   fetchImpl = fetch,
 ) {
   if (!domain || !token) {
-    // GitHub Actions supplies empty values for repo secrets on
-    // Dependabot-authored and forked pull_request runs (documented in
-    // docs/DEPLOYMENT.md) -- that's an expected, known platform
-    // restriction, not a credential problem this check exists to catch.
-    // Skipping (rather than failing) here keeps build/typecheck/lint/test
-    // running on those PRs exactly as they did before this check existed;
-    // only a present-but-invalid credential should fail the job.
+    if (allowSkipWhenMissing) {
+      // GitHub Actions supplies empty values for repo secrets on
+      // Dependabot-authored and forked pull_request runs (documented in
+      // docs/DEPLOYMENT.md) -- that's an expected, known platform
+      // restriction, not a credential problem this check exists to catch.
+      // Skipping (rather than failing) here keeps build/typecheck/lint/test
+      // running on those PRs exactly as they did before this check existed;
+      // only a present-but-invalid credential should fail the job. The
+      // caller is responsible for only setting allowSkipWhenMissing true for
+      // that specific untrusted-PR context -- never for a push to dev/main
+      // or a same-repo PR, where missing secrets mean real misconfiguration
+      // (a deleted/renamed repo secret) and must fail loudly instead of
+      // silently skipping E2E and letting an unvalidated build through.
+      return {
+        ok: true,
+        skipped: true,
+        message:
+          'Skipping Storefront API credential check: PUBLIC_STORE_DOMAIN and/or ' +
+          'PUBLIC_STOREFRONT_API_TOKEN is not available to this run (expected for ' +
+          'Dependabot-authored and forked pull requests, which never receive repo secrets).',
+      };
+    }
     return {
-      ok: true,
-      skipped: true,
+      ok: false,
       message:
-        'Skipping Storefront API credential check: PUBLIC_STORE_DOMAIN and/or ' +
-        'PUBLIC_STOREFRONT_API_TOKEN is not available to this run (expected for ' +
-        'Dependabot-authored and forked pull requests, which never receive repo secrets).',
+        'PUBLIC_STORE_DOMAIN and/or PUBLIC_STOREFRONT_API_TOKEN is not set for this run. ' +
+        'Unlike a Dependabot/fork pull request, this run is expected to have repo secrets ' +
+        'available -- check that both secrets exist under Settings -> Secrets and variables -> ' +
+        'Actions and are spelled exactly right.',
     };
   }
 
@@ -111,10 +126,22 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     domain: process.env.PUBLIC_STORE_DOMAIN,
     token: process.env.PUBLIC_STOREFRONT_API_TOKEN,
     apiVersion: process.env.PUBLIC_STOREFRONT_API_VERSION,
+    // Set by the workflow only for pull_request runs from Dependabot or a
+    // fork -- the one context where GitHub genuinely withholds repo
+    // secrets. Anywhere else (a push to dev/main, a same-repo PR), missing
+    // credentials mean real misconfiguration and must fail, not skip.
+    allowSkipWhenMissing: process.env.ALLOW_CREDENTIAL_SKIP === 'true',
   });
 
   if (result.ok) {
     process.stdout.write(`${result.message}\n`);
+    // Let calling workflows gate later steps on this (e.g. skip the E2E
+    // browser matrix entirely on Dependabot/fork PRs instead of letting it
+    // run against an unconfigured server and time out 20 minutes later).
+    if (result.skipped && process.env.GITHUB_OUTPUT) {
+      const fs = await import('node:fs/promises');
+      await fs.appendFile(process.env.GITHUB_OUTPUT, 'skipped=true\n');
+    }
   } else {
     process.stderr.write(`::error::${result.message}\n`);
     process.exitCode = 1;
