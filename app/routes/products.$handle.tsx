@@ -429,6 +429,18 @@ export default function ProductPage() {
 
   const isNew = product.tags.includes('new');
 
+  // Mirrors the live Liquid theme's threshold (1-9 units left) for showing
+  // low-stock urgency messaging on the gallery image and near the variant
+  // selector. Deliberately a boolean, not the exact count: this product
+  // query is served from CacheLong() (up to 24h stale-while-revalidate), so
+  // quantityAvailable can lag real inventory -- a coarse "low stock" signal
+  // degrades gracefully when stale, an exact "Only 3 left" claim does not.
+  const isLowStock =
+    Boolean(selectedVariant?.availableForSale) &&
+    typeof selectedVariant?.quantityAvailable === 'number' &&
+    selectedVariant.quantityAvailable >= 1 &&
+    selectedVariant.quantityAvailable <= 9;
+
   // Judge.me review metafields — populated by the Judge.me app's ongoing
   // sync into Shopify metafields; absent until a product has its first
   // review, so every usage below degrades gracefully to "no reviews yet".
@@ -526,7 +538,18 @@ export default function ProductPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
             {/* Gallery */}
-            <ProductGallery images={product.images.nodes} title={product.title} />
+            <ProductGallery
+              images={product.images.nodes}
+              title={product.title}
+              badges={
+                (isOnSale || isLowStock) && (
+                  <>
+                    {isOnSale && <Badge variant="sale">Sale</Badge>}
+                    {isLowStock && <Badge variant="default">Low Stock</Badge>}
+                  </>
+                )
+              }
+            />
 
             {/* Product info */}
             <div className="space-y-6">
@@ -686,6 +709,17 @@ export default function ProductPage() {
                 )}
                 </VariantSelector>
               </div>
+
+              {isLowStock && (
+                <div
+                  className="flex items-center gap-2 text-[0.75rem] font-medium text-[var(--color-accent)]"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--color-accent)]" aria-hidden="true" />
+                  Low stock — order soon
+                </div>
+              )}
 
               {/* Quantity + Add to cart */}
               <div className="space-y-3 pt-2">
