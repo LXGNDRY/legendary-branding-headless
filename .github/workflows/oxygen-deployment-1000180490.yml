@@ -1,7 +1,7 @@
 # Don't change the line below!
-#! oxygen_storefront_id: 1000167667
+#! oxygen_storefront_id: 1000180490
 
-name: Storefront 1000167667
+name: Storefront 1000180490
 
 on:
   push:
@@ -161,7 +161,7 @@ jobs:
           echo "DEPLOY_URL=$DEPLOY_URL" >> "$GITHUB_ENV"
           echo "AUTH_BYPASS_TOKEN=$AUTH_BYPASS_TOKEN" >> "$GITHUB_ENV"
         env:
-          SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000167667 }}
+          SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000180490 }}
 
       - name: Post-deploy smoke test
         run: |
