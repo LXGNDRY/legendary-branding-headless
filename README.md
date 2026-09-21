@@ -15,7 +15,7 @@ Store: [legendary-branding.com](https://legendary-branding.com)
 | Styling | Tailwind CSS v4 |
 | Runtime | Shopify Oxygen (Cloudflare Workers) |
 | API | Shopify Storefront API (GraphQL) |
-| Data source | legendary-branding.myshopify.com |
+| Data source | lngndny.myshopify.com |
 
 ---
 

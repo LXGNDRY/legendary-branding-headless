@@ -1,6 +1,6 @@
 # Deployment — Legendary Branding Headless Storefront
 
-**Source of truth for the actual pipeline:** `.github/workflows/oxygen-deployment-1000167667.yml`.
+**Source of truth for the actual pipeline:** `.github/workflows/oxygen-deployment-1000180490.yml`.
 This document expands on that file and on `CLAUDE.md`'s CI/CD section; it does not introduce any
 new claims about behavior that isn't in the workflow file itself.
 
@@ -27,7 +27,7 @@ the owner merges (agents never merge to `main`).
 
 ## 2. Pipeline Shape (as implemented)
 
-The workflow (`Storefront 1000167667`) triggers on `push` to `main`/`dev`, `pull_request` to
+The workflow (`Storefront 1000180490`) triggers on `push` to `main`/`dev`, `pull_request` to
 `main`/`dev`, and manual `workflow_dispatch`. It defines three jobs:
 
 ### `quality` (runs on every trigger)
@@ -52,7 +52,7 @@ The workflow (`Storefront 1000167667`) triggers on `push` to `main`/`dev`, `pull
 2. On `main`, `npm run validate:release-env` fails closed unless the complete Shopify,
    Customer Account, GA4, newsletter, and waitlist configuration is present.
 3. `npx shopify hydrogen deploy --force --json-output --auth-bypass-token`, authenticated via
-   `SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000167667 }}`.
+   `SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000180490 }}`.
    The job's `environment` is `production` when `github.ref_name == 'main'`, else `preview`.
 4. The deploy step requires `h2_deploy_log.json`, a valid HTTPS deployment URL, and Shopify's
    short-lived authentication bypass token. Missing or malformed output fails the job.
@@ -87,7 +87,7 @@ Read directly from the workflow file's `secrets.*` references:
 
 | Secret | Used by | Purpose |
 |---|---|---|
-| `OXYGEN_DEPLOYMENT_TOKEN_1000167667` | `deploy` job | Auth token for `shopify hydrogen deploy` (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`) |
+| `OXYGEN_DEPLOYMENT_TOKEN_1000180490` | `deploy` job | Auth token for `shopify hydrogen deploy` (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`) |
 | `PUBLIC_STORE_DOMAIN` | `quality` (codegen), `e2e` | Shopify storefront domain |
 | `PUBLIC_STOREFRONT_API_TOKEN` | `quality` (codegen), `e2e` | Public Storefront API token |
 | `SESSION_SECRET` | production validation | Session signing secret |
@@ -213,7 +213,7 @@ job but does not revert the already-deployed Oxygen build). Automating rollback 
 4. Check the `Post-deploy smoke test` step's log — every critical route must be verified; bot-check
    interception is a failure because the deployment uses Shopify's authentication bypass token.
 5. Deployment entries and their preview URLs are also visible in the Shopify Partners dashboard
-   under Hydrogen storefront 1000167667 — each successful deploy creates a new entry there.
+   under Hydrogen storefront 1000180490 — each successful deploy creates a new entry there.
 
 ---
 

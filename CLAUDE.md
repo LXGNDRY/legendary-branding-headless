@@ -12,8 +12,8 @@ Guidelines for Claude Code agents working on this repository. This document is t
 | GitHub | `LXGNDRY/legendary-branding-headless` |
 | Brand | LEGENDARY BRANDING |
 | Live domain | `legendary-branding.com` |
-| Storefront API domain | `legendary-branding.myshopify.com` |
-| Oxygen project | Storefront 1000167667 |
+| Storefront API domain | `lngndny.myshopify.com` |
+| Oxygen project | Storefront 1000180490 |
 | Owner contact | `lb@legendary-branding.com` |
 
 ---
@@ -112,7 +112,7 @@ All three must pass with zero errors. No exceptions.
 
 ## CI / CD Pipeline
 
-**File:** `.github/workflows/oxygen-deployment-1000167667.yml`
+**File:** `.github/workflows/oxygen-deployment-1000180490.yml`
 
 ### Required pipeline shape
 
@@ -193,7 +193,7 @@ If the deploy job shows `skipped`, the trigger was a PR event (not a push) — o
 
 ### Hydrogen Admin — viewing deployments
 
-Deployments and their preview URLs are visible in the Shopify Partners dashboard under the Hydrogen storefront (Storefront 1000167667). Each successful CI deploy creates a new deployment entry with its own URL.
+Deployments and their preview URLs are visible in the Shopify Partners dashboard under the Hydrogen storefront (Storefront 1000180490). Each successful CI deploy creates a new deployment entry with its own URL.
 
 ### Common failure modes and fixes
 
@@ -291,7 +291,7 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 | `.env.example` | Env var template — placeholders only, no real values |
 | `env.d.ts` | TypeScript type declarations for `Env` — keep in sync with `.env.example` |
 | `.graphqlrc.ts` | Codegen config — must match all inline `#graphql` query files |
-| `.github/workflows/oxygen-deployment-1000167667.yml` | CI/CD — must include typecheck/lint/build gate before deploy |
+| `.github/workflows/oxygen-deployment-1000180490.yml` | CI/CD — must include typecheck/lint/build gate before deploy |
 
 ---
 
