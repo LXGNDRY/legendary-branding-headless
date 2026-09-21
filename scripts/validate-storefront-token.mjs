@@ -115,6 +115,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   if (result.ok) {
     process.stdout.write(`${result.message}\n`);
+    // Let calling workflows gate later steps on this (e.g. skip the E2E
+    // browser matrix entirely on Dependabot/fork PRs instead of letting it
+    // run against an unconfigured server and time out 20 minutes later).
+    if (result.skipped && process.env.GITHUB_OUTPUT) {
+      const fs = await import('node:fs/promises');
+      await fs.appendFile(process.env.GITHUB_OUTPUT, 'skipped=true\n');
+    }
   } else {
     process.stderr.write(`::error::${result.message}\n`);
     process.exitCode = 1;
