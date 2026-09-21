@@ -6,6 +6,7 @@ import {useEffect, useState} from 'react';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
+import {withCheckoutLocale} from '~/lib/cart';
 import {requireSameOrigin} from '~/lib/security';
 
 export const meta: MetaFunction = () => [
@@ -428,7 +429,7 @@ export default function CartPage() {
               >
                 <Button
                   as="a"
-                  href={cart.checkoutUrl}
+                  href={withCheckoutLocale(cart.checkoutUrl)}
                   variant="dark"
                   className="w-full justify-center"
                   loading={checkingOut}

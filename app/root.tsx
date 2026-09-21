@@ -8,6 +8,7 @@ import {
   useNavigation,
   useFetchers,
   useLocation,
+  isRouteErrorResponse,
 } from 'react-router';
 import {useState, useEffect} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
@@ -24,7 +25,7 @@ import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
 import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
-import {Analytics as HydrogenAnalytics, getShopAnalytics} from '@shopify/hydrogen';
+import {Analytics as HydrogenAnalytics, getShopAnalytics, CartForm} from '@shopify/hydrogen';
 
 export const links: LinksFunction = () => [
   {rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml'},
@@ -197,13 +198,22 @@ export default function App() {
     setCartOpen(false);
   }, [location.pathname, location.search]);
 
-  // Auto-open cart drawer when an add-to-cart action completes
+  // Auto-open cart drawer when an add-to-cart action completes.
+  // The submitted action lives inside the JSON value under
+  // CartForm.INPUT_NAME (see ProductCard.handleQuickAdd and CartForm's own
+  // submissions), not a plain "cartAction" field -- reading the wrong key
+  // meant this never actually fired.
   useEffect(() => {
-    const addingFetcher = fetchers.find(
-      (f) =>
-        f.state === 'loading' &&
-        f.formData?.get('cartAction') === 'LinesAdd',
-    );
+    const addingFetcher = fetchers.find((f) => {
+      if (f.state !== 'loading') return false;
+      const raw = f.formData?.get(CartForm.INPUT_NAME);
+      if (typeof raw !== 'string') return false;
+      try {
+        return JSON.parse(raw)?.action === CartForm.ACTIONS.LinesAdd;
+      } catch {
+        return false;
+      }
+    });
     if (addingFetcher) setCartOpen(true);
   }, [fetchers]);
 
@@ -295,9 +305,13 @@ export function ErrorBoundary({error}: {error: unknown}) {
     captureError(error, {route: window.location.pathname});
   }
 
-  // Distinguish 404 from other errors
-  const is404 =
-    error instanceof Response && error.status === 404;
+  // Distinguish 404 from other errors. React Router converts a thrown
+  // Response from a loader into its own route-error-response object before
+  // it reaches an ErrorBoundary -- it is not `instanceof Response` by the
+  // time it gets here, so that check never matched a real 404 (missing
+  // collection/product/journal article all fell through to the generic
+  // "Something went wrong" message instead).
+  const is404 = isRouteErrorResponse(error) && error.status === 404;
 
   return (
     <div className="min-h-dvh flex items-center justify-center p-8 bg-[#FAF9F6]">

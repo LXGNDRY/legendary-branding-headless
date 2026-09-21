@@ -33,6 +33,12 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? 'github' : 'list',
   timeout: 30_000,
+  expect: {
+    // Default expect() timeout (5s) is too tight now that these tests hit
+    // the real Storefront API for every loader/navigation — bump it to
+    // match actionTimeout so real network latency doesn't flake assertions.
+    timeout: 10_000,
+  },
 
   use: {
     baseURL: process.env.BASE_URL || 'http://127.0.0.1:3000',

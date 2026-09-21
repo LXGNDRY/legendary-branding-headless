@@ -9,6 +9,7 @@ import {
   useFetcher,
 } from 'react-router';
 import {requireSameOrigin} from '~/lib/security';
+import {getCountryOptions} from '~/lib/market';
 import {useState} from 'react';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
@@ -172,16 +173,12 @@ export async function action({request, context}: ActionFunctionArgs) {
   const formData = await request.formData();
   const intent = String(formData.get('intent') || '');
 
-  // CustomerAddressInput uses zoneCode (province) + territoryCode (country code)
-  const countryInput = String(formData.get('country') || '').trim();
-  const territoryCode =
-    countryInput.length === 2
-      ? countryInput.toUpperCase()
-      : countryInput.toLowerCase() === 'united states' ||
-          countryInput.toLowerCase() === 'usa' ||
-          countryInput.toLowerCase() === 'us'
-        ? 'US'
-        : countryInput.slice(0, 2).toUpperCase();
+  // The country <select> submits an ISO 3166-1 alpha-2 code directly (see
+  // getCountryOptions() in ~/lib/market) -- previously this derived a
+  // territoryCode by guessing from the first two letters of a free-typed
+  // country name, which was wrong for most non-US countries (e.g.
+  // "Germany" -> "GE" Georgia, "Indonesia" -> "IN" India).
+  const territoryCode = String(formData.get('country') || '').trim().toUpperCase();
 
   const addressInput = {
     firstName: String(formData.get('firstName') || '').trim(),
@@ -388,12 +385,22 @@ function AddressForm({
           <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             Country
           </label>
-          <input
+          <select
             name="country"
-            defaultValue={address?.country || 'United States'}
+            defaultValue={
+              getCountryOptions().find(
+                (c) => c.name.toLowerCase() === (address?.country || '').toLowerCase(),
+              )?.code || 'US'
+            }
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
-          />
+          >
+            {getCountryOptions().map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
