@@ -33,7 +33,7 @@ CI gate because the local audit environment could not access the Shopify schema.
 | Area | State | Evidence |
 |---|---|---|
 | Build/typecheck/lint/test | ✅ Green | Typecheck, lint, build, and 54/54 tests pass at `3f39be7` |
-| CI quality gate | ✅ Correct order | `.github/workflows/oxygen-deployment-1000167667.yml`: build → typecheck → lint → test, deploy gated on quality passing on push to `main`/`dev` only |
+| CI quality gate | ✅ Correct order | `.github/workflows/oxygen-deployment-1000180490.yml`: build → typecheck → lint → test, deploy gated on quality passing on push to `main`/`dev` only |
 | Post-deploy smoke test | ✅ Added | Same workflow, curls the deployed URL for critical routes after `Deploy to Oxygen` |
 | Server error monitoring | ✅ Wired | `app/lib/sentry.server.ts` (hand-rolled Workers-compatible envelope sender) called from `server.ts`'s catch block |
 | Client error monitoring | ✅ Wired | `@sentry/react` in `app/lib/monitoring.ts`, `captureError` called from `app/root.tsx` ErrorBoundary |

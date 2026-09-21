@@ -72,7 +72,7 @@ export default {
       console.error('Server error:', error);
 
       // Report to Sentry
-      captureServerError(error, {request});
+      captureServerError(error, {request, waitUntil: ctx.waitUntil.bind(ctx)});
 
       // In development, include the error message for debugging
       const isDev = !import.meta.env.PROD;
