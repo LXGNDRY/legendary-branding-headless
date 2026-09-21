@@ -35,7 +35,7 @@ A separate platform is handling Liquid theme conversion (`Theme-Files-edits-here
 | `claude/*` | Agent working branches — PR into `dev`, never directly to `main` | None |
 
 ### Rules
-- All agent work goes to a `claude/*` branch, then PR → `dev`, then owner-reviewed PR → `main`.
+- All agent work goes to a `claude/*` branch, then PR → `dev`, then a release PR `dev` → `main` (see merge rule below for who can merge it).
 - **Never push directly to `main` or `dev`.**
 - **Never force-push to any branch.**
 - `dev` branch must exist at all times. If it's been deleted, recreate it from `main` before starting work:
@@ -45,7 +45,10 @@ A separate platform is handling Liquid theme conversion (`Theme-Files-edits-here
   git push -u origin dev
   ```
 - Every PR must be ready for review (not draft) and include a clear description of what changed and why.
-- Owner merges `dev` → `main` to trigger production deploy. Agents never merge to `main`.
+- Agents may merge a `dev` → `main` release PR into `main` when **either**:
+  - the PR's CI is fully green (Quality Gate + full E2E matrix) and `mergeable_state` is `clean` — no owner sign-off required in this case, or
+  - the owner explicitly instructs it in conversation (e.g. "merge PR #X into main"), even if CI hasn't finished.
+  In either case, still never force-push and never bypass a failing check to get there.
 
 ---
 
