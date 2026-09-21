@@ -20,8 +20,9 @@ boundary prevents the applicable gate from passing.
 | `claude/*`, `docs/*`, other working branches | Agent/developer working branches | No deploy — PRs only trigger the quality gate |
 
 Rules (from `CLAUDE.md`, unchanged here): never push directly to `main` or `dev`; never
-force-push; every PR targets `dev` first, then an owner-reviewed PR promotes `dev` → `main`, which
-the owner merges (agents never merge to `main`).
+force-push; every PR targets `dev` first, then a release PR promotes `dev` → `main`. Either the
+owner or an agent may merge that release PR into `main` — an agent may do so once its CI is fully
+green and mergeable, or whenever the owner explicitly says to merge it.
 
 ---
 
