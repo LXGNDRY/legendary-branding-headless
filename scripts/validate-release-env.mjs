@@ -7,10 +7,12 @@ export const RELEASE_ENVIRONMENT_VARIABLES = [
   'PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID',
   'PUBLIC_CUSTOMER_ACCOUNT_API_URL',
   'PUBLIC_GA4_MEASUREMENT_ID',
-  'PRIVATE_KLAVIYO_API_KEY',
-  'PUBLIC_KLAVIYO_LIST_ID',
-  'PUBLIC_KLAVIYO_WAITLIST_LIST_ID',
 ];
+
+// Klaviyo isn't live yet -- not required for a release to ship. The app
+// already degrades gracefully without these (see app/routes/api.waitlist.ts
+// and app/routes/api.newsletter.ts), returning a clear 503/no-op rather than
+// crashing, so gate the release on them once Klaviyo is actually turned on.
 
 export function missingReleaseEnvironment(environment = process.env) {
   return RELEASE_ENVIRONMENT_VARIABLES.filter((name) => {

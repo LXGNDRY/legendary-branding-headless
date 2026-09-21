@@ -97,12 +97,14 @@ Read directly from the workflow file's `secrets.*` references:
 | `PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID` | production validation | Customer Account OAuth client |
 | `PUBLIC_CUSTOMER_ACCOUNT_API_URL` | production validation | Customer Account API URL |
 | `PUBLIC_GA4_MEASUREMENT_ID` | production validation | GA4 destination |
-| `PRIVATE_KLAVIYO_API_KEY` | production validation | Server-side Klaviyo API access |
-| `PUBLIC_KLAVIYO_LIST_ID` | production validation | Newsletter list |
-| `PUBLIC_KLAVIYO_WAITLIST_LIST_ID` | production validation | Back-in-stock list |
 
 Their presence in the real GitHub repository settings and matching Oxygen runtime environment
 remains an owner-controlled launch check.
+
+`PRIVATE_KLAVIYO_API_KEY`, `PUBLIC_KLAVIYO_LIST_ID`, and `PUBLIC_KLAVIYO_WAITLIST_LIST_ID` are
+**not** part of the production-validation contract — Klaviyo isn't live yet. The newsletter and
+back-in-stock waitlist routes already degrade gracefully without them (a clear no-op/503, not a
+crash); add them to the contract in `scripts/validate-release-env.mjs` once Klaviyo is turned on.
 
 The commerce E2E fixture defaults to the active, stocked
 `legendary-world-round-t-shirt` product. Set the non-secret
