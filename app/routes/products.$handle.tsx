@@ -567,6 +567,9 @@ export default function ProductPage() {
                   variant={selectedVariant as ProductVariantFragment | null | undefined}
                   quantity={quantity}
                 />
+                <p className="text-center text-[0.7rem] text-[var(--color-text-tertiary)]">
+                  Secure checkout · SSL encrypted · All major cards accepted
+                </p>
                 {!selectedVariant?.availableForSale && selectedVariant && (
                   <section id="restock-signup" className="rounded-md border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] p-1">
                     <div className="px-3 pt-3">
