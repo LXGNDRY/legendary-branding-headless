@@ -10,10 +10,12 @@ import CategoryGrid from '~/components/sections/CategoryGrid';
 import NewArrivalsGrid from '~/components/sections/NewArrivalsGrid';
 import EditorialBand from '~/components/sections/EditorialBand';
 import VerifiedReviews from '~/components/sections/VerifiedReviews';
+import ReviewQuotes from '~/components/sections/ReviewQuotes';
 import UGCGrid from '~/components/sections/UGCGrid';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import {CacheLong} from '~/lib/cache';
+import {fetchJudgemeQuotes} from '~/lib/judgeme';
 
 type CollectionNode = {
   id: string;
@@ -135,7 +137,17 @@ export async function loader({context}: LoaderFunctionArgs) {
       ? ratedProducts.reduce((sum, p) => sum + p.rating * p.reviewCount, 0) / aggregateCount
       : 0;
 
-  return {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount};
+  // Real review quote cards -- optional, server-only. Degrades to an empty
+  // list (no section rendered) rather than failing the page when the token
+  // is unset or the Judge.me API call fails.
+  const quotes = context.env.PRIVATE_JUDGEME_API_TOKEN
+    ? await fetchJudgemeQuotes({
+        apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
+        shopDomain: context.env.PUBLIC_STORE_DOMAIN,
+      })
+    : [];
+
+  return {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount, quotes};
 }
 
 const MARQUEE_ITEMS = [
@@ -149,7 +161,7 @@ const MARQUEE_ITEMS = [
 ];
 
 export default function Homepage() {
-  const {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount} =
+  const {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount, quotes} =
     useLoaderData<typeof loader>();
 
   const newDropProducts = (newDrops?.products?.nodes ?? []) as ProductCardFragment[];
@@ -239,14 +251,17 @@ export default function Homepage() {
         products={ratedProducts}
       />
 
-      {/* 9 — Community / UGC */}
+      {/* 9 — Real review quote cards (Judge.me API, optional) */}
+      <ReviewQuotes eyebrow="In Their Words" heading="The Culture Speaks" quotes={quotes} />
+
+      {/* 10 — Community / UGC */}
       <UGCGrid
         eyebrow="Community"
         heading="Worn By The Culture"
         hashtag="#LegendaryBranding"
       />
 
-      {/* 10 — Newsletter */}
+      {/* 11 — Newsletter */}
       <NewsletterBand
         eyebrow="Stay in the loop"
         heading="Get early access to drops."
