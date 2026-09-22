@@ -19,7 +19,7 @@ export default function BrandMarquee({items, style = 'subtle', speed = 35}: Bran
   return (
     <div className={`${bgClass} ${colorClass} overflow-hidden border-y`}>
       <div
-        className="flex whitespace-nowrap py-3 will-change-transform"
+        className="h-marquee-track flex whitespace-nowrap py-3 will-change-transform"
         style={{animation: `h-marquee-scroll ${speed}s linear infinite`}}
         aria-hidden="true"
       >
