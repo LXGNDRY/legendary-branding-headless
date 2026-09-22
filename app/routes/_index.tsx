@@ -9,7 +9,8 @@ import StatStrip from '~/components/sections/StatStrip';
 import CategoryGrid from '~/components/sections/CategoryGrid';
 import NewArrivalsGrid from '~/components/sections/NewArrivalsGrid';
 import EditorialBand from '~/components/sections/EditorialBand';
-import Testimonials from '~/components/sections/Testimonials';
+import VerifiedReviews from '~/components/sections/VerifiedReviews';
+import UGCGrid from '~/components/sections/UGCGrid';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import {CacheLong} from '~/lib/cache';
@@ -56,11 +57,28 @@ const HOMEPAGE_QUERY = `#graphql
       products(first: 4, sortKey: BEST_SELLING) {
         nodes {
           ...ProductCard
+          reviewBadge: metafield(namespace: "judgeme", key: "badge") {
+            value
+          }
         }
       }
     }
   }
 ` as const;
+
+// Judge.me's badge metafield embeds the product's real synced rating as
+// HTML attributes (e.g. data-average-rating="4.8" data-number-of-reviews="23").
+// Parsed here so the homepage can show a genuine aggregate instead of
+// fabricated testimonials -- never invent quotes/names for this section.
+function parseJudgemeBadge(html: string | null | undefined): {rating: number; count: number} | null {
+  if (!html) return null;
+  const rating = html.match(/data-average-rating="([\d.]+)"/)?.[1];
+  const count = html.match(/data-number-of-reviews="(\d+)"/)?.[1];
+  if (!rating || !count) return null;
+  const parsedCount = parseInt(count, 10);
+  if (parsedCount <= 0) return null;
+  return {rating: parseFloat(rating), count: parsedCount};
+}
 
 export const meta: MetaFunction = () => {
   const description = 'Premium editorial streetwear. Bold, minimal, fast.';
@@ -92,7 +110,31 @@ export async function loader({context}: LoaderFunctionArgs) {
     },
   );
 
-  return {featuredCollections, newDrops, bestSellers};
+  const ratedProducts = ((bestSellers?.products?.nodes ?? []) as Array<
+    ProductCardFragment & {reviewBadge?: {value: string} | null}
+  >)
+    .map((product) => {
+      const parsed = parseJudgemeBadge(product.reviewBadge?.value);
+      return parsed
+        ? {
+            id: product.id,
+            handle: product.handle,
+            title: product.title,
+            image: product.featuredImage,
+            rating: parsed.rating,
+            reviewCount: parsed.count,
+          }
+        : null;
+    })
+    .filter((p): p is NonNullable<typeof p> => p !== null);
+
+  const aggregateCount = ratedProducts.reduce((sum, p) => sum + p.reviewCount, 0);
+  const aggregateRating =
+    aggregateCount > 0
+      ? ratedProducts.reduce((sum, p) => sum + p.rating * p.reviewCount, 0) / aggregateCount
+      : 0;
+
+  return {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount};
 }
 
 const MARQUEE_ITEMS = [
@@ -105,32 +147,8 @@ const MARQUEE_ITEMS = [
   'DTG PRINTS',
 ];
 
-const TESTIMONIALS = [
-  {
-    quote:
-      "This is the heaviest tee I've ever owned. The quality is unreal. You can feel the difference the second you put it on.",
-    name: 'Marcus T.',
-    location: 'Atlanta, GA',
-    stars: 5,
-  },
-  {
-    quote:
-      'Made to order means I actually had to wait, but it was worth every day. Fits perfectly, no shrinkage after washing.',
-    name: 'Jordan L.',
-    location: 'London, UK',
-    stars: 5,
-  },
-  {
-    quote:
-      "The DTG print quality blew me away. Sharp edges, no cracking. Other brands can't touch this.",
-    name: 'Aaliyah M.',
-    location: 'Toronto, CA',
-    stars: 5,
-  },
-];
-
 export default function Homepage() {
-  const {featuredCollections, newDrops, bestSellers} =
+  const {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount} =
     useLoaderData<typeof loader>();
 
   const newDropProducts = (newDrops?.products?.nodes ?? []) as ProductCardFragment[];
@@ -211,14 +229,23 @@ export default function Homepage() {
         </section>
       )}
 
-      {/* 8 — Testimonials */}
-      <Testimonials
+      {/* 8 — Verified reviews (real Judge.me aggregate, no invented quotes) */}
+      <VerifiedReviews
         eyebrow="Customer Reviews"
-        heading="The Culture Speaks"
-        items={TESTIMONIALS}
+        heading="Rated by the Culture"
+        aggregateRating={aggregateRating}
+        aggregateCount={aggregateCount}
+        products={ratedProducts}
       />
 
-      {/* 9 — Newsletter */}
+      {/* 9 — Community / UGC */}
+      <UGCGrid
+        eyebrow="Community"
+        heading="Worn By The Culture"
+        hashtag="#LegendaryBranding"
+      />
+
+      {/* 10 — Newsletter */}
       <NewsletterBand
         eyebrow="Stay in the loop"
         heading="Get early access to drops."
