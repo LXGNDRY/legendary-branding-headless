@@ -870,6 +870,11 @@ export default function ProductPage() {
                           What Customers Are Saying
                         </h2>
                         <ProductReviewList
+                          // Keyed by product so navigating between PDPs (client-side,
+                          // same route/component instance) remounts this and resets
+                          // its "show more" pagination state instead of carrying a
+                          // previous product's expanded count into the next one.
+                          key={product.id}
                           reviews={resolvedReviews}
                           aggregateRating={judgemeRating.rating}
                           aggregateCount={judgemeRating.count}
