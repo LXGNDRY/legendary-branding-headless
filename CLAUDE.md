@@ -207,6 +207,8 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 | TS2307 on `../route.js` imports | Build ran after Typecheck, or `rootDirs` missing from tsconfig | Move Build step before Typecheck; ensure `rootDirs` in tsconfig |
 | Deploy job skipped | Event was `pull_request`, not `push` | Merge the PR — only push events to `dev`/`main` deploy |
 | Codegen fails in CI | `PUBLIC_STORE_DOMAIN`/`PUBLIC_STOREFRONT_API_TOKEN` secrets not set | Add secrets in GitHub repo settings; codegen has `continue-on-error: true` so build still proceeds |
+| A real, populated metafield reads back as `null` from `context.storefront.query()` on the live site (but shows up fine via the Admin API) | No `MetafieldDefinition` grants `access.storefront: PUBLIC_READ` for that namespace/key. The public Storefront API silently returns `null` for any metafield without one, even when the raw value exists — the Admin API bypasses this and will mislead you into thinking the data is fine | Create the metafield definition (`metafieldDefinitionCreate`, `ownerType` matching the resource, `access: {storefront: PUBLIC_READ}`) via the Admin API or Shopify Admin → Settings → Custom data. This was the root cause of the Judge.me review/rating data never appearing on the live storefront (Milestone 14) despite the code being correct |
+| `Product.metafields(identifiers: [...])` data never shows up in a route even though the query and the metafield both look correct | This field returns a **plain list** (`[Metafield]`), not a Relay-style connection — there is no `.nodes` wrapper. Code written as `product.metafields?.nodes?.find(...)` always evaluates to `undefined`. (`images`/`variants` on the same query genuinely *are* connections and do use `.nodes` — don't pattern-match off those.) Also: any requested identifier with no value on that product comes back as a `null` entry in the array, not an omitted one, so guard with `m?.key` | Access it as a plain array: `product.metafields?.find((m) => m?.key === '...')`. This exact bug silently broke the PDP's rating, full review widget, and Care/Material/Fit accordions for the entirety of Milestone 14 until caught by testing against live data |
 
 ---
 
@@ -227,6 +229,7 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 | 11 | Codegen — generate + commit `storefrontapi.generated.d.ts`, wire into CI | ✅ Complete |
 | 12 | Content — real imagery replacing all `<Placeholder>` usage; full visual QA | ⏳ Blocked on theme import |
 | 13 | Hardening — smoke tests (vitest) ✅, tsconfig cleanup, zip removal post-theme-import | ⏳ In progress |
+| 14 | Reviews & Ratings — real Judge.me reviews (homepage aggregate + quote cards, PDP rating + full review widget, star ratings on every product-card surface site-wide); fixed the Storefront-API metafield-access gap and a `product.metafields` data-shape bug that had silently broken PDP ratings/Care/Material/Fit | ✅ Complete |
 
 ---
 
@@ -254,6 +257,7 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 | Price range | $55 – $120 USD |
 | Blog | "Legendary Blogging" (handle: `legendary_blogging`) |
 | Policy pages | `refund-policy`, `terms-of-service`, `privacy-with-legendary-branding`, `shipping-policy`, `size-guide`, `about`, `contact`, `legendary_branding_faqs` |
+| Reviews app | Judge.me — syncs `judgeme.badge`/`judgeme.widget` Product metafields (both have Storefront-API-readable `MetafieldDefinition`s, see Milestone 14). Real quote cards on the homepage use `PRIVATE_JUDGEME_API_TOKEN` (server-only, optional) against the Judge.me REST API — see `app/lib/judgeme.ts` |
 
 ---
 
