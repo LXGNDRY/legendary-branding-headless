@@ -65,9 +65,10 @@ type ProductFull = {
   tags: string[];
   vendor: string;
   productType: string;
-  metafields: {
-    nodes: Array<{key: string; value: string; type: string}>;
-  };
+  // Product.metafields(identifiers:) returns a plain list, not a
+  // connection -- there is no `.nodes` wrapper (unlike `images`/`variants`
+  // below, which genuinely are connections).
+  metafields: Array<{key: string; value: string; type: string} | null>;
   images: {
     nodes: {id?: string | null; url: string; altText?: string | null; width?: number | null; height?: number | null}[];
   };
@@ -453,8 +454,8 @@ export default function ProductPage() {
   // Judge.me review metafields — populated by the Judge.me app's ongoing
   // sync into Shopify metafields; absent until a product has its first
   // review, so every usage below degrades gracefully to "no reviews yet".
-  const judgemeBadgeHtml = product.metafields?.nodes?.find((m) => m.key === 'badge')?.value;
-  const judgemeWidgetHtml = product.metafields?.nodes?.find((m) => m.key === 'widget')?.value;
+  const judgemeBadgeHtml = product.metafields?.find((m) => m?.key === 'badge')?.value;
+  const judgemeWidgetHtml = product.metafields?.find((m) => m?.key === 'widget')?.value;
   const judgemeRating = parseJudgemeBadge(judgemeBadgeHtml);
 
   // Load Judge.me's widget script only when this product actually has
@@ -815,19 +816,19 @@ export default function ProductPage() {
                 <Accordion label="Shipping & Returns">
                   <p>Free shipping on orders over $100. Orders ship within 3–5 business days. Easy 30-day returns on unworn items.</p>
                 </Accordion>
-                {product.metafields?.nodes?.some((m) => m.key === 'care' && m.value) && (
+                {product.metafields?.some((m) => m?.key === 'care' && m.value) && (
                   <Accordion label="Care Guide">
-                    <p>{product.metafields.nodes.find((m) => m.key === 'care')?.value}</p>
+                    <p>{product.metafields.find((m) => m?.key === 'care')?.value}</p>
                   </Accordion>
                 )}
-                {product.metafields?.nodes?.some((m) => m.key === 'material' && m.value) && (
+                {product.metafields?.some((m) => m?.key === 'material' && m.value) && (
                   <Accordion label="Material">
-                    <p>{product.metafields.nodes.find((m) => m.key === 'material')?.value}</p>
+                    <p>{product.metafields.find((m) => m?.key === 'material')?.value}</p>
                   </Accordion>
                 )}
-                {product.metafields?.nodes?.some((m) => m.key === 'fit' && m.value) && (
+                {product.metafields?.some((m) => m?.key === 'fit' && m.value) && (
                   <Accordion label="Fit">
-                    <p>{product.metafields.nodes.find((m) => m.key === 'fit')?.value}</p>
+                    <p>{product.metafields.find((m) => m?.key === 'fit')?.value}</p>
                   </Accordion>
                 )}
                 <Accordion label="Size Guide">
