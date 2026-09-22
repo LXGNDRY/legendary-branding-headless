@@ -42,6 +42,8 @@ import ProductCard, {
 import {CacheLong} from '~/lib/cache';
 import {requireSameOrigin} from '~/lib/security';
 import {captureError} from '~/lib/monitoring';
+import StarRating from '~/components/ui/StarRating';
+import {parseJudgemeBadge} from '~/lib/judgeme';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -453,6 +455,7 @@ export default function ProductPage() {
   // review, so every usage below degrades gracefully to "no reviews yet".
   const judgemeBadgeHtml = product.metafields?.nodes?.find((m) => m.key === 'badge')?.value;
   const judgemeWidgetHtml = product.metafields?.nodes?.find((m) => m.key === 'widget')?.value;
+  const judgemeRating = parseJudgemeBadge(judgemeBadgeHtml);
 
   // Load Judge.me's widget script only when this product actually has
   // badge/widget metafield HTML to render, instead of unconditionally on
@@ -574,16 +577,31 @@ export default function ProductPage() {
                 <h1 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.01em] text-[var(--color-text-primary)] mb-3">
                   {product.title}
                 </h1>
-                {judgemeBadgeHtml && (
-                  // Judge.me's compact star-rating badge. Safe to render via
-                  // dangerouslySetInnerHTML: this HTML is our own trusted
-                  // Shopify metafield data synced server-side by the Judge.me
-                  // app, not user-supplied content, and Judge.me's loader
-                  // script requires this exact DOM structure to hydrate it.
-                  <div
-                    className="mb-2"
-                    dangerouslySetInnerHTML={{__html: judgemeBadgeHtml}}
-                  />
+                {judgemeRating && (
+                  // Rendered with our own StarRating component rather than
+                  // Judge.me's raw badge HTML: that markup ships hidden
+                  // (style="display:none") and depends on Judge.me's
+                  // external loader script to reveal/style it client-side,
+                  // which means no rating is visible until that script
+                  // loads (or at all, in SSR/no-JS contexts). Parsing the
+                  // same real rating/count data ourselves keeps this
+                  // visible immediately and consistent with every other
+                  // product card on the site.
+                  //
+                  // Only a link when the "#reviews" section it points to
+                  // actually exists below (gated on judgemeWidgetHtml,
+                  // same as that section) -- the badge and widget
+                  // metafields sync independently, so a product can have a
+                  // parseable badge without a widget yet.
+                  judgemeWidgetHtml ? (
+                    <a href="#reviews" className="inline-block mb-2">
+                      <StarRating rating={judgemeRating.rating} count={judgemeRating.count} />
+                    </a>
+                  ) : (
+                    <div className="mb-2">
+                      <StarRating rating={judgemeRating.rating} count={judgemeRating.count} />
+                    </div>
+                  )
                 )}
                 <div className="flex items-baseline gap-3 flex-wrap">
                   {selectedVariant ? (
@@ -891,6 +909,8 @@ export default function ProductPage() {
         currentProductHandle={product.handle}
         currentProductTitle={product.title}
         currentProductImage={product.images?.nodes?.[0]?.url}
+        currentProductRating={judgemeRating?.rating}
+        currentProductReviewCount={judgemeRating?.count}
       />
 
       <MobilePurchaseBar variant={selectedVariant} quantity={quantity} />
