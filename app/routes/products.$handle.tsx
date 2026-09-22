@@ -243,7 +243,7 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
       <button
         type="button"
         disabled
-        className="w-full h-btn-primary opacity-40 cursor-not-allowed"
+        className={`w-full h-btn-primary opacity-40 cursor-not-allowed ${unavailable ? 'h-wiggle-bounce' : ''}`}
       >
         {unavailable ? 'Choose an option' : 'Sold Out — join the waitlist below'}
       </button>
@@ -278,7 +278,10 @@ function MobilePurchaseBar({
   const needsSelection = !variant;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border-medium)] bg-[var(--color-bg-level-0)] p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)] lg:hidden">
+    <div
+      id="mobile-purchase-bar"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border-medium)] bg-[var(--color-bg-level-0)] p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)] lg:hidden"
+    >
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
           {available && variant ? (
@@ -355,7 +358,7 @@ function StickyBuyBar({
           <button
             type="button"
             disabled
-            className="h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs opacity-40 cursor-not-allowed"
+            className={`h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs opacity-40 cursor-not-allowed ${!variant ? 'h-wiggle-bounce' : ''}`}
           >
             {variant ? 'Sold Out' : 'Choose an option'}
           </button>
@@ -555,10 +558,17 @@ export default function ProductPage() {
 
             {/* Product info */}
             <div className="space-y-6">
-              {/* Badges */}
-              {(isOnSale || isNew || !selectedVariant?.availableForSale) && (
+              {/* Badges -- "Sold Out" only once a variant is actually
+                  selected and confirmed unavailable. `!selectedVariant?.
+                  availableForSale` is also true before the shopper has
+                  picked any option at all (selectedVariant is undefined
+                  then), which wrongly showed "Sold Out" on page load for
+                  any multi-variant product. */}
+              {(isOnSale || isNew || (selectedVariant && !selectedVariant.availableForSale)) && (
                 <div className="flex gap-2">
-                  {!selectedVariant?.availableForSale && <Badge variant="soldout">Sold Out</Badge>}
+                  {selectedVariant && !selectedVariant.availableForSale && (
+                    <Badge variant="soldout">Sold Out</Badge>
+                  )}
                   {isOnSale && <Badge variant="sale">Sale</Badge>}
                   {isNew && !isOnSale && <Badge variant="new">New</Badge>}
                 </div>

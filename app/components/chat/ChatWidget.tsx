@@ -93,6 +93,7 @@ export default function ChatWidget() {
   return (
     <>
       <button
+        id="chat-widget-button"
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Close chat' : 'Chat with us'}
