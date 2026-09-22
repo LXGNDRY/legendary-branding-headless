@@ -1,5 +1,6 @@
 import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
-import {useLoaderData} from 'react-router';
+import {Suspense} from 'react';
+import {useLoaderData, Await} from 'react-router';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -137,15 +138,18 @@ export async function loader({context}: LoaderFunctionArgs) {
       ? ratedProducts.reduce((sum, p) => sum + p.rating * p.reviewCount, 0) / aggregateCount
       : 0;
 
-  // Real review quote cards -- optional, server-only. Degrades to an empty
-  // list (no section rendered) rather than failing the page when the token
-  // is unset or the Judge.me API call fails.
+  // Real review quote cards -- optional, server-only, and NOT awaited here:
+  // this is a third-party fetch (up to a 5s timeout) for a non-critical
+  // section, so it streams in after the initial response instead of
+  // blocking the whole homepage on Judge.me's availability. Degrades to an
+  // empty list (no section rendered) rather than failing the page when the
+  // token is unset or the API call fails.
   const quotes = context.env.PRIVATE_JUDGEME_API_TOKEN
-    ? await fetchJudgemeQuotes({
+    ? fetchJudgemeQuotes({
         apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
         shopDomain: context.env.PUBLIC_STORE_DOMAIN,
       })
-    : [];
+    : Promise.resolve([]);
 
   return {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount, quotes};
 }
@@ -252,7 +256,13 @@ export default function Homepage() {
       />
 
       {/* 9 — Real review quote cards (Judge.me API, optional) */}
-      <ReviewQuotes eyebrow="In Their Words" heading="The Culture Speaks" quotes={quotes} />
+      <Suspense fallback={null}>
+        <Await resolve={quotes}>
+          {(resolvedQuotes) => (
+            <ReviewQuotes eyebrow="In Their Words" heading="The Culture Speaks" quotes={resolvedQuotes} />
+          )}
+        </Await>
+      </Suspense>
 
       {/* 10 — Community / UGC */}
       <UGCGrid
