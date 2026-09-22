@@ -835,35 +835,39 @@ export default function ProductPage() {
             the homepage's quote cards, since it's a non-critical section
             behind a third-party fetch with its own timeout. */}
         {judgemeRating && (
-          // The heading/eyebrow live inside the Await callback, not just
-          // ProductReviewList's own empty-state check: gating only the list
-          // left the "Reviews / What Customers Are Saying" heading (and an
-          // anchor the rating link above jumps to) rendered over nothing
-          // whenever the reviews promise resolves empty -- unset API token,
-          // a timed-out fetch, or the product missing from the fetched
-          // page are all documented as graceful-degradation paths, not
-          // edge cases, so this can't just show a broken-looking section.
-          <Suspense fallback={null}>
-            <Await resolve={reviews}>
-              {(resolvedReviews) =>
-                resolvedReviews.length > 0 ? (
-                  <section id="reviews" className="border-t border-[var(--color-border-muted)] scroll-mt-24">
-                    <div className="h-container py-16">
-                      <p className="h-eyebrow mb-3">Reviews</p>
-                      <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
-                        What Customers Are Saying
-                      </h2>
-                      <ProductReviewList
-                        reviews={resolvedReviews}
-                        aggregateRating={judgemeRating.rating}
-                        aggregateCount={judgemeRating.count}
-                      />
-                    </div>
-                  </section>
-                ) : null
-              }
-            </Await>
-          </Suspense>
+          <>
+            {/* Stable, invisible scroll target for the rating link above --
+                kept outside the Suspense boundary so it exists immediately,
+                before the reviews promise settles. Codex caught that gating
+                the id="reviews" element itself on the resolved (nonempty)
+                array left the link with nowhere to jump to while pending,
+                and permanently nowhere at all whenever it resolves empty
+                (unset API token, a timed-out fetch, or the product missing
+                from the fetched page are all graceful-degradation paths
+                here, not edge cases). */}
+            <span id="reviews" className="block scroll-mt-24" aria-hidden="true" />
+            <Suspense fallback={null}>
+              <Await resolve={reviews}>
+                {(resolvedReviews) =>
+                  resolvedReviews.length > 0 ? (
+                    <section className="border-t border-[var(--color-border-muted)]">
+                      <div className="h-container py-16">
+                        <p className="h-eyebrow mb-3">Reviews</p>
+                        <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
+                          What Customers Are Saying
+                        </h2>
+                        <ProductReviewList
+                          reviews={resolvedReviews}
+                          aggregateRating={judgemeRating.rating}
+                          aggregateCount={judgemeRating.count}
+                        />
+                      </div>
+                    </section>
+                  ) : null
+                }
+              </Await>
+            </Suspense>
+          </>
         )}
 
         {/* Craft / trust stats */}
