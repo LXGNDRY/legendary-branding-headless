@@ -41,7 +41,7 @@ interface VerifiedReviewsProps {
  * show, rather than fabricating social proof.
  */
 export default function VerifiedReviews({
-  eyebrow = 'Verified Reviews',
+  eyebrow = 'Customer Reviews',
   heading = 'Rated by the Culture',
   aggregateRating,
   aggregateCount,
@@ -64,7 +64,7 @@ export default function VerifiedReviews({
           </div>
           <p className="text-sm text-[var(--color-text-secondary)] mt-3">
             {aggregateRating.toFixed(1)} out of 5 &middot; from {aggregateCount.toLocaleString()}{' '}
-            verified {aggregateCount === 1 ? 'review' : 'reviews'}
+            {aggregateCount === 1 ? 'review' : 'reviews'}
           </p>
         </div>
 
