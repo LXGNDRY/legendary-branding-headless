@@ -216,7 +216,7 @@ function MobileMenu({
           onClick={onClose}
           className="flex items-baseline gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
         >
-          <GoatMark className="h-6 w-6 shrink-0" />
+          <GoatMark className="h-6 w-6 shrink-0 translate-y-[5px]" />
           LEGENDARY
         </Link>
         <button
@@ -359,17 +359,20 @@ export default function Header({
               <MenuIcon />
             </button>
 
-            {/* Wordmark -- `items-baseline` (not `items-center`) deliberately:
-                Instrument Serif reserves a lot of headroom above the cap
-                height, so centering the icon on the row's full line box put
-                it visibly above the text instead of level with it. Aligning
-                to the text's actual baseline tracks the font's real metrics
-                instead of a hand-tuned pixel offset. */}
+            {/* Wordmark -- `items-baseline` anchors the icon's bottom edge to
+                the text's real glyph baseline (Instrument Serif's line-box
+                reserves headroom well above the cap height, so `items-center`
+                put the icon visibly above the text). The icon is still taller
+                than the text's cap height though, so its own visual center
+                sits above the text's optical center even baseline-anchored --
+                translate-y closes that gap, measured against actual canvas
+                text metrics (ascent/descent) at each breakpoint's font size
+                rather than eyeballed. */}
             <Link
               to="/"
               className="flex items-baseline gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
             >
-              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0" />
+              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0 translate-y-[5px] lg:translate-y-[6.5px]" />
               LEGENDARY
             </Link>
 
