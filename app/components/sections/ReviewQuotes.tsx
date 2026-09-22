@@ -1,22 +1,6 @@
 import {useRevealChildren} from '~/hooks/useReveal';
 import type {JudgemeQuote} from '~/lib/judgeme';
-
-function StarIcon({filled = true}: {filled?: boolean}) {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill={filled ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      strokeWidth="1"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M7 1l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9L3.4 12l.7-4L1.2 5.2l4-.6L7 1z" />
-    </svg>
-  );
-}
+import {StarIcon} from '~/components/ui/StarRating';
 
 interface ReviewQuotesProps {
   eyebrow?: string;
