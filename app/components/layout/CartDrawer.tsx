@@ -507,16 +507,23 @@ export default function CartDrawer({cart, open, onClose, storeDomain}: CartDrawe
               </Button>
             )}
 
-            {storeDomain && currentCart.lines.edges.length > 0 && (
-              <ShopPayButton
-                variantIdsAndQuantities={currentCart.lines.edges.map(({node}) => ({
-                  id: node.merchandise.id,
-                  quantity: node.quantity,
-                }))}
-                storeDomain={storeDomain}
-                className="w-full [&_shop-pay-button]:block"
-              />
-            )}
+            {/* Hydrogen's <ShopPayButton> only accepts variant IDs/quantities --
+                it has no way to carry discount codes into the Shop Pay
+                checkout it opens, so a discounted cart summary could be
+                followed by an undiscounted checkout. Hidden whenever a
+                discount is applied rather than showing a mismatched total. */}
+            {storeDomain &&
+              currentCart.lines.edges.length > 0 &&
+              !currentCart.discountCodes?.some((code) => code.applicable) && (
+                <ShopPayButton
+                  variantIdsAndQuantities={currentCart.lines.edges.map(({node}) => ({
+                    id: node.merchandise.id,
+                    quantity: node.quantity,
+                  }))}
+                  storeDomain={storeDomain}
+                  className="w-full [&_shop-pay-button]:block"
+                />
+              )}
 
             <div className="flex justify-center pt-1">
               <Link

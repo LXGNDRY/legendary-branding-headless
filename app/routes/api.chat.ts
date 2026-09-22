@@ -22,6 +22,38 @@ interface ChatTurn {
   content: string;
 }
 
+// Forwarding a full sentence straight into Shopify's products(query:) search
+// treats every word as a literal search term, so filler words in a normal
+// question ("Do you have any hoodies?") often prevent a match that a plain
+// keyword search ("hoodies") would find. Stripped down to the words most
+// likely to be product-relevant before it ever reaches the Storefront API.
+const SEARCH_STOPWORDS = new Set([
+  'a', 'an', 'the', 'is', 'are', 'am', 'was', 'were', 'be', 'been', 'being',
+  'do', 'does', 'did', 'have', 'has', 'had', 'i', 'you', 'he', 'she', 'it',
+  'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me',
+  'him', 'us', 'them', 'this', 'that', 'these', 'those', 'to', 'of', 'in',
+  'on', 'at', 'for', 'with', 'about', 'any', 'some', 'and', 'or', 'but',
+  'can', 'could', 'would', 'should', 'will', 'want', 'looking', 'need',
+  'like', 'please', 'hi', 'hello', 'hey', 'thanks', 'thank', 'got', 'get',
+  'show', 'find', 'there', 'what', 'where', 'when', 'how', 'if',
+]);
+
+function extractSearchKeywords(message: string): string {
+  const words = message
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 1 && !SEARCH_STOPWORDS.has(word));
+
+  // Dedupe while preserving order, cap at a handful of terms so the query
+  // stays focused on the most product-relevant words in a longer message.
+  const keywords = [...new Set(words)].slice(0, 6);
+
+  // If everything got filtered out (e.g. a message that's all stopwords),
+  // fall back to the raw message rather than sending an empty query.
+  return keywords.length > 0 ? keywords.join(' ') : message;
+}
+
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_HISTORY_TURNS = 6;
 const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
@@ -49,11 +81,11 @@ Scope -- stay strictly within this:
 - Help visitors find products, understand sizing/materials, and answer policy/FAQ questions.
 - Use ONLY the "Relevant products" data given to you below for anything about specific items, prices, or availability. If nothing relevant was found, say so and suggest browsing the collection instead of guessing.
 - Never invent prices, stock levels, discounts, or product details not given to you.
-- You have NO access to order status, order history, payment methods, or any customer account data. If asked about an existing order, say you can't look that up and point them to legendary-branding.com/pages/contact or their order confirmation email.
+- You have NO access to order status, order history, payment methods, or any customer account data. If asked about an existing order, say you can't look that up and point them to legendary-branding.com/policies/contact or their order confirmation email.
 - Never discuss or promise changes to checkout, payments, taxes, or shipping costs beyond what is in the policy pages.
 - Collections available: Accessories & More, Hoodies & Jackets, Shirts & Tops, All Products, Sets, Marque Legendaire (luxury), Legendary Select.
 - Price range storewide: $55-$120 USD.
-- Policy pages exist at /pages/refund-policy, /pages/terms-of-service, /pages/privacy-with-legendary-branding, /pages/shipping-policy, /pages/size-guide, /pages/about, /pages/contact, /pages/legendary_branding_faqs -- point users there for anything policy-specific you're not fully sure of.
+- Policy pages exist at /policies/refund-policy, /policies/terms-of-service, /policies/privacy-with-legendary-branding, /policies/shipping-policy, /policies/size-guide, /policies/about, /policies/contact, /policies/legendary_branding_faqs -- point users there for anything policy-specific you're not fully sure of.
 - Keep replies short (2-4 sentences), plain text (no markdown), friendly but concise. When recommending a product, mention its name and that it can be found by searching for it on the site.`;
 
 export async function action({request, context}: ActionFunctionArgs) {
@@ -100,7 +132,7 @@ export async function action({request, context}: ActionFunctionArgs) {
   try {
     const data = await context.storefront.query(PRODUCT_SEARCH_QUERY, {
       variables: {
-        query: message,
+        query: extractSearchKeywords(message),
         country: context.storefront.i18n.country,
         language: context.storefront.i18n.language,
       },
