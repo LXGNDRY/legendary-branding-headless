@@ -131,6 +131,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     cart: cartData as CartData,
     analyticsCart: cartData,
     isLoggedIn,
+    storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     accountsEnabled: Boolean(
       context.env.PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID &&
       context.env.PUBLIC_CUSTOMER_ACCOUNT_API_URL,
@@ -187,7 +188,7 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, shop, analyticsConfig, consent} = useLoaderData<typeof loader>();
+  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, shop, analyticsConfig, consent, storeDomain} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
   const location = useLocation();
@@ -289,6 +290,7 @@ export default function App() {
         cart={cart}
         open={cartOpen}
         onClose={() => setCartOpen(false)}
+        storeDomain={storeDomain}
       />
       </div>
     </WishlistProvider>

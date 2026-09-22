@@ -1,6 +1,6 @@
 import type {MetaFunction, LoaderFunctionArgs, ActionFunctionArgs} from 'react-router';
 import {useLoaderData, useFetcher, Link} from 'react-router';
-import {Analytics, AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
+import {Analytics, AnalyticsEvent, CartForm, Image, Money, ShopPayButton, useAnalytics} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useEffect, useState} from 'react';
 import Container from '~/components/ui/Container';
@@ -59,7 +59,10 @@ export async function action({request, context}: ActionFunctionArgs) {
 
 export async function loader({context}: LoaderFunctionArgs) {
   const {cart} = context;
-  return {cart: (await cart.get()) as CartData};
+  return {
+    cart: (await cart.get()) as CartData,
+    storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+  };
 }
 
 function MinusIcon() {
@@ -336,7 +339,7 @@ function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
 }
 
 export default function CartPage() {
-  const {cart} = useLoaderData<typeof loader>();
+  const {cart, storeDomain} = useLoaderData<typeof loader>();
   const {publish} = useAnalytics();
   const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
@@ -448,6 +451,19 @@ export default function CartPage() {
               >
                 Proceed to Checkout
               </Button>
+            )}
+
+            {storeDomain && cart && cart.lines.edges.length > 0 && (
+              <div className="mt-3">
+                <ShopPayButton
+                  variantIdsAndQuantities={cart.lines.edges.map(({node}) => ({
+                    id: node.merchandise.id,
+                    quantity: node.quantity,
+                  }))}
+                  storeDomain={storeDomain}
+                  className="w-full [&_shop-pay-button]:block"
+                />
+              </div>
             )}
 
             <p className="mt-4 text-center text-[11px] text-[var(--color-text-secondary)] tracking-wide">
