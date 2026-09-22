@@ -34,11 +34,13 @@ const LEGAL_LINKS = [
   {label: 'Do Not Sell', href: '/pages/data-sharing-opt-out'},
 ];
 
+// Instagram and TikTok are the only two social profiles actually live for
+// this brand -- verified against the store's real social settings. X/Twitter
+// and YouTube links were previously fabricated placeholders pointing to
+// accounts that don't exist.
 const SOCIAL_LINKS = [
   {label: 'Instagram', href: 'https://www.instagram.com/legendary_branding/'},
   {label: 'TikTok', href: 'https://tiktok.com/@legendarybranding'},
-  {label: 'X', href: 'https://twitter.com/legendarybrand'},
-  {label: 'YouTube', href: 'https://youtube.com/@legendarybranding'},
 ];
 
 function FooterColumn({
