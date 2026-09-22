@@ -737,15 +737,4 @@
     transform: none !important;
     transition: none !important;
   }
-
-  /* Marquee tracks (AnnouncementBar, BrandMarquee): the generic rule above
-     already stops the scrolling animation, but that alone would just leave
-     the duplicated, left-aligned content sitting there -- overflow-hidden
-     would then clip it after the first item or two, reading as broken/
-     cut-off rather than a clean static bar. The components themselves hide
-     their duplicate (seamless-loop-only) copies via `motion-reduce:hidden`
-     and wrap + center the one real copy via `motion-reduce:flex-wrap
-     motion-reduce:justify-center`, so every announcement shows in full,
-     wrapping to more than one line if needed, with nothing cut off.
-     Nothing further is needed here. */
 }
