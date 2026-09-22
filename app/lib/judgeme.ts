@@ -41,6 +41,16 @@ export interface JudgemeQuote {
   productHandle?: string;
 }
 
+/** A single review rendered in full on a product page (see fetchJudgemeProductReviews). */
+export interface JudgemeReview {
+  id: number;
+  rating: number;
+  title?: string;
+  body: string;
+  reviewerName: string;
+  createdAt?: string;
+}
+
 interface JudgemeApiReview {
   id: number;
   rating: number;
@@ -50,6 +60,7 @@ interface JudgemeApiReview {
   curated?: string | null;
   reviewer?: {name?: string | null} | null;
   product_handle?: string | null;
+  created_at?: string | null;
 }
 
 interface JudgemeApiResponse {
@@ -70,6 +81,55 @@ function toDisplayName(fullName: string | null | undefined): string {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
+interface FetchJudgemeReviewsRawOptions {
+  apiToken: string;
+  shopDomain: string;
+  perPage: number;
+}
+
+/**
+ * Shared request/parse core for the Judge.me reviews endpoint. Always
+ * degrades to an empty list rather than throwing -- a failed third-party
+ * fetch should never break the page it's decorating.
+ */
+async function fetchJudgemeReviewsRaw({
+  apiToken,
+  shopDomain,
+  perPage,
+}: FetchJudgemeReviewsRawOptions): Promise<JudgemeApiReview[]> {
+  const url = new URL(JUDGEME_API_BASE);
+  url.searchParams.set('api_token', apiToken);
+  url.searchParams.set('shop_domain', shopDomain);
+  url.searchParams.set('per_page', String(perPage));
+  url.searchParams.set('published', 'true');
+
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(5000),
+      // Cloudflare Workers edge cache -- avoid hitting Judge.me on every
+      // request; an hour-stale review list is a non-issue for this content.
+      cf: {cacheTtl: 3600, cacheEverything: true},
+    } as RequestInit);
+  } catch (error) {
+    console.error('[judgeme] request failed', error);
+    return [];
+  }
+
+  if (!response.ok) {
+    console.error(`[judgeme] API responded with ${response.status}`);
+    return [];
+  }
+
+  try {
+    const data = (await response.json()) as JudgemeApiResponse;
+    return (data.reviews ?? []).filter((r) => !r.hidden && typeof r.rating === 'number');
+  } catch (error) {
+    console.error('[judgeme] failed to parse response', error);
+    return [];
+  }
+}
+
 interface FetchJudgemeQuotesOptions {
   apiToken: string;
   shopDomain: string;
@@ -87,45 +147,11 @@ export async function fetchJudgemeQuotes({
   minBodyLength = 20,
   perPage = 20,
 }: FetchJudgemeQuotesOptions): Promise<JudgemeQuote[]> {
-  const url = new URL(JUDGEME_API_BASE);
-  url.searchParams.set('api_token', apiToken);
-  url.searchParams.set('shop_domain', shopDomain);
-  url.searchParams.set('per_page', String(perPage));
-  url.searchParams.set('published', 'true');
+  const reviews = await fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage});
 
-  let response: Response;
-  try {
-    response = await fetch(url.toString(), {
-      signal: AbortSignal.timeout(5000),
-      // Cloudflare Workers edge cache -- avoid hitting Judge.me on every
-      // request; an hour-stale quote list is a non-issue for this content.
-      cf: {cacheTtl: 3600, cacheEverything: true},
-    } as RequestInit);
-  } catch (error) {
-    console.error('[judgeme] request failed', error);
-    return [];
-  }
-
-  if (!response.ok) {
-    console.error(`[judgeme] API responded with ${response.status}`);
-    return [];
-  }
-
-  let data: JudgemeApiResponse;
-  try {
-    data = (await response.json()) as JudgemeApiResponse;
-  } catch (error) {
-    console.error('[judgeme] failed to parse response', error);
-    return [];
-  }
-
-  return (data.reviews ?? [])
+  return reviews
     .filter(
-      (r) =>
-        !r.hidden &&
-        typeof r.rating === 'number' &&
-        r.rating >= minRating &&
-        (r.body ?? '').trim().length >= minBodyLength,
+      (r) => r.rating >= minRating && (r.body ?? '').trim().length >= minBodyLength,
     )
     .map((r) => ({
       id: r.id,
@@ -134,5 +160,49 @@ export async function fetchJudgemeQuotes({
       body: r.body!.trim(),
       reviewerName: toDisplayName(r.reviewer?.name),
       productHandle: r.product_handle ?? undefined,
+    }));
+}
+
+interface FetchJudgemeProductReviewsOptions {
+  apiToken: string;
+  shopDomain: string;
+  /** Only reviews for this product are returned (matched by handle). */
+  productHandle: string;
+  perPage?: number;
+}
+
+/**
+ * Full review list for a single product's page.
+ *
+ * Judge.me's Shopify app used to sync a self-contained "widget" metafield
+ * (pre-rendered HTML + a client-side script that unhid it) that this
+ * storefront rendered directly via dangerouslySetInnerHTML. Judge.me has
+ * since retired that script (cdn.judge.me/widget_v3.js now returns
+ * 410 Gone), and their replacement loader uses an incompatible DOM
+ * contract -- so instead of depending on their client-side embed at all,
+ * this fetches real review data server-side (same API already used for
+ * fetchJudgemeQuotes) and the storefront renders its own list.
+ *
+ * The public API has no per-product filter, so this pulls a page of the
+ * shop's reviews and filters by product_handle -- fine at this store's
+ * review volume; revisit with an id-based filter if that stops being true.
+ */
+export async function fetchJudgemeProductReviews({
+  apiToken,
+  shopDomain,
+  productHandle,
+  perPage = 100,
+}: FetchJudgemeProductReviewsOptions): Promise<JudgemeReview[]> {
+  const reviews = await fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage});
+
+  return reviews
+    .filter((r) => r.product_handle === productHandle && (r.body ?? '').trim().length > 0)
+    .map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      title: r.title?.trim() || undefined,
+      body: r.body!.trim(),
+      reviewerName: toDisplayName(r.reviewer?.name),
+      createdAt: r.created_at ?? undefined,
     }));
 }

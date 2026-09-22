@@ -227,13 +227,6 @@ export default function App() {
   }
   useWebVitals(analyticsConfig.ga4Id);
 
-  // Judge.me's widget script is loaded only on product pages that actually
-  // have badge/widget metafield HTML to render -- see products.$handle.tsx.
-  // It used to load unconditionally here on every route (home, cart,
-  // journal, etc.), which meant every visitor paid for an unnecessary
-  // third-party request and script parse/exec on pages with no review
-  // content at all.
-
   const cartCount = cart?.totalQuantity ?? 0;
   const isNavigating = navigation.state !== 'idle';
 
