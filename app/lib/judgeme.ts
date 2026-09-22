@@ -274,12 +274,22 @@ export async function fetchJudgemeProductReviews({
 
   const internalId = await resolveJudgemeProductId({apiToken, shopDomain, externalId: productId});
   if (internalId) {
-    const raw = await fetchJudgemeReviewsRaw({
-      apiToken,
-      shopDomain,
-      perPage,
-      productId: String(internalId),
-    });
+    // Fetch subsequent pages too -- a product with more reviews than a
+    // single `perPage` would otherwise silently lose everything past the
+    // first page, even though the PDP presents this as the full list
+    // alongside the real aggregate count (Codex-caught on this PR).
+    const idPages = await Promise.all(
+      Array.from({length: maxPages}, (_, i) =>
+        fetchJudgemeReviewsRaw({
+          apiToken,
+          shopDomain,
+          perPage,
+          page: i + 1,
+          productId: String(internalId),
+        }),
+      ),
+    );
+    const raw = [...new Map(idPages.flat().map((r) => [r.id, r])).values()];
     // Defensive: a resolved-but-wrong id would fall back to unfiltered
     // results the same way a raw Shopify id does, so still check the
     // handle before trusting the response.
