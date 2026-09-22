@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 
 interface ChatMessage {
@@ -45,7 +45,8 @@ export default function ChatWidget() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const {containerRef} = useFocusTrap(open, () => setOpen(false));
+  const handleEscape = useCallback(() => setOpen(false), []);
+  const {containerRef} = useFocusTrap(open, handleEscape);
 
   useEffect(() => {
     if (listRef.current) {
