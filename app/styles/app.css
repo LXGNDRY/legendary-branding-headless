@@ -589,6 +589,24 @@
     animation-delay: 1s;
   }
 
+  /* The chat widget button/panel are rendered once, globally, in root.tsx,
+     with no per-page knowledge of the PDP's fixed mobile purchase bar
+     (#mobile-purchase-bar, see products.$handle.tsx) sitting at the very
+     bottom of small screens -- without this, the two fixed-position
+     elements overlapped, with the chat bubble sitting on top of (and
+     blocking) the Add to Bag / Choose options button. #mobile-purchase-bar
+     exists in the DOM at every viewport width (it's only hidden above the
+     `lg` breakpoint via `lg:hidden`), so this is scoped to the same
+     breakpoint rather than relying on the element's own visibility. */
+  @media (max-width: 1023px) {
+    body:has(#mobile-purchase-bar) #chat-widget-button {
+      bottom: calc(5.25rem + env(safe-area-inset-bottom));
+    }
+    body:has(#mobile-purchase-bar) #chat-widget-panel {
+      bottom: calc(8.25rem + env(safe-area-inset-bottom));
+    }
+  }
+
   /* ── Dividers ─────────────────────────────────────────────────────────── */
 
   .h-divider {
