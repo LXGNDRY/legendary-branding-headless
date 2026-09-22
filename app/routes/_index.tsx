@@ -156,8 +156,8 @@ export default function Homepage() {
       {/* 1 — Split hero */}
       <HeroSplit
         eyebrow="235GSM+ · Made To Order · DTG Prints"
-        heading={`Premium\nStreetwear.`}
-        subtext="Heavyweight essentials built to last. No restocks. No shortcuts."
+        heading={`Legendary\nBranding.`}
+        subtext="Premium Streetwear. Heavyweight essentials built to last."
         primaryLabel="Shop Now"
         primaryHref="/collections/all-products"
         secondaryLabel="Lookbook"

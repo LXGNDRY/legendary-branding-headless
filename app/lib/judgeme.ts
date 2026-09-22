@@ -85,6 +85,8 @@ interface FetchJudgemeReviewsRawOptions {
   apiToken: string;
   shopDomain: string;
   perPage: number;
+  /** Shopify product ID (numeric, as a string) to filter server-side to a single product's reviews. */
+  productId?: string;
 }
 
 /**
@@ -96,12 +98,14 @@ async function fetchJudgemeReviewsRaw({
   apiToken,
   shopDomain,
   perPage,
+  productId,
 }: FetchJudgemeReviewsRawOptions): Promise<JudgemeApiReview[]> {
   const url = new URL(JUDGEME_API_BASE);
   url.searchParams.set('api_token', apiToken);
   url.searchParams.set('shop_domain', shopDomain);
   url.searchParams.set('per_page', String(perPage));
   url.searchParams.set('published', 'true');
+  if (productId) url.searchParams.set('product_id', productId);
 
   let response: Response;
   try {
@@ -166,7 +170,9 @@ export async function fetchJudgemeQuotes({
 interface FetchJudgemeProductReviewsOptions {
   apiToken: string;
   shopDomain: string;
-  /** Only reviews for this product are returned (matched by handle). */
+  /** Shopify product ID (numeric, as a string) -- filters server-side via Judge.me's `product_id` param. */
+  productId: string;
+  /** Belt-and-suspenders check against the returned rows; see below. */
   productHandle: string;
   perPage?: number;
 }
@@ -183,17 +189,26 @@ interface FetchJudgemeProductReviewsOptions {
  * this fetches real review data server-side (same API already used for
  * fetchJudgemeQuotes) and the storefront renders its own list.
  *
- * The public API has no per-product filter, so this pulls a page of the
- * shop's reviews and filters by product_handle -- fine at this store's
- * review volume; revisit with an id-based filter if that stops being true.
+ * Filters server-side via Judge.me's `product_id` param (the Shopify
+ * product's numeric ID) rather than pulling one page of the whole shop's
+ * reviews and filtering by handle client-side, as this used to: at this
+ * store's total review volume (a few hundred across ~16+ products), a
+ * single 100-review page reliably missed products whose reviews weren't
+ * in it -- confirmed live in production (a product's own compact rating
+ * badge showed real data from the Storefront API metafield, while this
+ * function's shop-wide-then-filter approach returned an empty list for
+ * that same product). The product_handle filter below is kept as a
+ * defensive check against the API returning something unexpected for an
+ * unrecognized/misnamed param, not as the primary filter.
  */
 export async function fetchJudgemeProductReviews({
   apiToken,
   shopDomain,
+  productId,
   productHandle,
-  perPage = 100,
+  perPage = 50,
 }: FetchJudgemeProductReviewsOptions): Promise<JudgemeReview[]> {
-  const reviews = await fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage});
+  const reviews = await fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage, productId});
 
   return reviews
     .filter((r) => r.product_handle === productHandle && (r.body ?? '').trim().length > 0)
