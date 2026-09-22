@@ -27,9 +27,9 @@ export default function BrandMarquee({items, style = 'subtle', speed = 35}: Bran
     ));
 
   return (
-    <div className={`${bgClass} ${colorClass} overflow-hidden border-y`}>
+    <div className={`${bgClass} ${colorClass} overflow-hidden border-y py-3`}>
       <div
-        className="flex whitespace-nowrap py-3 will-change-transform motion-reduce:flex-wrap motion-reduce:justify-center motion-reduce:overflow-hidden motion-reduce:max-h-[42px]"
+        className="flex whitespace-nowrap will-change-transform motion-reduce:flex-wrap motion-reduce:justify-center motion-reduce:overflow-hidden motion-reduce:max-h-[17.6px]"
         style={{animation: `h-marquee-scroll ${speed}s linear infinite`}}
         aria-hidden="true"
       >
@@ -38,7 +38,12 @@ export default function BrandMarquee({items, style = 'subtle', speed = 35}: Bran
             complete items -- flex-wrap never splits an item mid-text) gets
             clipped by max-height, so the bar shows as many full claims as
             fit on one line, at its normal single-line height, with nothing
-            cut off mid-item. */}
+            cut off mid-item. The py-3 that used to sit on this element
+            moved to the outer wrapper: padding on the clipped element
+            itself is included in max-height (border-box), so the second
+            row's top sliver was bleeding into that padding allowance
+            before it got clipped. Padding outside the clip boundary avoids
+            that entirely. */}
         {renderItems('base')}
         {/* Duplicate copies purely for the seamless scroll loop -- hidden
             whenever the animation itself is stopped. */}
