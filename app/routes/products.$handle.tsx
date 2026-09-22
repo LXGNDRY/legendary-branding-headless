@@ -828,7 +828,7 @@ export default function ProductPage() {
 
         {/* Reviews */}
         {judgemeWidgetHtml && (
-          <section className="border-t border-[var(--color-border-muted)]">
+          <section id="reviews" className="border-t border-[var(--color-border-muted)] scroll-mt-24">
             <div className="h-container py-16">
               <p className="h-eyebrow mb-3">Reviews</p>
               <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
