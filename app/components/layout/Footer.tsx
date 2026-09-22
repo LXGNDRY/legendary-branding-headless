@@ -35,7 +35,7 @@ const LEGAL_LINKS = [
 ];
 
 const SOCIAL_LINKS = [
-  {label: 'Instagram', href: 'https://instagram.com/legendarybranding'},
+  {label: 'Instagram', href: 'https://www.instagram.com/legendary_branding/'},
   {label: 'TikTok', href: 'https://tiktok.com/@legendarybranding'},
   {label: 'X', href: 'https://twitter.com/legendarybrand'},
   {label: 'YouTube', href: 'https://youtube.com/@legendarybranding'},

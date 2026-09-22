@@ -13,11 +13,14 @@ export function organizationSchema() {
     name: 'Legendary Branding',
     url: 'https://legendary-branding.com',
     logo: 'https://legendary-branding.com/favicon.ico',
+    // Only the two profiles actually configured/live for the brand --
+    // verified against the store's real social settings. Twitter and
+    // YouTube URLs were previously fabricated placeholders that pointed
+    // to accounts which don't exist; schema.org sameAs should only ever
+    // list real, verifiable profile URLs.
     sameAs: [
-      'https://instagram.com/legendarybranding',
-      'https://tiktok.com/@legendarybranding',
-      'https://twitter.com/legendarybrand',
-      'https://youtube.com/@legendarybranding',
+      'https://www.instagram.com/legendary_branding/',
+      'https://www.tiktok.com/@legendarybranding',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
