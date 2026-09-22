@@ -37,12 +37,17 @@ interface JudgemeApiResponse {
   reviews?: JudgemeApiReview[];
 }
 
-/** "Jordan Alvarez" -> "Jordan A." -- never expose a customer's full name. */
+/**
+ * "Jordan Alvarez" -> "Jordan A." -- never expose a customer's full name.
+ * A single-token name (common for CJK names entered with no whitespace,
+ * or just a first name) has no separate surname to mask, so it falls back
+ * to a generic label rather than ever rendering the name unmasked.
+ */
 function toDisplayName(fullName: string | null | undefined): string {
   const trimmed = (fullName ?? '').trim();
   if (!trimmed) return 'Customer';
   const parts = trimmed.split(/\s+/);
-  if (parts.length === 1) return parts[0];
+  if (parts.length === 1) return 'Customer';
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
