@@ -20,6 +20,7 @@ import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
 import AnnouncementBar from '~/components/layout/AnnouncementBar';
+import ChatWidget from '~/components/chat/ChatWidget';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
 import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
@@ -292,6 +293,8 @@ export default function App() {
         onClose={() => setCartOpen(false)}
         storeDomain={storeDomain}
       />
+
+      <ChatWidget />
       </div>
     </WishlistProvider>
     </HydrogenAnalytics.Provider>

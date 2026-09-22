@@ -30,6 +30,9 @@ interface Env {
   PUBLIC_KLAVIYO_WAITLIST_LIST_ID: string;
   // Klaviyo on-site embed (public company ID — safe to expose client-side)
   PUBLIC_KLAVIYO_COMPANY_ID: string;
+  // AI chat widget (optional, server-only — widget degrades to "unavailable"
+  // when unset, see app/routes/api.chat.ts)
+  PRIVATE_ANTHROPIC_API_KEY: string;
 }
 
 declare module 'virtual:react-router/server-build' {
