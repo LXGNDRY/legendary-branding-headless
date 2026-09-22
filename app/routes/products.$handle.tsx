@@ -222,9 +222,6 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
     ? fetchJudgemeProductReviews({
         apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
         shopDomain: context.env.PUBLIC_STORE_DOMAIN,
-        // Storefront API IDs are GIDs (gid://shopify/Product/1234567890) --
-        // Judge.me's product_id filter wants the trailing numeric Shopify ID.
-        productId: product.id.split('/').pop()!,
         productHandle: handle,
       })
     : Promise.resolve([]);
