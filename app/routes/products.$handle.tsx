@@ -7,8 +7,9 @@ import {
   useRouteError,
   isRouteErrorResponse,
   Link,
+  Await,
 } from 'react-router';
-import {useState, useEffect, useRef} from 'react';
+import {useState, useEffect, useRef, Suspense} from 'react';
 import {
   CartForm,
   Image,
@@ -43,7 +44,8 @@ import {CacheLong} from '~/lib/cache';
 import {requireSameOrigin} from '~/lib/security';
 import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
-import {parseJudgemeBadge} from '~/lib/judgeme';
+import {parseJudgemeBadge, fetchJudgemeProductReviews} from '~/lib/judgeme';
+import ProductReviewList from '~/components/sections/ProductReviewList';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -209,10 +211,26 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   });
 
   if (!product) throw new Response('Product not found', {status: 404});
+
+  // Real per-product reviews -- optional, server-only, and NOT awaited
+  // here: this is a third-party fetch (up to a 5s timeout) for a
+  // non-critical section, so it streams in after the initial response
+  // instead of blocking the PDP on Judge.me's availability. See
+  // fetchJudgemeProductReviews for why this replaced the old raw-HTML
+  // widget metafield render (Judge.me retired the script it depended on).
+  const reviews = context.env.PRIVATE_JUDGEME_API_TOKEN
+    ? fetchJudgemeProductReviews({
+        apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
+        shopDomain: context.env.PUBLIC_STORE_DOMAIN,
+        productHandle: handle,
+      })
+    : Promise.resolve([]);
+
   return {
     product: product as ProductFull,
     relatedProducts,
     storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+    reviews,
   };
 }
 
@@ -411,7 +429,7 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
 }
 
 export default function ProductPage() {
-  const {product, relatedProducts, storeDomain} = useLoaderData<typeof loader>();
+  const {product, relatedProducts, storeDomain, reviews} = useLoaderData<typeof loader>();
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -451,43 +469,16 @@ export default function ProductPage() {
     selectedVariant.quantityAvailable >= 1 &&
     selectedVariant.quantityAvailable <= 9;
 
-  // Judge.me review metafields — populated by the Judge.me app's ongoing
-  // sync into Shopify metafields; absent until a product has its first
-  // review, so every usage below degrades gracefully to "no reviews yet".
+  // Judge.me's compact rating badge metafield — populated by the Judge.me
+  // app's ongoing sync into Shopify metafields; absent until a product has
+  // its first review, so every usage below degrades gracefully to "no
+  // reviews yet". Parsed and rendered with our own StarRating component
+  // (see below) rather than any Judge.me script: their client-side loader
+  // for the full review list (formerly cdn.judge.me/widget_v3.js) has been
+  // retired -- see fetchJudgemeProductReviews in ~/lib/judgeme for the
+  // reviews list itself, fetched server-side instead.
   const judgemeBadgeHtml = product.metafields?.find((m) => m?.key === 'badge')?.value;
-  const judgemeWidgetHtml = product.metafields?.find((m) => m?.key === 'widget')?.value;
   const judgemeRating = parseJudgemeBadge(judgemeBadgeHtml);
-
-  // Load Judge.me's widget script only when this product actually has
-  // badge/widget metafield HTML to render, instead of unconditionally on
-  // every route (which used to cost every visitor a third-party request
-  // and script parse/exec on pages with no review content at all).
-  // On client-side navigation between products, the script may already be
-  // loaded -- in that case just re-scan the DOM via jdgm.batchRebuildWidgets
-  // (widget_v3.js's documented re-render entry point), since it only
-  // auto-scans on a full page load.
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    if (!judgemeBadgeHtml && !judgemeWidgetHtml) return;
-
-    function rebuild() {
-      const jdgm = (window as unknown as {jdgm?: {batchRebuildWidgets?: () => void}}).jdgm;
-      jdgm?.batchRebuildWidgets?.();
-    }
-
-    if (document.getElementById('judgeme-widget-loader')) {
-      rebuild();
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.id = 'judgeme-widget-loader';
-    script.src = 'https://cdn.judge.me/widget_v3.js';
-    script.async = true;
-    script.setAttribute('data-shop-domain', 'lngndny.myshopify.com');
-    script.onload = rebuild;
-    document.head.appendChild(script);
-  }, [product.handle, judgemeBadgeHtml, judgemeWidgetHtml]);
 
   const productJsonLd = productSchema({
     id: product.id,
@@ -589,20 +580,13 @@ export default function ProductPage() {
                   // visible immediately and consistent with every other
                   // product card on the site.
                   //
-                  // Only a link when the "#reviews" section it points to
-                  // actually exists below (gated on judgemeWidgetHtml,
-                  // same as that section) -- the badge and widget
-                  // metafields sync independently, so a product can have a
-                  // parseable badge without a widget yet.
-                  judgemeWidgetHtml ? (
-                    <a href="#reviews" className="inline-block mb-2">
-                      <StarRating rating={judgemeRating.rating} count={judgemeRating.count} />
-                    </a>
-                  ) : (
-                    <div className="mb-2">
-                      <StarRating rating={judgemeRating.rating} count={judgemeRating.count} />
-                    </div>
-                  )
+                  // Always a link when a badge exists: the "#reviews"
+                  // section below renders unconditionally whenever this
+                  // does (see the reviews section further down), even
+                  // though its actual review list streams in async.
+                  <a href="#reviews" className="inline-block mb-2">
+                    <StarRating rating={judgemeRating.rating} count={judgemeRating.count} />
+                  </a>
                 )}
                 <div className="flex items-baseline gap-3 flex-wrap">
                   {selectedVariant ? (
@@ -845,22 +829,45 @@ export default function ProductPage() {
           </div>
         </div>
 
-        {/* Reviews */}
-        {judgemeWidgetHtml && (
-          <section id="reviews" className="border-t border-[var(--color-border-muted)] scroll-mt-24">
-            <div className="h-container py-16">
-              <p className="h-eyebrow mb-3">Reviews</p>
-              <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
-                What Customers Are Saying
-              </h2>
-              {/* Judge.me's full review widget. Safe to render via
-                  dangerouslySetInnerHTML: this HTML is our own trusted
-                  Shopify metafield data synced server-side by the Judge.me
-                  app, not user-supplied content, and Judge.me's loader
-                  script requires this exact DOM structure to hydrate it. */}
-              <div dangerouslySetInnerHTML={{__html: judgemeWidgetHtml}} />
-            </div>
-          </section>
+        {/* Reviews — real per-product review list, fetched server-side via
+            the Judge.me API and rendered by us (see ProductReviewList /
+            fetchJudgemeProductReviews). Streamed in async, same pattern as
+            the homepage's quote cards, since it's a non-critical section
+            behind a third-party fetch with its own timeout. */}
+        {judgemeRating && (
+          <>
+            {/* Stable, invisible scroll target for the rating link above --
+                kept outside the Suspense boundary so it exists immediately,
+                before the reviews promise settles. Codex caught that gating
+                the id="reviews" element itself on the resolved (nonempty)
+                array left the link with nowhere to jump to while pending,
+                and permanently nowhere at all whenever it resolves empty
+                (unset API token, a timed-out fetch, or the product missing
+                from the fetched page are all graceful-degradation paths
+                here, not edge cases). */}
+            <span id="reviews" className="block scroll-mt-24" aria-hidden="true" />
+            <Suspense fallback={null}>
+              <Await resolve={reviews}>
+                {(resolvedReviews) =>
+                  resolvedReviews.length > 0 ? (
+                    <section className="border-t border-[var(--color-border-muted)]">
+                      <div className="h-container py-16">
+                        <p className="h-eyebrow mb-3">Reviews</p>
+                        <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
+                          What Customers Are Saying
+                        </h2>
+                        <ProductReviewList
+                          reviews={resolvedReviews}
+                          aggregateRating={judgemeRating.rating}
+                          aggregateCount={judgemeRating.count}
+                        />
+                      </div>
+                    </section>
+                  ) : null
+                }
+              </Await>
+            </Suspense>
+          </>
         )}
 
         {/* Craft / trust stats */}
