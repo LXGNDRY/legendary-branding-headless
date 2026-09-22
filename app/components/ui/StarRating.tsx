@@ -27,15 +27,16 @@ export default function StarRating({rating, count, size = 'md', className = ''}:
   if (count <= 0) return null;
 
   const iconSize = size === 'sm' ? 11 : 14;
+  const label = `${rating.toFixed(1)} out of 5 stars, based on ${count} ${count === 1 ? 'review' : 'reviews'}`;
 
   return (
-    <div className={`flex items-center gap-1.5 text-[var(--color-accent)] ${className}`}>
-      <div className="flex gap-0.5">
+    <div className={`flex items-center gap-1.5 text-[var(--color-accent)] ${className}`} role="img" aria-label={label}>
+      <div className="flex gap-0.5" aria-hidden="true">
         {Array.from({length: 5}).map((_, i) => (
           <StarIcon key={i} filled={i < Math.round(rating)} size={iconSize} />
         ))}
       </div>
-      <span className="text-xs text-[var(--color-text-tertiary)]">({count})</span>
+      <span className="text-xs text-[var(--color-text-tertiary)]" aria-hidden="true">({count})</span>
     </div>
   );
 }

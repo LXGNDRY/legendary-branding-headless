@@ -41,7 +41,7 @@ export default function VerifiedReviews({
           <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-text-primary)] mb-5">
             {heading}
           </h2>
-          <div className="flex items-center justify-center gap-2 text-[var(--color-accent)]">
+          <div className="flex items-center justify-center gap-2 text-[var(--color-accent)]" aria-hidden="true">
             {Array.from({length: 5}).map((_, i) => (
               <StarIcon key={i} filled={i < Math.round(aggregateRating)} size={16} />
             ))}

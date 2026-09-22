@@ -39,7 +39,11 @@ export default function ReviewQuotes({
               key={quote.id}
               className="h-reveal p-6 md:p-8 bg-[var(--color-bg-level-0)] border border-[var(--color-border-muted)] rounded-lg"
             >
-              <div className="flex gap-0.5 mb-4 text-[var(--color-accent)]">
+              <div
+                className="flex gap-0.5 mb-4 text-[var(--color-accent)]"
+                role="img"
+                aria-label={`${quote.rating.toFixed(1)} out of 5 stars`}
+              >
                 {Array.from({length: 5}).map((_, si) => (
                   <StarIcon key={si} filled={si < Math.round(quote.rating)} />
                 ))}
