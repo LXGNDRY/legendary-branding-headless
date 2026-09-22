@@ -589,24 +589,6 @@
     animation-delay: 1s;
   }
 
-  /* The chat widget button/panel are rendered once, globally, in root.tsx,
-     with no per-page knowledge of the PDP's fixed mobile purchase bar
-     (#mobile-purchase-bar, see products.$handle.tsx) sitting at the very
-     bottom of small screens -- without this, the two fixed-position
-     elements overlapped, with the chat bubble sitting on top of (and
-     blocking) the Add to Bag / Choose options button. #mobile-purchase-bar
-     exists in the DOM at every viewport width (it's only hidden above the
-     `lg` breakpoint via `lg:hidden`), so this is scoped to the same
-     breakpoint rather than relying on the element's own visibility. */
-  @media (max-width: 1023px) {
-    body:has(#mobile-purchase-bar) #chat-widget-button {
-      bottom: calc(5.25rem + env(safe-area-inset-bottom));
-    }
-    body:has(#mobile-purchase-bar) #chat-widget-panel {
-      bottom: calc(8.25rem + env(safe-area-inset-bottom));
-    }
-  }
-
   /* ── Dividers ─────────────────────────────────────────────────────────── */
 
   .h-divider {
@@ -754,5 +736,35 @@
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+  }
+}
+
+/* ── Unlayered overrides ──────────────────────────────────────────────────
+   Deliberately NOT inside @layer components/utilities: Tailwind v4 emits
+   utility classes (bottom-5, bottom-24, etc.) into its own `utilities`
+   layer, and cascade layers are resolved by layer declaration order before
+   selector specificity is ever considered -- a same-or-higher-specificity
+   rule inside `@layer components` still loses to a `utilities`-layer class
+   on the same element. An unlayered rule beats every layered rule
+   regardless of where either appears in the file, which is exactly what's
+   needed here: overriding the `bottom-5`/`bottom-24` utility classes still
+   present on the chat widget elements below (Codex-caught on PR #196;
+   confirmed the layered version was a no-op). */
+
+/* The chat widget button/panel are rendered once, globally, in root.tsx,
+   with no per-page knowledge of the PDP's fixed mobile purchase bar
+   (#mobile-purchase-bar, see products.$handle.tsx) sitting at the very
+   bottom of small screens -- without this, the two fixed-position
+   elements overlapped, with the chat bubble sitting on top of (and
+   blocking) the Add to Bag / Choose options button. #mobile-purchase-bar
+   exists in the DOM at every viewport width (it's only hidden above the
+   `lg` breakpoint via `lg:hidden`), so this is scoped to the same
+   breakpoint rather than relying on the element's own visibility. */
+@media (max-width: 1023px) {
+  body:has(#mobile-purchase-bar) #chat-widget-button {
+    bottom: calc(5.25rem + env(safe-area-inset-bottom));
+  }
+  body:has(#mobile-purchase-bar) #chat-widget-panel {
+    bottom: calc(8.25rem + env(safe-area-inset-bottom));
   }
 }
