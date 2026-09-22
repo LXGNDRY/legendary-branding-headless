@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Link} from 'react-router';
+import StarRating from '~/components/ui/StarRating';
 
 const COOKIE_NAME = 'recently_viewed';
 const MAX_PRODUCTS = 8;
@@ -9,6 +10,9 @@ interface RecentProduct {
   handle: string;
   title: string;
   image?: string;
+  /** Rating snapshot at the time this product was viewed. */
+  rating?: number;
+  reviewCount?: number;
 }
 
 interface RecentlyViewedProps {
@@ -16,6 +20,8 @@ interface RecentlyViewedProps {
   currentProductHandle: string;
   currentProductTitle: string;
   currentProductImage?: string;
+  currentProductRating?: number;
+  currentProductReviewCount?: number;
 }
 
 /**
@@ -29,6 +35,8 @@ export default function RecentlyViewed({
   currentProductHandle,
   currentProductTitle,
   currentProductImage,
+  currentProductRating,
+  currentProductReviewCount,
 }: RecentlyViewedProps) {
   const [products, setProducts] = useState<RecentProduct[]>([]);
 
@@ -59,6 +67,8 @@ export default function RecentlyViewed({
         handle: currentProductHandle,
         title: currentProductTitle,
         image: currentProductImage,
+        rating: currentProductRating,
+        reviewCount: currentProductReviewCount,
       },
       ...viewed.filter((p) => p.id !== currentProductId),
     ].slice(0, MAX_PRODUCTS);
@@ -68,7 +78,14 @@ export default function RecentlyViewed({
 
     // Show previously viewed (exclude current)
     setProducts(viewed.slice(1, 5));
-  }, [currentProductId, currentProductHandle, currentProductTitle, currentProductImage]);
+  }, [
+    currentProductId,
+    currentProductHandle,
+    currentProductTitle,
+    currentProductImage,
+    currentProductRating,
+    currentProductReviewCount,
+  ]);
 
   if (products.length < 2) return null;
 
@@ -105,6 +122,9 @@ export default function RecentlyViewed({
               <p className="text-xs font-medium leading-tight line-clamp-2">
                 {p.title}
               </p>
+              {p.rating != null && p.reviewCount != null && p.reviewCount > 0 && (
+                <StarRating rating={p.rating} count={p.reviewCount} size="sm" className="mt-1" />
+              )}
             </Link>
           ))}
         </div>

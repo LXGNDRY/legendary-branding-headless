@@ -330,6 +330,8 @@ export default function ProductCard({
               title: product.title,
               price: product.priceRange.minVariantPrice.amount,
               image: product.featuredImage?.url,
+              rating: reviewRating?.rating,
+              reviewCount: reviewRating?.count,
             }}
           />
         </div>

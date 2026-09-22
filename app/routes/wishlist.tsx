@@ -122,6 +122,18 @@ export default function WishlistPage() {
                     minVariantPrice: {amount: item.price, currencyCode: 'USD'},
                   },
                   tags: [],
+                  // ProductCard reads reviewBadge through the same
+                  // parseJudgemeBadge() helper as every other surface;
+                  // reconstructing its expected HTML shape from the rating
+                  // snapshot saved at add-to-wishlist time (see
+                  // WishlistButton) lets this page show real stars without
+                  // its own live product query.
+                  reviewBadge:
+                    item.rating != null && item.reviewCount != null
+                      ? {
+                          value: `<div data-average-rating='${item.rating}' data-number-of-reviews='${item.reviewCount}'></div>`,
+                        }
+                      : null,
                 }}
               />
             </div>

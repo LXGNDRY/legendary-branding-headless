@@ -7,6 +7,11 @@ interface WishlistButtonProps {
     title: string;
     price: string;
     image?: string;
+    /** Rating snapshot, if known at the point this button renders -- saved
+        into the wishlist item so the wishlist page can show real stars
+        without a live query against a client-only localStorage list. */
+    rating?: number;
+    reviewCount?: number;
   };
   className?: string;
   size?: 'sm' | 'md';
