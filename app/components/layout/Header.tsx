@@ -216,7 +216,7 @@ function MobileMenu({
           onClick={onClose}
           className="flex items-center gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
         >
-          <GoatMark className="h-6 w-6 shrink-0" />
+          <GoatMark className="h-6 w-6 shrink-0 translate-y-[7px]" />
           LEGENDARY
         </Link>
         <button
@@ -359,12 +359,17 @@ export default function Header({
               <MenuIcon />
             </button>
 
-            {/* Wordmark */}
+            {/* Wordmark -- the icon's translate-y compensates for Instrument
+                Serif's oversized line-box metrics: flex `items-center`
+                centers the icon on the full line box, but the font reserves
+                a lot of headroom above the cap height, so the visible glyphs
+                sit well below that center. Without the nudge the icon reads
+                as floating above the text instead of level with it. */}
             <Link
               to="/"
               className="flex items-center gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
             >
-              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0" />
+              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0 translate-y-[7px] lg:translate-y-[9px]" />
               LEGENDARY
             </Link>
 
