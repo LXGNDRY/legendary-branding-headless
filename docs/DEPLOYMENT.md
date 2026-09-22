@@ -135,6 +135,12 @@ Oxygen environment (Shopify Admin → Hydrogen → Environments), not via GitHub
 - `PUBLIC_META_PIXEL_ID`, `PUBLIC_TIKTOK_PIXEL_ID` — each optional pixel in
   `app/components/seo/Analytics.tsx` simply doesn't load if its ID is unset.
 - `PUBLIC_KLAVIYO_COMPANY_ID` — optional consent-gated Klaviyo on-site forms.
+- `PRIVATE_ANTHROPIC_API_KEY` — powers the storefront Q&A chat widget
+  (`app/routes/api.chat.ts`). Server-only. Without it the widget's API route
+  returns a clean `503` ("Chat is temporarily unavailable") rather than
+  crashing or faking a reply; the widget UI still renders either way. Get a
+  key at console.anthropic.com and set it in the Oxygen environment when
+  ready to turn the widget on.
 
 Newsletter and waitlist endpoints now fail truthfully with `503` when their required Klaviyo
 configuration is missing. Customer Account navigation is hidden and its routes fail with `503`
