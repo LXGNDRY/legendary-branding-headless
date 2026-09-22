@@ -214,9 +214,9 @@ function MobileMenu({
         <Link
           to="/"
           onClick={onClose}
-          className="flex items-center gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
+          className="flex items-baseline gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
         >
-          <GoatMark className="h-6 w-6 shrink-0 translate-y-[7px]" />
+          <GoatMark className="h-6 w-6 shrink-0 translate-y-[5px]" />
           LEGENDARY
         </Link>
         <button
@@ -359,17 +359,20 @@ export default function Header({
               <MenuIcon />
             </button>
 
-            {/* Wordmark -- the icon's translate-y compensates for Instrument
-                Serif's oversized line-box metrics: flex `items-center`
-                centers the icon on the full line box, but the font reserves
-                a lot of headroom above the cap height, so the visible glyphs
-                sit well below that center. Without the nudge the icon reads
-                as floating above the text instead of level with it. */}
+            {/* Wordmark -- `items-baseline` anchors the icon's bottom edge to
+                the text's real glyph baseline (Instrument Serif's line-box
+                reserves headroom well above the cap height, so `items-center`
+                put the icon visibly above the text). The icon is still taller
+                than the text's cap height though, so its own visual center
+                sits above the text's optical center even baseline-anchored --
+                translate-y closes that gap, measured against actual canvas
+                text metrics (ascent/descent) at each breakpoint's font size
+                rather than eyeballed. */}
             <Link
               to="/"
-              className="flex items-center gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
+              className="flex items-baseline gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
             >
-              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0 translate-y-[7px] lg:translate-y-[9px]" />
+              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0 translate-y-[5px] lg:translate-y-[6.5px]" />
               LEGENDARY
             </Link>
 
