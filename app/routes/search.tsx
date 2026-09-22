@@ -83,6 +83,9 @@ const SEARCH_QUERY = `#graphql
                 currencyCode
               }
             }
+            reviewBadge: metafield(namespace: "judgeme", key: "badge") {
+              value
+            }
           }
         }
       }
@@ -128,6 +131,7 @@ interface SearchProduct {
     minVariantPrice: {amount: string; currencyCode: CurrencyCode};
     maxVariantPrice: {amount: string; currencyCode: CurrencyCode};
   };
+  reviewBadge: {value: string} | null;
 }
 
 interface SearchResult {

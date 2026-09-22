@@ -16,7 +16,7 @@ import UGCGrid from '~/components/sections/UGCGrid';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import {CacheLong} from '~/lib/cache';
-import {fetchJudgemeQuotes} from '~/lib/judgeme';
+import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
 
 type CollectionNode = {
   id: string;
@@ -60,29 +60,11 @@ const HOMEPAGE_QUERY = `#graphql
       products(first: 4, sortKey: BEST_SELLING) {
         nodes {
           ...ProductCard
-          reviewBadge: metafield(namespace: "judgeme", key: "badge") {
-            value
-          }
         }
       }
     }
   }
 ` as const;
-
-// Judge.me's badge metafield embeds the product's real synced rating as
-// HTML attributes (e.g. data-average-rating='4.8' data-number-of-reviews='23').
-// Judge.me emits these with single quotes, so both quote styles are accepted.
-// Parsed here so the homepage can show a genuine aggregate instead of
-// fabricated testimonials -- never invent quotes/names for this section.
-function parseJudgemeBadge(html: string | null | undefined): {rating: number; count: number} | null {
-  if (!html) return null;
-  const rating = html.match(/data-average-rating=["']([\d.]+)["']/)?.[1];
-  const count = html.match(/data-number-of-reviews=["'](\d+)["']/)?.[1];
-  if (!rating || !count) return null;
-  const parsedCount = parseInt(count, 10);
-  if (parsedCount <= 0) return null;
-  return {rating: parseFloat(rating), count: parsedCount};
-}
 
 export const meta: MetaFunction = () => {
   const description = 'Premium editorial streetwear. Bold, minimal, fast.';
@@ -114,9 +96,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     },
   );
 
-  const ratedProducts = ((bestSellers?.products?.nodes ?? []) as Array<
-    ProductCardFragment & {reviewBadge?: {value: string} | null}
-  >)
+  const ratedProducts = ((bestSellers?.products?.nodes ?? []) as ProductCardFragment[])
     .map((product) => {
       const parsed = parseJudgemeBadge(product.reviewBadge?.value);
       return parsed

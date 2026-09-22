@@ -12,6 +12,25 @@
 
 const JUDGEME_API_BASE = 'https://judge.me/api/v1/reviews';
 
+/**
+ * Judge.me's badge metafield embeds the product's real synced rating as
+ * HTML attributes (e.g. data-average-rating='4.8' data-number-of-reviews='23').
+ * Judge.me emits these with single quotes, so both quote styles are accepted.
+ * Shared by every surface that reads this metafield (homepage aggregate,
+ * product cards) so the parsing logic exists in exactly one place.
+ */
+export function parseJudgemeBadge(
+  html: string | null | undefined,
+): {rating: number; count: number} | null {
+  if (!html) return null;
+  const rating = html.match(/data-average-rating=["']([\d.]+)["']/)?.[1];
+  const count = html.match(/data-number-of-reviews=["'](\d+)["']/)?.[1];
+  if (!rating || !count) return null;
+  const parsedCount = parseInt(count, 10);
+  if (parsedCount <= 0) return null;
+  return {rating: parseFloat(rating), count: parsedCount};
+}
+
 export interface JudgemeQuote {
   id: number;
   rating: number;

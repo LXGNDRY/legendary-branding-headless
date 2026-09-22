@@ -4,6 +4,8 @@ import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Badge from '~/components/ui/Badge';
 import WishlistButton from '~/components/ui/WishlistButton';
 import Placeholder from '~/components/ui/Placeholder';
+import StarRating from '~/components/ui/StarRating';
+import {parseJudgemeBadge} from '~/lib/judgeme';
 
 type MoneyFragment = {
   amount: string;
@@ -42,6 +44,7 @@ export type ProductCardFragment = {
     id: string;
     availableForSale: boolean;
   } | null;
+  reviewBadge?: {value: string} | null;
 };
 
 export const PRODUCT_CARD_FRAGMENT = `#graphql
@@ -96,6 +99,12 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
       id
       availableForSale
     }
+    # Judge.me's synced rating/review-count badge -- real data, not
+    # fabricated. Absent until a product has its first review; the card
+    # simply omits the star row in that case (see StarRating).
+    reviewBadge: metafield(namespace: "judgeme", key: "badge") {
+      value
+    }
   }
 ` as const;
 
@@ -137,6 +146,7 @@ export default function ProductCard({
   const onSale = isOnSale(product);
   const soldOut = !product.availableForSale;
   const isNewTag = isNew(product);
+  const reviewRating = parseJudgemeBadge(product.reviewBadge?.value);
   const hasSecondImage =
     hoverFlip &&
     product.images?.nodes &&
@@ -211,6 +221,9 @@ export default function ProductCard({
             >
               {product.title}
             </Link>
+            {reviewRating && (
+              <StarRating rating={reviewRating.rating} count={reviewRating.count} size="sm" className="mb-2" />
+            )}
             <p className="text-sm text-[var(--color-text-tertiary)] line-clamp-2 hidden md:block">
               {product.tags.slice(0, 3).join(' · ')}
             </p>
@@ -366,6 +379,7 @@ export default function ProductCard({
             className="font-serif text-base text-[var(--color-text-primary)] shrink-0"
           />
         </div>
+        {reviewRating && <StarRating rating={reviewRating.rating} count={reviewRating.count} size="sm" />}
       </div>
     </article>
   );

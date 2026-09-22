@@ -1,22 +1,6 @@
 import {Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
-
-function StarIcon({filled = true}: {filled?: boolean}) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 14 14"
-      fill={filled ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      strokeWidth="1"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M7 1l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9L3.4 12l.7-4L1.2 5.2l4-.6L7 1z" />
-    </svg>
-  );
-}
+import StarRating, {StarIcon} from '~/components/ui/StarRating';
 
 interface ProductRating {
   id: string;
@@ -57,9 +41,9 @@ export default function VerifiedReviews({
           <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-text-primary)] mb-5">
             {heading}
           </h2>
-          <div className="flex items-center justify-center gap-2 text-[var(--color-accent)]">
+          <div className="flex items-center justify-center gap-2 text-[var(--color-accent)]" aria-hidden="true">
             {Array.from({length: 5}).map((_, i) => (
-              <StarIcon key={i} filled={i < Math.round(aggregateRating)} />
+              <StarIcon key={i} filled={i < Math.round(aggregateRating)} size={16} />
             ))}
           </div>
           <p className="text-sm text-[var(--color-text-secondary)] mt-3">
@@ -93,16 +77,7 @@ export default function VerifiedReviews({
               <p className="text-sm text-[var(--color-text-primary)] leading-snug truncate mb-1">
                 {product.title}
               </p>
-              <div className="flex items-center gap-1.5 text-[var(--color-accent)]">
-                <div className="flex gap-0.5">
-                  {Array.from({length: 5}).map((_, i) => (
-                    <StarIcon key={i} filled={i < Math.round(product.rating)} />
-                  ))}
-                </div>
-                <span className="text-xs text-[var(--color-text-tertiary)]">
-                  ({product.reviewCount})
-                </span>
-              </div>
+              <StarRating rating={product.rating} count={product.reviewCount} size="sm" />
             </Link>
           ))}
         </div>
