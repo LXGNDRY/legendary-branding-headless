@@ -587,9 +587,21 @@ export default function ProductPage() {
                   // same real rating/count data ourselves keeps this
                   // visible immediately and consistent with every other
                   // product card on the site.
-                  <a href="#reviews" className="inline-block mb-2">
-                    <StarRating rating={judgemeRating.rating} count={judgemeRating.count} />
-                  </a>
+                  //
+                  // Only a link when the "#reviews" section it points to
+                  // actually exists below (gated on judgemeWidgetHtml,
+                  // same as that section) -- the badge and widget
+                  // metafields sync independently, so a product can have a
+                  // parseable badge without a widget yet.
+                  judgemeWidgetHtml ? (
+                    <a href="#reviews" className="inline-block mb-2">
+                      <StarRating rating={judgemeRating.rating} count={judgemeRating.count} />
+                    </a>
+                  ) : (
+                    <div className="mb-2">
+                      <StarRating rating={judgemeRating.rating} count={judgemeRating.count} />
+                    </div>
+                  )
                 )}
                 <div className="flex items-baseline gap-3 flex-wrap">
                   {selectedVariant ? (
