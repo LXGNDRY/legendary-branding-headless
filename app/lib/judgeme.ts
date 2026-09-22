@@ -11,6 +11,7 @@
  */
 
 const JUDGEME_API_BASE = 'https://judge.me/api/v1/reviews';
+const JUDGEME_PRODUCTS_BASE = 'https://judge.me/api/v1/products/-1';
 
 /**
  * Judge.me's badge metafield embeds the product's real synced rating as
@@ -87,26 +88,21 @@ interface FetchJudgemeReviewsRawOptions {
   perPage: number;
   /** 1-indexed page number; defaults to Judge.me's own default (page 1). */
   page?: number;
+  /** Judge.me's own internal product record ID (NOT Shopify's) -- see resolveJudgemeProductId. */
+  productId?: string;
 }
 
 /**
  * Shared request/parse core for the Judge.me reviews endpoint. Always
  * degrades to an empty list rather than throwing -- a failed third-party
  * fetch should never break the page it's decorating.
- *
- * Judge.me's `product_id` filter takes their own internal product record
- * ID, not the platform's (Shopify's) product ID -- there is no documented,
- * verifiable public endpoint to resolve one to the other, so this
- * deliberately does NOT attempt to filter server-side by product. See
- * fetchJudgemeProductReviews for how a single product's reviews are
- * found instead (paginating this endpoint and filtering by product_handle,
- * which every review response row does carry).
  */
 async function fetchJudgemeReviewsRaw({
   apiToken,
   shopDomain,
   perPage,
   page,
+  productId,
 }: FetchJudgemeReviewsRawOptions): Promise<JudgemeApiReview[]> {
   const url = new URL(JUDGEME_API_BASE);
   url.searchParams.set('api_token', apiToken);
@@ -114,6 +110,7 @@ async function fetchJudgemeReviewsRaw({
   url.searchParams.set('per_page', String(perPage));
   url.searchParams.set('published', 'true');
   if (page) url.searchParams.set('page', String(page));
+  if (productId) url.searchParams.set('product_id', productId);
 
   let response: Response;
   try {
@@ -175,13 +172,55 @@ export async function fetchJudgemeQuotes({
     }));
 }
 
+interface JudgemeProductLookupResponse {
+  product?: {id?: number} | null;
+}
+
+/**
+ * Resolves a Shopify product's numeric ID to Judge.me's own internal
+ * product record ID, via their documented `/products/-1` lookup (the `-1`
+ * is a literal placeholder telling the endpoint to look the product up by
+ * `external_id` instead of by Judge.me's own primary key). Returns null on
+ * any failure -- callers fall back to a less precise search rather than
+ * failing the page.
+ */
+async function resolveJudgemeProductId({
+  apiToken,
+  shopDomain,
+  externalId,
+}: {
+  apiToken: string;
+  shopDomain: string;
+  externalId: string;
+}): Promise<number | null> {
+  const url = new URL(JUDGEME_PRODUCTS_BASE);
+  url.searchParams.set('api_token', apiToken);
+  url.searchParams.set('shop_domain', shopDomain);
+  url.searchParams.set('external_id', externalId);
+
+  try {
+    const response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(5000),
+      cf: {cacheTtl: 3600, cacheEverything: true},
+    } as RequestInit);
+    if (!response.ok) return null;
+    const data = (await response.json()) as JudgemeProductLookupResponse;
+    return typeof data.product?.id === 'number' ? data.product.id : null;
+  } catch (error) {
+    console.error('[judgeme] product lookup failed', error);
+    return null;
+  }
+}
+
 interface FetchJudgemeProductReviewsOptions {
   apiToken: string;
   shopDomain: string;
-  /** Only reviews for this product are returned (matched by handle). */
+  /** Shopify product ID (numeric, as a string) -- resolved to Judge.me's internal ID first. */
+  productId: string;
+  /** Belt-and-suspenders check against the returned rows, and the fallback-path filter. */
   productHandle: string;
   perPage?: number;
-  /** How many 100-review pages of the shop's reviews to search across, in parallel. */
+  /** Fallback path only: how many 100-review pages to search across, in parallel. */
   maxPages?: number;
 }
 
@@ -193,31 +232,71 @@ interface FetchJudgemeProductReviewsOptions {
  * storefront rendered directly via dangerouslySetInnerHTML. Judge.me has
  * since retired that script (cdn.judge.me/widget_v3.js now returns
  * 410 Gone), and their replacement loader uses an incompatible DOM
- * contract -- so instead of depending on their client-side embed at all,
- * this fetches real review data server-side (same API already used for
- * fetchJudgemeQuotes) and the storefront renders its own list.
+ * contract requiring a `judgeme.review_widget_data` metafield that this
+ * store doesn't have populated -- so instead of depending on their
+ * client-side embed at all, this fetches real review data server-side and
+ * the storefront renders its own list.
  *
- * There's no reliable way to filter this server-side to one product: the
- * reviews endpoint's `product_id` parameter takes Judge.me's own internal
- * product record ID, not the Shopify product ID (confirmed via Judge.me's
- * help docs and third-party API references) -- there's no documented,
- * verifiable public endpoint to resolve one to the other, and passing a
- * mismatched value there isn't even an error, it silently falls back to
- * every review in the store. So this instead pages through the shop's
- * reviews (in parallel, bounded by maxPages) and filters by product_handle,
- * which every review response row does carry -- fine as long as maxPages
- * covers the store's total review volume; a store that outgrows this needs
- * a bigger maxPages, not a different approach (see Codex findings on
- * PR #200 for the product_id dead end and the earlier per_page=100-single-
- * page version's undersized page count).
+ * Primary path: resolve the Shopify product ID to Judge.me's internal one
+ * via resolveJudgemeProductId, then ask the reviews endpoint for exactly
+ * that product's reviews via its `product_id` filter (their own internal
+ * ID, confirmed via Judge.me's documented `/products/-1` lookup and help
+ * docs -- passing Shopify's ID directly there, as an earlier version of
+ * this function did, silently falls back to every review in the store
+ * rather than erroring, which is what broke this for products whose
+ * reviews weren't recent enough to land in a single fetched page).
+ *
+ * Fallback path (resolution failed, or it returned nothing after the
+ * primary fetch): page through the shop's reviews and filter by
+ * product_handle, same as the interim fix before this -- less precise
+ * (bounded by maxPages) but keeps the section working if the lookup
+ * endpoint itself is ever unavailable.
  */
 export async function fetchJudgemeProductReviews({
   apiToken,
   shopDomain,
+  productId,
   productHandle,
   perPage = 100,
   maxPages = 5,
 }: FetchJudgemeProductReviewsOptions): Promise<JudgemeReview[]> {
+  const toReviews = (raw: JudgemeApiReview[]) =>
+    raw
+      .filter((r) => (r.body ?? '').trim().length > 0)
+      .map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        title: r.title?.trim() || undefined,
+        body: r.body!.trim(),
+        reviewerName: toDisplayName(r.reviewer?.name),
+        createdAt: r.created_at ?? undefined,
+      }));
+
+  const internalId = await resolveJudgemeProductId({apiToken, shopDomain, externalId: productId});
+  if (internalId) {
+    // Fetch subsequent pages too -- a product with more reviews than a
+    // single `perPage` would otherwise silently lose everything past the
+    // first page, even though the PDP presents this as the full list
+    // alongside the real aggregate count (Codex-caught on this PR).
+    const idPages = await Promise.all(
+      Array.from({length: maxPages}, (_, i) =>
+        fetchJudgemeReviewsRaw({
+          apiToken,
+          shopDomain,
+          perPage,
+          page: i + 1,
+          productId: String(internalId),
+        }),
+      ),
+    );
+    const raw = [...new Map(idPages.flat().map((r) => [r.id, r])).values()];
+    // Defensive: a resolved-but-wrong id would fall back to unfiltered
+    // results the same way a raw Shopify id does, so still check the
+    // handle before trusting the response.
+    const matched = raw.filter((r) => r.product_handle === productHandle);
+    if (matched.length > 0) return toReviews(matched);
+  }
+
   const pages = await Promise.all(
     Array.from({length: maxPages}, (_, i) =>
       fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage, page: i + 1}),
@@ -225,16 +304,6 @@ export async function fetchJudgemeProductReviews({
   );
   // Dedup by id -- pagination could theoretically overlap if the shop's
   // review set shifts between the parallel page requests.
-  const reviews = [...new Map(pages.flat().map((r) => [r.id, r])).values()];
-
-  return reviews
-    .filter((r) => r.product_handle === productHandle && (r.body ?? '').trim().length > 0)
-    .map((r) => ({
-      id: r.id,
-      rating: r.rating,
-      title: r.title?.trim() || undefined,
-      body: r.body!.trim(),
-      reviewerName: toDisplayName(r.reviewer?.name),
-      createdAt: r.created_at ?? undefined,
-    }));
+  const deduped = [...new Map(pages.flat().map((r) => [r.id, r])).values()];
+  return toReviews(deduped.filter((r) => r.product_handle === productHandle));
 }
