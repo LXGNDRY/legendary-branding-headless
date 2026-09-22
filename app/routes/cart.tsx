@@ -344,6 +344,14 @@ export default function CartPage() {
   const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
   const [checkingOut, setCheckingOut] = useState(false);
+  // Hydrogen's <ShopPayButton> only accepts variant IDs/quantities -- it has
+  // no way to carry discount codes into the Shop Pay checkout it opens. That
+  // means a discounted cart summary here could be followed by an undiscounted
+  // Shop Pay checkout, so the button is hidden whenever a discount is
+  // applied rather than showing a mismatched total.
+  const hasApplicableDiscount = Boolean(
+    cart?.discountCodes?.some((code) => code.applicable),
+  );
 
   // A shopper hitting Back from Shopify's hosted checkout can restore this
   // page from the bfcache with React state intact, leaving `checkingOut`
@@ -453,7 +461,7 @@ export default function CartPage() {
               </Button>
             )}
 
-            {storeDomain && cart && cart.lines.edges.length > 0 && (
+            {storeDomain && cart && cart.lines.edges.length > 0 && !hasApplicableDiscount && (
               <div className="mt-3">
                 <ShopPayButton
                   variantIdsAndQuantities={cart.lines.edges.map(({node}) => ({
