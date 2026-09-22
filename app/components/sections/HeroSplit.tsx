@@ -2,6 +2,8 @@ import {Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import Button from '~/components/ui/Button';
 import type {ProductCardFragment} from '~/components/ui/ProductCard';
+import StarRating from '~/components/ui/StarRating';
+import {parseJudgemeBadge} from '~/lib/judgeme';
 
 interface HeroSplitProps {
   eyebrow?: string;
@@ -28,6 +30,7 @@ export default function HeroSplit({
 }: HeroSplitProps) {
   const leftImage = leftProduct?.featuredImage;
   const rightImage = rightProduct?.featuredImage;
+  const rightProductRating = parseJudgemeBadge(rightProduct?.reviewBadge?.value);
 
   return (
     <section className="relative w-full bg-[var(--color-bg-level-0)] overflow-hidden">
@@ -112,9 +115,12 @@ export default function HeroSplit({
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
             <div className="absolute bottom-8 left-8 right-8">
               <p className="text-xs tracking-[0.15em] uppercase text-white/70 mb-2">Featured</p>
-              <p className="font-serif text-2xl text-white leading-tight">
+              <p className="font-serif text-2xl text-white leading-tight mb-2">
                 {rightProduct.title}
               </p>
+              {rightProductRating && (
+                <StarRating rating={rightProductRating.rating} count={rightProductRating.count} size="sm" />
+              )}
             </div>
           </Link>
         </div>

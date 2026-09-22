@@ -21,6 +21,9 @@ interface WishlistItem {
   title: string;
   price: string;
   image?: string;
+  /** Rating snapshot at the time this item was saved -- see WishlistButton. */
+  rating?: number;
+  reviewCount?: number;
   addedAt: number;
 }
 

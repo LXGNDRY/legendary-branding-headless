@@ -1,6 +1,8 @@
 import {useState, useEffect, useRef} from 'react';
 import {Link, useNavigate} from 'react-router';
 import {Image} from '@shopify/hydrogen';
+import StarRating from '~/components/ui/StarRating';
+import {parseJudgemeBadge} from '~/lib/judgeme';
 
 interface PredictiveProduct {
   id: string;
@@ -11,6 +13,7 @@ interface PredictiveProduct {
   priceRange: {
     minVariantPrice: {amount: string; currencyCode: string};
   };
+  reviewBadge?: {value: string} | null;
 }
 
 interface PredictiveCollection {
@@ -233,6 +236,7 @@ export default function SearchTypeahead({
                   <div className="space-y-3">
                     {results!.products.slice(0, 6).map((product) => {
                       const item = registerItem();
+                      const rating = parseJudgemeBadge(product.reviewBadge?.value);
                       return (
                       <Link
                         key={product.id}
@@ -261,6 +265,9 @@ export default function SearchTypeahead({
                           <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">
                             ${product.priceRange.minVariantPrice.amount}
                           </p>
+                          {rating && (
+                            <StarRating rating={rating.rating} count={rating.count} size="sm" className="mt-1" />
+                          )}
                         </div>
                       </Link>
                       );

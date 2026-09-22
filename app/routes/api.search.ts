@@ -17,6 +17,9 @@ const PREDICTIVE_SEARCH_QUERY = `#graphql
             currencyCode
           }
         }
+        reviewBadge: metafield(namespace: "judgeme", key: "badge") {
+          value
+        }
       }
       collections {
         id
