@@ -284,7 +284,7 @@ export default function CollectionPage() {
             {collection.title}
           </h1>
           {collection.description && (
-            <p className="mt-3 text-[0.9rem] text-[var(--color-text-inverse)]/60 max-w-lg leading-relaxed">
+            <p className="h-truncate-2 mt-3 text-[0.9rem] text-[var(--color-text-inverse)]/60 max-w-lg leading-relaxed">
               {collection.description}
             </p>
           )}
