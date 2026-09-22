@@ -65,16 +65,14 @@ The dev server runs at `http://localhost:3000`.
 
 ## Milestone Roadmap
 
+See `CLAUDE.md` → "Milestone Sequence" for the authoritative, up-to-date table. Summary as of Milestone 14:
+
 | # | Milestone | Status |
 |---|---|---|
-| 1 | Foundation — shell, tokens, route stubs, docs | ✅ Done |
-| 2 | Homepage, collection index + PLP | 🔜 Next |
-| 3 | Product detail page (PDP), variant selector | 🔜 |
-| 4 | Cart drawer + page, checkout redirect | 🔜 |
-| 5 | Search (predictive + full results) | 🔜 |
-| 6 | Journal / Blog (index + article) | 🔜 |
-| 7 | Policy pages, 404, robots, sitemap | 🔜 |
-| 8 | SEO, JSON-LD, performance, Oxygen deploy | 🔜 |
+| 1–11 | Foundation through Codegen (homepage, PLP, PDP, cart, search, blog, policy pages, SEO, safety hardening, compliance, codegen) | ✅ Complete |
+| 12 | Content — real imagery replacing `<Placeholder>` usage | ⏳ Blocked on theme import |
+| 13 | Hardening — smoke tests, tsconfig cleanup, zip removal post-theme-import | ⏳ In progress |
+| 14 | Reviews & Ratings — real Judge.me reviews and star ratings site-wide | ✅ Complete |
 
 ---
 
