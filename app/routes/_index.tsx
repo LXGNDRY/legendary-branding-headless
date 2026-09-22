@@ -5,6 +5,7 @@ import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
+import Button from '~/components/ui/Button';
 import HeroSplit from '~/components/sections/HeroSplit';
 import StatStrip from '~/components/sections/StatStrip';
 import CategoryGrid from '~/components/sections/CategoryGrid';
@@ -63,6 +64,14 @@ const HOMEPAGE_QUERY = `#graphql
         }
       }
     }
+    marqueLegendaire: collection(handle: "marque-legendaire-luxury-streetwear") {
+      title
+      products(first: 4, sortKey: BEST_SELLING) {
+        nodes {
+          ...ProductCard
+        }
+      }
+    }
   }
 ` as const;
 
@@ -85,7 +94,7 @@ export const meta: MetaFunction = () => {
 export async function loader({context}: LoaderFunctionArgs) {
   const {storefront} = context;
 
-  const {featuredCollections, newDrops, bestSellers} = await storefront.query(
+  const {featuredCollections, newDrops, bestSellers, marqueLegendaire} = await storefront.query(
     HOMEPAGE_QUERY,
     {
       variables: {
@@ -131,7 +140,16 @@ export async function loader({context}: LoaderFunctionArgs) {
       })
     : Promise.resolve([]);
 
-  return {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount, quotes};
+  return {
+    featuredCollections,
+    newDrops,
+    bestSellers,
+    marqueLegendaire,
+    ratedProducts,
+    aggregateRating,
+    aggregateCount,
+    quotes,
+  };
 }
 
 const MARQUEE_ITEMS = [
@@ -145,11 +163,18 @@ const MARQUEE_ITEMS = [
 ];
 
 export default function Homepage() {
-  const {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount, quotes} =
-    useLoaderData<typeof loader>();
+  const {
+    featuredCollections,
+    newDrops,
+    marqueLegendaire,
+    ratedProducts,
+    aggregateRating,
+    aggregateCount,
+    quotes,
+  } = useLoaderData<typeof loader>();
 
   const newDropProducts = (newDrops?.products?.nodes ?? []) as ProductCardFragment[];
-  const bestSellerProducts = (bestSellers?.products?.nodes ?? []) as ProductCardFragment[];
+  const marqueLegendaireProducts = (marqueLegendaire?.products?.nodes ?? []) as ProductCardFragment[];
 
   return (
     <div>
@@ -199,20 +224,23 @@ export default function Homepage() {
         secondaryHref="/policies/about"
       />
 
-      {/* 7 — Best sellers */}
-      {bestSellerProducts.length > 0 && (
+      {/* 7 — Marque Légendaire collection */}
+      {marqueLegendaireProducts.length > 0 && (
         <section className="h-section bg-[var(--color-background)]">
           <div className="h-container">
             <div className="flex items-end justify-between mb-10">
               <div>
-                <p className="h-eyebrow mb-3">Most Wanted</p>
+                <p className="h-eyebrow mb-3">Luxury Streetwear</p>
                 <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-foreground)]">
-                  Best Sellers
+                  Marque Légendaire
                 </h2>
               </div>
+              <Button as="link" to="/collections/marque-legendaire-luxury-streetwear" variant="ghost">
+                View All
+              </Button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {bestSellerProducts.slice(0, 4).map((product, i) => (
+              {marqueLegendaireProducts.slice(0, 4).map((product, i) => (
                 <ProductCard
                   key={product.id}
                   product={product}
