@@ -189,6 +189,7 @@ function MobileMenu({
   accountsEnabled: boolean;
 }) {
   const {containerRef} = useFocusTrap(open, onClose);
+  const [openItem, setOpenItem] = useState<string | null>(null);
 
   // Prevent body scroll
   useEffect(() => {
@@ -197,6 +198,12 @@ function MobileMenu({
       document.body.style.overflow = 'hidden';
       return () => { document.body.style.overflow = original; };
     }
+  }, [open]);
+
+  // Collapse any expanded submenu whenever the drawer itself closes, so it
+  // doesn't reopen already-expanded next time.
+  useEffect(() => {
+    if (!open) setOpenItem(null);
   }, [open]);
 
   return (
@@ -214,9 +221,9 @@ function MobileMenu({
         <Link
           to="/"
           onClick={onClose}
-          className="flex items-center gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
+          className="flex items-baseline gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
         >
-          <GoatMark className="h-6 w-6 shrink-0" />
+          <GoatMark className="h-6 w-6 shrink-0 translate-y-[5px]" />
           LEGENDARY
         </Link>
         <button
@@ -230,18 +237,67 @@ function MobileMenu({
 
       <nav className="flex-1 overflow-y-auto px-6 pt-10 pb-8">
         <ul className="space-y-5 mb-12">
-          {NAV.map((item) => (
-            <li key={item.href} className="border-b border-[var(--color-border-subtle)] pb-4">
-              <Link
-                to={item.href}
-                onClick={onClose}
-                className="flex items-center justify-between font-serif text-[clamp(1.75rem,7vw,2.75rem)] leading-none text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
-              >
-                <span>{item.label}</span>
-                <ChevronDownIcon />
-              </Link>
-            </li>
-          ))}
+          {NAV.map((item) => {
+            const hasSubmenu = Boolean(item.groups?.length);
+            const isOpen = openItem === item.label;
+            const submenuId = `mobile-submenu-${item.label.toLowerCase().replace(/\s+/g, '-')}`;
+
+            return (
+              <li key={item.href} className="border-b border-[var(--color-border-subtle)] pb-4">
+                <div className="flex items-center justify-between gap-3">
+                  <Link
+                    to={item.href}
+                    onClick={onClose}
+                    className="font-serif text-[clamp(1.75rem,7vw,2.75rem)] leading-none text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                  {hasSubmenu && (
+                    <button
+                      type="button"
+                      onClick={() => setOpenItem(isOpen ? null : item.label)}
+                      aria-expanded={isOpen}
+                      aria-controls={submenuId}
+                      aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label} submenu`}
+                      className="p-2 -m-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                    >
+                      <span className={`inline-block transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                        <ChevronDownIcon />
+                      </span>
+                    </button>
+                  )}
+                </div>
+
+                {hasSubmenu && isOpen && (
+                  <div id={submenuId} className="mt-4 space-y-5">
+                    {item.groups!.map((group) => (
+                      <div key={group.label}>
+                        <p className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">{group.label}</p>
+                        <ul className="space-y-3">
+                          {group.links.map((link) => (
+                            <li key={link.href}>
+                              <Link
+                                to={link.href}
+                                onClick={onClose}
+                                className="flex items-center gap-2 text-base text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                              >
+                                {link.label}
+                                {link.isNew && (
+                                  <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-white px-1.5 py-0.5 rounded-full">
+                                    New
+                                  </span>
+                                )}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
 
         <div className="space-y-5 pt-6 border-t border-[var(--color-border-muted)]">
@@ -359,12 +415,20 @@ export default function Header({
               <MenuIcon />
             </button>
 
-            {/* Wordmark */}
+            {/* Wordmark -- `items-baseline` anchors the icon's bottom edge to
+                the text's real glyph baseline (Instrument Serif's line-box
+                reserves headroom well above the cap height, so `items-center`
+                put the icon visibly above the text). The icon is still taller
+                than the text's cap height though, so its own visual center
+                sits above the text's optical center even baseline-anchored --
+                translate-y closes that gap, measured against actual canvas
+                text metrics (ascent/descent) at each breakpoint's font size
+                rather than eyeballed. */}
             <Link
               to="/"
-              className="flex items-center gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
+              className="flex items-baseline gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
             >
-              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0" />
+              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0 translate-y-[5px] lg:translate-y-[6.5px]" />
               LEGENDARY
             </Link>
 

@@ -30,6 +30,12 @@ interface Env {
   PUBLIC_KLAVIYO_WAITLIST_LIST_ID: string;
   // Klaviyo on-site embed (public company ID — safe to expose client-side)
   PUBLIC_KLAVIYO_COMPANY_ID: string;
+  // AI chat widget (optional, server-only — widget degrades to "unavailable"
+  // when unset, see app/routes/api.chat.ts)
+  PRIVATE_ANTHROPIC_API_KEY: string;
+  // Judge.me reviews API (optional, server-only — real review quote cards on
+  // the homepage degrade to no section when unset, see app/lib/judgeme.ts)
+  PRIVATE_JUDGEME_API_TOKEN: string;
 }
 
 declare module 'virtual:react-router/server-build' {

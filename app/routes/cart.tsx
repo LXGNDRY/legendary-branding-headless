@@ -1,6 +1,6 @@
 import type {MetaFunction, LoaderFunctionArgs, ActionFunctionArgs} from 'react-router';
 import {useLoaderData, useFetcher, Link} from 'react-router';
-import {Analytics, AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
+import {Analytics, AnalyticsEvent, CartForm, Image, Money, ShopPayButton, useAnalytics} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useEffect, useState} from 'react';
 import Container from '~/components/ui/Container';
@@ -59,7 +59,10 @@ export async function action({request, context}: ActionFunctionArgs) {
 
 export async function loader({context}: LoaderFunctionArgs) {
   const {cart} = context;
-  return {cart: (await cart.get()) as CartData};
+  return {
+    cart: (await cart.get()) as CartData,
+    storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+  };
 }
 
 function MinusIcon() {
@@ -336,11 +339,19 @@ function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
 }
 
 export default function CartPage() {
-  const {cart} = useLoaderData<typeof loader>();
+  const {cart, storeDomain} = useLoaderData<typeof loader>();
   const {publish} = useAnalytics();
   const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
   const [checkingOut, setCheckingOut] = useState(false);
+  // Hydrogen's <ShopPayButton> only accepts variant IDs/quantities -- it has
+  // no way to carry discount codes into the Shop Pay checkout it opens. That
+  // means a discounted cart summary here could be followed by an undiscounted
+  // Shop Pay checkout, so the button is hidden whenever a discount is
+  // applied rather than showing a mismatched total.
+  const hasApplicableDiscount = Boolean(
+    cart?.discountCodes?.some((code) => code.applicable),
+  );
 
   // A shopper hitting Back from Shopify's hosted checkout can restore this
   // page from the bfcache with React state intact, leaving `checkingOut`
@@ -448,6 +459,19 @@ export default function CartPage() {
               >
                 Proceed to Checkout
               </Button>
+            )}
+
+            {storeDomain && cart && cart.lines.edges.length > 0 && !hasApplicableDiscount && (
+              <div className="mt-3">
+                <ShopPayButton
+                  variantIdsAndQuantities={cart.lines.edges.map(({node}) => ({
+                    id: node.merchandise.id,
+                    quantity: node.quantity,
+                  }))}
+                  storeDomain={storeDomain}
+                  className="w-full [&_shop-pay-button]:block"
+                />
+              </div>
             )}
 
             <p className="mt-4 text-center text-[11px] text-[var(--color-text-secondary)] tracking-wide">

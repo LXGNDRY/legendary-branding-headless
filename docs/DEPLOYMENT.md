@@ -107,6 +107,16 @@ routes, GA4 simply not loading, robots.txt/sitemap.xml falling back cleanly with
 domain), never crashing. Add any of them back to the contract in `scripts/validate-release-env.mjs`
 once that feature is actually turned on.
 
+**`PUBLIC_CHECKOUT_DOMAIN` should still be set to `legendary-branding.com` as a real (non-required)
+secret**, even though it's not in the validation contract. Verified directly against the live
+store: Shopify serves checkout from `legendary-branding.com/checkouts/...` -- the exact same
+domain as the storefront, not a separate `myshopify.com` or `checkout.shopify.com` host. This
+value feeds `Analytics.Provider`'s `consent.checkoutDomain` (`app/root.tsx`), which Hydrogen uses
+to scope the `_shopify_y`/`_shopify_s` tracking cookies across the storefront-to-checkout handoff
+for consistent attribution and consent-state continuity. Leaving it unset doesn't break checkout
+itself (the redirect to `checkoutUrl` still works either way), but it does mean that handoff loses
+first-party tracking continuity once this app is serving `legendary-branding.com` directly.
+
 The commerce E2E fixture defaults to the active, stocked
 `legendary-world-round-t-shirt` product. Set the non-secret
 `E2E_PRODUCT_HANDLE` environment variable when deliberately rotating the test
@@ -125,6 +135,12 @@ Oxygen environment (Shopify Admin → Hydrogen → Environments), not via GitHub
 - `PUBLIC_META_PIXEL_ID`, `PUBLIC_TIKTOK_PIXEL_ID` — each optional pixel in
   `app/components/seo/Analytics.tsx` simply doesn't load if its ID is unset.
 - `PUBLIC_KLAVIYO_COMPANY_ID` — optional consent-gated Klaviyo on-site forms.
+- `PRIVATE_ANTHROPIC_API_KEY` — powers the storefront Q&A chat widget
+  (`app/routes/api.chat.ts`). Server-only. Without it the widget's API route
+  returns a clean `503` ("Chat is temporarily unavailable") rather than
+  crashing or faking a reply; the widget UI still renders either way. Get a
+  key at console.anthropic.com and set it in the Oxygen environment when
+  ready to turn the widget on.
 
 Newsletter and waitlist endpoints now fail truthfully with `503` when their required Klaviyo
 configuration is missing. Customer Account navigation is hidden and its routes fail with `503`

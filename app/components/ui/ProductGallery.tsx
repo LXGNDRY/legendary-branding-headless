@@ -1,4 +1,4 @@
-import {useRef, useState} from 'react';
+import {useRef, useState, type ReactNode} from 'react';
 import {Image} from '@shopify/hydrogen';
 import Placeholder from '~/components/ui/Placeholder';
 
@@ -13,9 +13,12 @@ type GalleryImage = {
 export default function ProductGallery({
   images,
   title,
+  badges,
 }: {
   images: GalleryImage[];
   title: string;
+  /** Optional overlay content (e.g. Sale / low-stock badges) pinned to the top-left of the main image. */
+  badges?: ReactNode;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
@@ -61,6 +64,11 @@ export default function ProductGallery({
           className="w-full object-cover transition-opacity duration-300"
           key={active.url}
         />
+        {badges && (
+          <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
+            {badges}
+          </div>
+        )}
         {images.length > 1 && (
           <>
             <span className="absolute right-3 bottom-3 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] text-white backdrop-blur-sm">

@@ -46,7 +46,6 @@ export default function HeroSplit({
             />
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-level-0)] via-[var(--color-bg-level-0)]/40 to-[var(--color-bg-level-0)]/20" />
-            <div className="absolute inset-0 bg-[var(--color-bg-level-3)]" />
           </>
         ) : (
           <div className="absolute inset-0 bg-[var(--color-bg-level-1)]" />
@@ -94,16 +93,20 @@ export default function HeroSplit({
         </div>
       </div>
 
-      {/* Right column secondary image (desktop) */}
+      {/* Right column secondary image (desktop) -- inset from the section's
+          edges (rather than flush top/bottom/right) with rounded corners and
+          a shadow so it reads as a floating featured card over the main hero
+          photo, instead of a second full-bleed panel butted hard against it
+          with a stark vertical seam. */}
       {rightImage?.url && rightProduct && (
-        <div className="hidden lg:block absolute top-0 right-0 h-full w-[38%] overflow-hidden border-l border-[var(--color-border-muted)]">
+        <div className="hidden lg:block absolute top-8 bottom-8 right-8 w-[36%] overflow-hidden rounded-2xl shadow-2xl">
           <Link to={`/products/${rightProduct.handle}`} className="block w-full h-full group">
             <Image
               data={rightImage}
               width={900}
               height={1200}
               className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-[1.5s] ease-[var(--ease-expo)] group-hover:scale-[1.04]"
-              sizes="38vw"
+              sizes="36vw"
               loading="eager"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />

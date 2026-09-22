@@ -1,7 +1,7 @@
 import {useEffect, useState, useRef} from 'react';
 import {Link, useFetcher} from 'react-router';
 import Button from '~/components/ui/Button';
-import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
+import {AnalyticsEvent, CartForm, Image, Money, ShopPayButton, useAnalytics} from '@shopify/hydrogen';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
 import {withCheckoutLocale} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
@@ -189,9 +189,10 @@ interface CartDrawerProps {
   cart: CartData;
   open: boolean;
   onClose: () => void;
+  storeDomain?: string;
 }
 
-export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
+export default function CartDrawer({cart, open, onClose, storeDomain}: CartDrawerProps) {
   const {publish} = useAnalytics();
   const currentCart = cart;
   const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
@@ -505,6 +506,24 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 Checkout
               </Button>
             )}
+
+            {/* Hydrogen's <ShopPayButton> only accepts variant IDs/quantities --
+                it has no way to carry discount codes into the Shop Pay
+                checkout it opens, so a discounted cart summary could be
+                followed by an undiscounted checkout. Hidden whenever a
+                discount is applied rather than showing a mismatched total. */}
+            {storeDomain &&
+              currentCart.lines.edges.length > 0 &&
+              !currentCart.discountCodes?.some((code) => code.applicable) && (
+                <ShopPayButton
+                  variantIdsAndQuantities={currentCart.lines.edges.map(({node}) => ({
+                    id: node.merchandise.id,
+                    quantity: node.quantity,
+                  }))}
+                  storeDomain={storeDomain}
+                  className="w-full [&_shop-pay-button]:block"
+                />
+              )}
 
             <div className="flex justify-center pt-1">
               <Link

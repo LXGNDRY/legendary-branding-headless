@@ -1,5 +1,6 @@
 import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
-import {useLoaderData} from 'react-router';
+import {Suspense} from 'react';
+import {useLoaderData, Await} from 'react-router';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -9,10 +10,13 @@ import StatStrip from '~/components/sections/StatStrip';
 import CategoryGrid from '~/components/sections/CategoryGrid';
 import NewArrivalsGrid from '~/components/sections/NewArrivalsGrid';
 import EditorialBand from '~/components/sections/EditorialBand';
-import Testimonials from '~/components/sections/Testimonials';
+import VerifiedReviews from '~/components/sections/VerifiedReviews';
+import ReviewQuotes from '~/components/sections/ReviewQuotes';
+import UGCGrid from '~/components/sections/UGCGrid';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import {CacheLong} from '~/lib/cache';
+import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
 
 type CollectionNode = {
   id: string;
@@ -92,7 +96,42 @@ export async function loader({context}: LoaderFunctionArgs) {
     },
   );
 
-  return {featuredCollections, newDrops, bestSellers};
+  const ratedProducts = ((bestSellers?.products?.nodes ?? []) as ProductCardFragment[])
+    .map((product) => {
+      const parsed = parseJudgemeBadge(product.reviewBadge?.value);
+      return parsed
+        ? {
+            id: product.id,
+            handle: product.handle,
+            title: product.title,
+            image: product.featuredImage,
+            rating: parsed.rating,
+            reviewCount: parsed.count,
+          }
+        : null;
+    })
+    .filter((p): p is NonNullable<typeof p> => p !== null);
+
+  const aggregateCount = ratedProducts.reduce((sum, p) => sum + p.reviewCount, 0);
+  const aggregateRating =
+    aggregateCount > 0
+      ? ratedProducts.reduce((sum, p) => sum + p.rating * p.reviewCount, 0) / aggregateCount
+      : 0;
+
+  // Real review quote cards -- optional, server-only, and NOT awaited here:
+  // this is a third-party fetch (up to a 5s timeout) for a non-critical
+  // section, so it streams in after the initial response instead of
+  // blocking the whole homepage on Judge.me's availability. Degrades to an
+  // empty list (no section rendered) rather than failing the page when the
+  // token is unset or the API call fails.
+  const quotes = context.env.PRIVATE_JUDGEME_API_TOKEN
+    ? fetchJudgemeQuotes({
+        apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
+        shopDomain: context.env.PUBLIC_STORE_DOMAIN,
+      })
+    : Promise.resolve([]);
+
+  return {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount, quotes};
 }
 
 const MARQUEE_ITEMS = [
@@ -105,32 +144,8 @@ const MARQUEE_ITEMS = [
   'DTG PRINTS',
 ];
 
-const TESTIMONIALS = [
-  {
-    quote:
-      "This is the heaviest tee I've ever owned. The quality is unreal. You can feel the difference the second you put it on.",
-    name: 'Marcus T.',
-    location: 'Atlanta, GA',
-    stars: 5,
-  },
-  {
-    quote:
-      'Made to order means I actually had to wait, but it was worth every day. Fits perfectly, no shrinkage after washing.',
-    name: 'Jordan L.',
-    location: 'London, UK',
-    stars: 5,
-  },
-  {
-    quote:
-      "The DTG print quality blew me away. Sharp edges, no cracking. Other brands can't touch this.",
-    name: 'Aaliyah M.',
-    location: 'Toronto, CA',
-    stars: 5,
-  },
-];
-
 export default function Homepage() {
-  const {featuredCollections, newDrops, bestSellers} =
+  const {featuredCollections, newDrops, bestSellers, ratedProducts, aggregateRating, aggregateCount, quotes} =
     useLoaderData<typeof loader>();
 
   const newDropProducts = (newDrops?.products?.nodes ?? []) as ProductCardFragment[];
@@ -141,7 +156,7 @@ export default function Homepage() {
       {/* 1 — Split hero */}
       <HeroSplit
         eyebrow="235GSM+ · Made To Order · DTG Prints"
-        heading={`Premium\nStreet\nwear.`}
+        heading={`Premium\nStreetwear.`}
         subtext="Heavyweight essentials built to last. No restocks. No shortcuts."
         primaryLabel="Shop Now"
         primaryHref="/collections/all-products"
@@ -211,14 +226,32 @@ export default function Homepage() {
         </section>
       )}
 
-      {/* 8 — Testimonials */}
-      <Testimonials
+      {/* 8 — Verified reviews (real Judge.me aggregate, no invented quotes) */}
+      <VerifiedReviews
         eyebrow="Customer Reviews"
-        heading="The Culture Speaks"
-        items={TESTIMONIALS}
+        heading="Rated by the Culture"
+        aggregateRating={aggregateRating}
+        aggregateCount={aggregateCount}
+        products={ratedProducts}
       />
 
-      {/* 9 — Newsletter */}
+      {/* 9 — Real review quote cards (Judge.me API, optional) */}
+      <Suspense fallback={null}>
+        <Await resolve={quotes}>
+          {(resolvedQuotes) => (
+            <ReviewQuotes eyebrow="In Their Words" heading="The Culture Speaks" quotes={resolvedQuotes} />
+          )}
+        </Await>
+      </Suspense>
+
+      {/* 10 — Community / UGC */}
+      <UGCGrid
+        eyebrow="Community"
+        heading="Worn By The Culture"
+        hashtag="#LegendaryBranding"
+      />
+
+      {/* 11 — Newsletter */}
       <NewsletterBand
         eyebrow="Stay in the loop"
         heading="Get early access to drops."

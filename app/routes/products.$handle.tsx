@@ -8,11 +8,12 @@ import {
   isRouteErrorResponse,
   Link,
 } from 'react-router';
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import {
   CartForm,
   Image,
   Money,
+  ShopPayButton,
   VariantSelector,
   Analytics,
   getSelectedProductOptions,
@@ -29,8 +30,11 @@ import {
   breadcrumbSchema,
 } from '~/components/seo/SeoSchema';
 import SizeGuideModal from '~/components/ui/SizeGuideModal';
+import TrustStrip from '~/components/ui/TrustStrip';
 import WaitlistForm from '~/components/ui/WaitlistForm';
 import RecentlyViewed from '~/components/ui/RecentlyViewed';
+import StatStrip from '~/components/sections/StatStrip';
+import UGCGrid from '~/components/sections/UGCGrid';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -119,7 +123,17 @@ const PRODUCT_QUERY = `#graphql
       options {
         id
         name
-        optionValues { name }
+        optionValues {
+          name
+          swatch {
+            color
+            image {
+              previewImage {
+                url
+              }
+            }
+          }
+        }
       }
       selectedVariant: variantBySelectedOptions(
         selectedOptions: $selectedOptions
@@ -192,7 +206,11 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   });
 
   if (!product) throw new Response('Product not found', {status: 404});
-  return {product: product as ProductFull, relatedProducts};
+  return {
+    product: product as ProductFull,
+    relatedProducts,
+    storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+  };
 }
 
 function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragment | null; quantity?: number}) {
@@ -275,6 +293,57 @@ function MobilePurchaseBar({
   );
 }
 
+function StickyBuyBar({
+  title,
+  variant,
+  quantity,
+  visible,
+}: {
+  title: string;
+  variant?: ProductVariantFragment | null;
+  quantity: number;
+  visible: boolean;
+}) {
+  const available = Boolean(variant?.availableForSale);
+
+  return (
+    <div
+      className={`fixed inset-x-0 top-0 z-40 hidden border-b border-[var(--color-border-medium)] bg-[var(--color-bg-level-0)]/95 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-transform duration-200 lg:top-[68px] lg:block ${
+        visible ? 'translate-y-0 visible' : '-translate-y-full invisible'
+      }`}
+      aria-hidden={!visible}
+    >
+      <div className="h-container flex items-center justify-between gap-6 py-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">{title}</p>
+        </div>
+        {variant && (
+          <Money data={variant.price} className="shrink-0 text-sm font-semibold text-[var(--color-text-primary)]" />
+        )}
+        {available && variant ? (
+          <CartForm
+            route="/cart"
+            action={CartForm.ACTIONS.LinesAdd}
+            inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
+          >
+            <button type="submit" className="h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs">
+              Add to Bag
+            </button>
+          </CartForm>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs opacity-40 cursor-not-allowed"
+          >
+            {variant ? 'Sold Out' : 'Choose an option'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function QuantitySelector({value, onChange}: {value: number; onChange: (v: number) => void}) {
   return (
     <div className="flex items-center border border-[var(--color-border-medium)] rounded-md overflow-hidden bg-[var(--color-bg-level-2)]">
@@ -339,9 +408,22 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
 }
 
 export default function ProductPage() {
-  const {product, relatedProducts} = useLoaderData<typeof loader>();
+  const {product, relatedProducts, storeDomain} = useLoaderData<typeof loader>();
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const buyBoxSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const sentinel = buyBoxSentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      {rootMargin: '-64px 0px 0px 0px'},
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
 
   const selectedVariant = useOptimisticVariant(
     product.selectedVariant as ProductVariantFragment | undefined,
@@ -353,6 +435,18 @@ export default function ProductPage() {
     parseFloat(selectedVariant.compareAtPrice.amount) > parseFloat(selectedVariant.price.amount);
 
   const isNew = product.tags.includes('new');
+
+  // Mirrors the live Liquid theme's threshold (1-9 units left) for showing
+  // low-stock urgency messaging on the gallery image and near the variant
+  // selector. Deliberately a boolean, not the exact count: this product
+  // query is served from CacheLong() (up to 24h stale-while-revalidate), so
+  // quantityAvailable can lag real inventory -- a coarse "low stock" signal
+  // degrades gracefully when stale, an exact "Only 3 left" claim does not.
+  const isLowStock =
+    Boolean(selectedVariant?.availableForSale) &&
+    typeof selectedVariant?.quantityAvailable === 'number' &&
+    selectedVariant.quantityAvailable >= 1 &&
+    selectedVariant.quantityAvailable <= 9;
 
   // Judge.me review metafields — populated by the Judge.me app's ongoing
   // sync into Shopify metafields; absent until a product has its first
@@ -451,7 +545,18 @@ export default function ProductPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
             {/* Gallery */}
-            <ProductGallery images={product.images.nodes} title={product.title} />
+            <ProductGallery
+              images={product.images.nodes}
+              title={product.title}
+              badges={
+                (isOnSale || isLowStock) && (
+                  <>
+                    {isOnSale && <Badge variant="sale">Sale</Badge>}
+                    {isLowStock && <Badge variant="default">Low Stock</Badge>}
+                  </>
+                )
+              }
+            />
 
             {/* Product info */}
             <div className="space-y-6">
@@ -465,7 +570,7 @@ export default function ProductPage() {
               )}
 
               {/* Title + price */}
-              <div>
+              <div ref={buyBoxSentinelRef}>
                 <h1 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.01em] text-[var(--color-text-primary)] mb-3">
                   {product.title}
                 </h1>
@@ -480,12 +585,28 @@ export default function ProductPage() {
                     dangerouslySetInnerHTML={{__html: judgemeBadgeHtml}}
                   />
                 )}
-                <div className="flex items-baseline gap-3">
+                <div className="flex items-baseline gap-3 flex-wrap">
                   {selectedVariant ? (
                     <>
                       <Money data={selectedVariant.price} className="text-[1.1rem] font-medium text-[var(--color-text-primary)]" />
                       {isOnSale && selectedVariant.compareAtPrice && (
-                        <Money data={selectedVariant.compareAtPrice} className="text-sm text-[var(--color-text-tertiary)] line-through font-normal" />
+                        <>
+                          <Money data={selectedVariant.compareAtPrice} className="text-sm text-[var(--color-text-tertiary)] line-through font-normal" />
+                          <span className="inline-flex items-center rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
+                            Save{' '}
+                            <Money
+                              data={{
+                                amount: (
+                                  parseFloat(selectedVariant.compareAtPrice.amount) -
+                                  parseFloat(selectedVariant.price.amount)
+                                ).toString(),
+                                currencyCode: selectedVariant.price.currencyCode,
+                              }}
+                              className="ml-1"
+                              as="span"
+                            />
+                          </span>
+                        </>
                       )}
                     </>
                   ) : (
@@ -517,43 +638,106 @@ export default function ProductPage() {
                       )}
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      {option.values.map(({value, isActive, isAvailable, to}) => {
-                        const optionClass = `min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-md ${
-                            isActive
-                              ? 'border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)]'
-                              : isAvailable
-                                ? 'border-[var(--color-border-medium)] text-[var(--color-text-primary)] hover:border-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-2)]'
-                                : 'border-[var(--color-border-muted)] text-[var(--color-text-tertiary)] cursor-not-allowed line-through opacity-50'
-                          }`;
+                      {(() => {
+                        const isColor = ['color', 'colour'].includes(option.name.toLowerCase());
+                        return option.values.map(({value, isActive, isAvailable, to, optionValue}) => {
+                          const swatch = (optionValue as {swatch?: {color?: string | null; image?: {previewImage?: {url?: string | null} | null} | null} | null} | undefined)?.swatch;
+                          const swatchImageUrl = swatch?.image?.previewImage?.url;
+                          const swatchStyle = swatchImageUrl
+                            ? {backgroundImage: `url(${swatchImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center'}
+                            : swatch?.color
+                              ? {backgroundColor: swatch.color}
+                              : undefined;
 
-                        return isAvailable ? (
-                          <Link
-                            key={value}
-                            to={to}
-                            replace
-                            preventScrollReset
-                            prefetch="intent"
-                            className={optionClass}
-                            aria-label={`${option.name}: ${value}`}
-                          >
-                            {value}
-                          </Link>
-                        ) : (
-                          <span
-                            key={value}
-                            className={optionClass}
-                            aria-disabled="true"
-                            aria-label={`${option.name}: ${value} (unavailable)`}
-                          >
-                            {value}
-                          </span>
-                        );
-                      })}
+                          // Only render the circular swatch treatment when
+                          // Shopify actually has swatch metadata configured
+                          // for this value. Guessing a CSS color from
+                          // arbitrary merchandising text (e.g. "Heather
+                          // Grey") produces invalid CSS and an unlabeled,
+                          // invisible circle -- falling through to the
+                          // normal labeled text pill below is always
+                          // legible instead.
+                          if (isColor && swatchStyle) {
+                            const swatchClass = `relative h-9 w-9 rounded-full border-2 transition-all duration-150 shrink-0 ${
+                              isActive
+                                ? 'border-[var(--color-text-primary)] ring-2 ring-offset-2 ring-[var(--color-text-primary)]'
+                                : isAvailable
+                                  ? 'border-[var(--color-border-medium)] hover:border-[var(--color-text-primary)]'
+                                  : 'border-[var(--color-border-muted)] opacity-40 cursor-not-allowed'
+                            }`;
+
+                            return isAvailable ? (
+                              <Link
+                                key={value}
+                                to={to}
+                                replace
+                                preventScrollReset
+                                prefetch="intent"
+                                className={swatchClass}
+                                style={swatchStyle}
+                                aria-label={`${option.name}: ${value}`}
+                                title={value}
+                              />
+                            ) : (
+                              <span
+                                key={value}
+                                className={`${swatchClass} after:absolute after:inset-0 after:m-auto after:h-[1px] after:w-full after:-rotate-45 after:bg-[var(--color-text-tertiary)]`}
+                                style={swatchStyle}
+                                aria-disabled="true"
+                                aria-label={`${option.name}: ${value} (unavailable)`}
+                                title={`${value} — Sold out`}
+                              />
+                            );
+                          }
+
+                          const optionClass = `min-w-[3rem] h-10 px-4 border text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 flex items-center justify-center rounded-md ${
+                              isActive
+                                ? 'border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)]'
+                                : isAvailable
+                                  ? 'border-[var(--color-border-medium)] text-[var(--color-text-primary)] hover:border-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-2)]'
+                                  : 'border-[var(--color-border-muted)] text-[var(--color-text-tertiary)] cursor-not-allowed line-through opacity-50'
+                            }`;
+
+                          return isAvailable ? (
+                            <Link
+                              key={value}
+                              to={to}
+                              replace
+                              preventScrollReset
+                              prefetch="intent"
+                              className={optionClass}
+                              aria-label={`${option.name}: ${value}`}
+                            >
+                              {value}
+                            </Link>
+                          ) : (
+                            <span
+                              key={value}
+                              className={optionClass}
+                              aria-disabled="true"
+                              aria-label={`${option.name}: ${value} (unavailable)`}
+                            >
+                              {value}
+                            </span>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 )}
                 </VariantSelector>
               </div>
+
+              {isLowStock && (
+                <div
+                  className="flex items-center gap-2 text-[0.75rem] font-medium text-[var(--color-accent)]"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--color-accent)]" aria-hidden="true" />
+                  Low stock — order soon
+                </div>
+              )}
 
               {/* Quantity + Add to cart */}
               <div className="space-y-3 pt-2">
@@ -567,6 +751,16 @@ export default function ProductPage() {
                   variant={selectedVariant as ProductVariantFragment | null | undefined}
                   quantity={quantity}
                 />
+                {selectedVariant?.availableForSale && (
+                  <ShopPayButton
+                    variantIdsAndQuantities={[{id: selectedVariant.id, quantity}]}
+                    storeDomain={storeDomain}
+                    className="w-full [&_shop-pay-button]:block"
+                  />
+                )}
+                <p className="text-center text-[0.7rem] text-[var(--color-text-tertiary)]">
+                  Secure checkout · SSL encrypted
+                </p>
                 {!selectedVariant?.availableForSale && selectedVariant && (
                   <section id="restock-signup" className="rounded-md border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] p-1">
                     <div className="px-3 pt-3">
@@ -587,6 +781,8 @@ export default function ProductPage() {
               <p className="h-eyebrow text-[var(--color-text-tertiary)] text-center">
                 Free shipping over $100 · 30-day returns
               </p>
+
+              <TrustStrip />
 
               {/* Accordions */}
               <div className="border-t border-[var(--color-border-muted)] pt-4">
@@ -632,7 +828,7 @@ export default function ProductPage() {
 
         {/* Reviews */}
         {judgemeWidgetHtml && (
-          <section className="border-t border-[var(--color-border-muted)]">
+          <section id="reviews" className="border-t border-[var(--color-border-muted)] scroll-mt-24">
             <div className="h-container py-16">
               <p className="h-eyebrow mb-3">Reviews</p>
               <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
@@ -647,6 +843,17 @@ export default function ProductPage() {
             </div>
           </section>
         )}
+
+        {/* Craft / trust stats */}
+        <StatStrip variant="light" />
+
+        {/* Community / UGC */}
+        <UGCGrid
+          eyebrow="Community"
+          heading="See It Styled"
+          hashtag="#LegendaryBranding"
+          count={6}
+        />
 
         {/* Related products */}
         {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
@@ -687,6 +894,12 @@ export default function ProductPage() {
       />
 
       <MobilePurchaseBar variant={selectedVariant} quantity={quantity} />
+      <StickyBuyBar
+        title={product.title}
+        variant={selectedVariant}
+        quantity={quantity}
+        visible={showStickyBar}
+      />
 
       {/* Size guide modal */}
       <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />

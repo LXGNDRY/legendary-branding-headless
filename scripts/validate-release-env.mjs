@@ -17,6 +17,10 @@ export const RELEASE_ENVIRONMENT_VARIABLES = [
 // (app/root.tsx passes it through as `|| undefined`, and Analytics.tsx simply
 // doesn't load the GA4 pixel when unset) -- per explicit owner request, these
 // shouldn't gate a release either. Add them back once real values are set.
+//
+// PRIVATE_ANTHROPIC_API_KEY (AI chat widget) is the same shape: app/routes/
+// api.chat.ts returns a clean 503 ("Chat is temporarily unavailable") rather
+// than crashing when it's unset, so it doesn't gate a release either.
 
 export function missingReleaseEnvironment(environment = process.env) {
   return RELEASE_ENVIRONMENT_VARIABLES.filter((name) => {
