@@ -88,6 +88,7 @@ export function createMockStorefront(config: MockStorefrontConfig = {}) {
         isPending: false,
       },
       waitUntil: () => {},
+      env: {},
       ...overrides,
     }),
   };
