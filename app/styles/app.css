@@ -737,4 +737,20 @@
     transform: none !important;
     transition: none !important;
   }
+
+  /* Marquee tracks (AnnouncementBar, BrandMarquee): the generic rule above
+     already stops the scrolling animation, but that alone just leaves the
+     duplicated, left-aligned content sitting there -- overflow-hidden then
+     clips it after the first item or two, which reads as broken/cut-off
+     rather than a clean static bar. Show only the first (real, not
+     duplicated) item, centered, instead. */
+  .h-announce-track,
+  .h-marquee-track {
+    justify-content: center !important;
+  }
+
+  .h-announce-track > *:not(:first-child),
+  .h-marquee-track > *:not(:first-child) {
+    display: none !important;
+  }
 }

@@ -25,7 +25,7 @@ export default function AnnouncementBar({items = DEFAULT_ITEMS}: AnnouncementBar
   return (
     <div className="bg-[var(--color-bg-level-2)] text-[var(--color-text-primary)] overflow-hidden border-b border-[var(--color-border-muted)]">
       <div
-        className="flex whitespace-nowrap py-2 will-change-transform"
+        className="h-announce-track flex whitespace-nowrap py-2 will-change-transform"
         style={{animation: 'h-announce-scroll 40s linear infinite'}}
         aria-hidden="true"
       >
