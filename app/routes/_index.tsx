@@ -13,7 +13,6 @@ import NewArrivalsGrid from '~/components/sections/NewArrivalsGrid';
 import EditorialBand from '~/components/sections/EditorialBand';
 import VerifiedReviews from '~/components/sections/VerifiedReviews';
 import ReviewQuotes from '~/components/sections/ReviewQuotes';
-import UGCGrid from '~/components/sections/UGCGrid';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import {CacheLong} from '~/lib/cache';
@@ -272,14 +271,7 @@ export default function Homepage() {
         </Await>
       </Suspense>
 
-      {/* 10 — Community / UGC */}
-      <UGCGrid
-        eyebrow="Community"
-        heading="Worn By The Culture"
-        hashtag="#LegendaryBranding"
-      />
-
-      {/* 11 — Newsletter */}
+      {/* 10 — Newsletter */}
       <NewsletterBand
         eyebrow="Stay in the loop"
         heading="Get early access to drops."
