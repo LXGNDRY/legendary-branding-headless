@@ -88,7 +88,7 @@ export default function Footer({localization}: {localization: LocalizationData})
               to="/"
               className="inline-flex items-center gap-3 text-[clamp(2rem,4vw,3rem)] font-serif leading-none text-[var(--color-text-primary)] select-none"
             >
-              <BrandLogo className="h-[0.85em] w-auto shrink-0" />
+              <BrandLogo className="h-[0.85em] w-[0.85em] shrink-0" />
               LEGENDARY
             </Link>
             <p className="mt-5 text-[var(--color-text-secondary)] leading-relaxed">
