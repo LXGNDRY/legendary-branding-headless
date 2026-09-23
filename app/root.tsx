@@ -266,6 +266,7 @@ export default function App() {
         isLoggedIn={isLoggedIn}
         accountsEnabled={accountsEnabled}
         onOpenCart={() => setCartOpen(true)}
+        localization={localization}
       />
       <main id="main-content" className="flex-1">
         <Outlet />
