@@ -26,7 +26,7 @@ function expectTrustedCheckout(href: string | null, baseURL?: string) {
 
 test.describe('Golden commerce journey', () => {
   test('PDP communicates shipping charges and provides product-specific fit guidance', async ({page}) => {
-    await page.goto(PRODUCT_PATH, {waitUntil: 'domcontentloaded'});
+    await page.goto(PRODUCT_PATH, {waitUntil: 'networkidle'});
     await expect(page.getByRole('heading', {level: 1})).toBeVisible();
 
     await page.locator('#variant-options').getByRole('button', {name: 'Size Guide'}).click();
@@ -40,17 +40,17 @@ test.describe('Golden commerce journey', () => {
     const shippingDetails = page.getByText(/Standard shipping is \$5 on orders under \$100 USD/);
     await expect(shippingDetails).toBeVisible();
     await expect(page.getByText(/\$12 express shipping option is available/)).toBeVisible();
-    await expect(page.getByText(/Import duties are included in the displayed price/)).toBeVisible();
+    await expect(page.getByText(/Import duties are included in the displayed price/).first()).toBeVisible();
     await expect(page.getByText(/Applicable taxes are paid by you and calculated at checkout/).first()).toBeVisible();
   });
 
   test('international market selection updates and persists for the session', async ({page}) => {
-    await page.goto(PRODUCT_PATH, {waitUntil: 'domcontentloaded'});
+    await page.goto(PRODUCT_PATH, {waitUntil: 'networkidle'});
     const countrySelector = page.getByLabel('Shipping country and market').first();
     await expect(countrySelector).toBeAttached();
 
     const marketResponse = page.waitForResponse((response) =>
-      response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/market',
+      response.request().method() === 'POST' && /\/api\/market(?:\.data)?$/.test(new URL(response.url()).pathname),
     );
     await countrySelector.selectOption('GB');
     const response = await marketResponse;
