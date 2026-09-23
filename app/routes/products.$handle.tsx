@@ -14,7 +14,6 @@ import {
   CartForm,
   Image,
   Money,
-  ShopPayButton,
   VariantSelector,
   Analytics,
   getSelectedProductOptions,
@@ -231,7 +230,6 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   return {
     product: product as ProductFull,
     relatedProducts,
-    storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     reviews,
   };
 }
@@ -434,7 +432,7 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
 }
 
 export default function ProductPage() {
-  const {product, relatedProducts, storeDomain, reviews} = useLoaderData<typeof loader>();
+  const {product, relatedProducts, reviews} = useLoaderData<typeof loader>();
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -766,13 +764,6 @@ export default function ProductPage() {
                   variant={selectedVariant as ProductVariantFragment | null | undefined}
                   quantity={quantity}
                 />
-                {selectedVariant?.availableForSale && (
-                  <ShopPayButton
-                    variantIdsAndQuantities={[{id: selectedVariant.id, quantity}]}
-                    storeDomain={storeDomain}
-                    className="w-full [&_shop-pay-button]:block"
-                  />
-                )}
                 <p className="text-center text-[0.7rem] text-[var(--color-text-tertiary)]">
                   Secure checkout · SSL encrypted
                 </p>

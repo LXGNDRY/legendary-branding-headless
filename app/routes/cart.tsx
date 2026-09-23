@@ -1,6 +1,6 @@
 import type {MetaFunction, LoaderFunctionArgs, ActionFunctionArgs} from 'react-router';
 import {useLoaderData, useFetcher, Link} from 'react-router';
-import {Analytics, AnalyticsEvent, CartForm, Image, Money, ShopPayButton, useAnalytics} from '@shopify/hydrogen';
+import {Analytics, AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useEffect, useState} from 'react';
 import Container from '~/components/ui/Container';
@@ -61,7 +61,6 @@ export async function loader({context}: LoaderFunctionArgs) {
   const {cart} = context;
   return {
     cart: (await cart.get()) as CartData,
-    storeDomain: context.env.PUBLIC_STORE_DOMAIN,
   };
 }
 
@@ -211,7 +210,7 @@ function CartLineRow({line}: {line: CartLineData}) {
 }
 
 /** Applied-code / apply-form / discount-amount UI for the Order Summary. */
-function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
+function CartDiscountSection({cart, lines}: {cart: NonNullable<CartData>; lines: CartLineData[]}) {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
   const fetcher = useFetcher<{
@@ -251,7 +250,14 @@ function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
     }
   }, [discountResult, fetcher.state]);
 
-  const discountAllocations = cart.discountAllocations ?? [];
+  // Cart-level discountAllocations only cover discounts that allocate at
+  // the cart level. Many of this store's active discounts are automatic,
+  // line-scoped promos (e.g. "25% off OUTERWEAR") that only ever show up
+  // in each line's own `discountAllocations` -- without including those
+  // here, the order-summary "Discount" line never rendered even though
+  // the discount was genuinely applied and reflected in each line's price.
+  const lineDiscountAllocations = lines.flatMap((line) => line.discountAllocations ?? []);
+  const discountAllocations = [...(cart.discountAllocations ?? []), ...lineDiscountAllocations];
   const totalDiscountAmount = discountAllocations.reduce(
     (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
     0,
@@ -339,19 +345,11 @@ function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
 }
 
 export default function CartPage() {
-  const {cart, storeDomain} = useLoaderData<typeof loader>();
+  const {cart} = useLoaderData<typeof loader>();
   const {publish} = useAnalytics();
   const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
   const [checkingOut, setCheckingOut] = useState(false);
-  // Hydrogen's <ShopPayButton> only accepts variant IDs/quantities -- it has
-  // no way to carry discount codes into the Shop Pay checkout it opens. That
-  // means a discounted cart summary here could be followed by an undiscounted
-  // Shop Pay checkout, so the button is hidden whenever a discount is
-  // applied rather than showing a mismatched total.
-  const hasApplicableDiscount = Boolean(
-    cart?.discountCodes?.some((code) => code.applicable),
-  );
 
   // A shopper hitting Back from Shopify's hosted checkout can restore this
   // page from the bfcache with React state intact, leaving `checkingOut`
@@ -414,7 +412,7 @@ export default function CartPage() {
                 <span className="text-[var(--color-text-secondary)] tracking-widest uppercase text-xs">Shipping</span>
                 <span className="text-[var(--color-text-secondary)]">Calculated at checkout</span>
               </div>
-              {cart && <CartDiscountSection cart={cart} />}
+              {cart && <CartDiscountSection cart={cart} lines={lines} />}
             </div>
             <div className="border-t border-[var(--color-border-subtle)] pt-4 mb-8">
               <div className="flex justify-between font-medium text-sm">
@@ -459,19 +457,6 @@ export default function CartPage() {
               >
                 Proceed to Checkout
               </Button>
-            )}
-
-            {storeDomain && cart && cart.lines.edges.length > 0 && !hasApplicableDiscount && (
-              <div className="mt-3">
-                <ShopPayButton
-                  variantIdsAndQuantities={cart.lines.edges.map(({node}) => ({
-                    id: node.merchandise.id,
-                    quantity: node.quantity,
-                  }))}
-                  storeDomain={storeDomain}
-                  className="w-full [&_shop-pay-button]:block"
-                />
-              </div>
             )}
 
             <p className="mt-4 text-center text-[11px] text-[var(--color-text-secondary)] tracking-wide">
