@@ -2,7 +2,7 @@ import {Link, useLocation} from 'react-router';
 import {useState, useEffect, useRef} from 'react';
 import {useWishlist} from '~/components/ui/Wishlist';
 import SearchTypeahead from '~/components/ui/SearchTypeahead';
-import GoatMark from '~/components/ui/GoatMark';
+import BrandLogo from '~/components/ui/BrandLogo';
 import MarketSelector from '~/components/ui/MarketSelector';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import type {LocalizationData} from '~/lib/market';
@@ -227,7 +227,7 @@ function MobileMenu({
           onClick={onClose}
           className="flex items-baseline gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
         >
-          <GoatMark className="h-6 w-6 shrink-0 translate-y-[5px]" />
+          <BrandLogo className="h-6 w-auto shrink-0 translate-y-[5px]" />
           LEGENDARY
         </Link>
         <button
@@ -444,7 +444,7 @@ export default function Header({
               to="/"
               className="flex items-baseline gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
             >
-              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0 translate-y-[5px] lg:translate-y-[6.5px]" />
+              <BrandLogo className="h-6 w-auto lg:h-7 shrink-0 translate-y-[5px] lg:translate-y-[6.5px]" />
               LEGENDARY
             </Link>
 
