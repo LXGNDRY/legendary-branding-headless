@@ -260,7 +260,7 @@ export default function CollectionPage() {
       <JsonLd data={collectionJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
       {/* Collection hero */}
-      <div className="relative h-[280px] md:h-[420px] bg-[var(--color-bg-level-2)] overflow-hidden">
+      <div className="relative min-h-[220px] md:h-[420px] bg-[var(--color-bg-level-2)] overflow-hidden">
         {collection.image?.url ? (
           <Image
             data={collection.image}
@@ -272,19 +272,17 @@ export default function CollectionPage() {
           />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-level-0)] via-[var(--color-bg-level-0)]/40 to-transparent" />
-        <div className="h-container absolute inset-0 flex flex-col justify-end pb-10">
+        <div className="h-container relative min-h-[220px] md:absolute md:inset-0 md:min-h-0 flex flex-col justify-end pt-16 pb-10">
           <nav className="h-eyebrow text-[var(--color-text-inverse)]/50 mb-4" aria-label="Breadcrumb">
             <a href="/collections" className="hover:text-[var(--color-text-inverse)]/80 transition-colors">
               Collections
             </a>
-            <span className="mx-2 opacity-40">/</span>
-            <span className="text-[var(--color-text-inverse)]/70">{collection.title}</span>
           </nav>
           <h1 className="font-serif font-normal text-[clamp(2.5rem,6vw,5rem)] leading-[0.95] tracking-[-0.01em] text-[var(--color-text-inverse)]">
             {collection.title}
           </h1>
           {collection.description && (
-            <p className="h-truncate-2 mt-3 text-[0.9rem] text-[var(--color-text-inverse)]/60 max-w-lg leading-relaxed">
+            <p className="h-md-truncate-2 mt-3 text-[0.9rem] text-[var(--color-text-inverse)]/60 max-w-lg leading-relaxed">
               {collection.description}
             </p>
           )}

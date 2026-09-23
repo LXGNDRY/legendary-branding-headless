@@ -613,6 +613,18 @@
     overflow: hidden;
   }
 
+  /* Only clamps at md+ -- for heroes that grow to fit content on mobile
+     but stay a fixed height (so overflowing text must be clamped) on
+     desktop, e.g. the collection page hero. */
+  @media (min-width: 768px) {
+    .h-md-truncate-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+
   /* ── Input / form base styles ─────────────────────────────────────────── */
 
   input[type="email"],
