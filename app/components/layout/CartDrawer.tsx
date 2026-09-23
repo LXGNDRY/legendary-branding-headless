@@ -365,9 +365,24 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
               <TruckIcon />
               <span className="text-[11px] tracking-wide text-[var(--color-text-secondary)]">
                 {hasFreeShipping ? (
-                  <span className="font-medium text-[var(--color-success)]">Orders of $100+ qualify for free shipping</span>
+                  <span className="font-medium text-[var(--color-success)]">
+                    Orders of{' '}
+                    <Money
+                      data={{amount: FREE_SHIPPING_THRESHOLD.toFixed(2), currencyCode: subtotal.currencyCode}}
+                      as="span"
+                    />
+                    + qualify for free shipping
+                  </span>
                 ) : (
-                  <>Add <span className="font-medium text-[var(--color-text-primary)]">${remaining.toFixed(2)}</span> for free shipping</>
+                  <>
+                    Add{' '}
+                    <Money
+                      data={{amount: remaining.toFixed(2), currencyCode: subtotal.currencyCode}}
+                      as="span"
+                      className="font-medium text-[var(--color-text-primary)]"
+                    />{' '}
+                    for free shipping
+                  </>
                 )}
               </span>
             </div>
