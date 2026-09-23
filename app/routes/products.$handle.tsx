@@ -546,6 +546,7 @@ export default function ProductPage() {
             <ProductGallery
               images={product.images.nodes}
               title={product.title}
+              selectedImage={selectedVariant?.image}
               badges={
                 (isOnSale || isLowStock) && (
                   <>
