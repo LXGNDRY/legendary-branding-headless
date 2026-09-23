@@ -210,7 +210,17 @@ function CartLineRow({line}: {line: CartLineData}) {
 }
 
 /** Applied-code / apply-form / discount-amount UI for the Order Summary. */
-function CartDiscountSection({cart, lines}: {cart: NonNullable<CartData>; lines: CartLineData[]}) {
+function CartDiscountSection({
+  cart,
+  discountAllocations,
+  totalDiscountAmount,
+  discountCurrencyCode,
+}: {
+  cart: NonNullable<CartData>;
+  discountAllocations: CartDiscountAllocation[];
+  totalDiscountAmount: number;
+  discountCurrencyCode: CurrencyCode;
+}) {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
   const fetcher = useFetcher<{
@@ -249,23 +259,6 @@ function CartDiscountSection({cart, lines}: {cart: NonNullable<CartData>; lines:
       setDiscountCode('');
     }
   }, [discountResult, fetcher.state]);
-
-  // Cart-level discountAllocations only cover discounts that allocate at
-  // the cart level. Many of this store's active discounts are automatic,
-  // line-scoped promos (e.g. "25% off OUTERWEAR") that only ever show up
-  // in each line's own `discountAllocations` -- without including those
-  // here, the order-summary "Discount" line never rendered even though
-  // the discount was genuinely applied and reflected in each line's price.
-  const lineDiscountAllocations = lines.flatMap((line) => line.discountAllocations ?? []);
-  const discountAllocations = [...(cart.discountAllocations ?? []), ...lineDiscountAllocations];
-  const totalDiscountAmount = discountAllocations.reduce(
-    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
-    0,
-  );
-  const discountCurrencyCode: CurrencyCode =
-    discountAllocations[0]?.discountedAmount.currencyCode ??
-    cart.cost.subtotalAmount.currencyCode ??
-    'USD';
 
   return (
     <>
@@ -351,6 +344,33 @@ export default function CartPage() {
   const isEmpty = lines.length === 0;
   const [checkingOut, setCheckingOut] = useState(false);
 
+  // Line-scoped discounts (e.g. an automatic "25% off OUTERWEAR" promo) are
+  // already netted into `cart.cost.subtotalAmount` by the Cart API -- unlike
+  // cart-level discount codes, which apply after it. Summing both allocation
+  // levels into a single "Discount" line while still showing the API's
+  // already-discounted subtotal would subtract the line discount a second
+  // time (e.g. a $110 item discounted to $82.50 would render as
+  // "Subtotal $82.50, Discount -$27.50, Total $82.50"). So the displayed
+  // subtotal is grossed back up by the line-level discount amount, making it
+  // the true pre-discount total, while the combined discount line still
+  // nets back down to the API's real (line- and cart-discounted) subtotal.
+  const lineDiscountAllocations = lines.flatMap((line) => line.discountAllocations ?? []);
+  const lineDiscountTotal = lineDiscountAllocations.reduce(
+    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
+    0,
+  );
+  const discountAllocations = [...(cart?.discountAllocations ?? []), ...lineDiscountAllocations];
+  const totalDiscountAmount = discountAllocations.reduce(
+    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
+    0,
+  );
+  const subtotalCurrencyCode: CurrencyCode = cart?.cost.subtotalAmount.currencyCode ?? 'USD';
+  const discountCurrencyCode: CurrencyCode =
+    discountAllocations[0]?.discountedAmount.currencyCode ?? subtotalCurrencyCode;
+  const displaySubtotalAmount = cart?.cost.subtotalAmount
+    ? (parseFloat(cart.cost.subtotalAmount.amount) + lineDiscountTotal).toFixed(2)
+    : undefined;
+
   // A shopper hitting Back from Shopify's hosted checkout can restore this
   // page from the bfcache with React state intact, leaving `checkingOut`
   // stuck true and the checkout link permanently blocked.
@@ -404,15 +424,25 @@ export default function CartPage() {
                 <span className="text-[var(--color-text-secondary)] tracking-widest uppercase text-xs">
                   Subtotal ({cart?.totalQuantity} {cart?.totalQuantity === 1 ? 'item' : 'items'})
                 </span>
-                {cart?.cost.subtotalAmount && (
-                  <Money data={cart.cost.subtotalAmount} className="font-medium" />
+                {displaySubtotalAmount && (
+                  <Money
+                    data={{amount: displaySubtotalAmount, currencyCode: subtotalCurrencyCode}}
+                    className="font-medium"
+                  />
                 )}
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-[var(--color-text-secondary)] tracking-widest uppercase text-xs">Shipping</span>
                 <span className="text-[var(--color-text-secondary)]">Calculated at checkout</span>
               </div>
-              {cart && <CartDiscountSection cart={cart} lines={lines} />}
+              {cart && (
+                <CartDiscountSection
+                  cart={cart}
+                  discountAllocations={discountAllocations}
+                  totalDiscountAmount={totalDiscountAmount}
+                  discountCurrencyCode={discountCurrencyCode}
+                />
+              )}
             </div>
             <div className="border-t border-[var(--color-border-subtle)] pt-4 mb-8">
               <div className="flex justify-between font-medium text-sm">

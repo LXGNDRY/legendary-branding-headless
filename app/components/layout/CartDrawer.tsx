@@ -204,6 +204,10 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   // here, the order-summary "Discount" line never rendered even though
   // the discount was genuinely applied and reflected in each line's price.
   const lineDiscountAllocations = lines.flatMap((line) => line.discountAllocations ?? []);
+  const lineDiscountTotal = lineDiscountAllocations.reduce(
+    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
+    0,
+  );
   const discountAllocations = [
     ...(currentCart?.discountAllocations ?? []),
     ...lineDiscountAllocations,
@@ -217,6 +221,14 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
     subtotal?.currencyCode ??
     'USD';
   const subtotalValue = subtotal ? parseFloat(subtotal.amount) : 0;
+  // Line-scoped discounts are already netted into `subtotal` by the Cart
+  // API (unlike cart-level discount codes, which apply after it), so the
+  // *displayed* subtotal is grossed back up by that amount -- otherwise the
+  // combined discount line below would subtract the line discount a second
+  // time (e.g. a $110 item discounted to $82.50 would render as
+  // "Subtotal $82.50, Discount -$27.50"). The free-shipping progress above
+  // intentionally keeps using the real net `subtotalValue`.
+  const displaySubtotalAmount = subtotal ? (subtotalValue + lineDiscountTotal).toFixed(2) : undefined;
   // Free shipping progress
   const progress = Math.min((subtotalValue / FREE_SHIPPING_THRESHOLD) * 100, 100);
   const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotalValue, 0);
@@ -451,7 +463,13 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
             {/* Subtotal */}
             <div className="flex justify-between items-baseline">
               <span className="text-xs tracking-[0.15em] uppercase text-[var(--color-text-secondary)]">Subtotal</span>
-              <Money data={currentCart.cost.subtotalAmount} className="text-base font-semibold text-[var(--color-text-primary)]" />
+              <Money
+                data={{
+                  amount: displaySubtotalAmount ?? currentCart.cost.subtotalAmount.amount,
+                  currencyCode: currentCart.cost.subtotalAmount.currencyCode,
+                }}
+                className="text-base font-semibold text-[var(--color-text-primary)]"
+              />
             </div>
 
             {/* Discount amount */}
