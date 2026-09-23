@@ -1,4 +1,4 @@
-import {useRef, useState, type ReactNode} from 'react';
+import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {Image} from '@shopify/hydrogen';
 import Placeholder from '~/components/ui/Placeholder';
 
@@ -14,15 +14,30 @@ export default function ProductGallery({
   images,
   title,
   badges,
+  selectedImageUrl,
 }: {
   images: GalleryImage[];
   title: string;
   /** Optional overlay content (e.g. Sale / low-stock badges) pinned to the top-left of the main image. */
   badges?: ReactNode;
+  /**
+   * The currently selected variant's image URL (e.g. a color swatch's
+   * distinct photo). When it changes, the gallery jumps to the matching
+   * image in `images` -- without this, picking a color variant left the
+   * gallery showing whatever image happened to be active, never the
+   * variant's own photo.
+   */
+  selectedImageUrl?: string | null;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const active = images[activeIndex];
+
+  useEffect(() => {
+    if (!selectedImageUrl) return;
+    const matchIndex = images.findIndex((img) => img.url === selectedImageUrl);
+    if (matchIndex !== -1) setActiveIndex(matchIndex);
+  }, [selectedImageUrl, images]);
 
   function move(direction: -1 | 1) {
     setActiveIndex((index) => (index + direction + images.length) % images.length);
