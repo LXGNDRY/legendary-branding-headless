@@ -3,7 +3,9 @@ import {useState, useEffect, useRef} from 'react';
 import {useWishlist} from '~/components/ui/Wishlist';
 import SearchTypeahead from '~/components/ui/SearchTypeahead';
 import GoatMark from '~/components/ui/GoatMark';
+import MarketSelector from '~/components/ui/MarketSelector';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import type {LocalizationData} from '~/lib/market';
 
 /* ── Nav data ──────────────────────────────────────────────────────────── */
 
@@ -182,11 +184,13 @@ function MobileMenu({
   onClose,
   isLoggedIn,
   accountsEnabled,
+  localization,
 }: {
   open: boolean;
   onClose: () => void;
   isLoggedIn: boolean;
   accountsEnabled: boolean;
+  localization?: LocalizationData;
 }) {
   const {containerRef} = useFocusTrap(open, onClose);
   const [openItem, setOpenItem] = useState<string | null>(null);
@@ -333,6 +337,16 @@ function MobileMenu({
             </a>
           )}
         </div>
+
+        {localization && (
+          <div className="pt-6 mt-6 border-t border-[var(--color-border-muted)]">
+            <p className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">Shipping to</p>
+            <MarketSelector
+              current={localization.country}
+              countries={localization.availableCountries}
+            />
+          </div>
+        )}
       </nav>
     </div>
   );
@@ -346,6 +360,7 @@ interface HeaderProps {
   accountsEnabled?: boolean;
   onOpenCart?: () => void;
   transparent?: boolean;
+  localization?: LocalizationData;
 }
 
 export default function Header({
@@ -354,6 +369,7 @@ export default function Header({
   accountsEnabled = false,
   onOpenCart,
   transparent = false,
+  localization,
 }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [activeNav, setActiveNav] = useState<string | null>(null);
@@ -525,6 +541,7 @@ export default function Header({
         onClose={() => setMobileOpen(false)}
         isLoggedIn={isLoggedIn}
         accountsEnabled={accountsEnabled}
+        localization={localization}
       />
     </>
   );
