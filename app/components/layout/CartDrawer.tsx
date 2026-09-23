@@ -1,7 +1,7 @@
 import {useEffect, useState, useRef} from 'react';
 import {Link, useFetcher} from 'react-router';
 import Button from '~/components/ui/Button';
-import {AnalyticsEvent, CartForm, Image, Money, ShopPayButton, useAnalytics} from '@shopify/hydrogen';
+import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
 import {withCheckoutLocale} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
@@ -189,16 +189,29 @@ interface CartDrawerProps {
   cart: CartData;
   open: boolean;
   onClose: () => void;
-  storeDomain?: string;
 }
 
-export default function CartDrawer({cart, open, onClose, storeDomain}: CartDrawerProps) {
+export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   const {publish} = useAnalytics();
   const currentCart = cart;
   const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
   const totalQuantity = currentCart?.totalQuantity ?? 0;
   const subtotal = currentCart?.cost?.subtotalAmount;
-  const discountAllocations = currentCart?.discountAllocations ?? [];
+  // Cart-level discountAllocations only cover discounts that allocate at
+  // the cart level. Many of this store's active discounts are automatic,
+  // line-scoped promos (e.g. "25% off OUTERWEAR") that only ever show up
+  // in each line's own `discountAllocations` -- without including those
+  // here, the order-summary "Discount" line never rendered even though
+  // the discount was genuinely applied and reflected in each line's price.
+  const lineDiscountAllocations = lines.flatMap((line) => line.discountAllocations ?? []);
+  const lineDiscountTotal = lineDiscountAllocations.reduce(
+    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
+    0,
+  );
+  const discountAllocations = [
+    ...(currentCart?.discountAllocations ?? []),
+    ...lineDiscountAllocations,
+  ];
   const totalDiscountAmount = discountAllocations.reduce(
     (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
     0,
@@ -208,6 +221,14 @@ export default function CartDrawer({cart, open, onClose, storeDomain}: CartDrawe
     subtotal?.currencyCode ??
     'USD';
   const subtotalValue = subtotal ? parseFloat(subtotal.amount) : 0;
+  // Line-scoped discounts are already netted into `subtotal` by the Cart
+  // API (unlike cart-level discount codes, which apply after it), so the
+  // *displayed* subtotal is grossed back up by that amount -- otherwise the
+  // combined discount line below would subtract the line discount a second
+  // time (e.g. a $110 item discounted to $82.50 would render as
+  // "Subtotal $82.50, Discount -$27.50"). The free-shipping progress above
+  // intentionally keeps using the real net `subtotalValue`.
+  const displaySubtotalAmount = subtotal ? (subtotalValue + lineDiscountTotal).toFixed(2) : undefined;
   // Free shipping progress
   const progress = Math.min((subtotalValue / FREE_SHIPPING_THRESHOLD) * 100, 100);
   const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotalValue, 0);
@@ -442,7 +463,13 @@ export default function CartDrawer({cart, open, onClose, storeDomain}: CartDrawe
             {/* Subtotal */}
             <div className="flex justify-between items-baseline">
               <span className="text-xs tracking-[0.15em] uppercase text-[var(--color-text-secondary)]">Subtotal</span>
-              <Money data={currentCart.cost.subtotalAmount} className="text-base font-semibold text-[var(--color-text-primary)]" />
+              <Money
+                data={{
+                  amount: displaySubtotalAmount ?? currentCart.cost.subtotalAmount.amount,
+                  currencyCode: currentCart.cost.subtotalAmount.currencyCode,
+                }}
+                className="text-base font-semibold text-[var(--color-text-primary)]"
+              />
             </div>
 
             {/* Discount amount */}
@@ -506,24 +533,6 @@ export default function CartDrawer({cart, open, onClose, storeDomain}: CartDrawe
                 Checkout
               </Button>
             )}
-
-            {/* Hydrogen's <ShopPayButton> only accepts variant IDs/quantities --
-                it has no way to carry discount codes into the Shop Pay
-                checkout it opens, so a discounted cart summary could be
-                followed by an undiscounted checkout. Hidden whenever a
-                discount is applied rather than showing a mismatched total. */}
-            {storeDomain &&
-              currentCart.lines.edges.length > 0 &&
-              !currentCart.discountCodes?.some((code) => code.applicable) && (
-                <ShopPayButton
-                  variantIdsAndQuantities={currentCart.lines.edges.map(({node}) => ({
-                    id: node.merchandise.id,
-                    quantity: node.quantity,
-                  }))}
-                  storeDomain={storeDomain}
-                  className="w-full [&_shop-pay-button]:block"
-                />
-              )}
 
             <div className="flex justify-center pt-1">
               <Link
