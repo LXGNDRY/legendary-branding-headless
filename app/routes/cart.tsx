@@ -1,6 +1,6 @@
 import type {MetaFunction, LoaderFunctionArgs, ActionFunctionArgs} from 'react-router';
 import {useLoaderData, useFetcher, Link} from 'react-router';
-import {Analytics, AnalyticsEvent, CartForm, Image, Money, ShopPayButton, useAnalytics} from '@shopify/hydrogen';
+import {Analytics, AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useEffect, useState} from 'react';
 import Container from '~/components/ui/Container';
@@ -61,7 +61,6 @@ export async function loader({context}: LoaderFunctionArgs) {
   const {cart} = context;
   return {
     cart: (await cart.get()) as CartData,
-    storeDomain: context.env.PUBLIC_STORE_DOMAIN,
   };
 }
 
@@ -211,7 +210,17 @@ function CartLineRow({line}: {line: CartLineData}) {
 }
 
 /** Applied-code / apply-form / discount-amount UI for the Order Summary. */
-function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
+function CartDiscountSection({
+  cart,
+  discountAllocations,
+  totalDiscountAmount,
+  discountCurrencyCode,
+}: {
+  cart: NonNullable<CartData>;
+  discountAllocations: CartDiscountAllocation[];
+  totalDiscountAmount: number;
+  discountCurrencyCode: CurrencyCode;
+}) {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
   const fetcher = useFetcher<{
@@ -250,16 +259,6 @@ function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
       setDiscountCode('');
     }
   }, [discountResult, fetcher.state]);
-
-  const discountAllocations = cart.discountAllocations ?? [];
-  const totalDiscountAmount = discountAllocations.reduce(
-    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
-    0,
-  );
-  const discountCurrencyCode: CurrencyCode =
-    discountAllocations[0]?.discountedAmount.currencyCode ??
-    cart.cost.subtotalAmount.currencyCode ??
-    'USD';
 
   return (
     <>
@@ -339,19 +338,38 @@ function CartDiscountSection({cart}: {cart: NonNullable<CartData>}) {
 }
 
 export default function CartPage() {
-  const {cart, storeDomain} = useLoaderData<typeof loader>();
+  const {cart} = useLoaderData<typeof loader>();
   const {publish} = useAnalytics();
   const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
   const [checkingOut, setCheckingOut] = useState(false);
-  // Hydrogen's <ShopPayButton> only accepts variant IDs/quantities -- it has
-  // no way to carry discount codes into the Shop Pay checkout it opens. That
-  // means a discounted cart summary here could be followed by an undiscounted
-  // Shop Pay checkout, so the button is hidden whenever a discount is
-  // applied rather than showing a mismatched total.
-  const hasApplicableDiscount = Boolean(
-    cart?.discountCodes?.some((code) => code.applicable),
+
+  // Line-scoped discounts (e.g. an automatic "25% off OUTERWEAR" promo) are
+  // already netted into `cart.cost.subtotalAmount` by the Cart API -- unlike
+  // cart-level discount codes, which apply after it. Summing both allocation
+  // levels into a single "Discount" line while still showing the API's
+  // already-discounted subtotal would subtract the line discount a second
+  // time (e.g. a $110 item discounted to $82.50 would render as
+  // "Subtotal $82.50, Discount -$27.50, Total $82.50"). So the displayed
+  // subtotal is grossed back up by the line-level discount amount, making it
+  // the true pre-discount total, while the combined discount line still
+  // nets back down to the API's real (line- and cart-discounted) subtotal.
+  const lineDiscountAllocations = lines.flatMap((line) => line.discountAllocations ?? []);
+  const lineDiscountTotal = lineDiscountAllocations.reduce(
+    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
+    0,
   );
+  const discountAllocations = [...(cart?.discountAllocations ?? []), ...lineDiscountAllocations];
+  const totalDiscountAmount = discountAllocations.reduce(
+    (sum, allocation) => sum + parseFloat(allocation.discountedAmount.amount),
+    0,
+  );
+  const subtotalCurrencyCode: CurrencyCode = cart?.cost.subtotalAmount.currencyCode ?? 'USD';
+  const discountCurrencyCode: CurrencyCode =
+    discountAllocations[0]?.discountedAmount.currencyCode ?? subtotalCurrencyCode;
+  const displaySubtotalAmount = cart?.cost.subtotalAmount
+    ? (parseFloat(cart.cost.subtotalAmount.amount) + lineDiscountTotal).toFixed(2)
+    : undefined;
 
   // A shopper hitting Back from Shopify's hosted checkout can restore this
   // page from the bfcache with React state intact, leaving `checkingOut`
@@ -406,15 +424,25 @@ export default function CartPage() {
                 <span className="text-[var(--color-text-secondary)] tracking-widest uppercase text-xs">
                   Subtotal ({cart?.totalQuantity} {cart?.totalQuantity === 1 ? 'item' : 'items'})
                 </span>
-                {cart?.cost.subtotalAmount && (
-                  <Money data={cart.cost.subtotalAmount} className="font-medium" />
+                {displaySubtotalAmount && (
+                  <Money
+                    data={{amount: displaySubtotalAmount, currencyCode: subtotalCurrencyCode}}
+                    className="font-medium"
+                  />
                 )}
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-[var(--color-text-secondary)] tracking-widest uppercase text-xs">Shipping</span>
                 <span className="text-[var(--color-text-secondary)]">Calculated at checkout</span>
               </div>
-              {cart && <CartDiscountSection cart={cart} />}
+              {cart && (
+                <CartDiscountSection
+                  cart={cart}
+                  discountAllocations={discountAllocations}
+                  totalDiscountAmount={totalDiscountAmount}
+                  discountCurrencyCode={discountCurrencyCode}
+                />
+              )}
             </div>
             <div className="border-t border-[var(--color-border-subtle)] pt-4 mb-8">
               <div className="flex justify-between font-medium text-sm">
@@ -459,19 +487,6 @@ export default function CartPage() {
               >
                 Proceed to Checkout
               </Button>
-            )}
-
-            {storeDomain && cart && cart.lines.edges.length > 0 && !hasApplicableDiscount && (
-              <div className="mt-3">
-                <ShopPayButton
-                  variantIdsAndQuantities={cart.lines.edges.map(({node}) => ({
-                    id: node.merchandise.id,
-                    quantity: node.quantity,
-                  }))}
-                  storeDomain={storeDomain}
-                  className="w-full [&_shop-pay-button]:block"
-                />
-              </div>
             )}
 
             <p className="mt-4 text-center text-[11px] text-[var(--color-text-secondary)] tracking-wide">
