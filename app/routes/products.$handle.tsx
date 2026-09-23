@@ -35,7 +35,6 @@ import TrustStrip from '~/components/ui/TrustStrip';
 import WaitlistForm from '~/components/ui/WaitlistForm';
 import RecentlyViewed from '~/components/ui/RecentlyViewed';
 import StatStrip from '~/components/sections/StatStrip';
-import UGCGrid from '~/components/sections/UGCGrid';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -890,14 +889,6 @@ export default function ProductPage() {
 
         {/* Craft / trust stats */}
         <StatStrip variant="light" />
-
-        {/* Community / UGC */}
-        <UGCGrid
-          eyebrow="Community"
-          heading="See It Styled"
-          hashtag="#LegendaryBranding"
-          count={6}
-        />
 
         {/* Related products */}
         {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
