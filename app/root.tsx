@@ -28,16 +28,20 @@ import {CacheLong} from '~/lib/cache';
 import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
 import {Analytics as HydrogenAnalytics, getShopAnalytics, CartForm} from '@shopify/hydrogen';
 
-// The favicon/apple-touch-icon both point directly at the owner's exact
-// Shopify Files upload (Timeless_Style_-_Artboard_22_4.png, a black goat
-// silhouette with a white star cutout) rather than a locally bundled copy
-// -- the file itself is never resized, cropped, or re-encoded.
-const FAVICON_URL =
-  'https://cdn.shopify.com/s/files/1/0490/1391/5801/files/Timeless_Style_-_Artboard_22_4.png?v=1790112618';
-
 export const links: LinksFunction = () => [
-  {rel: 'icon', href: FAVICON_URL, type: 'image/png'},
-  {rel: 'apple-touch-icon', href: FAVICON_URL},
+  // The raw Shopify Files upload (Timeless_Style_-_Artboard_22_4.png) is a
+  // 1467x768 canvas where the actual goat mark occupies a small, off-center
+  // region -- referencing it directly at favicon scale (16-32px) rendered
+  // as an unrecognizable, near-invisible speck, the same problem the
+  // on-site logo had. favicon.svg/{16,32,180,192,512} are built from the
+  // owner's exact vector paths for this mark (same geometry, just rendered
+  // tight to its real bounding box, with an off-white background plate so
+  // the black mark stays visible against both light and dark browser tab
+  // chrome) rather than a copy or edit of that PNG file itself.
+  {rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml'},
+  {rel: 'icon', href: '/favicon-32.png', sizes: '32x32', type: 'image/png'},
+  {rel: 'icon', href: '/favicon-16.png', sizes: '16x16', type: 'image/png'},
+  {rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180'},
   {rel: 'manifest', href: '/site.webmanifest'},
   {
     rel: 'preconnect',
