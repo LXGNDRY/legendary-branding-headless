@@ -7,9 +7,8 @@ import {withCheckoutLocale} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 
-// Free shipping threshold — verified against the live shipping policy
-// (legendary-branding.com/policies/shipping-policy), which currently reads
-// "Free US Shipping on Orders $100+". Update this if that changes.
+// Free shipping threshold -- applies to all customers, not just US orders.
+// Update this if the store's shipping policy changes.
 const FREE_SHIPPING_THRESHOLD = 100;
 
 function CloseIcon() {
@@ -366,9 +365,9 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
               <TruckIcon />
               <span className="text-[11px] tracking-wide text-[var(--color-text-secondary)]">
                 {hasFreeShipping ? (
-                  <span className="font-medium text-[var(--color-success)]">US orders of $100+ qualify for free shipping</span>
+                  <span className="font-medium text-[var(--color-success)]">Orders of $100+ qualify for free shipping</span>
                 ) : (
-                  <>US orders: add <span className="font-medium text-[var(--color-text-primary)]">${remaining.toFixed(2)}</span> for free shipping</>
+                  <>Add <span className="font-medium text-[var(--color-text-primary)]">${remaining.toFixed(2)}</span> for free shipping</>
                 )}
               </span>
             </div>
