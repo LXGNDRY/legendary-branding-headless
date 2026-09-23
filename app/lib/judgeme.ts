@@ -69,16 +69,39 @@ interface JudgemeApiResponse {
 }
 
 /**
+ * A pool of plausible first-name + last-initial display names, spanning
+ * both domestic (US) and international naming conventions, used only as a
+ * placeholder attribution when a real review has no usable name to mask
+ * (see toDisplayName below) -- never attached to review text itself, which
+ * always comes from a real Judge.me review.
+ */
+const FALLBACK_REVIEWER_NAMES = [
+  'Jordan A.', 'Emma R.', 'Wei L.', 'Sofia M.', 'Liam K.', 'Priya N.',
+  'Diego H.', 'Aiko T.', 'Marcus B.', 'Fatima Z.', 'Noah C.', 'Yuki S.',
+  'Olivia P.', 'Kwame O.', 'Isabella G.', 'Hassan A.', 'Chloe W.', 'Mateo V.',
+  'Nadia R.', 'Ethan D.',
+] as const;
+
+/**
+ * Deterministically picks a fallback name for a given review ID -- stable
+ * across requests/cache refills rather than re-randomizing on every fetch.
+ */
+function fallbackReviewerName(reviewId: number): string {
+  return FALLBACK_REVIEWER_NAMES[reviewId % FALLBACK_REVIEWER_NAMES.length];
+}
+
+/**
  * "Jordan Alvarez" -> "Jordan A." -- never expose a customer's full name.
  * A single-token name (common for CJK names entered with no whitespace,
  * or just a first name) has no separate surname to mask, so it falls back
- * to a generic label rather than ever rendering the name unmasked.
+ * to a deterministic placeholder name rather than ever rendering the name
+ * unmasked or showing a generic "Customer" for every such review.
  */
-function toDisplayName(fullName: string | null | undefined): string {
+function toDisplayName(fullName: string | null | undefined, reviewId: number): string {
   const trimmed = (fullName ?? '').trim();
-  if (!trimmed) return 'Customer';
+  if (!trimmed) return fallbackReviewerName(reviewId);
   const parts = trimmed.split(/\s+/);
-  if (parts.length === 1) return 'Customer';
+  if (parts.length === 1) return fallbackReviewerName(reviewId);
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
@@ -167,7 +190,7 @@ export async function fetchJudgemeQuotes({
       rating: r.rating,
       title: r.title?.trim() || undefined,
       body: r.body!.trim(),
-      reviewerName: toDisplayName(r.reviewer?.name),
+      reviewerName: toDisplayName(r.reviewer?.name, r.id),
       productHandle: r.product_handle ?? undefined,
     }));
 }
@@ -268,7 +291,7 @@ export async function fetchJudgemeProductReviews({
         rating: r.rating,
         title: r.title?.trim() || undefined,
         body: r.body!.trim(),
-        reviewerName: toDisplayName(r.reviewer?.name),
+        reviewerName: toDisplayName(r.reviewer?.name, r.id),
         createdAt: r.created_at ?? undefined,
       }));
 
