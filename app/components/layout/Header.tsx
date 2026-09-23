@@ -2,8 +2,10 @@ import {Link, useLocation} from 'react-router';
 import {useState, useEffect, useRef} from 'react';
 import {useWishlist} from '~/components/ui/Wishlist';
 import SearchTypeahead from '~/components/ui/SearchTypeahead';
-import GoatMark from '~/components/ui/GoatMark';
+import BrandLogo from '~/components/ui/BrandLogo';
+import MarketSelector from '~/components/ui/MarketSelector';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import type {LocalizationData} from '~/lib/market';
 
 /* ── Nav data ──────────────────────────────────────────────────────────── */
 
@@ -182,11 +184,13 @@ function MobileMenu({
   onClose,
   isLoggedIn,
   accountsEnabled,
+  localization,
 }: {
   open: boolean;
   onClose: () => void;
   isLoggedIn: boolean;
   accountsEnabled: boolean;
+  localization?: LocalizationData;
 }) {
   const {containerRef} = useFocusTrap(open, onClose);
   const [openItem, setOpenItem] = useState<string | null>(null);
@@ -223,7 +227,7 @@ function MobileMenu({
           onClick={onClose}
           className="flex items-baseline gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
         >
-          <GoatMark className="h-6 w-6 shrink-0 translate-y-[5px]" />
+          <BrandLogo className="h-6 w-auto shrink-0 translate-y-[5px]" />
           LEGENDARY
         </Link>
         <button
@@ -333,6 +337,16 @@ function MobileMenu({
             </a>
           )}
         </div>
+
+        {localization && (
+          <div className="pt-6 mt-6 border-t border-[var(--color-border-muted)]">
+            <p className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">Shipping to</p>
+            <MarketSelector
+              current={localization.country}
+              countries={localization.availableCountries}
+            />
+          </div>
+        )}
       </nav>
     </div>
   );
@@ -346,6 +360,7 @@ interface HeaderProps {
   accountsEnabled?: boolean;
   onOpenCart?: () => void;
   transparent?: boolean;
+  localization?: LocalizationData;
 }
 
 export default function Header({
@@ -354,6 +369,7 @@ export default function Header({
   accountsEnabled = false,
   onOpenCart,
   transparent = false,
+  localization,
 }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [activeNav, setActiveNav] = useState<string | null>(null);
@@ -428,7 +444,7 @@ export default function Header({
               to="/"
               className="flex items-baseline gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
             >
-              <GoatMark className="h-6 w-6 lg:h-7 lg:w-7 shrink-0 translate-y-[5px] lg:translate-y-[6.5px]" />
+              <BrandLogo className="h-6 w-auto lg:h-7 shrink-0 translate-y-[5px] lg:translate-y-[6.5px]" />
               LEGENDARY
             </Link>
 
@@ -525,6 +541,7 @@ export default function Header({
         onClose={() => setMobileOpen(false)}
         isLoggedIn={isLoggedIn}
         accountsEnabled={accountsEnabled}
+        localization={localization}
       />
     </>
   );
