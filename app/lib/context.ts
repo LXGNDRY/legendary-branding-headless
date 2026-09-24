@@ -4,7 +4,6 @@ import {
   DEFAULT_COUNTRY,
   DEFAULT_LANGUAGE,
   normalizeCountryCode,
-  normalizeLanguageCode,
 } from '~/lib/market';
 import {CART_QUERY_FRAGMENT, CART_MUTATE_FRAGMENT} from '~/lib/fragments';
 
@@ -85,7 +84,6 @@ export async function createAppLoadContext(
   // not stored independently: Shopify derives it from the selected market.
   const storedCountry = normalizeCountryCode(session.get('country'));
   const activeCountry = storedCountry ?? resolveCountry(request);
-  const storedLanguage = normalizeLanguageCode(session.get('language'));
 
   // Configure customer account if env vars are present
   const hasCustomerAccount = Boolean(
@@ -99,7 +97,7 @@ export async function createAppLoadContext(
     waitUntil,
     session,
     i18n: {
-      language: storedLanguage ?? DEFAULT_LANGUAGE,
+      language: DEFAULT_LANGUAGE,
       country: activeCountry,
     },
     cart: {
