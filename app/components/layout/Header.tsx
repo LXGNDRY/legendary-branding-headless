@@ -31,18 +31,15 @@ interface NavItem {
 const NAV: NavItem[] = [
   {label: 'Shop', href: '/collections/all-products', groups: [
     {label: 'Just Dropped', links: [
-      {label: 'New Arrivals', href: '/collections/all-products', isNew: true},
-      {label: 'Best Sellers', href: '/collections/all-products'},
+      {label: 'New Drops', href: '/collections/all-products', isNew: true},
     ]},
-    {label: 'Categories', links: [
-      {label: 'T-Shirts', href: '/collections/shirts-tops'},
-      {label: 'Hoodies & Jackets', href: '/collections/hoodies-jackets'},
-      {label: 'Sets', href: '/collections/sets'},
-      {label: 'Accessories', href: '/collections/accessories-more'},
+    {label: 'Shop by Category', links: [
+      {label: 'Shirts & Tops', href: '/collections/shirts-tops'},
+      {label: 'Outerwear', href: '/collections/hoodies-jackets'},
+      {label: 'Bottoms & Accessories', href: '/collections/accessories-more'},
     ]},
-    {label: 'Collections', links: [
-      {label: 'Marque Légendaire', href: '/collections/marque-legendaire-luxury-streetwear'},
-      {label: 'Legendary Select', href: '/collections/legendary-select'},
+    {label: 'Featured Collection', links: [
+      {label: 'The Marque Légendaire Collection', href: '/collections/marque-legendaire-luxury-streetwear'},
     ]},
   ]},
   {label: 'Collections', href: '/collections'},
