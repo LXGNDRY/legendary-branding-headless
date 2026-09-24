@@ -16,6 +16,7 @@ import styles from '~/styles/app.css?url';
 import {CacheShort} from '~/lib/cache';
 import {initSentry, useWebVitals, captureError} from '~/lib/monitoring';
 import {WishlistProvider} from '~/components/ui/Wishlist';
+import {LocaleProvider} from '~/lib/i18n';
 import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
@@ -248,6 +249,7 @@ export default function App() {
         currency: localization.country.currency.isoCode,
       }}
     >
+    <LocaleProvider language={localization.language.isoCode}>
     <WishlistProvider isLoggedIn={isLoggedIn}>
       <div className="flex flex-col min-h-dvh">
       {/* Page-transition progress bar */}
@@ -298,6 +300,7 @@ export default function App() {
       <ChatWidget />
       </div>
     </WishlistProvider>
+    </LocaleProvider>
     </HydrogenAnalytics.Provider>
   );
 }

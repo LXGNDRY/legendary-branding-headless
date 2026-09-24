@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium webkit",
-    "validate:release-env": "node scripts/validate-release-env.mjs"
+    "validate:release-env": "node scripts/validate-release-env.mjs",
+    "locales:check": "python3 scripts/locales.py --check"
   },
   "type": "module",
   "dependencies": {
