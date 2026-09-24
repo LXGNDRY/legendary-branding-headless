@@ -40,8 +40,13 @@ export class AppSession implements HydrogenSession {
         httpOnly: true,
         path: '/',
         sameSite: 'lax',
-        // Secure cookie in production or any HTTPS context
-        secure: IS_PRODUCTION || url.protocol === 'https:',
+        // Keep cookies Secure on HTTPS and production hosts. Production
+        // preview runs on localhost over HTTP in Playwright; exempt only
+        // those local hosts so WebKit can persist the cookie in that test
+        // environment (Chromium treats localhost differently).
+        secure:
+          url.protocol === 'https:' ||
+          (IS_PRODUCTION && !['localhost', '127.0.0.1'].includes(url.hostname)),
         secrets,
         // 7 day session expiry
         maxAge: 60 * 60 * 24 * 7,

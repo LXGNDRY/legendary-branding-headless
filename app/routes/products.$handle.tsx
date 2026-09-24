@@ -30,10 +30,8 @@ import {
   breadcrumbSchema,
 } from '~/components/seo/SeoSchema';
 import SizeGuideModal from '~/components/ui/SizeGuideModal';
-import TrustStrip from '~/components/ui/TrustStrip';
 import WaitlistForm from '~/components/ui/WaitlistForm';
 import RecentlyViewed from '~/components/ui/RecentlyViewed';
-import StatStrip from '~/components/sections/StatStrip';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -68,7 +66,7 @@ type ProductFull = {
   // Product.metafields(identifiers:) returns a plain list, not a
   // connection -- there is no `.nodes` wrapper (unlike `images`/`variants`
   // below, which genuinely are connections).
-  metafields: Array<{key: string; value: string; type: string} | null>;
+  metafields: Array<{key: string; value: string; type: string; reference?: {image?: {url: string; altText?: string | null; width?: number | null; height?: number | null} | null} | null} | null>;
   images: {
     nodes: {id?: string | null; url: string; altText?: string | null; width?: number | null; height?: number | null}[];
   };
@@ -119,6 +117,11 @@ const PRODUCT_QUERY = `#graphql
         key
         value
         type
+        reference {
+          ... on MediaImage {
+            image { url altText width height }
+          }
+        }
       }
       images(first: 10) {
         nodes { id url altText width height }
@@ -290,7 +293,7 @@ function MobilePurchaseBar({
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">{needsSelection ? 'Choose an option' : 'Sold out'}</p>
           )}
           <p className="truncate text-[0.65rem] uppercase tracking-[0.1em] text-[var(--color-text-tertiary)]">
-            {available ? 'Ready to ship' : needsSelection ? 'Select size and color' : 'Get notified on restock'}
+            {available ? 'Made to order' : needsSelection ? 'Select size and color' : 'Get notified on restock'}
           </p>
         </div>
         {available && variant ? (
@@ -629,6 +632,13 @@ export default function ProductPage() {
                 </div>
               </div>
 
+              {(product.metafields?.some((m) => m?.key === 'fit' && m.value) || product.metafields?.some((m) => m?.key === 'material' && m.value)) && (
+                <ul className="-mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-text-secondary)]" aria-label="Product highlights">
+                  {product.metafields?.find((m) => m?.key === 'fit' && m.value)?.value && <li><span className="font-medium text-[var(--color-text-primary)]">Fit:</span> {product.metafields.find((m) => m?.key === 'fit' && m.value)?.value}</li>}
+                  {product.metafields?.find((m) => m?.key === 'material' && m.value)?.value && <li><span className="font-medium text-[var(--color-text-primary)]">Material:</span> {product.metafields.find((m) => m?.key === 'material' && m.value)?.value}</li>}
+                </ul>
+              )}
+
               {/* Variant selector */}
               <div id="variant-options">
                 <VariantSelector
@@ -753,6 +763,31 @@ export default function ProductPage() {
                 </div>
               )}
 
+              <section
+                aria-label="Delivery and checkout information"
+                className="border-y border-[var(--color-border-muted)] py-3.5"
+              >
+                <div className="flex items-start gap-3">
+                  <svg
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-text-primary)]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6h11v11H3zM14 9h4l3 3v5h-7z" />
+                    <circle cx="7" cy="19" r="1.5" />
+                    <circle cx="18" cy="19" r="1.5" />
+                  </svg>
+                  <div className="min-w-0 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                    <p className="font-medium text-[var(--color-text-primary)]">Worldwide delivery</p>
+                    <p>$5 standard below $100 USD · free at $100 USD+ · $12 express</p>
+                    <p className="mt-0.5 text-[var(--color-text-tertiary)]">Duties included · taxes calculated at checkout</p>
+                  </div>
+                </div>
+              </section>
+
               {/* Quantity + Add to cart */}
               <div className="space-y-3 pt-2">
                 {selectedVariant?.availableForSale && (
@@ -784,12 +819,11 @@ export default function ProductPage() {
                 )}
               </div>
 
-              {/* Shipping note */}
-              <p className="h-eyebrow text-[var(--color-text-tertiary)] text-center">
-                Free shipping over $100 · 30-day returns
+              <p className="flex items-center justify-center gap-3 text-[0.7rem] uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">
+                <Link to="/policies/shipping-policy" className="transition-colors hover:text-[var(--color-text-primary)]">Shipping details</Link>
+                <span aria-hidden="true" className="h-3 w-px bg-[var(--color-border-medium)]" />
+                <Link to="/policies/refund-policy" className="transition-colors hover:text-[var(--color-text-primary)]">Returns</Link>
               </p>
-
-              <TrustStrip />
 
               {/* Accordions */}
               <div className="border-t border-[var(--color-border-muted)] pt-4">
@@ -802,7 +836,11 @@ export default function ProductPage() {
                   </Accordion>
                 )}
                 <Accordion label="Shipping & Returns">
-                  <p>Free shipping on orders over $100. Orders ship within 3–5 business days. Easy 30-day returns on unworn items.</p>
+                  <div className="space-y-3">
+                    <p>Standard shipping is $5 on orders under $100 USD and free on orders of $100 USD or more. A $12 express shipping option is available. Import duties are included in the displayed price. Applicable taxes are paid by you and calculated at checkout.</p>
+                    <p>For return eligibility, timing, and instructions, review our <Link to="/policies/refund-policy" className="underline underline-offset-2">return policy</Link>.</p>
+                    <Link to="/policies/shipping-policy" className="inline-block underline underline-offset-2">Read the shipping policy</Link>
+                  </div>
                 </Accordion>
                 {product.metafields?.some((m) => m?.key === 'care' && m.value) && (
                   <Accordion label="Care Guide">
@@ -880,8 +918,6 @@ export default function ProductPage() {
         )}
 
         {/* Craft / trust stats */}
-        <StatStrip variant="light" />
-
         {/* Related products */}
         {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
           <section className="border-t border-[var(--color-border-muted)]">
@@ -931,7 +967,12 @@ export default function ProductPage() {
       />
 
       {/* Size guide modal */}
-      <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
+      <SizeGuideModal
+        open={sizeGuideOpen}
+        onClose={() => setSizeGuideOpen(false)}
+        chartImage={product.metafields?.find((m) => m?.key === 'size_chart')?.reference?.image ?? null}
+        fitNote={product.metafields?.find((m) => m?.key === 'fit')?.value}
+      />
     </>
   );
 }
