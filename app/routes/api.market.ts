@@ -2,10 +2,8 @@ import type {ActionFunctionArgs} from 'react-router';
 import type {CountryCode} from '@shopify/hydrogen/storefront-api-types';
 import {
   isAvailableCountry,
-  isAvailableLanguage,
   LOCALIZATION_QUERY,
   normalizeCountryCode,
-  normalizeLanguageCode,
   type LocalizationData,
 } from '~/lib/market';
 import {requireSameOrigin} from '~/lib/security';
@@ -19,12 +17,8 @@ export async function action({request, context}: ActionFunctionArgs) {
 
   const formData = await request.formData();
   const country = normalizeCountryCode(formData.get('country'));
-  const language = normalizeLanguageCode(formData.get('language'));
   if (!country) {
     return Response.json({error: 'Invalid country'}, {status: 400});
-  }
-  if (!language) {
-    return Response.json({error: 'Invalid language'}, {status: 400});
   }
 
   const result = await context.storefront.query(LOCALIZATION_QUERY, {
@@ -38,12 +32,8 @@ export async function action({request, context}: ActionFunctionArgs) {
   if (!localization || !isAvailableCountry(country, localization.availableCountries)) {
     return Response.json({error: 'Country is not available for this storefront'}, {status: 400});
   }
-  if (!isAvailableLanguage(language, localization.availableLanguages)) {
-    return Response.json({error: 'Language is not available for this storefront'}, {status: 400});
-  }
 
   context.session.set('country', country);
-  context.session.set('language', language);
 
   let cart = null;
   const cartId = await context.cart.getCartId();
@@ -62,5 +52,5 @@ export async function action({request, context}: ActionFunctionArgs) {
     headers.set('Set-Cookie', await context.session.commit());
   }
 
-  return Response.json({success: true, country, language, cart}, {headers});
+  return Response.json({success: true, country, cart}, {headers});
 }
