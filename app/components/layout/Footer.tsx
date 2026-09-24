@@ -127,6 +127,8 @@ export default function Footer({localization}: {localization: LocalizationData})
             <MarketSelector
               current={localization.country}
               countries={localization.availableCountries}
+              language={localization.language}
+              languages={localization.availableLanguages}
             />
             {SOCIAL_LINKS.map(({label, href}) => (
               <a
