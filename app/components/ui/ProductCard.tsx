@@ -6,6 +6,7 @@ import WishlistButton from '~/components/ui/WishlistButton';
 import Placeholder from '~/components/ui/Placeholder';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge} from '~/lib/judgeme';
+import {useTranslation} from '~/lib/i18n';
 
 type MoneyFragment = {
   amount: string;
@@ -143,6 +144,7 @@ export default function ProductCard({
   hoverFlip?: boolean;
   layout?: 'grid' | 'list';
 }) {
+  const t = useTranslation();
   const onSale = isOnSale(product);
   const soldOut = !product.availableForSale;
   const isNewTag = isNew(product);
@@ -355,7 +357,7 @@ export default function ProductCard({
               className="w-full justify-center bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase py-2.5 hover:bg-[var(--color-accent)] hover:text-white transition-colors duration-200 rounded-full disabled:opacity-60"
               aria-label={`Quick add ${product.title} to bag`}
             >
-              {isAdding ? 'Adding…' : justAdded ? 'Added ✓' : 'Add to Bag'}
+              {isAdding ? t('status.updating') : justAdded ? '✓' : t('action.addToBag')}
             </button>
           </div>
         )}

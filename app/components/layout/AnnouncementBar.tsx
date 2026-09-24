@@ -1,7 +1,8 @@
 import {Link} from 'react-router';
+import {useTranslation, type TranslationKey} from '~/lib/i18n';
 
 interface Announcement {
-  text: string;
+  key: TranslationKey;
   link?: string;
 }
 
@@ -10,10 +11,10 @@ interface AnnouncementBarProps {
 }
 
 const DEFAULT_ITEMS: Announcement[] = [
-  {text: 'Free Shipping on Orders $100+', link: '/collections/all-products'},
-  {text: '235GSM+ Heavyweight Tees, Made to Order'},
-  {text: 'New Drops Every Friday', link: '/collections/all-products'},
-  {text: 'Worldwide Shipping Available'},
+  {key: 'announcement.freeShipping', link: '/collections/all-products'},
+  {key: 'announcement.heavyweight'},
+  {key: 'announcement.newDrops', link: '/collections/all-products'},
+  {key: 'announcement.worldwide'},
 ];
 
 /**
@@ -22,6 +23,7 @@ const DEFAULT_ITEMS: Announcement[] = [
  * Dark theme: subtle dark surface with accent highlights.
  */
 function AnnouncementItem({item}: {item: Announcement}) {
+  const t = useTranslation();
   return (
     <span className="inline-flex items-center gap-6 mx-8">
       {item.link ? (
@@ -29,11 +31,11 @@ function AnnouncementItem({item}: {item: Announcement}) {
           to={item.link}
           className="text-[11px] font-medium tracking-[0.1em] uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
         >
-          {item.text}
+          {t(item.key)}
         </Link>
       ) : (
         <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-[var(--color-text-tertiary)]">
-          {item.text}
+          {t(item.key)}
         </span>
       )}
       <span className="text-[var(--color-accent)] text-xs" aria-hidden="true">✦</span>

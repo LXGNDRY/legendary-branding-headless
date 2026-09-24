@@ -5,12 +5,15 @@ import BrandLogo from '~/components/ui/BrandLogo';
 import type {LocalizationData} from '~/lib/market';
 
 const SHOP_LINKS = [
-  {label: 'All Products', href: '/collections/all-products'},
-  {label: 'T-Shirts', href: '/collections/shirts-tops'},
-  {label: 'Hoodies & Jackets', href: '/collections/hoodies-jackets'},
-  {label: 'Sets', href: '/collections/sets'},
-  {label: 'Accessories', href: '/collections/accessories-more'},
-  {label: 'Collections', href: '/collections'},
+  {label: 'New Drops', href: '/collections/all-products'},
+  {label: 'Shirts & Tops', href: '/collections/shirts-tops'},
+  {label: 'Outerwear', href: '/collections/hoodies-jackets'},
+  {label: 'Bottoms & Accessories', href: '/collections/accessories-more'},
+  {
+    label: 'The Marque Légendaire Collection',
+    href: '/collections/marque-legendaire-luxury-streetwear',
+  },
+  {label: 'View All Collections', href: '/collections'},
 ];
 
 const HELP_LINKS = [

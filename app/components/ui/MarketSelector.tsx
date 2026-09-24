@@ -1,6 +1,7 @@
 import {useEffect, useId} from 'react';
 import {useFetcher} from 'react-router';
 import type {MarketCountry, MarketLanguage} from '~/lib/market';
+import {useTranslation} from '~/lib/i18n';
 
 export default function MarketSelector({
   current,
@@ -13,6 +14,7 @@ export default function MarketSelector({
   language: MarketLanguage;
   languages: MarketLanguage[];
 }) {
+  const t = useTranslation();
   const fetcher = useFetcher<{success?: boolean; error?: string}>();
   const busy = fetcher.state !== 'idle';
   const selectId = useId();
@@ -30,7 +32,7 @@ export default function MarketSelector({
   return (
     <fetcher.Form method="post" action="/api/market" className="flex items-center gap-2">
       <label htmlFor={selectId} className="sr-only">
-        Shipping country and market
+        {t('market.country')}
       </label>
       <select
         id={selectId}
@@ -53,7 +55,7 @@ export default function MarketSelector({
         ))}
       </select>
       <label htmlFor={`${selectId}-language`} className="sr-only">
-        Store language
+        {t('market.language')}
       </label>
       <select
         id={`${selectId}-language`}
@@ -70,7 +72,7 @@ export default function MarketSelector({
           </option>
         ))}
       </select>
-      {busy && <span className="text-xs text-[var(--color-text-tertiary)]">Updating…</span>}
+      {busy && <span className="text-xs text-[var(--color-text-tertiary)]">{t('status.updating')}</span>}
       {fetcher.data?.error && (
         <span id={errorId} role="alert" className="text-xs text-[var(--color-error)]">
           {fetcher.data.error}
