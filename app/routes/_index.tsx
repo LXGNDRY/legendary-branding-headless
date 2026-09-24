@@ -189,8 +189,7 @@ export default function Homepage() {
         primaryHref="/collections/all-products"
         secondaryLabel="Lookbook"
         secondaryHref="/journal"
-        leftProduct={newDropProducts[0] ?? null}
-        rightProduct={newDropProducts[1] ?? null}
+        rightProduct={newDropProducts[0] ?? null}
       />
 
       {/* 2 — Marquee */}
