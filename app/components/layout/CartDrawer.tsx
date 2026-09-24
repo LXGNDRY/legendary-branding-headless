@@ -336,7 +336,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         ref={drawerRef}
         role="dialog"
         aria-modal="true"
-        aria-label={t('cart.title')}
+        aria-label="Shopping cart"
         aria-hidden={!open}
         className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform ${
           open ? 'translate-x-0' : 'translate-x-full'
