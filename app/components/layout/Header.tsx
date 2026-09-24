@@ -6,6 +6,7 @@ import BrandLogo from '~/components/ui/BrandLogo';
 import MarketSelector from '~/components/ui/MarketSelector';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import type {LocalizationData} from '~/lib/market';
+import type {NavCollectionItem} from '~/lib/nav';
 import {useTranslation} from '~/lib/i18n';
 
 /* ── Nav data ──────────────────────────────────────────────────────────── */
@@ -28,24 +29,50 @@ interface NavItem {
   groups?: NavGroup[];
 }
 
-const NAV: NavItem[] = [
-  {label: 'Shop', href: '/collections/all-products', groups: [
-    {label: 'Just Dropped', links: [
-      {label: 'New Drops', href: '/collections/all-products', isNew: true},
-    ]},
-    {label: 'Shop by Category', links: [
-      {label: 'Shirts & Tops', href: '/collections/shirts-tops'},
-      {label: 'Outerwear', href: '/collections/hoodies-jackets'},
-      {label: 'Bottoms & Accessories', href: '/collections/accessories-more'},
-    ]},
-    {label: 'Featured Collection', links: [
-      {label: 'The Marque Légendaire Collection', href: '/collections/marque-legendaire-luxury-streetwear'},
-    ]},
-  ]},
+// Non-collection top-level nav is fixed site structure (no Shopify Admin
+// equivalent to source it from); the Shop dropdown's collection groups are
+// built at render time from Shopify's own "Main Menu" navigation instead of
+// being hardcoded here -- see buildShopNav below.
+const STATIC_NAV: NavItem[] = [
   {label: 'Collections', href: '/collections'},
   {label: 'Journal', href: '/journal'},
   {label: 'About', href: '/policies/about'},
 ];
+
+// Groups Shopify's live main-menu collections the same way the storefront
+// always has (new arrivals / everyday categories / the featured luxury
+// line), but by handle rather than by a hand-maintained label+link list --
+// order within each group still follows the merchant's menu order.
+function buildShopNav(navCollections: NavCollectionItem[]): NavItem {
+  const byHandle = new Map(navCollections.map((c) => [c.handle, c]));
+  const newDrops = byHandle.get('all-products');
+  const featured = byHandle.get('marque-legendaire-luxury-streetwear');
+  const categories = navCollections.filter(
+    (c) => c.handle !== 'all-products' && c.handle !== 'marque-legendaire-luxury-streetwear',
+  );
+
+  const groups: NavGroup[] = [];
+  if (newDrops) {
+    groups.push({
+      label: 'Just Dropped',
+      links: [{label: newDrops.title, href: newDrops.url, isNew: true}],
+    });
+  }
+  if (categories.length) {
+    groups.push({
+      label: 'Shop by Category',
+      links: categories.map((c) => ({label: c.title, href: c.url})),
+    });
+  }
+  if (featured) {
+    groups.push({
+      label: 'Featured Collection',
+      links: [{label: featured.title, href: featured.url}],
+    });
+  }
+
+  return {label: 'Shop', href: '/collections/all-products', groups};
+}
 
 /* ── Icons ────────────────────────────────────────────────────────────── */
 
@@ -183,12 +210,14 @@ function MobileMenu({
   isLoggedIn,
   accountsEnabled,
   localization,
+  nav,
 }: {
   open: boolean;
   onClose: () => void;
   isLoggedIn: boolean;
   accountsEnabled: boolean;
   localization?: LocalizationData;
+  nav: NavItem[];
 }) {
   const t = useTranslation();
   const {containerRef} = useFocusTrap(open, onClose);
@@ -240,7 +269,7 @@ function MobileMenu({
 
       <nav className="flex-1 overflow-y-auto px-6 pt-10 pb-8">
         <ul className="space-y-5 mb-12">
-          {NAV.map((item) => {
+          {nav.map((item) => {
             const hasSubmenu = Boolean(item.groups?.length);
             const isOpen = openItem === item.label;
             const submenuId = `mobile-submenu-${item.label.toLowerCase().replace(/\s+/g, '-')}`;
@@ -362,6 +391,7 @@ interface HeaderProps {
   onOpenCart?: () => void;
   transparent?: boolean;
   localization?: LocalizationData;
+  navCollections?: NavCollectionItem[];
 }
 
 export default function Header({
@@ -371,8 +401,10 @@ export default function Header({
   onOpenCart,
   transparent = false,
   localization,
+  navCollections = [],
 }: HeaderProps) {
   const t = useTranslation();
+  const NAV: NavItem[] = [buildShopNav(navCollections), ...STATIC_NAV];
   const [scrolled, setScrolled] = useState(false);
   const [activeNav, setActiveNav] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -544,6 +576,7 @@ export default function Header({
         isLoggedIn={isLoggedIn}
         accountsEnabled={accountsEnabled}
         localization={localization}
+        nav={NAV}
       />
     </>
   );

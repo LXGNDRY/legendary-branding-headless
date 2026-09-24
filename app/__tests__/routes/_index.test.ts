@@ -17,10 +17,10 @@ describe('_index loader', () => {
     mockStorefront = createMockStorefront({
       responses: {
         Homepage: {
-          featuredCollections: {nodes: []},
           newDrops: {products: {nodes: []}},
           bestSellers: {products: {nodes: []}},
         },
+        MainMenu: {menu: {items: []}},
       },
     });
   });
@@ -33,12 +33,12 @@ describe('_index loader', () => {
     const result = await loader({request, context, params: {}});
 
     expect(result).toBeDefined();
-    expect(result.featuredCollections).toBeDefined();
+    expect(result.categoryItems).toBeDefined();
     expect(result.newDrops).toBeDefined();
     expect(result.bestSellers).toBeDefined();
   });
 
-  it('calls storefront.query with the Homepage operation', async () => {
+  it('calls storefront.query with the Homepage and MainMenu operations', async () => {
     const context = mockStorefront.createContext();
     const request = new Request('http://localhost/');
 
@@ -46,8 +46,9 @@ describe('_index loader', () => {
     await loader({request, context, params: {}});
 
     const calls = mockStorefront.getCalls();
-    expect(calls).toHaveLength(1);
-    expect(calls[0].operationName).toBe('Homepage');
+    const operationNames = calls.map((call) => call.operationName);
+    expect(operationNames).toContain('Homepage');
+    expect(operationNames).toContain('MainMenu');
   });
 
   it('passes country and language variables from i18n', async () => {
@@ -58,23 +59,34 @@ describe('_index loader', () => {
     await loader({request, context, params: {}});
 
     const calls = mockStorefront.getCalls();
-    expect(calls[0].variables.country).toBe('US');
-    expect(calls[0].variables.language).toBe('EN');
+    const homepageCall = calls.find((call) => call.operationName === 'Homepage')!;
+    expect(homepageCall.variables.country).toBe('US');
+    expect(homepageCall.variables.language).toBe('EN');
   });
 
-  it('returns featured collections from the query', async () => {
-    const mockCollection = {
-      id: 'gid://shopify/Collection/1',
-      title: 'Test Collection',
-      handle: 'test',
-      description: '',
-      image: null,
-    };
-
-    mockStorefront.setMockResponse('Homepage', {
-      featuredCollections: {nodes: [mockCollection]},
-      newDrops: {products: {nodes: []}},
-      bestSellers: {products: {nodes: []}},
+  it('returns category items resolved from the live main-menu collections', async () => {
+    mockStorefront.setMockResponse('MainMenu', {
+      menu: {
+        items: [
+          {
+            id: 'gid://shopify/MenuItem/1',
+            title: 'SHIRTS & TOPS',
+            type: 'COLLECTION',
+            url: '/collections/shirts-tops',
+            resourceId: 'gid://shopify/Collection/1',
+          },
+        ],
+      },
+    });
+    mockStorefront.setMockResponse('NavCollections', {
+      nodes: [
+        {
+          id: 'gid://shopify/Collection/1',
+          title: 'Shirts & Tops',
+          handle: 'shirts-tops',
+          image: null,
+        },
+      ],
     });
 
     const context = mockStorefront.createContext();
@@ -83,7 +95,44 @@ describe('_index loader', () => {
     // @ts-expect-error - minimal mock context
     const result = await loader({request, context, params: {}});
 
-    expect(result.featuredCollections.nodes).toHaveLength(1);
-    expect(result.featuredCollections.nodes[0].handle).toBe('test');
+    expect(result.categoryItems).toHaveLength(1);
+    expect(result.categoryItems[0].handle).toBe('shirts-tops');
+  });
+
+  it('excludes the New Drops and Marque Légendaire collections from category items', async () => {
+    mockStorefront.setMockResponse('MainMenu', {
+      menu: {
+        items: [
+          {
+            id: 'gid://shopify/MenuItem/1',
+            title: 'NEW DROPS',
+            type: 'COLLECTION',
+            url: '/collections/all-products',
+            resourceId: 'gid://shopify/Collection/1',
+          },
+          {
+            id: 'gid://shopify/MenuItem/2',
+            title: 'SHIRTS & TOPS',
+            type: 'COLLECTION',
+            url: '/collections/shirts-tops',
+            resourceId: 'gid://shopify/Collection/2',
+          },
+        ],
+      },
+    });
+    mockStorefront.setMockResponse('NavCollections', {
+      nodes: [
+        {id: 'gid://shopify/Collection/1', title: 'New Drops', handle: 'all-products', image: null},
+        {id: 'gid://shopify/Collection/2', title: 'Shirts & Tops', handle: 'shirts-tops', image: null},
+      ],
+    });
+
+    const context = mockStorefront.createContext();
+    const request = new Request('http://localhost/');
+
+    // @ts-expect-error - minimal mock context
+    const result = await loader({request, context, params: {}});
+
+    expect(result.categoryItems.map((item) => item.handle)).toEqual(['shirts-tops']);
   });
 });
