@@ -5,6 +5,26 @@ import type {ProductCardFragment} from '~/components/ui/ProductCard';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge} from '~/lib/judgeme';
 
+// The opening hero banner mirrors the exact photography live on the Online
+// Store sales channel's published theme ("Theme-Files/edits-here" ->
+// templates/index.json, hero section: image_1 for desktop, image_2_mobile
+// for mobile) -- these are campaign photos, not product/API data, so they're
+// referenced directly from Shopify's file CDN rather than queried through
+// the Storefront API (which has no endpoint for a theme section's assets).
+// Each `?width=` variant below is generated on-the-fly by Shopify's image
+// CDN so every breakpoint downloads only the pixels it needs.
+const HERO_DESKTOP_BASE =
+  'https://cdn.shopify.com/s/files/1/0490/1391/5801/files/5958342654289094365_0f2d35ea-8d96-4d70-ba9d-513592aeddf9.jpg?v=1789153351';
+const HERO_MOBILE_BASE =
+  'https://cdn.shopify.com/s/files/1/0490/1391/5801/files/12051419194614170644_d39726cf-d2d8-45ab-a65c-4e10d09ed173.jpg?v=1789153413';
+
+function cdnSrcSet(base: string, widths: number[]) {
+  return widths.map((w) => `${base}&width=${w} ${w}w`).join(', ');
+}
+
+const HERO_DESKTOP_WIDTHS = [960, 1440, 1920, 2400];
+const HERO_MOBILE_WIDTHS = [480, 750, 1000, 1400];
+
 interface HeroSplitProps {
   eyebrow?: string;
   heading: string;
@@ -13,7 +33,6 @@ interface HeroSplitProps {
   primaryHref: string;
   secondaryLabel?: string;
   secondaryHref?: string;
-  leftProduct?: ProductCardFragment | null;
   rightProduct?: ProductCardFragment | null;
 }
 
@@ -25,34 +44,39 @@ export default function HeroSplit({
   primaryHref,
   secondaryLabel,
   secondaryHref,
-  leftProduct,
   rightProduct,
 }: HeroSplitProps) {
-  const leftImage = leftProduct?.featuredImage;
   const rightImage = rightProduct?.featuredImage;
   const rightProductRating = parseJudgemeBadge(rightProduct?.reviewBadge?.value);
 
   return (
     <section className="relative w-full bg-[var(--color-bg-level-0)] overflow-hidden">
-      {/* Background: full-width product image with dark overlay */}
+      {/* Background: the storefront's live campaign hero, art-directed per
+          breakpoint -- a <picture> with media-conditional <source>s (rather
+          than one <img> scaled by CSS) so a phone only ever downloads the
+          portrait mobile crop and a desktop browser only the landscape one. */}
       <div className="relative w-full min-h-[85dvh] flex items-end lg:items-center">
-        {leftImage?.url ? (
-          <>
-            <Image
-              data={leftImage}
-              width={1800}
-              height={2200}
-              className="absolute inset-0 w-full h-full object-cover object-center"
-              sizes="100vw"
-              loading="eager"
-              fetchPriority="high"
-            />
-            {/* Gradient overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-level-0)] via-[var(--color-bg-level-0)]/40 to-[var(--color-bg-level-0)]/20" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-[var(--color-bg-level-1)]" />
-        )}
+        <picture>
+          <source
+            media="(min-width: 1024px)"
+            srcSet={cdnSrcSet(HERO_DESKTOP_BASE, HERO_DESKTOP_WIDTHS)}
+            sizes="100vw"
+          />
+          <source
+            srcSet={cdnSrcSet(HERO_MOBILE_BASE, HERO_MOBILE_WIDTHS)}
+            sizes="100vw"
+          />
+          <img
+            src={`${HERO_DESKTOP_BASE}&width=1920`}
+            alt="Legendary Branding — Marque Légendaire streetwear"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            loading="eager"
+            fetchPriority="high"
+            decoding="sync"
+          />
+        </picture>
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-level-0)] via-[var(--color-bg-level-0)]/40 to-[var(--color-bg-level-0)]/20" />
 
         {/* Hero content — pointer-events-none on the full-width wrapper so its
             empty space (beyond max-w-2xl) doesn't sit on top of the absolutely
