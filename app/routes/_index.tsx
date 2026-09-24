@@ -17,38 +17,17 @@ import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import {CacheLong} from '~/lib/cache';
 import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
-
-type CollectionNode = {
-  id: string;
-  title: string;
-  handle: string;
-  description?: string | null;
-  image?: {
-    url: string;
-    altText?: string | null;
-    width?: number | null;
-    height?: number | null;
-  } | null;
-};
+import {
+  MAIN_MENU_QUERY,
+  NAV_COLLECTIONS_QUERY,
+  resolveMenuCollections,
+  type MenuItemNode,
+} from '~/lib/nav';
 
 const HOMEPAGE_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
   query Homepage($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
-    featuredCollections: collections(first: 6, sortKey: UPDATED_AT) {
-      nodes {
-        id
-        title
-        handle
-        description
-        image {
-          url
-          altText
-          width
-          height
-        }
-      }
-    }
     newDrops: collection(handle: "all-products") {
       products(first: 8, sortKey: CREATED) {
         nodes {
@@ -92,16 +71,40 @@ export const meta: MetaFunction = () => {
 
 export async function loader({context}: LoaderFunctionArgs) {
   const {storefront} = context;
+  const variables = {
+    country: storefront.i18n.country,
+    language: storefront.i18n.language,
+  };
 
-  const {featuredCollections, newDrops, bestSellers, marqueLegendaire} = await storefront.query(
-    HOMEPAGE_QUERY,
-    {
-      variables: {
-        country: storefront.i18n.country,
-        language: storefront.i18n.language,
-      },
-      cache: CacheLong(),
-    },
+  const [{newDrops, bestSellers, marqueLegendaire}, menuResult] = await Promise.all([
+    storefront.query(HOMEPAGE_QUERY, {variables, cache: CacheLong()}),
+    storefront.query(MAIN_MENU_QUERY, {variables, cache: CacheLong()}),
+  ]);
+
+  // "Shop by Category" tiles: sourced from Shopify's own main-menu collection
+  // order (see ~/lib/nav) rather than an arbitrary sortKey, so this section
+  // always matches the merchant's actual navigation -- New Drops and Marque
+  // Légendaire already get their own dedicated homepage sections above/below,
+  // so they're excluded here to avoid repeating the same collection twice.
+  const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
+  const collectionIds = menuItems
+    .filter((item) => item.type === 'COLLECTION' && item.resourceId)
+    .map((item) => item.resourceId!);
+
+  const menuCollections = collectionIds.length
+    ? resolveMenuCollections(
+        menuItems,
+        (
+          await storefront.query(NAV_COLLECTIONS_QUERY, {
+            variables: {ids: collectionIds, ...variables},
+            cache: CacheLong(),
+          })
+        ).nodes,
+      )
+    : [];
+
+  const categoryItems = menuCollections.filter(
+    (c) => c.handle !== 'all-products' && c.handle !== 'marque-legendaire-luxury-streetwear',
   );
 
   const ratedProducts = ((bestSellers?.products?.nodes ?? []) as ProductCardFragment[])
@@ -140,7 +143,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     : Promise.resolve([]);
 
   return {
-    featuredCollections,
+    categoryItems,
     newDrops,
     bestSellers,
     marqueLegendaire,
@@ -163,7 +166,7 @@ const MARQUEE_ITEMS = [
 
 export default function Homepage() {
   const {
-    featuredCollections,
+    categoryItems,
     newDrops,
     marqueLegendaire,
     ratedProducts,
@@ -200,7 +203,7 @@ export default function Homepage() {
       <CategoryGrid
         eyebrow="Explore"
         heading="Shop by Category"
-        items={((featuredCollections?.nodes ?? []) as CollectionNode[]).slice(0, 3)}
+        items={categoryItems}
       />
 
       {/* 5 — New arrivals asymmetric grid */}

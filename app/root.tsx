@@ -27,6 +27,13 @@ import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
 import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
+import {
+  MAIN_MENU_QUERY,
+  NAV_COLLECTIONS_QUERY,
+  resolveMenuCollections,
+  type MenuItemNode,
+  type NavCollectionItem,
+} from '~/lib/nav';
 import {Analytics as HydrogenAnalytics, getShopAnalytics, CartForm} from '@shopify/hydrogen';
 
 export const links: LinksFunction = () => [
@@ -123,7 +130,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     }
   }
 
-  const [cartData, localizationResult, shop] = await Promise.all([
+  const [cartData, localizationResult, shop, menuResult] = await Promise.all([
     cart.get(),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
@@ -136,7 +143,35 @@ export async function loader({context}: LoaderFunctionArgs) {
       storefront: context.storefront,
       publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
     }),
+    context.storefront.query(MAIN_MENU_QUERY, {
+      variables: {
+        country: context.storefront.i18n.country,
+        language: context.storefront.i18n.language,
+      },
+      cache: CacheLong(),
+    }),
   ]);
+
+  const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
+  const collectionIds = menuItems
+    .filter((item) => item.type === 'COLLECTION' && item.resourceId)
+    .map((item) => item.resourceId!);
+
+  const navCollections: NavCollectionItem[] = collectionIds.length
+    ? resolveMenuCollections(
+        menuItems,
+        (
+          await context.storefront.query(NAV_COLLECTIONS_QUERY, {
+            variables: {
+              ids: collectionIds,
+              country: context.storefront.i18n.country,
+              language: context.storefront.i18n.language,
+            },
+            cache: CacheLong(),
+          })
+        ).nodes,
+      )
+    : [];
 
   return {
     cart: cartData as CartData,
@@ -147,6 +182,7 @@ export async function loader({context}: LoaderFunctionArgs) {
       context.env.PUBLIC_CUSTOMER_ACCOUNT_API_URL,
     ),
     localization: localizationResult.localization as LocalizationData,
+    navCollections,
     shop,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on
@@ -198,7 +234,7 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, shop, analyticsConfig, consent} = useLoaderData<typeof loader>();
+  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, consent} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
   const location = useLocation();
@@ -277,11 +313,12 @@ export default function App() {
         accountsEnabled={accountsEnabled}
         onOpenCart={() => setCartOpen(true)}
         localization={localization}
+        navCollections={navCollections}
       />
       <main id="main-content" className="flex-1">
         <Outlet />
       </main>
-      <Footer localization={localization} />
+      <Footer localization={localization} navCollections={navCollections} />
 
       {/* Consent-gated analytics (GA4, Meta, TikTok, Klaviyo on-site embed) */}
       <Analytics

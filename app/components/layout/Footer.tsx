@@ -3,18 +3,17 @@ import NewsletterForm from '~/components/ui/NewsletterForm';
 import MarketSelector from '~/components/ui/MarketSelector';
 import BrandLogo from '~/components/ui/BrandLogo';
 import type {LocalizationData} from '~/lib/market';
+import type {NavCollectionItem} from '~/lib/nav';
 
-const SHOP_LINKS = [
-  {label: 'New Drops', href: '/collections/all-products'},
-  {label: 'Shirts & Tops', href: '/collections/shirts-tops'},
-  {label: 'Outerwear', href: '/collections/hoodies-jackets'},
-  {label: 'Bottoms & Accessories', href: '/collections/accessories-more'},
-  {
-    label: 'The Marque Légendaire Collection',
-    href: '/collections/marque-legendaire-luxury-streetwear',
-  },
-  {label: 'View All Collections', href: '/collections'},
-];
+// Built at render time from Shopify's live main-menu collections (see
+// buildShopLinks below) instead of a hardcoded handle/label list, so a
+// collection rename or reorder in Shopify Admin shows up here automatically.
+function buildShopLinks(navCollections: NavCollectionItem[]) {
+  return [
+    ...navCollections.map((c) => ({label: c.title, href: c.url})),
+    {label: 'View All Collections', href: '/collections'},
+  ];
+}
 
 const HELP_LINKS = [
   {label: 'FAQ', href: '/policies/legendary_branding_faqs'},
@@ -80,7 +79,14 @@ function FooterColumn({
  * Premium dark theme footer with brand statement, newsletter,
  * three link columns, social links, and copyright.
  */
-export default function Footer({localization}: {localization: LocalizationData}) {
+export default function Footer({
+  localization,
+  navCollections = [],
+}: {
+  localization: LocalizationData;
+  navCollections?: NavCollectionItem[];
+}) {
+  const SHOP_LINKS = buildShopLinks(navCollections);
   return (
     <footer className="border-t border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] mt-auto">
       <div className="h-container py-16 md:py-24">
