@@ -1,17 +1,13 @@
 import {useEffect, useId} from 'react';
 import {useFetcher} from 'react-router';
-import type {MarketCountry, MarketLanguage} from '~/lib/market';
+import type {MarketCountry} from '~/lib/market';
 
 export default function MarketSelector({
   current,
   countries,
-  language,
-  languages,
 }: {
   current: MarketCountry;
   countries: MarketCountry[];
-  language: MarketLanguage;
-  languages: MarketLanguage[];
 }) {
   const fetcher = useFetcher<{success?: boolean; error?: string}>();
   const busy = fetcher.state !== 'idle';
@@ -49,24 +45,6 @@ export default function MarketSelector({
         {countries.map((country) => (
           <option key={country.isoCode} value={country.isoCode}>
             {country.name} · {country.currency.isoCode}
-          </option>
-        ))}
-      </select>
-      <label htmlFor={`${selectId}-language`} className="sr-only">
-        Store language
-      </label>
-      <select
-        id={`${selectId}-language`}
-        name="language"
-        key={language.isoCode}
-        defaultValue={language.isoCode}
-        disabled={busy}
-        onChange={(event) => event.currentTarget.form?.requestSubmit()}
-        className="max-w-[10rem] bg-transparent text-xs text-[var(--color-text-secondary)] border border-[var(--color-border-medium)] rounded-md px-3 py-2"
-      >
-        {languages.map((availableLanguage) => (
-          <option key={availableLanguage.isoCode} value={availableLanguage.isoCode}>
-            {availableLanguage.endonymName}
           </option>
         ))}
       </select>
