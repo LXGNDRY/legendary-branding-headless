@@ -49,15 +49,18 @@ test.describe('Golden commerce journey', () => {
     const countrySelector = page.getByLabel('Shipping country and market').first();
     await expect(countrySelector).toBeAttached();
 
-    const marketResponse = page.waitForResponse((response) =>
-      response.request().method() === 'POST' && /\/api\/market(?:\.data)?$/.test(new URL(response.url()).pathname),
-    );
-    await countrySelector.selectOption('GB');
-    const response = await marketResponse;
+    // A successful market update deliberately reloads the document so all
+    // server-rendered Storefront API requests use the selected market. Arm
+    // both waits before changing the select: calling page.reload() afterward
+    // races that application reload on mobile WebKit/Chromium.
+    const [response] = await Promise.all([
+      page.waitForResponse((response) =>
+        response.request().method() === 'POST' && /\/api\/market(?:\.data)?$/.test(new URL(response.url()).pathname),
+      ),
+      page.waitForNavigation({waitUntil: 'domcontentloaded'}),
+      countrySelector.selectOption('GB'),
+    ]);
     expect(response.ok()).toBe(true);
-    await expect(page.getByLabel('Shipping country and market').first()).toHaveValue('GB');
-
-    await page.reload({waitUntil: 'domcontentloaded'});
     await expect(page.getByLabel('Shipping country and market').first()).toHaveValue('GB');
   });
 
