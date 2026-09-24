@@ -39,7 +39,7 @@ export default function StatStrip({
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="flex flex-col items-center justify-center px-6 md:px-10 py-10 flex-1 min-w-[140px] border-r border-inherit last:border-r-0"
+          className="flex flex-col items-center justify-center text-center px-6 md:px-10 py-10 flex-1 min-w-[140px] border-r border-inherit last:border-r-0"
           role="listitem"
         >
           <dd className={`text-[clamp(1.5rem,3vw,2.5rem)] font-serif leading-none mb-2 ${valueColor}`}>

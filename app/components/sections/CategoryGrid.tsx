@@ -41,14 +41,14 @@ export default function CategoryGrid({eyebrow = 'Shop', heading = 'Collections',
             <Link
               key={item.id}
               to={`/collections/${item.handle}`}
-              className="h-reveal group relative aspect-[3/4] overflow-hidden rounded-md bg-[var(--color-bg-level-2)]"
+              className="h-reveal group relative aspect-square overflow-hidden rounded-md bg-[var(--color-bg-level-2)]"
             >
               {item.image?.url ? (
                 <Image
                   data={item.image}
-                  aspectRatio="3/4"
-                  width={600}
-                  height={800}
+                  aspectRatio="1/1"
+                  width={700}
+                  height={700}
                   className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-600 ease-[var(--ease-expo)] group-hover:scale-[1.05]"
                   sizes="(max-width: 640px) 100vw, 33vw"
                   loading="lazy"
