@@ -1,4 +1,4 @@
-import {useId} from 'react';
+import {useEffect, useId} from 'react';
 import {useFetcher} from 'react-router';
 import type {MarketCountry} from '~/lib/market';
 
@@ -13,6 +13,15 @@ export default function MarketSelector({
   const busy = fetcher.state !== 'idle';
   const selectId = useId();
   const errorId = `${selectId}-error`;
+
+  useEffect(() => {
+    if (fetcher.data?.success) {
+      // Root loader reads the selected country from the server session. A
+      // document navigation makes every price and availability query use the
+      // newly selected Shopify Market, rather than only updating this control.
+      window.location.reload();
+    }
+  }, [fetcher.data?.success]);
 
   return (
     <fetcher.Form method="post" action="/api/market" className="flex items-center gap-2">
