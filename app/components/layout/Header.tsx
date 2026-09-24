@@ -6,6 +6,7 @@ import BrandLogo from '~/components/ui/BrandLogo';
 import MarketSelector from '~/components/ui/MarketSelector';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import type {LocalizationData} from '~/lib/market';
+import {useTranslation} from '~/lib/i18n';
 
 /* ── Nav data ──────────────────────────────────────────────────────────── */
 
@@ -192,6 +193,7 @@ function MobileMenu({
   accountsEnabled: boolean;
   localization?: LocalizationData;
 }) {
+  const t = useTranslation();
   const {containerRef} = useFocusTrap(open, onClose);
   const [openItem, setOpenItem] = useState<string | null>(null);
 
@@ -254,7 +256,7 @@ function MobileMenu({
                     onClick={onClose}
                     className="font-serif text-[clamp(1.75rem,7vw,2.75rem)] leading-none text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
                   >
-                    {item.label}
+                    {item.label === 'Shop' ? t('nav.shop') : item.label === 'Collections' ? t('nav.collections') : item.label === 'Journal' ? t('nav.journal') : item.label === 'About' ? t('nav.about') : item.label}
                   </Link>
                   {hasSubmenu && (
                     <button
@@ -311,7 +313,7 @@ function MobileMenu({
               onClick={onClose}
               className="h-eyebrow block text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             >
-              {isLoggedIn ? 'My Account' : 'Sign In'}
+              {isLoggedIn ? t('nav.myAccount') : t('nav.signIn')}
             </Link>
           )}
           <Link
@@ -319,14 +321,14 @@ function MobileMenu({
             onClick={onClose}
             className="h-eyebrow block text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
           >
-            Wishlist
+            {t('nav.wishlist')}
           </Link>
           <Link
             to="/search"
             onClick={onClose}
             className="h-eyebrow block text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
           >
-            Search
+            {t('nav.search')}
           </Link>
           {isLoggedIn && (
             <a
@@ -340,7 +342,7 @@ function MobileMenu({
 
         {localization && (
           <div className="pt-6 mt-6 border-t border-[var(--color-border-muted)]">
-            <p className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">Shipping to</p>
+            <p className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">{t('market.shippingTo')}</p>
             <MarketSelector
               current={localization.country}
               countries={localization.availableCountries}
@@ -373,6 +375,7 @@ export default function Header({
   transparent = false,
   localization,
 }: HeaderProps) {
+  const t = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [activeNav, setActiveNav] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -466,7 +469,7 @@ export default function Header({
                     to={item.href}
                     className="h-eyebrow py-2 relative text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors inline-flex items-center gap-1"
                   >
-                    {item.label}
+                    {item.label === 'Shop' ? t('nav.shop') : item.label === 'Collections' ? t('nav.collections') : item.label === 'Journal' ? t('nav.journal') : item.label === 'About' ? t('nav.about') : item.label}
                     {item.groups && <ChevronDownIcon />}
                   </Link>
                 </div>
@@ -478,7 +481,7 @@ export default function Header({
               <button
                 onClick={() => setSearchOpen((s) => !s)}
                 className="p-2 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
-                aria-label={searchOpen ? 'Close search' : 'Search'}
+                aria-label={searchOpen ? t('nav.search') : t('nav.search')}
                 aria-expanded={searchOpen}
               >
                 {searchOpen ? <CloseIcon /> : <SearchIcon />}
@@ -488,7 +491,7 @@ export default function Header({
                 <Link
                   to={isLoggedIn ? '/account' : '/account/login'}
                   className="hidden sm:flex p-2 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
-                  aria-label={isLoggedIn ? 'My Account' : 'Sign In'}
+                  aria-label={isLoggedIn ? t('nav.myAccount') : t('nav.signIn')}
                 >
                   <UserIcon />
                 </Link>
@@ -497,7 +500,7 @@ export default function Header({
               <Link
                 to="/wishlist"
                 className="relative hidden sm:flex p-2 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
-                aria-label={`Wishlist${wishlistCount > 0 ? ` (${wishlistCount} items)` : ''}`}
+                aria-label={`${t('nav.wishlist')}${wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
               >
                 <WishlistIcon />
                 <CountBadge count={wishlistCount} />
