@@ -30,10 +30,8 @@ import {
   breadcrumbSchema,
 } from '~/components/seo/SeoSchema';
 import SizeGuideModal from '~/components/ui/SizeGuideModal';
-import TrustStrip from '~/components/ui/TrustStrip';
 import WaitlistForm from '~/components/ui/WaitlistForm';
 import RecentlyViewed from '~/components/ui/RecentlyViewed';
-import StatStrip from '~/components/sections/StatStrip';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -68,7 +66,7 @@ type ProductFull = {
   // Product.metafields(identifiers:) returns a plain list, not a
   // connection -- there is no `.nodes` wrapper (unlike `images`/`variants`
   // below, which genuinely are connections).
-  metafields: Array<{key: string; value: string; type: string} | null>;
+  metafields: Array<{key: string; value: string; type: string; reference?: {image?: {url: string; altText?: string | null; width?: number | null; height?: number | null} | null} | null} | null>;
   images: {
     nodes: {id?: string | null; url: string; altText?: string | null; width?: number | null; height?: number | null}[];
   };
@@ -119,6 +117,11 @@ const PRODUCT_QUERY = `#graphql
         key
         value
         type
+        reference {
+          ... on MediaImage {
+            image { url altText width height }
+          }
+        }
       }
       images(first: 10) {
         nodes { id url altText width height }
@@ -290,7 +293,7 @@ function MobilePurchaseBar({
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">{needsSelection ? 'Choose an option' : 'Sold out'}</p>
           )}
           <p className="truncate text-[0.65rem] uppercase tracking-[0.1em] text-[var(--color-text-tertiary)]">
-            {available ? 'Ready to ship' : needsSelection ? 'Select size and color' : 'Get notified on restock'}
+            {available ? 'Made to order' : needsSelection ? 'Select size and color' : 'Get notified on restock'}
           </p>
         </div>
         {available && variant ? (
@@ -629,6 +632,13 @@ export default function ProductPage() {
                 </div>
               </div>
 
+              {(product.metafields?.some((m) => m?.key === 'fit' && m.value) || product.metafields?.some((m) => m?.key === 'material' && m.value)) && (
+                <ul className="-mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-text-secondary)]" aria-label="Product highlights">
+                  {product.metafields?.find((m) => m?.key === 'fit' && m.value)?.value && <li><span className="font-medium text-[var(--color-text-primary)]">Fit:</span> {product.metafields.find((m) => m?.key === 'fit' && m.value)?.value}</li>}
+                  {product.metafields?.find((m) => m?.key === 'material' && m.value)?.value && <li><span className="font-medium text-[var(--color-text-primary)]">Material:</span> {product.metafields.find((m) => m?.key === 'material' && m.value)?.value}</li>}
+                </ul>
+              )}
+
               {/* Variant selector */}
               <div id="variant-options">
                 <VariantSelector
@@ -753,6 +763,11 @@ export default function ProductPage() {
                 </div>
               )}
 
+              <div className="rounded-md border border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] px-4 py-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                <p><span className="font-medium text-[var(--color-text-primary)]">Shipping:</span> $5 standard below $100 USD · free standard at $100 USD+ · $12 express option.</p>
+                <p className="mt-1">Import duties are included in the displayed price. Taxes are paid by you at checkout.</p>
+              </div>
+
               {/* Quantity + Add to cart */}
               <div className="space-y-3 pt-2">
                 {selectedVariant?.availableForSale && (
@@ -784,12 +799,11 @@ export default function ProductPage() {
                 )}
               </div>
 
-              {/* Shipping note */}
-              <p className="h-eyebrow text-[var(--color-text-tertiary)] text-center">
-                Free shipping over $100 · 30-day returns
+              <p className="text-center text-xs text-[var(--color-text-secondary)]">
+                <Link to="/policies/shipping-policy" className="underline underline-offset-2 hover:text-[var(--color-text-primary)]">Shipping details</Link>
+                {' · '}
+                <Link to="/policies/refund-policy" className="underline underline-offset-2 hover:text-[var(--color-text-primary)]">Return policy</Link>
               </p>
-
-              <TrustStrip />
 
               {/* Accordions */}
               <div className="border-t border-[var(--color-border-muted)] pt-4">
@@ -802,7 +816,11 @@ export default function ProductPage() {
                   </Accordion>
                 )}
                 <Accordion label="Shipping & Returns">
-                  <p>Free shipping on orders over $100. Orders ship within 3–5 business days. Easy 30-day returns on unworn items.</p>
+                  <div className="space-y-3">
+                    <p>Standard shipping is $5 on orders under $100 USD and free on orders of $100 USD or more. A $12 express shipping option is available. Import duties are included in the displayed price. Applicable taxes are paid by you and calculated at checkout.</p>
+                    <p>For return eligibility, timing, and instructions, review our <Link to="/policies/refund-policy" className="underline underline-offset-2">return policy</Link>.</p>
+                    <Link to="/policies/shipping-policy" className="inline-block underline underline-offset-2">Read the shipping policy</Link>
+                  </div>
                 </Accordion>
                 {product.metafields?.some((m) => m?.key === 'care' && m.value) && (
                   <Accordion label="Care Guide">
@@ -880,8 +898,6 @@ export default function ProductPage() {
         )}
 
         {/* Craft / trust stats */}
-        <StatStrip variant="light" />
-
         {/* Related products */}
         {relatedProducts?.products?.nodes && relatedProducts.products.nodes.length > 0 && (
           <section className="border-t border-[var(--color-border-muted)]">
@@ -931,7 +947,12 @@ export default function ProductPage() {
       />
 
       {/* Size guide modal */}
-      <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
+      <SizeGuideModal
+        open={sizeGuideOpen}
+        onClose={() => setSizeGuideOpen(false)}
+        chartImage={product.metafields?.find((m) => m?.key === 'size_chart')?.reference?.image ?? null}
+        fitNote={product.metafields?.find((m) => m?.key === 'fit')?.value}
+      />
     </>
   );
 }
