@@ -344,6 +344,8 @@ function MobileMenu({
             <MarketSelector
               current={localization.country}
               countries={localization.availableCountries}
+              language={localization.language}
+              languages={localization.availableLanguages}
             />
           </div>
         )}
