@@ -44,5 +44,13 @@ export async function action({request, context}: ActionFunctionArgs) {
     cart = updated.cart;
   }
 
-  return Response.json({success: true, country, cart});
+  // The selected market must survive navigation. Without committing this
+  // cookie, the next server render falls back to edge detection and can show
+  // a different Markets price/currency than the one the customer selected.
+  const headers = new Headers();
+  if (context.session.isPending) {
+    headers.set('Set-Cookie', await context.session.commit());
+  }
+
+  return Response.json({success: true, country, cart}, {headers});
 }
