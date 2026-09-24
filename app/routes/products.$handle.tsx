@@ -763,10 +763,30 @@ export default function ProductPage() {
                 </div>
               )}
 
-              <div className="rounded-md border border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] px-4 py-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                <p><span className="font-medium text-[var(--color-text-primary)]">Shipping:</span> $5 standard below $100 USD · free standard at $100 USD+ · $12 express option.</p>
-                <p className="mt-1">Import duties are included in the displayed price. Taxes are paid by you at checkout.</p>
-              </div>
+              <section
+                aria-label="Delivery and checkout information"
+                className="border-y border-[var(--color-border-muted)] py-3.5"
+              >
+                <div className="flex items-start gap-3">
+                  <svg
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-text-primary)]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6h11v11H3zM14 9h4l3 3v5h-7z" />
+                    <circle cx="7" cy="19" r="1.5" />
+                    <circle cx="18" cy="19" r="1.5" />
+                  </svg>
+                  <div className="min-w-0 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                    <p className="font-medium text-[var(--color-text-primary)]">Worldwide delivery</p>
+                    <p>$5 standard below $100 USD · free at $100 USD+ · $12 express</p>
+                    <p className="mt-0.5 text-[var(--color-text-tertiary)]">Duties included · taxes calculated at checkout</p>
+                  </div>
+                </div>
+              </section>
 
               {/* Quantity + Add to cart */}
               <div className="space-y-3 pt-2">
@@ -799,10 +819,10 @@ export default function ProductPage() {
                 )}
               </div>
 
-              <p className="text-center text-xs text-[var(--color-text-secondary)]">
-                <Link to="/policies/shipping-policy" className="underline underline-offset-2 hover:text-[var(--color-text-primary)]">Shipping details</Link>
-                {' · '}
-                <Link to="/policies/refund-policy" className="underline underline-offset-2 hover:text-[var(--color-text-primary)]">Return policy</Link>
+              <p className="flex items-center justify-center gap-3 text-[0.7rem] uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">
+                <Link to="/policies/shipping-policy" className="transition-colors hover:text-[var(--color-text-primary)]">Shipping details</Link>
+                <span aria-hidden="true" className="h-3 w-px bg-[var(--color-border-medium)]" />
+                <Link to="/policies/refund-policy" className="transition-colors hover:text-[var(--color-text-primary)]">Returns</Link>
               </p>
 
               {/* Accordions */}
