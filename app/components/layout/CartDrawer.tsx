@@ -6,6 +6,7 @@ import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
 import {withCheckoutLocale} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {useTranslation} from '~/lib/i18n';
 
 // Free shipping threshold -- applies to all customers, not just US orders.
 // Update this if the store's shipping policy changes.
@@ -55,6 +56,7 @@ function TruckIcon() {
 }
 
 function CartLineItem({line}: {line: CartLineData}) {
+  const t = useTranslation();
   const {merchandise, quantity, cost, discountAllocations} = line;
   const {product, selectedOptions, image} = merchandise;
 
@@ -139,7 +141,7 @@ function CartLineItem({line}: {line: CartLineData}) {
               <button
                 type="submit"
                 className="w-11 h-11 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors disabled:opacity-30"
-                aria-label={`Decrease quantity for ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
+                aria-label={t('cart.decreaseQuantity', {product: `${product.title}${variantLabel ? `, ${variantLabel}` : ''}`})}
                 disabled={quantity <= 1}
               >
                 <MinusIcon />
@@ -154,7 +156,7 @@ function CartLineItem({line}: {line: CartLineData}) {
               <button
                 type="submit"
                 className="w-11 h-11 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors"
-                aria-label={`Increase quantity for ${product.title}${variantLabel ? `, ${variantLabel}` : ''}`}
+                aria-label={t('cart.increaseQuantity', {product: `${product.title}${variantLabel ? `, ${variantLabel}` : ''}`})}
               >
                 <PlusIcon />
               </button>
@@ -172,9 +174,9 @@ function CartLineItem({line}: {line: CartLineData}) {
               <button
                 type="submit"
                 className="text-[11px] text-[var(--color-text-tertiary)] hover:text-[var(--color-error)] transition-colors p-2.5 -m-2.5"
-                aria-label={`Remove ${product.title}`}
+                aria-label={t('cart.removeProduct', {product: product.title})}
               >
-                Remove
+                {t('action.remove')}
               </button>
             </CartForm>
           </div>
@@ -191,6 +193,7 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
+  const t = useTranslation();
   const {publish} = useAnalytics();
   const currentCart = cart;
   const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
@@ -408,7 +411,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 size="sm"
                 className="w-full"
               >
-                Start Shopping
+                {t('action.startShopping')}
               </Button>
             </div>
           ) : (
@@ -469,7 +472,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                   action={CartForm.ACTIONS.DiscountCodesUpdate}
                   inputs={{discountCodes: []}}
                 >
-                  <button type="submit" className="underline underline-offset-2">Remove</button>
+                  <button type="submit" className="underline underline-offset-2">{t('action.remove')}</button>
                 </CartForm>
               </div>
             ))}
@@ -532,7 +535,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                   loading={checkingOut}
                   testId="drawer-checkout"
                 >
-                  {checkingOut ? 'Redirecting…' : 'Checkout'}
+                  {checkingOut ? t('status.updating') : t('cart.checkout')}
                 </Button>
               </div>
             ) : (
@@ -544,7 +547,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 disabled
                 ariaLabel="Checkout unavailable -- your cart is still loading"
               >
-                Checkout
+                {t('cart.checkout')}
               </Button>
             )}
 

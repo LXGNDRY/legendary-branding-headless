@@ -42,6 +42,7 @@ import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge, fetchJudgemeProductReviews} from '~/lib/judgeme';
 import ProductReviewList from '~/components/sections/ProductReviewList';
+import {useTranslation} from '~/lib/i18n';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -238,6 +239,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
 }
 
 function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragment | null; quantity?: number}) {
+  const t = useTranslation();
   const soldOut = !variant?.availableForSale;
   const unavailable = !variant;
 
@@ -248,7 +250,7 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
         disabled
         className={`w-full h-btn-primary opacity-40 cursor-not-allowed ${unavailable ? 'h-wiggle-bounce' : ''}`}
       >
-        {unavailable ? 'Choose an option' : 'Sold Out — join the waitlist below'}
+        {unavailable ? t('action.chooseOption') : 'Sold Out — join the waitlist below'}
       </button>
     );
   }
@@ -264,7 +266,7 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
         className="w-full h-btn-primary"
         data-testid="add-to-cart"
       >
-        Add to Bag
+        {t('action.addToBag')}
       </button>
     </CartForm>
   );
@@ -277,6 +279,7 @@ function MobilePurchaseBar({
   variant?: ProductVariantFragment | null;
   quantity: number;
 }) {
+  const t = useTranslation();
   const available = Boolean(variant?.availableForSale);
   const needsSelection = !variant;
 
@@ -303,7 +306,7 @@ function MobilePurchaseBar({
             inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
           >
             <button type="submit" className="h-btn-primary whitespace-nowrap px-5">
-              Add to Bag
+              {t('action.addToBag')}
             </button>
           </CartForm>
         ) : (
@@ -331,6 +334,7 @@ function StickyBuyBar({
   quantity: number;
   visible: boolean;
 }) {
+  const t = useTranslation();
   const available = Boolean(variant?.availableForSale);
 
   return (
@@ -354,7 +358,7 @@ function StickyBuyBar({
             inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
           >
             <button type="submit" className="h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs">
-              Add to Bag
+              {t('action.addToBag')}
             </button>
           </CartForm>
         ) : (
@@ -435,6 +439,7 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
 }
 
 export default function ProductPage() {
+  const t = useTranslation();
   const {product, relatedProducts, reviews} = useLoaderData<typeof loader>();
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -532,7 +537,7 @@ export default function ProductPage() {
           {/* Breadcrumb */}
           <nav className="h-eyebrow text-[var(--color-text-tertiary)] mb-8" aria-label="Breadcrumb">
             <Link to="/collections/all-products" className="hover:text-[var(--color-foreground)] transition-colors">
-              Shop
+              {t('nav.shop')}
             </Link>
             <span className="mx-2 opacity-40">/</span>
             {product.vendor && (
@@ -657,7 +662,7 @@ export default function ProductPage() {
                           onClick={() => setSizeGuideOpen(true)}
                           className="text-[11px] text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] underline underline-offset-2 transition-colors"
                         >
-                          Size Guide
+                          {t('product.sizeGuide')}
                         </button>
                       )}
                     </div>
@@ -781,9 +786,9 @@ export default function ProductPage() {
                     <circle cx="18" cy="19" r="1.5" />
                   </svg>
                   <div className="min-w-0 text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                    <p className="font-medium text-[var(--color-text-primary)]">Worldwide delivery</p>
-                    <p>$5 standard below $100 USD · free at $100 USD+ · $12 express</p>
-                    <p className="mt-0.5 text-[var(--color-text-tertiary)]">Duties included · taxes calculated at checkout</p>
+                    <p className="font-medium text-[var(--color-text-primary)]">{t('shipping.worldwideDelivery')}</p>
+                    <p>{t('shipping.standard')}</p>
+                    <p className="mt-0.5 text-[var(--color-text-tertiary)]">{t('shipping.duties')}</p>
                   </div>
                 </div>
               </section>
@@ -801,7 +806,7 @@ export default function ProductPage() {
                   quantity={quantity}
                 />
                 <p className="text-center text-[0.7rem] text-[var(--color-text-tertiary)]">
-                  Secure checkout · SSL encrypted
+                  {t('cart.secureCheckout')} · SSL encrypted
                 </p>
                 {!selectedVariant?.availableForSale && selectedVariant && (
                   <section id="restock-signup" className="rounded-md border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] p-1">
