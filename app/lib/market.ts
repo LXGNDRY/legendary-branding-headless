@@ -8,7 +8,6 @@ export const DEFAULT_COUNTRY: CountryCode = 'US';
 export const DEFAULT_LANGUAGE: LanguageCode = 'EN';
 
 const COUNTRY_CODE = /^[A-Z]{2}$/;
-const LANGUAGE_CODE = /^[A-Z]{2}(?:_[A-Z]{2})?$/;
 const REGION_NAMES = new Intl.DisplayNames(['en'], {type: 'region'});
 
 export interface MarketCountry {
@@ -22,15 +21,7 @@ export interface MarketCountry {
 
 export interface LocalizationData {
   country: MarketCountry;
-  language: MarketLanguage;
   availableCountries: MarketCountry[];
-  availableLanguages: MarketLanguage[];
-}
-
-export interface MarketLanguage {
-  isoCode: LanguageCode;
-  name: string;
-  endonymName: string;
 }
 
 export function normalizeCountryCode(value: unknown): CountryCode | null {
@@ -42,19 +33,6 @@ export function normalizeCountryCode(value: unknown): CountryCode | null {
     return null;
   }
   return normalized as CountryCode;
-}
-
-export function normalizeLanguageCode(value: unknown): LanguageCode | null {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim().toUpperCase();
-  return LANGUAGE_CODE.test(normalized) ? normalized as LanguageCode : null;
-}
-
-export function isAvailableLanguage(
-  language: LanguageCode,
-  availableLanguages: Pick<MarketLanguage, 'isoCode'>[],
-) {
-  return availableLanguages.some((candidate) => candidate.isoCode === language);
 }
 
 export function isAvailableCountry(
@@ -89,11 +67,6 @@ export const LOCALIZATION_QUERY = `#graphql
   query StorefrontLocalization($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
     localization {
-      language {
-        isoCode
-        name
-        endonymName
-      }
       country {
         isoCode
         name
@@ -109,11 +82,6 @@ export const LOCALIZATION_QUERY = `#graphql
           isoCode
           symbol
         }
-      }
-      availableLanguages {
-        isoCode
-        name
-        endonymName
       }
     }
   }
