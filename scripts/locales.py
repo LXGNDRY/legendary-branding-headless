@@ -5,6 +5,8 @@ Shopify is the source of truth for catalog content.  This script deliberately
 handles only the React storefront's static interface strings.  It accepts an
 approved translation map (including a Hextom export converted to this flat
 JSON shape), preserves placeholders, and rejects incomplete catalogs.
+
+Run ``npm run locales:check`` in CI before a language is made customer-facing.
 """
 
 from __future__ import annotations
