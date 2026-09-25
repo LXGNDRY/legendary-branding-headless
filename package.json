@@ -20,7 +20,7 @@
   "dependencies": {
     "@graphql-codegen/cli": "7.4.0",
     "@sentry/react": "10.71.0",
-    "@shopify/cli": "3.94.3",
+    "@shopify/cli": "4.8.0",
     "@shopify/hydrogen": "2026.4.5",
     "graphql": "16.14.2",
     "isbot": "4.4.0",
