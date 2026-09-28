@@ -36,5 +36,19 @@
   "shipping.worldwideDelivery": "Worldwide delivery",
   "shipping.standard": "$5 standard below $100 USD · free at $100 USD+ · $12 express",
   "shipping.duties": "Duties included · taxes calculated at checkout",
-  "status.updating": "Updating…"
+  "status.updating": "Updating…",
+  "fabric.guide.eyebrow": "Fabric Weight Guide",
+  "fabric.guide.heading": "Know Your GSM",
+  "fabric.tier.lightweight.name": "Lightweight",
+  "fabric.tier.lightweight.description": "Soft, breathable, and easy to move in — with the same premium construction Legendary Branding is known for. A go-to for warmer days or layering without added bulk.",
+  "fabric.tier.midweight.name": "Midweight",
+  "fabric.tier.midweight.description": "The everyday standard. Enough structure to hold its shape, soft enough to wear all day, and finished to the same quality standard across the board. Versatile across seasons and styles.",
+  "fabric.tier.heavyweight.name": "Heavyweight",
+  "fabric.tier.heavyweight.description": "Noticeably substantial with a clean, structured drape — the weight behind a sharp boxy or drop-shoulder fit. Durable, well-built, and true to the Legendary Branding standard.",
+  "fabric.tier.heavyweightPremium.name": "Heavyweight Premium",
+  "fabric.tier.heavyweightPremium.description": "Dense and durable, with a stand-off drape that holds oversized fits with intention. Craftsmanship you can feel the moment you pick it up.",
+  "fabric.tier.ultraHeavyweight.name": "Ultra-Heavyweight",
+  "fabric.tier.ultraHeavyweight.description": "Rich, substantial feel with real warmth and structure — built to hold up over time without ever cutting corners on quality.",
+  "fabric.tier.maximumWeight.name": "Maximum Weight",
+  "fabric.tier.maximumWeight.description": "Our heaviest offering — dense, rigid, and made to last. The weight customers notice immediately, backed by the same craftsmanship in every stitch."
 }
