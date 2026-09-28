@@ -42,7 +42,7 @@ import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge, fetchJudgemeProductReviews} from '~/lib/judgeme';
 import ProductReviewList from '~/components/sections/ProductReviewList';
-import {useTranslation} from '~/lib/i18n';
+import {useTranslation, type TranslationKey} from '~/lib/i18n';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -75,6 +75,24 @@ type ProductFull = {
   selectedVariant?: ProductVariantFragment | null;
   variants: {nodes: ProductVariantFragment[]};
 };
+
+/**
+ * Educational fabric-weight (GSM) tier copy for the PDP's Fabric Weight
+ * Guide section -- explains what a product's weight class feels like and
+ * is built for, not a per-product spec pulled from the Storefront API.
+ * Numeric GSM ranges aren't locale-dependent so they stay here; the tier
+ * name and description are rendered through useTranslation() via these
+ * keys (see the `fabric.tier.*` entries in app/locales/*.json) so the
+ * guide is localized like the rest of the PDP.
+ */
+const FABRIC_WEIGHT_TIERS = [
+  {range: '190–210', nameKey: 'fabric.tier.lightweight.name', descriptionKey: 'fabric.tier.lightweight.description'},
+  {range: '220–240', nameKey: 'fabric.tier.midweight.name', descriptionKey: 'fabric.tier.midweight.description'},
+  {range: '260–280', nameKey: 'fabric.tier.heavyweight.name', descriptionKey: 'fabric.tier.heavyweight.description'},
+  {range: '300–340', nameKey: 'fabric.tier.heavyweightPremium.name', descriptionKey: 'fabric.tier.heavyweightPremium.description'},
+  {range: '360–400', nameKey: 'fabric.tier.ultraHeavyweight.name', descriptionKey: 'fabric.tier.ultraHeavyweight.description'},
+  {range: '420–460', nameKey: 'fabric.tier.maximumWeight.name', descriptionKey: 'fabric.tier.maximumWeight.description'},
+] as const satisfies ReadonlyArray<{range: string; nameKey: TranslationKey; descriptionKey: TranslationKey}>;
 
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
@@ -875,6 +893,30 @@ export default function ProductPage() {
             </div>
           </div>
         </div>
+
+        {/* Fabric Weight Guide — always visible on the page (not tucked
+            behind a collapsed accordion, like the review section below it)
+            since it's core buying-decision info, not supplementary detail. */}
+        <section className="border-t border-[var(--color-border-muted)]">
+          <div className="h-container py-16">
+            <p className="h-eyebrow mb-3">{t('fabric.guide.eyebrow')}</p>
+            <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
+              {t('fabric.guide.heading')}
+            </h2>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
+              {FABRIC_WEIGHT_TIERS.map((tier) => (
+                <div key={tier.range}>
+                  <dt className="text-[var(--color-text-primary)] font-medium">
+                    {tier.range} GSM — {t(tier.nameKey)}
+                  </dt>
+                  <dd className="mt-1.5 text-[var(--color-text-secondary)] text-sm leading-relaxed">
+                    {t(tier.descriptionKey)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
 
         {/* Reviews — real per-product review list, fetched server-side via
             the Judge.me API and rendered by us (see ProductReviewList /
