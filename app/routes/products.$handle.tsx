@@ -76,6 +76,52 @@ type ProductFull = {
   variants: {nodes: ProductVariantFragment[]};
 };
 
+/**
+ * Educational fabric-weight (GSM) tier copy for the PDP's "Fabric Weight
+ * Guide" accordion -- explains what a product's weight class feels like and
+ * is built for, not a per-product spec pulled from the Storefront API. Same
+ * pattern as the static "Shipping & Returns" accordion copy below: general
+ * policy/education content, not fabricated product data.
+ */
+const FABRIC_WEIGHT_TIERS = [
+  {
+    range: '190–210',
+    name: 'Lightweight',
+    description:
+      'Soft, breathable, and easy to move in — with the same premium construction Legendary Branding is known for. A go-to for warmer days or layering without added bulk.',
+  },
+  {
+    range: '220–240',
+    name: 'Midweight',
+    description:
+      'The everyday standard. Enough structure to hold its shape, soft enough to wear all day, and finished to the same quality standard across the board. Versatile across seasons and styles.',
+  },
+  {
+    range: '260–280',
+    name: 'Heavyweight',
+    description:
+      'Noticeably substantial with a clean, structured drape — the weight behind a sharp boxy or drop-shoulder fit. Durable, well-built, and true to the Legendary Branding standard.',
+  },
+  {
+    range: '300–340',
+    name: 'Heavyweight Premium',
+    description:
+      'Dense and durable, with a stand-off drape that holds oversized fits with intention. Craftsmanship you can feel the moment you pick it up.',
+  },
+  {
+    range: '360–400',
+    name: 'Ultra-Heavyweight',
+    description:
+      'Rich, substantial feel with real warmth and structure — built to hold up over time without ever cutting corners on quality.',
+  },
+  {
+    range: '420–460',
+    name: 'Maximum Weight',
+    description:
+      'Our heaviest offering — dense, rigid, and made to last. The weight customers notice immediately, backed by the same craftsmanship in every stitch.',
+  },
+] as const;
+
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
     id
@@ -862,6 +908,18 @@ export default function ProductPage() {
                     <p>{product.metafields.find((m) => m?.key === 'fit')?.value}</p>
                   </Accordion>
                 )}
+                <Accordion label="Fabric Weight Guide">
+                  <dl className="space-y-4">
+                    {FABRIC_WEIGHT_TIERS.map((tier) => (
+                      <div key={tier.range}>
+                        <dt className="text-[var(--color-text-primary)] font-medium">
+                          {tier.range} GSM — {tier.name}
+                        </dt>
+                        <dd className="mt-1 ml-0">{tier.description}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Accordion>
                 <Accordion label="Size Guide">
                   <button
                     type="button"
