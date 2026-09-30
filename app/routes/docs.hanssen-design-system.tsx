@@ -2,7 +2,7 @@ import {type MetaFunction, useLocation} from 'react-router';
 import DocsLayout from '~/components/docs/DocsLayout';
 
 export const meta: MetaFunction = () => {
-  const canonical = 'https://legendary-branding.com/docs/hanssen-design-system';
+  const canonical = 'https://www.legendary-branding.com/docs/hanssen-design-system';
   return [
     {title: 'Hanssen Design System — LEGENDARY BRANDING'},
     {name: 'description', content: 'Editorial luxury streetwear design system — off-white canvas, serif headlines, accent red CTAs, Inter body.'},

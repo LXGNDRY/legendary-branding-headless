@@ -2,7 +2,7 @@ import {type MetaFunction, useLocation} from 'react-router';
 import DocsLayout from '~/components/docs/DocsLayout';
 
 export const meta: MetaFunction = () => {
-  const canonical = 'https://legendary-branding.com/docs/phase5-functional-changelog';
+  const canonical = 'https://www.legendary-branding.com/docs/phase5-functional-changelog';
   return [
     {title: 'Phase 5 — Functional Changelog — LEGENDARY BRANDING'},
     {name: 'description', content: 'Address CRUD, wishlist persistence with Customer Account metafield sync, and explicit image dimensions across all sections.'},

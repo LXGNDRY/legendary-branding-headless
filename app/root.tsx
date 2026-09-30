@@ -93,7 +93,7 @@ export const meta: MetaFunction = () => [
   },
   {property: 'og:type', content: 'website'},
   {property: 'og:site_name', content: 'Legendary Branding'},
-  {property: 'og:url', content: 'https://legendary-branding.com'},
+  {property: 'og:url', content: 'https://www.legendary-branding.com'},
   {property: 'og:title', content: 'Legendary Branding | Premium Streetwear'},
   {property: 'og:description', content: 'Premium streetwear built to last. 190GSM+ premium-weight tees, made to order. Shop the collection.'},
   {name: 'twitter:card', content: 'summary_large_image'},

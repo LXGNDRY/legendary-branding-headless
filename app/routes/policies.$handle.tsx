@@ -54,7 +54,7 @@ type ShopPolicies = {
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   const title = `${data?.title ?? 'Policy'} | LEGENDARY BRANDING`;
   const description = data?.title ? `${data.title} | Legendary Branding` : 'Legendary Branding policies.';
-  const canonical = `https://legendary-branding.com/policies/${data?.handle ?? ''}`;
+  const canonical = `https://www.legendary-branding.com/policies/${data?.handle ?? ''}`;
 
   return [
     {title},

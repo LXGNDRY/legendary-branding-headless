@@ -17,7 +17,7 @@ import Button from '~/components/ui/Button';
 export const meta: MetaFunction = () => [
   {title: 'Addresses | LEGENDARY BRANDING'},
   {name: 'description', content: 'Manage your shipping addresses.'},
-  {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/account/addresses'},
+  {tagName: 'link', rel: 'canonical', href: 'https://www.legendary-branding.com/account/addresses'},
 ];
 
 const ADDRESSES_QUERY = `#graphql
