@@ -2,7 +2,7 @@ import {type MetaFunction, useLocation} from 'react-router';
 import DocsLayout from '~/components/docs/DocsLayout';
 
 export const meta: MetaFunction = () => {
-  const canonical = 'https://legendary-branding.com/docs/phase7-10-hardening-changelog';
+  const canonical = 'https://www.legendary-branding.com/docs/phase7-10-hardening-changelog';
   return [
     {title: 'Phases 7–10 — Performance, Errors, Caching & Security — LEGENDARY BRANDING'},
     {name: 'description', content: 'Combined hardening pass across 4 phases — speed, reliability, caching, and defense-in-depth.'},

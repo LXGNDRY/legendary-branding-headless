@@ -6,7 +6,7 @@ import ProductCard from '~/components/ui/ProductCard';
 import {useEffect, useState} from 'react';
 
 export const meta: MetaFunction = () => {
-  const canonical = 'https://legendary-branding.com/wishlist';
+  const canonical = 'https://www.legendary-branding.com/wishlist';
   return [
     {title: 'Wishlist | LEGENDARY BRANDING'},
     {name: 'description', content: 'Your saved items from Legendary Branding.'},

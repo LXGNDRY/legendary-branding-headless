@@ -185,7 +185,7 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
     ? product.descriptionHtml.replace(/<[^>]+>/g, '').slice(0, 155)
     : `Shop ${product?.title ?? 'this product'} at Legendary Branding.`;
   const ogImage = product?.images?.nodes?.[0]?.url ?? '';
-  const canonical = `https://legendary-branding.com${location.pathname}`;
+  const canonical = `https://www.legendary-branding.com${location.pathname}`;
   return [
     {title: `${product?.title ?? 'Product'} | LEGENDARY BRANDING`},
     {name: 'description', content: description},

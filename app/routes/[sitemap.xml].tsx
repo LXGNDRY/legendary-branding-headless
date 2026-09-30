@@ -53,8 +53,15 @@ function urlEntry(origin: string, path: string, options: {lastmod?: string; prio
 }
 
 export async function loader({request, context}: LoaderFunctionArgs) {
-  const domain = context.env.PUBLIC_CHECKOUT_DOMAIN?.trim();
-  const origin = domain ? `https://${domain}` : new URL(request.url).origin;
+  // PUBLIC_CHECKOUT_DOMAIN is documented/configured as the bare apex
+  // (legendary-branding.com), but the live site is actually served from
+  // and canonicalizes to the www subdomain (the apex 301-redirects there
+  // -- see the canonical <link>/og:url fixes across the rest of the app).
+  // Prefixing www here keeps the sitemap's <loc> entries on the same host
+  // as those canonical tags instead of silently reverting to the
+  // redirecting apex host whenever this env var is set.
+  const domain = context.env.PUBLIC_CHECKOUT_DOMAIN?.trim().replace(/^www\./, '');
+  const origin = domain ? `https://www.${domain}` : new URL(request.url).origin;
   const variables = {country: context.storefront.i18n.country, language: context.storefront.i18n.language, first: 250};
 
   const [products, collections, pages, articles] = await Promise.all([

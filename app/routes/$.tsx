@@ -4,7 +4,7 @@ import Container from '~/components/ui/Container';
 export const meta: MetaFunction = () => [
   {title: '404 - Page Not Found | LEGENDARY BRANDING'},
   {name: 'description', content: 'The page you are looking for does not exist.'},
-  {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/404'},
+  {tagName: 'link', rel: 'canonical', href: 'https://www.legendary-branding.com/404'},
   {name: 'robots', content: 'noindex, follow'},
 ];
 

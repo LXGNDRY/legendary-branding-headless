@@ -120,7 +120,7 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
   const collection = data?.collection;
   const title = `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
   const description = collection?.description ?? `Shop ${collection?.title ?? 'this collection'}.`;
-  const canonical = `https://legendary-branding.com/collections/${collection?.handle ?? 'all'}`;
+  const canonical = `https://www.legendary-branding.com/collections/${collection?.handle ?? 'all'}`;
   const ogImage = collection?.image?.url
     ? `${collection.image.url}&width=1200&height=630`
     : undefined;

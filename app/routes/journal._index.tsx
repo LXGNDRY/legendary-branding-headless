@@ -49,10 +49,10 @@ export const meta: MetaFunction = () => [
     name: 'description',
     content: 'Culture, craft, and community from Legendary Branding.',
   },
-  {tagName: 'link', rel: 'canonical', href: 'https://legendary-branding.com/journal'},
+  {tagName: 'link', rel: 'canonical', href: 'https://www.legendary-branding.com/journal'},
   {property: 'og:title', content: 'Journal | LEGENDARY BRANDING'},
   {property: 'og:description', content: 'Culture, craft, and community from Legendary Branding.'},
-  {property: 'og:url', content: 'https://legendary-branding.com/journal'},
+  {property: 'og:url', content: 'https://www.legendary-branding.com/journal'},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {

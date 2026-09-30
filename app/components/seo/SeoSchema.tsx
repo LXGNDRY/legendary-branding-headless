@@ -11,8 +11,8 @@ export function organizationSchema() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Legendary Branding',
-    url: 'https://legendary-branding.com',
-    logo: 'https://legendary-branding.com/favicon.ico',
+    url: 'https://www.legendary-branding.com',
+    logo: 'https://www.legendary-branding.com/favicon.ico',
     // Only the two profiles actually configured/live for the brand --
     // verified against the store's real social settings. Twitter and
     // YouTube URLs were previously fabricated placeholders that pointed
@@ -35,10 +35,10 @@ export function websiteSchema() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Legendary Branding',
-    url: 'https://legendary-branding.com',
+    url: 'https://www.legendary-branding.com',
     potentialAction: {
       '@type': 'SearchAction',
-      target: 'https://legendary-branding.com/search?q={search_term_string}',
+      target: 'https://www.legendary-branding.com/search?q={search_term_string}',
       'query-input': 'required name=search_term_string',
     },
   };
@@ -116,7 +116,7 @@ export function collectionPageSchema({
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: title,
-    url: `https://legendary-branding.com/collections/${handle}`,
+    url: `https://www.legendary-branding.com/collections/${handle}`,
     description: description || `${title} | Legendary Branding`,
     mainEntity: products?.length
       ? {
@@ -161,9 +161,9 @@ export function articleSchema({
     publisher: {
       '@type': 'Organization',
       name: 'Legendary Branding',
-      url: 'https://legendary-branding.com',
+      url: 'https://www.legendary-branding.com',
     },
-    mainEntityOfPage: `https://legendary-branding.com/journal/${handle}`,
+    mainEntityOfPage: `https://www.legendary-branding.com/journal/${handle}`,
   };
 }
 
@@ -192,7 +192,7 @@ export function productSchema({
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    '@id': `https://legendary-branding.com/products/${handle}#product`,
+    '@id': `https://www.legendary-branding.com/products/${handle}#product`,
     name: title,
     image: images,
     description,
@@ -200,13 +200,13 @@ export function productSchema({
     brand: {'@type': 'Brand', name: vendor || 'Legendary Branding'},
     offers: variants.map((v) => ({
       '@type': 'Offer',
-      '@id': `https://legendary-branding.com/products/${handle}#offer-${v.id}`,
+      '@id': `https://www.legendary-branding.com/products/${handle}#offer-${v.id}`,
       price: v.price,
       priceCurrency: v.currencyCode,
       availability: v.available
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
-      url: `https://legendary-branding.com/products/${handle}`,
+      url: `https://www.legendary-branding.com/products/${handle}`,
       itemCondition: 'https://schema.org/NewCondition',
     })),
     aggregateRating: undefined, // not available
