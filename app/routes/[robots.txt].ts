@@ -7,13 +7,16 @@ import type {LoaderFunctionArgs} from 'react-router';
  * Blocks checkout and account routes, allows everything else.
  * Uses PUBLIC_CHECKOUT_DOMAIN when available so the Sitemap URL always points
  * to the canonical domain rather than the Oxygen preview origin (consistent
- * with [sitemap.xml].tsx).
+ * with [sitemap.xml].tsx). PUBLIC_CHECKOUT_DOMAIN is documented/configured
+ * as the bare apex (legendary-branding.com), which 301-redirects to the
+ * live www host that every canonical <link>/og:url now points at -- www is
+ * prefixed here so this Sitemap line stays on that same host instead of
+ * silently reverting to the redirecting apex host whenever the var is set.
  */
 export async function loader({request, context}: LoaderFunctionArgs) {
   const env = context.env as {PUBLIC_CHECKOUT_DOMAIN?: string};
-  const origin = env.PUBLIC_CHECKOUT_DOMAIN
-    ? `https://${env.PUBLIC_CHECKOUT_DOMAIN}`
-    : new URL(request.url).origin;
+  const domain = env.PUBLIC_CHECKOUT_DOMAIN?.trim().replace(/^www\./, '');
+  const origin = domain ? `https://www.${domain}` : new URL(request.url).origin;
 
   const robots = `User-agent: *
 Allow: /
