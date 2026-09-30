@@ -2,7 +2,7 @@ import {type MetaFunction, Link, useLocation} from 'react-router';
 import DocsLayout from '~/components/docs/DocsLayout';
 
 export const meta: MetaFunction = () => {
-  const canonical = 'https://legendary-branding.com/docs';
+  const canonical = 'https://www.legendary-branding.com/docs';
   return [
     {title: 'Docs — LEGENDARY BRANDING'},
     {name: 'description', content: 'Theme documentation, design system reference, and changelogs for the Legendary Branding headless storefront.'},

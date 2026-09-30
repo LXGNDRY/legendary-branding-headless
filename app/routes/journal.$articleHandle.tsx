@@ -52,7 +52,7 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
   const article = data?.article;
   const description = article?.excerpt ?? `${article?.title ?? 'Article'} | Legendary Branding Journal`;
   const ogImage = article?.image?.url;
-  const canonical = `https://legendary-branding.com${location.pathname}`;
+  const canonical = `https://www.legendary-branding.com${location.pathname}`;
   return [
     {title: `${article?.title ?? 'Article'} | The Journal | LEGENDARY BRANDING`},
     {name: 'description', content: description},

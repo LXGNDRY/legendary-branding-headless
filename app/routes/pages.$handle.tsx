@@ -44,7 +44,7 @@ interface ContentBlock {
 
 export const meta: MetaFunction<typeof loader> = ({data, params}) => {
   const title = `${data?.page?.title ?? 'Page'} | LEGENDARY BRANDING`;
-  const canonical = `https://legendary-branding.com/pages/${params.handle ?? ''}`;
+  const canonical = `https://www.legendary-branding.com/pages/${params.handle ?? ''}`;
 
   return [
     {title},

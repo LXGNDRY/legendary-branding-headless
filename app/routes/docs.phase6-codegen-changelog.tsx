@@ -2,7 +2,7 @@ import {type MetaFunction, useLocation} from 'react-router';
 import DocsLayout from '~/components/docs/DocsLayout';
 
 export const meta: MetaFunction = () => {
-  const canonical = 'https://legendary-branding.com/docs/phase6-codegen-changelog';
+  const canonical = 'https://www.legendary-branding.com/docs/phase6-codegen-changelog';
   return [
     {title: 'Phase 6 — Codegen & GraphQL Validation — LEGENDARY BRANDING'},
     {name: 'description', content: 'Real type-safety gate for Storefront + Customer Account GraphQL. Fixes account mutation bugs that could never be caught before.'},

@@ -2,7 +2,7 @@ import {type MetaFunction, useLocation} from 'react-router';
 import DocsLayout from '~/components/docs/DocsLayout';
 
 export const meta: MetaFunction = () => {
-  const canonical = 'https://legendary-branding.com/docs/mobile-optimization-changelog';
+  const canonical = 'https://www.legendary-branding.com/docs/mobile-optimization-changelog';
   return [
     {title: 'Mobile Optimization Pass — LEGENDARY BRANDING'},
     {name: 'description', content: 'Seven vertical slices hardening the storefront for real mobile devices — touch targets, hover-capability bugs, a site-wide viewport-meta fix, checkout handoff, accessibility, performance, and device/browser coverage.'},
