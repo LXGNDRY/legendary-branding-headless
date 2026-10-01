@@ -47,10 +47,10 @@ export default function NewsletterForm({
 
   const buttonStyles =
     variant === 'popup'
-      ? 'px-6 py-3.5 bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap text-[0.7rem] font-semibold tracking-[0.12em] uppercase rounded-r-md'
+      ? 'px-6 py-3.5 bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap text-[0.7rem] font-semibold tracking-[0.12em] uppercase rounded-r-md'
       : variant === 'footer'
-        ? 'px-5 py-3 bg-[var(--color-accent)] text-white text-[0.7rem] font-semibold tracking-[0.12em] uppercase hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap rounded-r-md'
-        : 'px-7 py-3.5 bg-[var(--color-accent)] text-white text-[0.75rem] font-semibold tracking-[0.14em] uppercase hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap rounded-r-full';
+        ? 'px-5 py-3 bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap rounded-r-md'
+        : 'px-7 py-3.5 bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-[0.75rem] font-semibold tracking-[0.14em] uppercase hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap rounded-r-full';
 
   const formWrapperClass =
     variant === 'band'

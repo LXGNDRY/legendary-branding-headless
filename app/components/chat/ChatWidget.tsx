@@ -99,7 +99,7 @@ export default function ChatWidget() {
         aria-label={open ? 'Close chat' : 'Chat with us'}
         aria-expanded={open}
         aria-controls="chat-widget-panel"
-        className="fixed bottom-5 right-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-accent)] text-white shadow-lg transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]"
+        className="fixed bottom-5 right-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-text-inverse)] shadow-lg transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]"
       >
         {open ? <CloseIcon /> : <ChatIcon />}
       </button>
@@ -140,7 +140,7 @@ export default function ChatWidget() {
                 key={i}
                 className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
                   m.role === 'user'
-                    ? 'ml-auto bg-[var(--color-accent)] text-white'
+                    ? 'ml-auto bg-[var(--color-accent)] text-[var(--color-text-inverse)]'
                     : 'mr-auto bg-[var(--color-surface)] text-[var(--color-ink)]'
                 }`}
               >
@@ -177,7 +177,7 @@ export default function ChatWidget() {
               type="submit"
               disabled={sending || !input.trim()}
               aria-label="Send message"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-white disabled:opacity-40"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-text-inverse)] disabled:opacity-40"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M2 8h11M8 2l5 6-5 6" />

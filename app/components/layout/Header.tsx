@@ -141,7 +141,7 @@ function ChevronDownIcon() {
 function CountBadge({count}: {count: number}) {
   if (!count) return null;
   return (
-    <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center bg-[var(--color-accent)] text-white text-[9px] font-bold rounded-full px-1 leading-none">
+    <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-[9px] font-bold rounded-full px-1 leading-none">
       {count > 99 ? '99+' : count}
     </span>
   );
@@ -186,7 +186,7 @@ function MegaDropdown({item, onClose}: {item: NavItem; onClose: () => void}) {
                         <path d="M2.5 6h7M7 2.5l3 3.5-3 3.5" />
                       </svg>
                       {link.isNew && (
-                        <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-white px-1.5 py-0.5 rounded-full ml-1">
+                        <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-[var(--color-text-inverse)] px-1.5 py-0.5 rounded-full ml-1">
                           New
                         </span>
                       )}
@@ -315,7 +315,7 @@ function MobileMenu({
                               >
                                 {link.label}
                                 {link.isNew && (
-                                  <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-white px-1.5 py-0.5 rounded-full">
+                                  <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-[var(--color-text-inverse)] px-1.5 py-0.5 rounded-full">
                                     New
                                   </span>
                                 )}
