@@ -382,6 +382,7 @@ export default function CollectionPage() {
                 <select
                   value={sort}
                   onChange={(e) => handleSort(e.target.value)}
+                  aria-label="Sort products"
                   className="h-eyebrow text-[var(--color-foreground)] bg-transparent border-b border-[var(--color-border-subtle)] focus:border-[var(--color-foreground)] focus:outline-none cursor-pointer pb-0.5 transition-colors"
                 >
                   {SORT_OPTIONS.map((o) => (
