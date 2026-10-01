@@ -45,12 +45,15 @@ export default function NewsletterForm({
         ? 'flex-1 border border-[var(--color-border-medium)] px-4 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] outline-none focus:border-[var(--color-accent)] transition-colors bg-[var(--color-bg-level-2)] rounded-l-md'
         : 'flex-1 px-5 py-3.5 bg-[var(--color-bg-level-2)] border border-[var(--color-border-medium)] text-[var(--color-text-primary)] text-sm placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors rounded-l-full sm:rounded-l-full rounded-r-full sm:rounded-r-none';
 
+  // --color-text-inverse only passes WCAG AA against the base --color-accent
+  // (~4.72:1) -- against the darker --color-accent-hover it drops to
+  // ~3.69:1, so the hover state switches to white (~5.37:1) instead.
   const buttonStyles =
     variant === 'popup'
-      ? 'px-6 py-3.5 bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap text-[0.7rem] font-semibold tracking-[0.12em] uppercase rounded-r-md'
+      ? 'px-6 py-3.5 bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] hover:text-white transition-colors whitespace-nowrap text-[0.7rem] font-semibold tracking-[0.12em] uppercase rounded-r-md'
       : variant === 'footer'
-        ? 'px-5 py-3 bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap rounded-r-md'
-        : 'px-7 py-3.5 bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-[0.75rem] font-semibold tracking-[0.14em] uppercase hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap rounded-r-full';
+        ? 'px-5 py-3 bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase hover:bg-[var(--color-accent-hover)] hover:text-white transition-colors whitespace-nowrap rounded-r-md'
+        : 'px-7 py-3.5 bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-[0.75rem] font-semibold tracking-[0.14em] uppercase hover:bg-[var(--color-accent-hover)] hover:text-white transition-colors whitespace-nowrap rounded-r-full';
 
   const formWrapperClass =
     variant === 'band'
