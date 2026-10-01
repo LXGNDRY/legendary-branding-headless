@@ -141,7 +141,7 @@ function ChevronDownIcon() {
 function CountBadge({count}: {count: number}) {
   if (!count) return null;
   return (
-    <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center bg-[var(--color-accent)] text-white text-[9px] font-bold rounded-full px-1 leading-none">
+    <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center bg-[var(--color-accent)] text-[var(--color-text-inverse)] text-[9px] font-bold rounded-full px-1 leading-none">
       {count > 99 ? '99+' : count}
     </span>
   );
@@ -186,7 +186,7 @@ function MegaDropdown({item, onClose}: {item: NavItem; onClose: () => void}) {
                         <path d="M2.5 6h7M7 2.5l3 3.5-3 3.5" />
                       </svg>
                       {link.isNew && (
-                        <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-white px-1.5 py-0.5 rounded-full ml-1">
+                        <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-[var(--color-text-inverse)] px-1.5 py-0.5 rounded-full ml-1">
                           New
                         </span>
                       )}
@@ -247,7 +247,21 @@ function MobileMenu({
       aria-modal="true"
       role="dialog"
       aria-label="Main menu"
+      // `aria-hidden` alone hides this from the accessibility tree but
+      // doesn't stop its links from being keyboard-focusable while closed
+      // (they're only moved off-screen via CSS transform) -- `inert`
+      // removes them from the tab order and assistive-tech focus too,
+      // which is what axe's focusable-disabled/focusable-not-tabbable
+      // rules require for anything marked aria-hidden. Passed as a real
+      // string ('' present / undefined omitted) rather than a boolean:
+      // @types/react doesn't declare `inert`, and React stringifies an
+      // *unrecognized* attribute's boolean `false` as the literal text
+      // "false" instead of omitting it -- any string value, even "false",
+      // makes an element inert to the browser. A string value (rendered
+      // synchronously, so it's correct in the server-rendered HTML too,
+      // unlike a client-only effect) has no such ambiguity.
       aria-hidden={!open}
+      {...({inert: !open ? '' : undefined} as {inert?: string})}
     >
       <div className="flex items-center justify-between px-5 h-[60px] border-b border-[var(--color-border-muted)]">
         <Link
@@ -315,7 +329,7 @@ function MobileMenu({
                               >
                                 {link.label}
                                 {link.isNew && (
-                                  <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-white px-1.5 py-0.5 rounded-full">
+                                  <span className="text-[9px] font-semibold tracking-widest uppercase bg-[var(--color-accent)] text-[var(--color-text-inverse)] px-1.5 py-0.5 rounded-full">
                                     New
                                   </span>
                                 )}

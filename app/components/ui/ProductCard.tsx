@@ -354,7 +354,7 @@ export default function ProductCard({
               type="button"
               onClick={handleQuickAdd}
               disabled={isAdding}
-              className="w-full justify-center bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase py-2.5 hover:bg-[var(--color-accent)] hover:text-white transition-colors duration-200 rounded-full disabled:opacity-60"
+              className="w-full justify-center bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase py-2.5 hover:bg-[var(--color-accent)] hover:text-[var(--color-text-inverse)] transition-colors duration-200 rounded-full disabled:opacity-60"
               aria-label={`Quick add ${product.title} to bag`}
             >
               {isAdding ? t('status.updating') : justAdded ? '✓' : t('action.addToBag')}

@@ -30,6 +30,7 @@
     "web-vitals": "6.2.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.62.1",
     "@react-router/dev": "7.18.2",
     "@react-router/fs-routes": "7.18.2",

@@ -7,14 +7,15 @@ import type {ReactNode} from 'react';
  *
  * Variants:
  * - default: dark surface, light text
- * - sale: red accent background, white text
+ * - sale: red accent background, inverse (dark) text -- white on this red
+ *   fails WCAG AA (4.19:1, needs 4.5:1); --color-text-inverse passes (~4.7:1)
  * - new: dark surface, light text
  * - soldout: dark muted surface, muted text
  */
 
 const variants = {
   default: 'bg-[var(--color-bg-level-3)] text-[var(--color-text-primary)] border border-[var(--color-border-medium)]',
-  sale: 'bg-[var(--color-accent)] text-white',
+  sale: 'bg-[var(--color-accent)] text-[var(--color-text-inverse)]',
   new: 'bg-[var(--color-bg-level-2)] text-[var(--color-text-primary)] border border-[var(--color-border-medium)]',
   soldout: 'bg-[var(--color-bg-level-2)] text-[var(--color-text-tertiary)] border border-[var(--color-border-muted)]',
 } as const;
