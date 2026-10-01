@@ -48,6 +48,7 @@ type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
 type ProductVariantFragment = {
   id: string;
+  sku?: string | null;
   availableForSale: boolean;
   quantityAvailable?: number | null;
   selectedOptions: {name: string; value: string}[];
@@ -97,6 +98,7 @@ const FABRIC_WEIGHT_TIERS = [
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
     id
+    sku
     availableForSale
     quantityAvailable
     selectedOptions { name value }
@@ -518,10 +520,14 @@ export default function ProductPage() {
     vendor: product.vendor || undefined,
     variants: product.variants.nodes.map((v) => ({
       id: v.id,
+      sku: v.sku || undefined,
       price: v.price.amount,
       currencyCode: v.price.currencyCode,
       available: v.availableForSale,
     })),
+    aggregateRating: judgemeRating
+      ? {ratingValue: judgemeRating.rating, reviewCount: judgemeRating.count}
+      : undefined,
   });
 
   const breadcrumbJsonLd = breadcrumbSchema([
