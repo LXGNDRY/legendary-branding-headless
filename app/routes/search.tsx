@@ -156,7 +156,7 @@ const PAGE_SIZE = 24;
 export const meta: MetaFunction<typeof loader> = ({data}) => [
   {title: `Search: ${data?.query ?? ''} | LEGENDARY BRANDING`},
   {name: 'description', content: `Search results for "${data?.query ?? ''}" at Legendary Branding.`},
-  {robots: 'noindex, follow'},
+  {name: 'robots', content: 'noindex, follow'},
 ];
 
 export async function loader({request, context}: LoaderFunctionArgs) {

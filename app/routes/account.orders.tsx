@@ -5,6 +5,7 @@ import {
   useLoaderData,
   Link,
 } from 'react-router';
+import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 
@@ -192,9 +193,11 @@ export default function OrdersPage() {
                     {order.lineItems.nodes.map((item, i) => (
                       <div key={i} className="w-16 h-16 bg-[var(--color-surface)] flex items-center justify-center">
                         {item.image?.url ? (
-                          <img
-                            src={item.image.url}
+                          <Image
+                            data={item.image}
                             alt={item.image.altText || item.title}
+                            width={64}
+                            height={64}
                             className="w-full h-full object-cover"
                           />
                         ) : (
