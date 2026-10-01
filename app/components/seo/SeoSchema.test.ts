@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {faqPageSchema, parseFaqFromHtml} from './SeoSchema';
+import {faqPageSchema, parseFaqFromHtml, breadcrumbSchema, collectionPageSchema} from './SeoSchema';
 
 describe('parseFaqFromHtml', () => {
   it('extracts question/answer pairs from <details><summary> markup', () => {
@@ -50,6 +50,37 @@ describe('faqPageSchema', () => {
           acceptedAnswer: {'@type': 'Answer', text: 'A1'},
         },
       ],
+    });
+  });
+});
+
+describe('breadcrumbSchema', () => {
+  it('resolves a site-relative url to an absolute one -- Google requires BreadcrumbList item to be absolute', () => {
+    const schema = breadcrumbSchema([{name: 'Home', url: '/'}, {name: 'Journal', url: '/journal'}]);
+    expect(schema.itemListElement[0].item).toBe('https://www.legendary-branding.com/');
+    expect(schema.itemListElement[1].item).toBe('https://www.legendary-branding.com/journal');
+  });
+
+  it('leaves an already-absolute url untouched', () => {
+    const schema = breadcrumbSchema([{name: 'External', url: 'https://example.com/x'}]);
+    expect(schema.itemListElement[0].item).toBe('https://example.com/x');
+  });
+
+  it('omits the item field entirely for the final (current-page) breadcrumb with no url', () => {
+    const schema = breadcrumbSchema([{name: 'Home', url: '/'}, {name: 'Current Page'}]);
+    expect(schema.itemListElement[1]).not.toHaveProperty('item');
+  });
+});
+
+describe('collectionPageSchema', () => {
+  it('resolves each product\'s relative url to an absolute one', () => {
+    const schema = collectionPageSchema({
+      title: 'Hoodies',
+      handle: 'hoodies-jackets',
+      products: [{name: 'Hoodie', url: '/products/hoodie', image: 'https://cdn.shopify.com/x.jpg'}],
+    });
+    expect(schema.mainEntity).toMatchObject({
+      itemListElement: [{url: 'https://www.legendary-branding.com/products/hoodie'}],
     });
   });
 });

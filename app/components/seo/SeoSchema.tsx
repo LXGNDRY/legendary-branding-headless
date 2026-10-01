@@ -44,6 +44,17 @@ export function websiteSchema() {
   };
 }
 
+/**
+ * Google's structured-data guidelines require BreadcrumbList's `item` to be
+ * an absolute URL, but every call site in this codebase passes a
+ * site-relative path (e.g. '/', '/journal') for readability -- so this
+ * resolves each one against the production origin here, once, rather than
+ * requiring every call site to remember to do it.
+ */
+function toAbsoluteUrl(path: string): string {
+  return path.startsWith('http') ? path : `https://www.legendary-branding.com${path}`;
+}
+
 export function breadcrumbSchema(items: Array<{name: string; url?: string}>) {
   return {
     '@context': 'https://schema.org',
@@ -52,7 +63,7 @@ export function breadcrumbSchema(items: Array<{name: string; url?: string}>) {
       '@type': 'ListItem',
       position: i + 1,
       name: item.name,
-      ...(item.url ? {item: item.url} : {}),
+      ...(item.url ? {item: toAbsoluteUrl(item.url)} : {}),
     })),
   };
 }
@@ -125,7 +136,7 @@ export function collectionPageSchema({
             '@type': 'ListItem',
             position: i + 1,
             name: p.name,
-            url: p.url,
+            url: toAbsoluteUrl(p.url),
             image: p.image,
           })),
         }
