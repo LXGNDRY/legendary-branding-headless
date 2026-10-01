@@ -248,9 +248,11 @@ export default function SearchTypeahead({
                       >
                         {product.featuredImage?.url ? (
                           <div className="w-12 h-14 bg-[var(--color-bg-level-2)] shrink-0 overflow-hidden rounded-sm">
-                            <img
-                              src={product.featuredImage.url}
+                            <Image
+                              data={product.featuredImage}
                               alt={product.featuredImage.altText || product.title}
+                              width={48}
+                              height={56}
                               className="w-full h-full object-cover"
                               loading="lazy"
                             />
