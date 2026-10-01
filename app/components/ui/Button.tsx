@@ -44,8 +44,12 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps | ButtonAsAnchorProps
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // Accent red pill — primary CTA (dark theme)
+  // --color-text-inverse (#0A0A0A) only passes WCAG AA against the base
+  // --color-accent (~4.72:1) -- against the darker hover/pressed reds below
+  // it drops to ~3.69:1 / ~2.77:1, so those states switch to white
+  // (~5.37:1 / ~7.14:1) instead.
   primary:
-    'bg-[var(--color-accent)] text-white border-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] hover:border-[var(--color-accent-hover)] hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(230,57,54,0.25)] active:translate-y-0 active:bg-[var(--color-accent-pressed)] active:border-[var(--color-accent-pressed)]',
+    'bg-[var(--color-accent)] text-[var(--color-text-inverse)] border-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] hover:border-[var(--color-accent-hover)] hover:text-white hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(230,57,54,0.25)] active:translate-y-0 active:bg-[var(--color-accent-pressed)] active:border-[var(--color-accent-pressed)] active:text-white',
   // Outline pill — secondary CTA on dark backgrounds
   outline:
     'bg-transparent text-[var(--color-text-primary)] border-[var(--color-border-medium)] hover:bg-[var(--color-bg-level-3)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)] hover:-translate-y-px active:translate-y-0',

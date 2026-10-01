@@ -298,7 +298,7 @@ export default function App() {
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-[var(--color-accent)] focus:text-white focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase focus:rounded-full"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-[var(--color-accent)] focus:text-[var(--color-text-inverse)] focus:px-4 focus:py-2 focus:text-xs focus:tracking-widest focus:uppercase focus:rounded-full"
       >
         Skip to content
       </a>

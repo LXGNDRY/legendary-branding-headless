@@ -638,7 +638,7 @@ export default function ProductPage() {
                       {isOnSale && selectedVariant.compareAtPrice && (
                         <>
                           <Money data={selectedVariant.compareAtPrice} className="text-sm text-[var(--color-text-tertiary)] line-through font-normal" />
-                          <span className="inline-flex items-center rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
+                          <span className="inline-flex items-center rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-inverse)]">
                             Save{' '}
                             <Money
                               data={{

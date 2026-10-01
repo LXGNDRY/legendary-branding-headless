@@ -34,7 +34,7 @@ export default function StatStrip({
   const labelColor = 'text-[var(--color-text-tertiary)]';
 
   return (
-    <dl
+    <div
       className={`flex flex-wrap border-y ${bg} ${className}`}
       role="list"
     >
@@ -44,14 +44,14 @@ export default function StatStrip({
           className="flex flex-col items-center justify-center text-center px-6 md:px-10 py-10 flex-1 min-w-[140px] border-r border-inherit last:border-r-0"
           role="listitem"
         >
-          <dd className={`text-[clamp(1.5rem,3vw,2.5rem)] font-serif leading-none mb-2 ${valueColor}`}>
+          <div className={`text-[clamp(1.5rem,3vw,2.5rem)] font-serif leading-none mb-2 ${valueColor}`}>
             {stat.value}
-          </dd>
-          <dt className={`h-eyebrow ${labelColor}`}>
+          </div>
+          <div className={`h-eyebrow ${labelColor}`}>
             {stat.label}
-          </dt>
+          </div>
         </div>
       ))}
-    </dl>
+    </div>
   );
 }

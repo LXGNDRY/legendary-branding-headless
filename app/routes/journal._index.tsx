@@ -106,7 +106,12 @@ export default function JournalIndex() {
       {/* Featured article */}
       {featured && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-14 pb-14 border-b border-[var(--color-border-subtle)]">
-          <Link to={`/journal/${featured.handle}`} prefetch="intent" className="group block overflow-hidden rounded-lg bg-[var(--color-surface)]">
+          <Link
+            to={`/journal/${featured.handle}`}
+            prefetch="intent"
+            aria-label={featured.title}
+            className="group block overflow-hidden rounded-lg bg-[var(--color-surface)]"
+          >
             {featured.image ? (
               <Image
                 data={featured.image}
@@ -155,7 +160,12 @@ export default function JournalIndex() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {rest.map((article, i) => (
             <article key={article.id} className="group">
-              <Link to={`/journal/${article.handle}`} prefetch="intent" className="block mb-4 overflow-hidden rounded-lg bg-[var(--color-surface)]">
+              <Link
+                to={`/journal/${article.handle}`}
+                prefetch="intent"
+                aria-label={article.title}
+                className="block mb-4 overflow-hidden rounded-lg bg-[var(--color-surface)]"
+              >
                 {article.image ? (
                   <Image
                     data={article.image}
