@@ -248,6 +248,16 @@ function MobileMenu({
       role="dialog"
       aria-label="Main menu"
       aria-hidden={!open}
+      // `aria-hidden` alone hides this from the accessibility tree but
+      // doesn't stop its links from being keyboard-focusable while closed
+      // (they're only moved off-screen via CSS transform) -- `inert`
+      // removes them from the tab order and from assistive-tech focus too,
+      // which is what axe's focusable-disabled/focusable-not-tabbable
+      // rules require for anything marked aria-hidden. Spread as an
+      // untyped DOM attribute since @types/react doesn't declare `inert`
+      // yet, despite it being a standard HTML boolean attribute supported
+      // by every engine this app targets (Chromium, WebKit).
+      {...({inert: !open} as {inert?: boolean})}
     >
       <div className="flex items-center justify-between px-5 h-[60px] border-b border-[var(--color-border-muted)]">
         <Link

@@ -334,6 +334,13 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         aria-modal="true"
         aria-label="Shopping cart"
         aria-hidden={!open}
+        // See the matching comment in Header.tsx's MobileMenu -- aria-hidden
+        // alone doesn't stop the closed drawer's buttons/links from being
+        // keyboard-focusable; inert does. Spread as an untyped DOM attribute
+        // since @types/react doesn't declare `inert` yet, despite it being
+        // a standard HTML boolean attribute supported by every engine this
+        // app targets (Chromium, WebKit).
+        {...({inert: !open} as {inert?: boolean})}
         className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
