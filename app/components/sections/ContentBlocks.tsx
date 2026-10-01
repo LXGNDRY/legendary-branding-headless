@@ -75,9 +75,11 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
               >
                 <div className="md:[direction:ltr]">
                   {block.image ? (
-                    <img
-                      src={block.image}
+                    <Image
+                      data={{url: block.image}}
                       alt={block.title || 'Editorial image'}
+                      width={800}
+                      height={600}
                       className="w-full aspect-[4/3] object-cover"
                       loading="lazy"
                     />

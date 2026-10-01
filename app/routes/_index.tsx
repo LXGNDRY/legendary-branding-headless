@@ -16,6 +16,7 @@ import ReviewQuotes from '~/components/sections/ReviewQuotes';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import {CacheLong} from '~/lib/cache';
+import {FREE_SHIPPING_THRESHOLD} from '~/lib/cart';
 import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
 import {
   MAIN_MENU_QUERY,
@@ -157,7 +158,7 @@ export async function loader({context}: LoaderFunctionArgs) {
 const MARQUEE_ITEMS = [
   '190GSM+ PREMIUM-WEIGHT TEES',
   'MADE TO ORDER',
-  'FREE SHIPPING OVER $100',
+  `FREE SHIPPING OVER $${FREE_SHIPPING_THRESHOLD}`,
   'WORLDWIDE SHIPPING',
   'AUTHENTICITY GUARANTEED',
   'NEW DROPS EVERY FRIDAY',
