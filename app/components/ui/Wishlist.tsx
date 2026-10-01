@@ -20,6 +20,8 @@ interface WishlistItem {
   handle: string;
   title: string;
   price: string;
+  /** Compare-at price snapshot at the time this item was saved -- see WishlistButton. */
+  compareAtPrice?: string;
   image?: string;
   /** Rating snapshot at the time this item was saved -- see WishlistButton. */
   rating?: number;

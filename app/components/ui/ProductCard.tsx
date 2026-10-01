@@ -109,7 +109,7 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
   }
 ` as const;
 
-function isOnSale(product: ProductCardFragment) {
+export function isOnSale(product: ProductCardFragment) {
   return (
     Number(product.compareAtPriceRange?.minVariantPrice?.amount) >
     Number(product.priceRange?.minVariantPrice?.amount)
@@ -118,6 +118,14 @@ function isOnSale(product: ProductCardFragment) {
 
 function isNew(product: ProductCardFragment) {
   return product.tags.includes('new');
+}
+
+/** Whole-percent discount off the compare-at price, when on sale. */
+export function percentOff(product: ProductCardFragment): number | null {
+  const compareAt = Number(product.compareAtPriceRange?.minVariantPrice?.amount);
+  const price = Number(product.priceRange?.minVariantPrice?.amount);
+  if (!compareAt || compareAt <= price) return null;
+  return Math.round(((compareAt - price) / compareAt) * 100);
 }
 
 /**
@@ -146,6 +154,12 @@ export default function ProductCard({
 }) {
   const t = useTranslation();
   const onSale = isOnSale(product);
+  const saleBadgeLabel = onSale
+    ? (() => {
+        const pct = percentOff(product);
+        return pct ? `-${pct}%` : 'Sale';
+      })()
+    : null;
   const soldOut = !product.availableForSale;
   const isNewTag = isNew(product);
   const reviewRating = parseJudgemeBadge(product.reviewBadge?.value);
@@ -205,6 +219,13 @@ export default function ProductCard({
             />
           ) : (
             <Placeholder aspect="aspect-[3/4]" label={product.title} />
+          )}
+          {(onSale || isNewTag || soldOut) && (
+            <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+              {isNewTag && <Badge variant="new">New</Badge>}
+              {onSale && <Badge variant="sale">{saleBadgeLabel}</Badge>}
+              {soldOut && <Badge variant="soldout">Sold Out</Badge>}
+            </div>
           )}
         </Link>
 
@@ -307,7 +328,7 @@ export default function ProductCard({
         {(onSale || isNewTag || soldOut) && (
           <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
             {isNewTag && <Badge variant="new">New</Badge>}
-            {onSale && <Badge variant="sale">Sale</Badge>}
+            {onSale && <Badge variant="sale">{saleBadgeLabel}</Badge>}
             {soldOut && <Badge variant="soldout">Sold Out</Badge>}
           </div>
         )}
@@ -331,6 +352,9 @@ export default function ProductCard({
               handle: product.handle,
               title: product.title,
               price: product.priceRange.minVariantPrice.amount,
+              compareAtPrice: onSale
+                ? product.compareAtPriceRange.minVariantPrice.amount
+                : undefined,
               image: product.featuredImage?.url,
               rating: reviewRating?.rating,
               reviewCount: reviewRating?.count,
@@ -378,10 +402,18 @@ export default function ProductCard({
           >
             {product.title}
           </Link>
-          <Money
-            data={product.priceRange.minVariantPrice}
-            className="font-serif text-base text-[var(--color-text-primary)] shrink-0"
-          />
+          <div className="flex gap-2 items-baseline shrink-0">
+            <Money
+              data={product.priceRange.minVariantPrice}
+              className="font-serif text-base text-[var(--color-text-primary)]"
+            />
+            {onSale && (
+              <Money
+                data={product.compareAtPriceRange.minVariantPrice}
+                className="text-[var(--color-text-tertiary)] line-through font-normal text-xs"
+              />
+            )}
+          </div>
         </div>
         {reviewRating && <StarRating rating={reviewRating.rating} count={reviewRating.count} size="sm" />}
       </div>
