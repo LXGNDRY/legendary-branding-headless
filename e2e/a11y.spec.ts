@@ -17,7 +17,11 @@ import AxeBuilder from '@axe-core/playwright';
  */
 
 async function auditPage(page: import('@playwright/test').Page, path: string) {
-  await page.goto(path, {waitUntil: 'domcontentloaded'});
+  const response = await page.goto(path, {waitUntil: 'domcontentloaded'});
+  expect(
+    response?.ok(),
+    `Navigation to ${path} did not succeed (status ${response?.status()}) -- an error boundary with no violations would otherwise report this route as falsely accessible`,
+  ).toBe(true);
   const results = await new AxeBuilder({page})
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
