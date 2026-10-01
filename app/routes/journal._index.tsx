@@ -3,6 +3,8 @@ import {useLoaderData, Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
+import JsonLd from '~/components/ui/JsonLd';
+import {breadcrumbSchema} from '~/components/seo/SeoSchema';
 
 type ArticleNode = {
   id: string;
@@ -81,8 +83,14 @@ export default function JournalIndex() {
   const {articles} = useLoaderData<typeof loader>();
   const [featured, ...rest] = articles;
 
+  const breadcrumbJsonLd = breadcrumbSchema([
+    {name: 'Home', url: '/'},
+    {name: 'Journal'},
+  ]);
+
   return (
     <Container className="py-16">
+      <JsonLd data={breadcrumbJsonLd} />
       <div className="mb-14 max-w-lg">
         <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-text-secondary)] mb-2">
           Editorial
