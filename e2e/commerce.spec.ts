@@ -37,11 +37,12 @@ test.describe('Golden commerce journey', () => {
     await sizeGuide.getByRole('button', {name: 'Close size guide'}).click();
 
     await page.getByRole('button', {name: 'Shipping & Returns'}).click();
-    const shippingDetails = page.getByText(/Standard shipping is \$5 on orders under \$100 USD/);
-    await expect(shippingDetails).toBeVisible();
-    await expect(page.getByText(/\$12 express shipping option is available/)).toBeVisible();
+    // Dollar amounts/thresholds intentionally live only on the shipping
+    // policy page (single source of truth, see products.$handle.tsx) --
+    // the PDP accordion links out to it rather than duplicating the figures.
     await expect(page.getByText(/Import duties are included in the displayed price/).first()).toBeVisible();
     await expect(page.getByText(/Applicable taxes are paid by you and calculated at checkout/).first()).toBeVisible();
+    await expect(page.getByRole('link', {name: 'shipping policy'})).toBeVisible();
   });
 
   test('international market selection updates and persists for the session', async ({page}) => {

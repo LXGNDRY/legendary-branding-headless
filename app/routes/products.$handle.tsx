@@ -866,9 +866,8 @@ export default function ProductPage() {
                 )}
                 <Accordion label="Shipping & Returns">
                   <div className="space-y-3">
-                    <p>Standard shipping is $5 on orders under $100 USD and free on orders of $100 USD or more. A $12 express shipping option is available. Import duties are included in the displayed price. Applicable taxes are paid by you and calculated at checkout.</p>
+                    <p>Import duties are included in the displayed price. Applicable taxes are paid by you and calculated at checkout. For current shipping rates and delivery timelines, see our <Link to="/policies/shipping-policy" className="underline underline-offset-2">shipping policy</Link>.</p>
                     <p>For return eligibility, timing, and instructions, review our <Link to="/policies/refund-policy" className="underline underline-offset-2">return policy</Link>.</p>
-                    <Link to="/policies/shipping-policy" className="inline-block underline underline-offset-2">Read the shipping policy</Link>
                   </div>
                 </Accordion>
                 {product.metafields?.some((m) => m?.key === 'care' && m.value) && (

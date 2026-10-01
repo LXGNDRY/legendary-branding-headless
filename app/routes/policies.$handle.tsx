@@ -100,6 +100,15 @@ export async function loader({params, context}: LoaderFunctionArgs) {
     }
   }
 
+  // A handle with no body and no entry in PAGE_TITLES is neither a real
+  // Shopify page/policy nor a known static route (like 'contact', which
+  // intentionally has no body -- it renders its own form block below) --
+  // a true 404, not the soft "Content for this page is not available"
+  // placeholder, which would otherwise return 200 for any garbage handle.
+  if (!bodyHtml && !(handle in PAGE_TITLES)) {
+    throw new Response('Policy page not found', {status: 404});
+  }
+
   return {handle, title, bodyHtml};
 }
 

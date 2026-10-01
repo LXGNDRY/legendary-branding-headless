@@ -9,6 +9,7 @@ import {
   type LocalizationData,
 } from '~/lib/market';
 import {requireSameOrigin} from '~/lib/security';
+import {rateLimitMiddleware} from '~/lib/rate-limit';
 
 export async function action({request, context}: ActionFunctionArgs) {
   if (request.method !== 'POST') {
@@ -16,6 +17,8 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
   const originError = requireSameOrigin(request);
   if (originError) return originError;
+  const limited = rateLimitMiddleware(request, 'market', 10);
+  if (limited) return limited;
 
   const formData = await request.formData();
   const country = normalizeCountryCode(formData.get('country'));
