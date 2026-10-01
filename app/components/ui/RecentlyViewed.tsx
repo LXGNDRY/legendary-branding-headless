@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Link} from 'react-router';
+import {Image} from '@shopify/hydrogen';
 import StarRating from '~/components/ui/StarRating';
 
 const COOKIE_NAME = 'recently_viewed';
@@ -105,9 +106,11 @@ export default function RecentlyViewed({
             >
               <div className="aspect-[3/4] bg-[var(--color-surface)] mb-3 overflow-hidden">
                 {p.image ? (
-                  <img
-                    src={p.image}
+                  <Image
+                    data={{url: p.image}}
                     alt={p.title}
+                    width={400}
+                    height={533}
                     className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                     loading="lazy"
                   />

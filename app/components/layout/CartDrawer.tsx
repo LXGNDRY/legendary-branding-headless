@@ -3,14 +3,10 @@ import {Link, useFetcher} from 'react-router';
 import Button from '~/components/ui/Button';
 import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
-import {withCheckoutLocale} from '~/lib/cart';
+import {withCheckoutLocale, FREE_SHIPPING_THRESHOLD} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useTranslation} from '~/lib/i18n';
-
-// Free shipping threshold -- applies to all customers, not just US orders.
-// Update this if the store's shipping policy changes.
-const FREE_SHIPPING_THRESHOLD = 100;
 
 function CloseIcon() {
   return (
