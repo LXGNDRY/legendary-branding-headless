@@ -175,6 +175,7 @@ export function productSchema({
   images,
   vendor,
   variants,
+  aggregateRating,
 }: {
   id: string;
   title: string;
@@ -184,10 +185,14 @@ export function productSchema({
   vendor?: string;
   variants: Array<{
     id: string;
+    sku?: string;
     price: string;
     currencyCode: string;
     available: boolean;
   }>;
+  /** Judge.me's synced rating badge -- see parseJudgemeBadge. Omitted entirely
+   * (rather than rendered as zero) for a product with no reviews yet. */
+  aggregateRating?: {ratingValue: number; reviewCount: number};
 }) {
   return {
     '@context': 'https://schema.org',
@@ -196,11 +201,16 @@ export function productSchema({
     name: title,
     image: images,
     description,
-    sku: id,
+    // Falls back to the Shopify product GID only when no variant has a
+    // real merchant-assigned SKU -- schema.org expects a merchant
+    // identifier here, not an internal GID, but every product needs some
+    // value in this field.
+    sku: variants.find((v) => v.sku)?.sku || id,
     brand: {'@type': 'Brand', name: vendor || 'Legendary Branding'},
     offers: variants.map((v) => ({
       '@type': 'Offer',
       '@id': `https://www.legendary-branding.com/products/${handle}#offer-${v.id}`,
+      ...(v.sku ? {sku: v.sku} : {}),
       price: v.price,
       priceCurrency: v.currencyCode,
       availability: v.available
@@ -209,7 +219,15 @@ export function productSchema({
       url: `https://www.legendary-branding.com/products/${handle}`,
       itemCondition: 'https://schema.org/NewCondition',
     })),
-    aggregateRating: undefined, // not available
+    ...(aggregateRating
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: aggregateRating.ratingValue,
+            reviewCount: aggregateRating.reviewCount,
+          },
+        }
+      : {}),
   };
 }
 
