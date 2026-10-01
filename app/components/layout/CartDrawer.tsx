@@ -246,19 +246,6 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
 
   const {containerRef: drawerRef} = useFocusTrap(open, onClose);
 
-  // `inert` isn't in React's DOM attribute whitelist, so passing it as a
-  // JSX prop (even cast to a plain object and spread) risks React
-  // stringifying a `false` value as the literal attribute `inert="false"`
-  // instead of omitting it -- any string value makes an element inert to
-  // the browser, so that would incorrectly inert the *open* drawer too.
-  // Setting/removing the attribute imperatively sidesteps that ambiguity.
-  useEffect(() => {
-    const el = drawerRef.current;
-    if (!el) return;
-    if (open) el.removeAttribute('inert');
-    else el.setAttribute('inert', '');
-  }, [open, drawerRef]);
-
   // A shopper hitting Back from Shopify's hosted checkout can restore this
   // page from the bfcache with React state intact, leaving `checkingOut`
   // stuck true and the checkout link permanently blocked. Also reset on
@@ -348,9 +335,10 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         aria-label="Shopping cart"
         // See the matching comment in Header.tsx's MobileMenu -- aria-hidden
         // alone doesn't stop the closed drawer's buttons/links from being
-        // keyboard-focusable; the inert attribute set imperatively above
-        // does.
+        // keyboard-focusable; inert does, passed as a string for the same
+        // reason documented there.
         aria-hidden={!open}
+        {...({inert: !open ? '' : undefined} as {inert?: string})}
         className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}

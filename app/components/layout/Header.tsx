@@ -223,21 +223,6 @@ function MobileMenu({
   const {containerRef} = useFocusTrap(open, onClose);
   const [openItem, setOpenItem] = useState<string | null>(null);
 
-  // `inert` isn't in React's DOM attribute whitelist, so passing it as a
-  // JSX prop (even cast to a plain object and spread) risks React
-  // stringifying a `false` value as the literal attribute `inert="false"`
-  // instead of omitting it -- any string value makes an element inert to
-  // the browser, so that would incorrectly inert the *open* menu too.
-  // Setting/removing the attribute imperatively sidesteps that ambiguity
-  // entirely. See the matching aria-hidden comment below for why this is
-  // needed at all.
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (open) el.removeAttribute('inert');
-    else el.setAttribute('inert', '');
-  }, [open, containerRef]);
-
   // Prevent body scroll
   useEffect(() => {
     if (open) {
@@ -264,12 +249,19 @@ function MobileMenu({
       aria-label="Main menu"
       // `aria-hidden` alone hides this from the accessibility tree but
       // doesn't stop its links from being keyboard-focusable while closed
-      // (they're only moved off-screen via CSS transform) -- the `inert`
-      // attribute set imperatively above removes them from the tab order
-      // and from assistive-tech focus too, which is what axe's
-      // focusable-disabled/focusable-not-tabbable rules require for
-      // anything marked aria-hidden.
+      // (they're only moved off-screen via CSS transform) -- `inert`
+      // removes them from the tab order and assistive-tech focus too,
+      // which is what axe's focusable-disabled/focusable-not-tabbable
+      // rules require for anything marked aria-hidden. Passed as a real
+      // string ('' present / undefined omitted) rather than a boolean:
+      // @types/react doesn't declare `inert`, and React stringifies an
+      // *unrecognized* attribute's boolean `false` as the literal text
+      // "false" instead of omitting it -- any string value, even "false",
+      // makes an element inert to the browser. A string value (rendered
+      // synchronously, so it's correct in the server-rendered HTML too,
+      // unlike a client-only effect) has no such ambiguity.
       aria-hidden={!open}
+      {...({inert: !open ? '' : undefined} as {inert?: string})}
     >
       <div className="flex items-center justify-between px-5 h-[60px] border-b border-[var(--color-border-muted)]">
         <Link
