@@ -5,14 +5,16 @@ import AxeBuilder from '@axe-core/playwright';
  * Automated accessibility audit — WCAG AA, per CLAUDE.md's design-system
  * requirement ("all interactive elements must have aria-label or visible
  * label; color contrast must meet WCAG AA minimum"). Runs axe-core against
- * the golden-journey routes (the ones real customers actually land on),
- * failing the build on any 'serious' or 'critical' violation. 'moderate'
- * and 'minor' are reported but non-blocking -- WCAG AA is the bar, not a
- * zero-findings audit tool, and axe's own docs note some moderate/minor
- * rules are opinionated best-practices rather than AA requirements.
+ * the golden-journey routes (the ones real customers actually land on).
+ *
+ * `.withTags(...)` already restricts the audit to WCAG 2.0/2.1 A+AA
+ * conformance rules, so every violation axe returns here is a normative
+ * WCAG AA failure, not an opinionated best-practice -- impact severity
+ * (serious/critical/moderate/minor) measures how badly a given violation
+ * affects users, not whether the underlying rule is actually required.
+ * Filtering by impact would let real, in-scope WCAG AA violations pass
+ * silently and unreported, so every one of them fails the suite.
  */
-
-const BLOCKING_IMPACTS = ['serious', 'critical'] as const;
 
 async function auditPage(page: import('@playwright/test').Page, path: string) {
   await page.goto(path, {waitUntil: 'domcontentloaded'});
@@ -20,15 +22,11 @@ async function auditPage(page: import('@playwright/test').Page, path: string) {
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
 
-  const blocking = results.violations.filter((v) =>
-    BLOCKING_IMPACTS.includes(v.impact as (typeof BLOCKING_IMPACTS)[number]),
-  );
-
-  if (blocking.length > 0) {
-    const detail = blocking
+  if (results.violations.length > 0) {
+    const detail = results.violations
       .map((v) => `- [${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} node(s))`)
       .join('\n');
-    expect(blocking, `Serious/critical a11y violations on ${path}:\n${detail}`).toEqual([]);
+    expect(results.violations, `WCAG AA violations on ${path}:\n${detail}`).toEqual([]);
   }
 }
 
