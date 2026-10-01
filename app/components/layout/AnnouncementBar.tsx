@@ -29,6 +29,13 @@ function AnnouncementItem({item}: {item: Announcement}) {
       {item.link ? (
         <Link
           to={item.link}
+          // The whole scrolling row is aria-hidden (decorative/duplicative --
+          // every destination here is also reachable via primary nav), but
+          // that doesn't stop a mouse click or remove this from the
+          // keyboard tab order on its own; tabIndex={-1} does, which is
+          // what axe's aria-hidden-focus rule requires for any focusable
+          // content inside an aria-hidden container.
+          tabIndex={-1}
           className="text-[11px] font-medium tracking-[0.1em] uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
         >
           {t(item.key)}
