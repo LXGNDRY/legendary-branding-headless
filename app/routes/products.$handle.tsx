@@ -486,6 +486,16 @@ export default function ProductPage() {
     selectedVariant?.compareAtPrice &&
     parseFloat(selectedVariant.compareAtPrice.amount) > parseFloat(selectedVariant.price.amount);
 
+  const salePercentOff =
+    isOnSale && selectedVariant?.compareAtPrice
+      ? Math.round(
+          ((parseFloat(selectedVariant.compareAtPrice.amount) -
+            parseFloat(selectedVariant.price.amount)) /
+            parseFloat(selectedVariant.compareAtPrice.amount)) *
+            100,
+        )
+      : null;
+
   const isNew = product.tags.includes('new');
 
   // Mirrors the live Liquid theme's threshold (1-9 units left) for showing
@@ -582,7 +592,7 @@ export default function ProductPage() {
               badges={
                 (isOnSale || isLowStock) && (
                   <>
-                    {isOnSale && <Badge variant="sale">Sale</Badge>}
+                    {isOnSale && <Badge variant="sale">{salePercentOff ? `-${salePercentOff}%` : "Sale"}</Badge>}
                     {isLowStock && <Badge variant="default">Low Stock</Badge>}
                   </>
                 )
@@ -602,7 +612,7 @@ export default function ProductPage() {
                   {selectedVariant && !selectedVariant.availableForSale && (
                     <Badge variant="soldout">Sold Out</Badge>
                   )}
-                  {isOnSale && <Badge variant="sale">Sale</Badge>}
+                  {isOnSale && <Badge variant="sale">{salePercentOff ? `-${salePercentOff}%` : "Sale"}</Badge>}
                   {isNew && !isOnSale && <Badge variant="new">New</Badge>}
                 </div>
               )}
@@ -651,6 +661,7 @@ export default function ProductPage() {
                               className="ml-1"
                               as="span"
                             />
+                            {salePercentOff ? ` (${salePercentOff}% off)` : ''}
                           </span>
                         </>
                       )}

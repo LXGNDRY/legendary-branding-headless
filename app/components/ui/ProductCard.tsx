@@ -44,6 +44,8 @@ export type ProductCardFragment = {
   selectedOrFirstAvailableVariant?: {
     id: string;
     availableForSale: boolean;
+    price?: MoneyFragment;
+    compareAtPrice?: MoneyFragment | null;
   } | null;
   reviewBadge?: {value: string} | null;
 };
@@ -99,6 +101,14 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
     ) {
       id
       availableForSale
+      price {
+        amount
+        currencyCode
+      }
+      compareAtPrice {
+        amount
+        currencyCode
+      }
     }
     # Judge.me's synced rating/review-count badge -- real data, not
     # fabricated. Absent until a product has its first review; the card
@@ -109,15 +119,53 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
   }
 ` as const;
 
-function isOnSale(product: ProductCardFragment) {
-  return (
-    Number(product.compareAtPriceRange?.minVariantPrice?.amount) >
-    Number(product.priceRange?.minVariantPrice?.amount)
-  );
+/**
+ * The price/compareAtPrice pair used for sale detection and percent-off
+ * math. Prefers `selectedOrFirstAvailableVariant`'s own price pair, since
+ * `priceRange`/`compareAtPriceRange` are each independently the minimum
+ * across all variants -- on a product with differently priced/discounted
+ * variants, those two minima need not describe the same variant, which
+ * can pair an unrelated price with an unrelated compareAtPrice and report
+ * a sale (or a percentage) that doesn't correspond to any real variant.
+ * Falls back to the range fields only when variant-level data isn't
+ * fetched (e.g. the degraded search/wishlist card shapes).
+ */
+function salePricePair(product: ProductCardFragment): {price: number; compareAt: number} | null {
+  const variant = product.selectedOrFirstAvailableVariant;
+  if (variant?.price && variant?.compareAtPrice) {
+    return {
+      price: Number(variant.price.amount),
+      compareAt: Number(variant.compareAtPrice.amount),
+    };
+  }
+  if (!variant?.price) {
+    // No variant-level price data was fetched at all -- fall back to the
+    // (possibly mismatched) range minima rather than reporting no sale.
+    return {
+      price: Number(product.priceRange?.minVariantPrice?.amount),
+      compareAt: Number(product.compareAtPriceRange?.minVariantPrice?.amount),
+    };
+  }
+  // Variant-level price was fetched but this specific variant has no
+  // compareAtPrice -- it is genuinely not on sale, regardless of what the
+  // range minima (describing a different variant) might suggest.
+  return null;
+}
+
+export function isOnSale(product: ProductCardFragment) {
+  const pair = salePricePair(product);
+  return pair != null && pair.compareAt > pair.price;
 }
 
 function isNew(product: ProductCardFragment) {
   return product.tags.includes('new');
+}
+
+/** Whole-percent discount off the compare-at price, when on sale. */
+export function percentOff(product: ProductCardFragment): number | null {
+  const pair = salePricePair(product);
+  if (!pair || !pair.compareAt || pair.compareAt <= pair.price) return null;
+  return Math.round(((pair.compareAt - pair.price) / pair.compareAt) * 100);
 }
 
 /**
@@ -146,6 +194,18 @@ export default function ProductCard({
 }) {
   const t = useTranslation();
   const onSale = isOnSale(product);
+  const saleBadgeLabel = onSale
+    ? (() => {
+        const pct = percentOff(product);
+        return pct ? `-${pct}%` : 'Sale';
+      })()
+    : null;
+  // Same-variant price/compareAtPrice pair used for display -- keeps the
+  // strikethrough price and the Sale badge's percentage describing the
+  // same variant (see salePricePair's doc comment).
+  const displayPrice = product.selectedOrFirstAvailableVariant?.price ?? product.priceRange.minVariantPrice;
+  const displayCompareAt =
+    product.selectedOrFirstAvailableVariant?.compareAtPrice ?? product.compareAtPriceRange.minVariantPrice;
   const soldOut = !product.availableForSale;
   const isNewTag = isNew(product);
   const reviewRating = parseJudgemeBadge(product.reviewBadge?.value);
@@ -206,6 +266,13 @@ export default function ProductCard({
           ) : (
             <Placeholder aspect="aspect-[3/4]" label={product.title} />
           )}
+          {(onSale || isNewTag || soldOut) && (
+            <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+              {isNewTag && <Badge variant="new">New</Badge>}
+              {onSale && <Badge variant="sale">{saleBadgeLabel}</Badge>}
+              {soldOut && <Badge variant="soldout">Sold Out</Badge>}
+            </div>
+          )}
         </Link>
 
         {/* Info */}
@@ -234,12 +301,12 @@ export default function ProductCard({
           <div className="flex items-end justify-between">
             <div className="flex gap-2.5 items-baseline">
               <Money
-                data={product.priceRange.minVariantPrice}
+                data={displayPrice}
                 className="text-lg font-serif text-[var(--color-text-primary)]"
               />
               {onSale && (
                 <Money
-                  data={product.compareAtPriceRange.minVariantPrice}
+                  data={displayCompareAt}
                   className="text-[var(--color-text-tertiary)] line-through font-normal text-sm"
                 />
               )}
@@ -307,7 +374,7 @@ export default function ProductCard({
         {(onSale || isNewTag || soldOut) && (
           <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
             {isNewTag && <Badge variant="new">New</Badge>}
-            {onSale && <Badge variant="sale">Sale</Badge>}
+            {onSale && <Badge variant="sale">{saleBadgeLabel}</Badge>}
             {soldOut && <Badge variant="soldout">Sold Out</Badge>}
           </div>
         )}
@@ -330,7 +397,10 @@ export default function ProductCard({
               id: product.id,
               handle: product.handle,
               title: product.title,
-              price: product.priceRange.minVariantPrice.amount,
+              price: displayPrice.amount,
+              compareAtPrice: onSale
+                ? displayCompareAt.amount
+                : undefined,
               image: product.featuredImage?.url,
               rating: reviewRating?.rating,
               reviewCount: reviewRating?.count,
@@ -378,10 +448,18 @@ export default function ProductCard({
           >
             {product.title}
           </Link>
-          <Money
-            data={product.priceRange.minVariantPrice}
-            className="font-serif text-base text-[var(--color-text-primary)] shrink-0"
-          />
+          <div className="flex gap-2 items-baseline shrink-0">
+            <Money
+              data={displayPrice}
+              className="font-serif text-base text-[var(--color-text-primary)]"
+            />
+            {onSale && (
+              <Money
+                data={displayCompareAt}
+                className="text-[var(--color-text-tertiary)] line-through font-normal text-xs"
+              />
+            )}
+          </div>
         </div>
         {reviewRating && <StarRating rating={reviewRating.rating} count={reviewRating.count} size="sm" />}
       </div>
