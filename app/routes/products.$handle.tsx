@@ -3,12 +3,14 @@ import {
   type ActionFunctionArgs,
   type MetaFunction,
   useLoaderData,
+  useRouteLoaderData,
   useParams,
   useRouteError,
   isRouteErrorResponse,
   Link,
   Await,
 } from 'react-router';
+import type {ActiveDiscount} from '~/lib/discounts';
 import {useState, useEffect, useRef, Suspense} from 'react';
 import {
   CartForm,
@@ -461,6 +463,14 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
 export default function ProductPage() {
   const t = useTranslation();
   const {product, relatedProducts, reviews} = useLoaderData<typeof loader>();
+  // Real active Shopify discounts, fetched once in the root loader (see
+  // app/root.tsx) rather than re-fetched per PDP. Streamed, not awaited --
+  // the root loader never blocks on this optional Admin API call, so this
+  // is a Promise resolved below via Suspense/Await, not a plain array.
+  // Degrades to no callout rendered when PRIVATE_SHOPIFY_ADMIN_API_TOKEN is
+  // unset or the fetch fails, same as every other optional integration.
+  const activeDiscountsPromise = (useRouteLoaderData('root') as {activeDiscounts?: Promise<ActiveDiscount[]>} | undefined)
+    ?.activeDiscounts;
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -671,6 +681,36 @@ export default function ProductPage() {
                   )}
                 </div>
               </div>
+
+              {activeDiscountsPromise && (
+                <Suspense fallback={null}>
+                  <Await resolve={activeDiscountsPromise} errorElement={null}>
+                    {(activeDiscounts) =>
+                      activeDiscounts.length > 0 && (
+                        <ul
+                          className="-mt-3 space-y-1 text-sm text-[var(--color-text-secondary)]"
+                          aria-label="Current promotions"
+                        >
+                          {activeDiscounts.map((discount) => (
+                            <li key={discount.id} className="flex items-start gap-1.5">
+                              <span className="text-[var(--color-accent)]" aria-hidden="true">✦</span>
+                              <span>
+                                {discount.summary}
+                                {discount.kind === 'code' && (
+                                  <>
+                                    {' '}— use code{' '}
+                                    <span className="font-semibold text-[var(--color-text-primary)]">{discount.code}</span>
+                                  </>
+                                )}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )
+                    }
+                  </Await>
+                </Suspense>
+              )}
 
               {(product.metafields?.some((m) => m?.key === 'fit' && m.value) || product.metafields?.some((m) => m?.key === 'material' && m.value)) && (
                 <ul className="-mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-text-secondary)]" aria-label="Product highlights">

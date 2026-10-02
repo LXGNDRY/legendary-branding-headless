@@ -36,6 +36,10 @@ interface Env {
   // Judge.me reviews API (optional, server-only — real review quote cards on
   // the homepage degrade to no section when unset, see app/lib/judgeme.ts)
   PRIVATE_JUDGEME_API_TOKEN: string;
+  // Shopify Admin API (optional, server-only, read_discounts scope only —
+  // active-discount banner degrades to the static announcement copy and
+  // PDP omits the promotions callout when unset, see app/lib/discounts.ts)
+  PRIVATE_SHOPIFY_ADMIN_API_TOKEN: string;
 }
 
 declare module 'virtual:react-router/server-build' {

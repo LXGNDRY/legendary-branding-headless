@@ -9,11 +9,13 @@ import {
   useFetchers,
   useLocation,
   isRouteErrorResponse,
+  Await,
 } from 'react-router';
-import {useState, useEffect} from 'react';
+import {useState, useEffect, Suspense} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
 import {CacheShort} from '~/lib/cache';
+import {fetchActiveDiscounts, type ActiveDiscount} from '~/lib/discounts';
 import {initSentry, useWebVitals, captureError} from '~/lib/monitoring';
 import {WishlistProvider} from '~/components/ui/Wishlist';
 import {LocaleProvider} from '~/lib/i18n';
@@ -34,7 +36,7 @@ import {
   type MenuItemNode,
   type NavCollectionItem,
 } from '~/lib/nav';
-import {Analytics as HydrogenAnalytics, getShopAnalytics, CartForm} from '@shopify/hydrogen';
+import {Analytics as HydrogenAnalytics, getShopAnalytics, CartForm, createWithCache} from '@shopify/hydrogen';
 
 export const links: LinksFunction = () => [
   // The raw Shopify Files upload (Timeless_Style_-_Artboard_22_4.png) is a
@@ -101,7 +103,7 @@ export const meta: MetaFunction = () => [
   {name: 'twitter:description', content: 'Premium streetwear built to last.'},
 ];
 
-export async function loader({context}: LoaderFunctionArgs) {
+export async function loader({context, request}: LoaderFunctionArgs) {
   const {cart, customerAccount} = context;
 
   // Check if customer is logged in and associate cart with buyer identity
@@ -129,6 +131,35 @@ export async function loader({context}: LoaderFunctionArgs) {
       }
     }
   }
+
+  // Opening a named Cache API instance is required to cache the Admin API
+  // discount fetch (a POST request -- Cloudflare's Cache API only caches
+  // GET by default, so this goes through Hydrogen's createWithCache
+  // wrapper instead, same mechanism context.ts uses for the storefront
+  // client's own cache). Hoisted above Promise.all so this doesn't delay
+  // kicking off the requests that don't need it.
+  const discountsWithCache = context.env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN
+    ? createWithCache({
+        cache: await caches.open('hydrogen'),
+        waitUntil: context.waitUntil ?? (() => {}),
+        request,
+      })
+    : null;
+
+  // Deliberately NOT awaited/included in the Promise.all below: an Admin
+  // API outage or slow edge would otherwise block every single storefront
+  // page's initial response on this one optional, non-critical fetch
+  // (Codex-caught). Streamed in after the initial response via
+  // Suspense/Await below, same pattern as the homepage's Judge.me quotes --
+  // AnnouncementBar/the PDP callout fall back to their non-discount default
+  // state until this resolves.
+  const activeDiscounts: Promise<ActiveDiscount[]> = discountsWithCache
+    ? fetchActiveDiscounts({
+        accessToken: context.env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN,
+        shopDomain: context.env.PUBLIC_STORE_DOMAIN,
+        withCache: discountsWithCache,
+      })
+    : Promise.resolve([]);
 
   const [cartData, localizationResult, shop, menuResult] = await Promise.all([
     cart.get(),
@@ -184,6 +215,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     localization: localizationResult.localization as LocalizationData,
     navCollections,
     shop,
+    activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on
     // Oxygen, not values baked in at Vite build time, so import.meta.env
@@ -234,7 +266,7 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, consent} = useLoaderData<typeof loader>();
+  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, consent, activeDiscounts} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
   const location = useLocation();
@@ -306,7 +338,11 @@ export default function App() {
       {/* Site-wide SEO schema */}
       <DefaultSeoSchema />
 
-      <AnnouncementBar />
+      <Suspense fallback={<AnnouncementBar />}>
+        <Await resolve={activeDiscounts} errorElement={<AnnouncementBar />}>
+          {(discounts) => <AnnouncementBar discounts={discounts} />}
+        </Await>
+      </Suspense>
       <Header
         cartCount={cartCount}
         isLoggedIn={isLoggedIn}
