@@ -14,6 +14,7 @@ import {useState, useEffect} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
 import {CacheShort} from '~/lib/cache';
+import {fetchActiveDiscounts, type ActiveDiscount} from '~/lib/discounts';
 import {initSentry, useWebVitals, captureError} from '~/lib/monitoring';
 import {WishlistProvider} from '~/components/ui/Wishlist';
 import {LocaleProvider} from '~/lib/i18n';
@@ -130,7 +131,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     }
   }
 
-  const [cartData, localizationResult, shop, menuResult] = await Promise.all([
+  const [cartData, localizationResult, shop, menuResult, activeDiscounts] = await Promise.all([
     cart.get(),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
@@ -150,6 +151,12 @@ export async function loader({context}: LoaderFunctionArgs) {
       },
       cache: CacheLong(),
     }),
+    context.env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN
+      ? fetchActiveDiscounts({
+          accessToken: context.env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN,
+          shopDomain: context.env.PUBLIC_STORE_DOMAIN,
+        })
+      : Promise.resolve([] as ActiveDiscount[]),
   ]);
 
   const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
@@ -184,6 +191,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     localization: localizationResult.localization as LocalizationData,
     navCollections,
     shop,
+    activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on
     // Oxygen, not values baked in at Vite build time, so import.meta.env
@@ -234,7 +242,7 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, consent} = useLoaderData<typeof loader>();
+  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, consent, activeDiscounts} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
   const location = useLocation();
@@ -306,7 +314,7 @@ export default function App() {
       {/* Site-wide SEO schema */}
       <DefaultSeoSchema />
 
-      <AnnouncementBar />
+      <AnnouncementBar discounts={activeDiscounts} />
       <Header
         cartCount={cartCount}
         isLoggedIn={isLoggedIn}
