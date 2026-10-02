@@ -844,6 +844,10 @@ export default function ProductPage() {
                 </div>
               )}
 
+              <p className="text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                Merch is unisex &amp; true to size. So, feel free to order your normal fit. We work closely with our vendors to ensure quality and premium textures.
+              </p>
+
               <section
                 aria-label="Delivery and checkout information"
                 className="border-y border-[var(--color-border-muted)] py-3.5"
