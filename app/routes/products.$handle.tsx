@@ -297,9 +297,14 @@ function AddToCartButton({variant, quantity = 1}: {variant?: ProductVariantFragm
 
 function MobilePurchaseBar({
   variant,
+  fallbackPrice,
   quantity,
 }: {
   variant?: ProductVariantFragment | null;
+  /** Shown in place of a price while no variant is selected yet, so the
+      customer isn't forced to pick a size/color before seeing what the
+      product costs. Purchase actions below still require a real `variant`. */
+  fallbackPrice?: MoneyData | null;
   quantity: number;
 }) {
   const t = useTranslation();
@@ -315,6 +320,8 @@ function MobilePurchaseBar({
         <div className="min-w-0 flex-1">
           {available && variant ? (
             <Money data={variant.price} className="block text-sm font-semibold text-[var(--color-text-primary)]" />
+          ) : needsSelection && fallbackPrice ? (
+            <Money data={fallbackPrice} className="block text-sm font-semibold text-[var(--color-text-primary)]" />
           ) : (
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">{needsSelection ? 'Choose an option' : 'Sold out'}</p>
           )}
@@ -349,11 +356,16 @@ function MobilePurchaseBar({
 function StickyBuyBar({
   title,
   variant,
+  fallbackPrice,
   quantity,
   visible,
 }: {
   title: string;
   variant?: ProductVariantFragment | null;
+  /** Shown in place of a price while no variant is selected yet, so the
+      customer isn't forced to pick a size/color before seeing what the
+      product costs. Purchase actions below still require a real `variant`. */
+  fallbackPrice?: MoneyData | null;
   quantity: number;
   visible: boolean;
 }) {
@@ -371,8 +383,8 @@ function StickyBuyBar({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">{title}</p>
         </div>
-        {variant && (
-          <Money data={variant.price} className="shrink-0 text-sm font-semibold text-[var(--color-text-primary)]" />
+        {(variant ?? fallbackPrice) && (
+          <Money data={variant ? variant.price : (fallbackPrice as MoneyData)} className="shrink-0 text-sm font-semibold text-[var(--color-text-primary)]" />
         )}
         {available && variant ? (
           <CartForm
@@ -493,16 +505,29 @@ export default function ProductPage() {
     product.variants.nodes as ProductVariantFragment[],
   );
 
+  // Until every option is picked, `selectedVariant` is undefined -- a
+  // customer landing on a PDP straight from a product card (no options
+  // preselected in the URL) would otherwise see no price at all until they
+  // chose a variant. Falling back to the first available (or just first)
+  // variant's own price/compareAtPrice pair shows a real price immediately
+  // without ever pairing a price from one variant with a compareAtPrice
+  // from another (the mismatch this codebase already hit once with
+  // priceRange/compareAtPriceRange range minima on ProductCard).
+  const displayVariant =
+    selectedVariant ??
+    product.variants.nodes.find((v) => v.availableForSale) ??
+    product.variants.nodes[0];
+
   const isOnSale =
-    selectedVariant?.compareAtPrice &&
-    parseFloat(selectedVariant.compareAtPrice.amount) > parseFloat(selectedVariant.price.amount);
+    displayVariant?.compareAtPrice &&
+    parseFloat(displayVariant.compareAtPrice.amount) > parseFloat(displayVariant.price.amount);
 
   const salePercentOff =
-    isOnSale && selectedVariant?.compareAtPrice
+    isOnSale && displayVariant?.compareAtPrice
       ? Math.round(
-          ((parseFloat(selectedVariant.compareAtPrice.amount) -
-            parseFloat(selectedVariant.price.amount)) /
-            parseFloat(selectedVariant.compareAtPrice.amount)) *
+          ((parseFloat(displayVariant.compareAtPrice.amount) -
+            parseFloat(displayVariant.price.amount)) /
+            parseFloat(displayVariant.compareAtPrice.amount)) *
             100,
         )
       : null;
@@ -653,21 +678,21 @@ export default function ProductPage() {
                   </a>
                 )}
                 <div className="flex items-baseline gap-3 flex-wrap">
-                  {selectedVariant ? (
+                  {displayVariant && (
                     <>
-                      <Money data={selectedVariant.price} className="text-[1.1rem] font-medium text-[var(--color-text-primary)]" />
-                      {isOnSale && selectedVariant.compareAtPrice && (
+                      <Money data={displayVariant.price} className="text-[1.1rem] font-medium text-[var(--color-text-primary)]" />
+                      {isOnSale && displayVariant.compareAtPrice && (
                         <>
-                          <Money data={selectedVariant.compareAtPrice} className="text-sm text-[var(--color-text-tertiary)] line-through font-normal" />
+                          <Money data={displayVariant.compareAtPrice} className="text-sm text-[var(--color-text-tertiary)] line-through font-normal" />
                           <span className="inline-flex items-center rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-inverse)]">
                             Save{' '}
                             <Money
                               data={{
                                 amount: (
-                                  parseFloat(selectedVariant.compareAtPrice.amount) -
-                                  parseFloat(selectedVariant.price.amount)
+                                  parseFloat(displayVariant.compareAtPrice.amount) -
+                                  parseFloat(displayVariant.price.amount)
                                 ).toString(),
-                                currencyCode: selectedVariant.price.currencyCode,
+                                currencyCode: displayVariant.price.currencyCode,
                               }}
                               className="ml-1"
                               as="span"
@@ -677,8 +702,6 @@ export default function ProductPage() {
                         </>
                       )}
                     </>
-                  ) : (
-                    <span className="text-[1.1rem] font-medium text-[var(--color-text-tertiary)]">Select a variant</span>
                   )}
                 </div>
               </div>
@@ -842,6 +865,16 @@ export default function ProductPage() {
                   <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--color-accent)]" aria-hidden="true" />
                   Low stock — order soon
                 </div>
+              )}
+
+              {/* "True to size" contradicts products whose `fit` metafield says
+                  otherwise (e.g. "oversized", "boxy" -- surfaced just below in
+                  the Fit accordion), so this blanket reassurance only renders
+                  when the product has no specific fit guidance of its own. */}
+              {!product.metafields?.some((m) => m?.key === 'fit' && m.value) && (
+                <p className="text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                  Merch is unisex &amp; true to size. So, feel free to order your normal fit. We work closely with our vendors to ensure quality and premium textures.
+                </p>
               )}
 
               <section
@@ -1062,10 +1095,11 @@ export default function ProductPage() {
         currentProductReviewCount={judgemeRating?.count}
       />
 
-      <MobilePurchaseBar variant={selectedVariant} quantity={quantity} />
+      <MobilePurchaseBar variant={selectedVariant} fallbackPrice={displayVariant?.price} quantity={quantity} />
       <StickyBuyBar
         title={product.title}
         variant={selectedVariant}
+        fallbackPrice={displayVariant?.price}
         quantity={quantity}
         visible={showStickyBar}
       />
