@@ -35,6 +35,16 @@ import {CacheCustom, type WithCache} from '@shopify/hydrogen';
 
 const DEFAULT_ADMIN_API_VERSION = '2025-10';
 
+// Bump this whenever ACTIVE_DISCOUNTS_QUERY's shape or parseDiscountNodes's
+// interpretation of the response changes -- the cacheKey below includes it
+// so a deploy can never read back a cached response written under a
+// previous query shape. Without this, changing `codes(first: 1)` to
+// `codes(first: 2)` (to detect bulk-code campaigns) would have let an
+// already-cached, pre-fix response -- which only ever had 1 node because
+// that's all the old query asked for -- pass the new "exactly 1 code"
+// check and still advertise a bulk campaign's code (Codex-caught).
+const QUERY_VERSION = 2;
+
 export interface ActiveDiscount {
   id: string;
   title: string;
@@ -197,7 +207,7 @@ export async function fetchActiveDiscounts({
         // still meaningfully keeps this off the Admin API's hot path
         // without that staleness risk.
         cacheStrategy: CacheCustom({mode: 'public', maxAge: 60, staleWhileRevalidate: 300}),
-        cacheKey: ['active-discounts', shopDomain, apiVersion],
+        cacheKey: ['active-discounts', shopDomain, apiVersion, QUERY_VERSION],
         shouldCacheResponse: (body) => !!body?.data && !body.errors?.length,
       },
     );
