@@ -9,8 +9,9 @@ import {
   useFetchers,
   useLocation,
   isRouteErrorResponse,
+  Await,
 } from 'react-router';
-import {useState, useEffect} from 'react';
+import {useState, useEffect, Suspense} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
 import {CacheShort} from '~/lib/cache';
@@ -145,7 +146,22 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       })
     : null;
 
-  const [cartData, localizationResult, shop, menuResult, activeDiscounts] = await Promise.all([
+  // Deliberately NOT awaited/included in the Promise.all below: an Admin
+  // API outage or slow edge would otherwise block every single storefront
+  // page's initial response on this one optional, non-critical fetch
+  // (Codex-caught). Streamed in after the initial response via
+  // Suspense/Await below, same pattern as the homepage's Judge.me quotes --
+  // AnnouncementBar/the PDP callout fall back to their non-discount default
+  // state until this resolves.
+  const activeDiscounts: Promise<ActiveDiscount[]> = discountsWithCache
+    ? fetchActiveDiscounts({
+        accessToken: context.env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN,
+        shopDomain: context.env.PUBLIC_STORE_DOMAIN,
+        withCache: discountsWithCache,
+      })
+    : Promise.resolve([]);
+
+  const [cartData, localizationResult, shop, menuResult] = await Promise.all([
     cart.get(),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
@@ -165,13 +181,6 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       },
       cache: CacheLong(),
     }),
-    discountsWithCache
-      ? fetchActiveDiscounts({
-          accessToken: context.env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN,
-          shopDomain: context.env.PUBLIC_STORE_DOMAIN,
-          withCache: discountsWithCache,
-        })
-      : Promise.resolve([] as ActiveDiscount[]),
   ]);
 
   const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
@@ -329,7 +338,11 @@ export default function App() {
       {/* Site-wide SEO schema */}
       <DefaultSeoSchema />
 
-      <AnnouncementBar discounts={activeDiscounts} />
+      <Suspense fallback={<AnnouncementBar />}>
+        <Await resolve={activeDiscounts} errorElement={<AnnouncementBar />}>
+          {(discounts) => <AnnouncementBar discounts={discounts} />}
+        </Await>
+      </Suspense>
       <Header
         cartCount={cartCount}
         isLoggedIn={isLoggedIn}

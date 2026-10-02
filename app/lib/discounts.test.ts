@@ -165,6 +165,40 @@ describe('fetchActiveDiscounts', () => {
     expect(discounts).toEqual([]);
   });
 
+  // Regression guard: DiscountCustomerAll describes WHO can redeem a code
+  // discount, not whether it's a single shared code safe to broadcast
+  // sitewide versus a bulk-generated campaign (e.g. affiliate codes) where
+  // publishing one arbitrary code would let it be exhausted or wrongly
+  // attributed. Querying 2 codes and requiring exactly 1 total distinguishes
+  // the two without a dedicated "is bulk" field.
+  it('excludes a storewide code discount that has multiple bulk-generated codes', async () => {
+    const discounts = await fetchActiveDiscounts({
+      accessToken: 'x',
+      shopDomain: 'test.myshopify.com',
+      withCache: mockWithCache({
+        data: {
+          data: {
+            discountNodes: {
+              nodes: [
+                {
+                  id: 'gid://shopify/DiscountCodeNode/6',
+                  discount: {
+                    __typename: 'DiscountCodeBasic',
+                    title: 'Affiliate campaign',
+                    summary: '15% off entire order',
+                    customerSelection: {__typename: 'DiscountCustomerAll'},
+                    codes: {nodes: [{code: 'AFF-0001'}, {code: 'AFF-0002'}]},
+                  },
+                },
+              ],
+            },
+          },
+        },
+      }),
+    });
+    expect(discounts).toEqual([]);
+  });
+
   // Regression guard: querying unsupported fields on an app-managed
   // discount type breaks the entire request (one GraphQL operation), so
   // app discounts are deliberately never queried for title/summary at
