@@ -119,7 +119,10 @@ export default function WishlistPage() {
                     maxVariantPrice: {amount: item.price, currencyCode: 'USD'},
                   },
                   compareAtPriceRange: {
-                    minVariantPrice: {amount: item.price, currencyCode: 'USD'},
+                    minVariantPrice: {
+                      amount: item.compareAtPrice ?? item.price,
+                      currencyCode: 'USD',
+                    },
                   },
                   tags: [],
                   // ProductCard reads reviewBadge through the same

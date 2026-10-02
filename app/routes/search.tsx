@@ -83,6 +83,12 @@ const SEARCH_QUERY = `#graphql
                 currencyCode
               }
             }
+            compareAtPriceRange {
+              minVariantPrice {
+                amount
+                currencyCode
+              }
+            }
             reviewBadge: metafield(namespace: "judgeme", key: "badge") {
               value
             }
@@ -130,6 +136,9 @@ interface SearchProduct {
   priceRange: {
     minVariantPrice: {amount: string; currencyCode: CurrencyCode};
     maxVariantPrice: {amount: string; currencyCode: CurrencyCode};
+  };
+  compareAtPriceRange: {
+    minVariantPrice: {amount: string; currencyCode: CurrencyCode};
   };
   reviewBadge: {value: string} | null;
 }
@@ -504,13 +513,7 @@ export default function SearchPage() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
                 {products.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    product={{
-                      ...product,
-                      compareAtPriceRange: product.priceRange,
-                    }}
-                  />
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             )}
