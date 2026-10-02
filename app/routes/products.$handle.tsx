@@ -844,9 +844,15 @@ export default function ProductPage() {
                 </div>
               )}
 
-              <p className="text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                Merch is unisex &amp; true to size. So, feel free to order your normal fit. We work closely with our vendors to ensure quality and premium textures.
-              </p>
+              {/* "True to size" contradicts products whose `fit` metafield says
+                  otherwise (e.g. "oversized", "boxy" -- surfaced just below in
+                  the Fit accordion), so this blanket reassurance only renders
+                  when the product has no specific fit guidance of its own. */}
+              {!product.metafields?.some((m) => m?.key === 'fit' && m.value) && (
+                <p className="text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                  Merch is unisex &amp; true to size. So, feel free to order your normal fit. We work closely with our vendors to ensure quality and premium textures.
+                </p>
+              )}
 
               <section
                 aria-label="Delivery and checkout information"
