@@ -3,7 +3,7 @@ import {Link, useFetcher} from 'react-router';
 import Button from '~/components/ui/Button';
 import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
-import {withCheckoutLocale, FREE_SHIPPING_THRESHOLD} from '~/lib/cart';
+import {withCheckoutLocale} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useTranslation} from '~/lib/i18n';
@@ -224,13 +224,8 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   // *displayed* subtotal is grossed back up by that amount -- otherwise the
   // combined discount line below would subtract the line discount a second
   // time (e.g. a $110 item discounted to $82.50 would render as
-  // "Subtotal $82.50, Discount -$27.50"). The free-shipping progress above
-  // intentionally keeps using the real net `subtotalValue`.
+  // "Subtotal $82.50, Discount -$27.50").
   const displaySubtotalAmount = subtotal ? (subtotalValue + lineDiscountTotal).toFixed(2) : undefined;
-  // Free shipping progress
-  const progress = Math.min((subtotalValue / FREE_SHIPPING_THRESHOLD) * 100, 100);
-  const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotalValue, 0);
-  const hasFreeShipping = remaining <= 0;
 
   // Discount code state
   const [discountOpen, setDiscountOpen] = useState(false);
@@ -362,40 +357,15 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
           </button>
         </div>
 
-        {/* Free shipping progress */}
+        {/* Free shipping notice -- every order ships free, so this is a flat
+            confirmation rather than a threshold progress tracker. */}
         {lines.length > 0 && subtotal && (
           <div className="px-6 py-4 border-b border-[var(--color-border-muted)] shrink-0 bg-[var(--color-bg-level-0)]">
-            <div className="flex items-center gap-2.5 mb-2.5">
+            <div className="flex items-center gap-2.5">
               <TruckIcon />
-              <span className="text-[11px] tracking-wide text-[var(--color-text-secondary)]">
-                {hasFreeShipping ? (
-                  <span className="font-medium text-[var(--color-success)]">
-                    Orders of{' '}
-                    <Money
-                      data={{amount: FREE_SHIPPING_THRESHOLD.toFixed(2), currencyCode: subtotal.currencyCode}}
-                      as="span"
-                    />
-                    + qualify for free shipping
-                  </span>
-                ) : (
-                  <>
-                    Add{' '}
-                    <Money
-                      data={{amount: remaining.toFixed(2), currencyCode: subtotal.currencyCode}}
-                      as="span"
-                      className="font-medium text-[var(--color-text-primary)]"
-                    />{' '}
-                    for free shipping
-                  </>
-                )}
+              <span className="text-[11px] tracking-wide font-medium text-[var(--color-success)]">
+                Free shipping on every order
               </span>
-            </div>
-            <div className="h-1 bg-[var(--color-bg-level-3)] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[var(--color-accent)] transition-all duration-500 ease-[var(--ease-expo)]"
-                style={{width: `${progress}%`}}
-                aria-hidden="true"
-              />
             </div>
           </div>
         )}

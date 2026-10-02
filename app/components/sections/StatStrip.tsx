@@ -1,5 +1,3 @@
-import {FREE_SHIPPING_THRESHOLD} from '~/lib/cart';
-
 interface Stat {
   value: string;
   label: string;
@@ -15,7 +13,7 @@ const DEFAULT_STATS: Stat[] = [
   {value: '190GSM+', label: 'Fabric Weight'},
   {value: '380-460GSM', label: 'Hoodies'},
   {value: '30 Days', label: 'Free Returns'},
-  {value: `$${FREE_SHIPPING_THRESHOLD}+`, label: 'Free Shipping'},
+  {value: 'Free', label: 'Shipping, Every Order'},
 ];
 
 /**
