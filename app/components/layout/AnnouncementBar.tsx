@@ -66,10 +66,21 @@ function AnnouncementItem({item}: {item: Announcement}) {
 }
 
 export default function AnnouncementBar({items, discounts}: AnnouncementBarProps) {
-  const resolvedItems =
-    items ?? (discounts && discounts.length > 0 ? discounts.map(discountToAnnouncement) : DEFAULT_ITEMS);
+  const hasLiveDiscounts = !items && !!discounts && discounts.length > 0;
+  const resolvedItems = items ?? (hasLiveDiscounts ? discounts!.map(discountToAnnouncement) : DEFAULT_ITEMS);
   return (
     <div className="bg-[var(--color-bg-level-2)] text-[var(--color-text-primary)] overflow-hidden border-b border-[var(--color-border-muted)] py-2">
+      {/* A real active discount, unlike the static marketing copy below, has
+          no other sitewide surface a screen-reader user could discover it
+          from (the static items' destinations are "also reachable via
+          primary nav" -- a live discount generally isn't) -- so it gets one
+          accessible, non-animated, visually-hidden announcement here,
+          outside the aria-hidden scrolling marquee. */}
+      {hasLiveDiscounts && (
+        <p className="sr-only">
+          {discounts!.map((d) => (d.kind === 'code' ? `${d.summary} — use code ${d.code}` : d.summary)).join('. ')}
+        </p>
+      )}
       <div
         className="flex whitespace-nowrap will-change-transform motion-reduce:flex-wrap motion-reduce:justify-center motion-reduce:overflow-hidden motion-reduce:max-h-[17.6px]"
         style={{animation: 'h-announce-scroll 40s linear infinite'}}

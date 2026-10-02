@@ -16,7 +16,22 @@
  * fails, matching the same optional-third-party-integration pattern used
  * for Judge.me (~/lib/judgeme.ts) -- this feature must never break the page
  * it decorates.
+ *
+ * Deliberately queries only the merchant-configured discount types
+ * (Basic/Bxgy/FreeShipping) and NOT DiscountAutomaticApp/DiscountCodeApp --
+ * those are configured via Shopify Functions, whose `title`/`summary`
+ * field support isn't guaranteed the same way (confirmed against the
+ * 2025-10 Admin schema: DiscountCodeApp exposes neither `summary` nor
+ * `customerSelection`, and DiscountAutomaticApp exposes no `summary`
+ * either -- querying them broke the entire request with a GraphQL
+ * validation error, silently emptying every discount, Basic/Bxgy included,
+ * since it's one query). An app-managed discount's "summary" also isn't
+ * necessarily meant for direct customer-facing display the way a
+ * merchant-authored one is, so omitting them entirely is the safer
+ * default, not just the schema-safe one.
  */
+
+import {CacheLong, type WithCache} from '@shopify/hydrogen';
 
 const DEFAULT_ADMIN_API_VERSION = '2025-10';
 
@@ -42,9 +57,9 @@ interface DiscountCustomerGetsBase {
 interface DiscountNodeApiResult {
   id: string;
   discount:
-    | ({__typename: 'DiscountAutomaticApp' | 'DiscountAutomaticBasic' | 'DiscountAutomaticBxgy'} & DiscountCustomerGetsBase)
+    | ({__typename: 'DiscountAutomaticBasic' | 'DiscountAutomaticBxgy' | 'DiscountAutomaticFreeShipping'} & DiscountCustomerGetsBase)
     | ({
-        __typename: 'DiscountCodeApp' | 'DiscountCodeBasic' | 'DiscountCodeBxgy';
+        __typename: 'DiscountCodeBasic' | 'DiscountCodeBxgy' | 'DiscountCodeFreeShipping';
         codes: {nodes: DiscountCodeNode[]};
         customerSelection: {__typename: string};
       } & DiscountCustomerGetsBase)
@@ -74,15 +89,9 @@ const ACTIVE_DISCOUNTS_QUERY = `
         id
         discount {
           __typename
-          ... on DiscountAutomaticApp { title summary }
           ... on DiscountAutomaticBasic { title summary }
           ... on DiscountAutomaticBxgy { title summary }
-          ... on DiscountCodeApp {
-            title
-            summary
-            customerSelection { __typename }
-            codes(first: 1) { nodes { code } }
-          }
+          ... on DiscountAutomaticFreeShipping { title summary }
           ... on DiscountCodeBasic {
             title
             summary
@@ -95,80 +104,25 @@ const ACTIVE_DISCOUNTS_QUERY = `
             customerSelection { __typename }
             codes(first: 1) { nodes { code } }
           }
+          ... on DiscountCodeFreeShipping {
+            title
+            summary
+            customerSelection { __typename }
+            codes(first: 1) { nodes { code } }
+          }
         }
       }
     }
   }
 `;
 
-interface FetchActiveDiscountsOptions {
-  accessToken: string;
-  shopDomain: string;
-  apiVersion?: string;
-}
-
-/**
- * Fetches the shop's currently active discounts, filtered to ones safe to
- * advertise publicly: automatic discounts (no code needed) and code
- * discounts whose `customerSelection` is `DiscountCustomerAll` (a storewide
- * code like "WELCOME_20"). Discounts restricted to specific customers (e.g.
- * a one-off abandoned-cart or win-back code generated for a single named
- * customer) are deliberately excluded -- those are not a sitewide
- * promotion, and advertising them to every visitor would be misleading.
- */
-export async function fetchActiveDiscounts({
-  accessToken,
-  shopDomain,
-  apiVersion = DEFAULT_ADMIN_API_VERSION,
-}: FetchActiveDiscountsOptions): Promise<ActiveDiscount[]> {
-  const url = `https://${shopDomain}/admin/api/${apiVersion}/graphql.json`;
-
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': accessToken,
-      },
-      body: JSON.stringify({query: ACTIVE_DISCOUNTS_QUERY}),
-      signal: AbortSignal.timeout(5000),
-      // Active discounts change infrequently -- a 15-minute-stale list is a
-      // non-issue for this content, and caching keeps this read-only Admin
-      // API call off the hot path for every single page view.
-      cf: {cacheTtl: 900, cacheEverything: true},
-    } as RequestInit);
-  } catch (error) {
-    console.error('[discounts] request failed', error);
-    return [];
-  }
-
-  if (!response.ok) {
-    console.error(`[discounts] Admin API responded with ${response.status}`);
-    return [];
-  }
-
-  let data: AdminDiscountsResponse;
-  try {
-    data = await response.json();
-  } catch (error) {
-    console.error('[discounts] failed to parse response', error);
-    return [];
-  }
-
-  if (data.errors?.length) {
-    console.error('[discounts] Admin API returned errors', data.errors);
-    return [];
-  }
-
-  const nodes = data.data?.discountNodes?.nodes ?? [];
-
+function parseDiscountNodes(nodes: DiscountNodeApiResult[]): ActiveDiscount[] {
   return nodes
     .map((node): ActiveDiscount | null => {
       const d = node.discount;
       if (!('title' in d) || !('summary' in d)) return null;
 
-      if (d.__typename === 'DiscountCodeApp' || d.__typename === 'DiscountCodeBasic' || d.__typename === 'DiscountCodeBxgy') {
+      if (d.__typename === 'DiscountCodeBasic' || d.__typename === 'DiscountCodeBxgy' || d.__typename === 'DiscountCodeFreeShipping') {
         if (d.customerSelection.__typename !== 'DiscountCustomerAll') return null;
         const code = d.codes.nodes[0]?.code;
         if (!code) return null;
@@ -178,4 +132,75 @@ export async function fetchActiveDiscounts({
       return {id: node.id, title: d.title, summary: d.summary, kind: 'automatic'};
     })
     .filter((d): d is ActiveDiscount => d !== null);
+}
+
+interface FetchActiveDiscountsOptions {
+  accessToken: string;
+  shopDomain: string;
+  apiVersion?: string;
+  /** Hydrogen's cache-wrapped fetch (see app/lib/context.ts) -- caches this
+      POST request through Oxygen's Cache API with a real TTL. Cloudflare's
+      Cache API (and its `cf.cacheEverything` fetch option) only caches GET
+      requests, so without this the Admin API call would sit on the
+      critical path of every single page view. */
+  withCache: WithCache;
+}
+
+/**
+ * Fetches the shop's currently active discounts, filtered to ones safe to
+ * advertise publicly: automatic discounts (no code needed) and code
+ * discounts whose `customerSelection` is `DiscountCustomerAll` (a
+ * storewide code like "WELCOME_20"). Discounts restricted to specific
+ * customers (e.g. a one-off abandoned-cart or win-back code generated for
+ * a single named customer) are deliberately excluded -- those are not a
+ * sitewide promotion, and advertising them to every visitor would be
+ * misleading.
+ */
+export async function fetchActiveDiscounts({
+  accessToken,
+  shopDomain,
+  apiVersion = DEFAULT_ADMIN_API_VERSION,
+  withCache,
+}: FetchActiveDiscountsOptions): Promise<ActiveDiscount[]> {
+  const url = `https://${shopDomain}/admin/api/${apiVersion}/graphql.json`;
+
+  let data: AdminDiscountsResponse | null;
+  try {
+    const result = await withCache.fetch<AdminDiscountsResponse>(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Access-Token': accessToken,
+        },
+        body: JSON.stringify({query: ACTIVE_DISCOUNTS_QUERY}),
+        signal: AbortSignal.timeout(5000),
+      },
+      {
+        displayName: 'Active discounts (Admin API)',
+        // Active discounts change infrequently -- a long TTL keeps this
+        // read-only Admin API call off the hot path for every page view.
+        cacheStrategy: CacheLong(),
+        cacheKey: ['active-discounts', shopDomain, apiVersion],
+        shouldCacheResponse: (body) => !!body?.data && !body.errors?.length,
+      },
+    );
+    data = result.data;
+  } catch (error) {
+    console.error('[discounts] request failed', error);
+    return [];
+  }
+
+  if (!data) {
+    console.error('[discounts] Admin API returned no data');
+    return [];
+  }
+
+  if (data.errors?.length) {
+    console.error('[discounts] Admin API returned errors', data.errors);
+    return [];
+  }
+
+  return parseDiscountNodes(data.data?.discountNodes?.nodes ?? []);
 }

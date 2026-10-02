@@ -35,7 +35,7 @@ import {
   type MenuItemNode,
   type NavCollectionItem,
 } from '~/lib/nav';
-import {Analytics as HydrogenAnalytics, getShopAnalytics, CartForm} from '@shopify/hydrogen';
+import {Analytics as HydrogenAnalytics, getShopAnalytics, CartForm, createWithCache} from '@shopify/hydrogen';
 
 export const links: LinksFunction = () => [
   // The raw Shopify Files upload (Timeless_Style_-_Artboard_22_4.png) is a
@@ -102,7 +102,7 @@ export const meta: MetaFunction = () => [
   {name: 'twitter:description', content: 'Premium streetwear built to last.'},
 ];
 
-export async function loader({context}: LoaderFunctionArgs) {
+export async function loader({context, request}: LoaderFunctionArgs) {
   const {cart, customerAccount} = context;
 
   // Check if customer is logged in and associate cart with buyer identity
@@ -131,6 +131,20 @@ export async function loader({context}: LoaderFunctionArgs) {
     }
   }
 
+  // Opening a named Cache API instance is required to cache the Admin API
+  // discount fetch (a POST request -- Cloudflare's Cache API only caches
+  // GET by default, so this goes through Hydrogen's createWithCache
+  // wrapper instead, same mechanism context.ts uses for the storefront
+  // client's own cache). Hoisted above Promise.all so this doesn't delay
+  // kicking off the requests that don't need it.
+  const discountsWithCache = context.env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN
+    ? createWithCache({
+        cache: await caches.open('hydrogen'),
+        waitUntil: context.waitUntil ?? (() => {}),
+        request,
+      })
+    : null;
+
   const [cartData, localizationResult, shop, menuResult, activeDiscounts] = await Promise.all([
     cart.get(),
     context.storefront.query(LOCALIZATION_QUERY, {
@@ -151,10 +165,11 @@ export async function loader({context}: LoaderFunctionArgs) {
       },
       cache: CacheLong(),
     }),
-    context.env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN
+    discountsWithCache
       ? fetchActiveDiscounts({
           accessToken: context.env.PRIVATE_SHOPIFY_ADMIN_API_TOKEN,
           shopDomain: context.env.PUBLIC_STORE_DOMAIN,
+          withCache: discountsWithCache,
         })
       : Promise.resolve([] as ActiveDiscount[]),
   ]);
