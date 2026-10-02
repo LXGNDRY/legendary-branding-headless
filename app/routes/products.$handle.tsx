@@ -917,7 +917,7 @@ export default function ProductPage() {
                 )}
                 <Accordion label="Shipping & Returns">
                   <div className="space-y-3">
-                    <p>Import duties are included in the displayed price. Applicable taxes are paid by you and calculated at checkout. For current shipping rates and delivery timelines, see our <Link to="/policies/shipping-policy" className="underline underline-offset-2">shipping policy</Link>.</p>
+                    <p>Free standard shipping on every order, with $10 express shipping available at checkout. Import duties are included in the displayed price. Applicable taxes are paid by you and calculated at checkout. For delivery timelines, see our <Link to="/policies/shipping-policy" className="underline underline-offset-2">shipping policy</Link>.</p>
                     <p>For return eligibility, timing, and instructions, review our <Link to="/policies/refund-policy" className="underline underline-offset-2">return policy</Link>.</p>
                   </div>
                 </Accordion>
