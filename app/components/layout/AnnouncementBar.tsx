@@ -1,13 +1,27 @@
 import {Link} from 'react-router';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
+import type {ActiveDiscount} from '~/lib/discounts';
 
-interface Announcement {
-  key: TranslationKey;
-  link?: string;
-}
+type Announcement =
+  | {key: TranslationKey; link?: string}
+  // A real, live Shopify discount's text -- already resolved, not a
+  // translation key, since discount copy comes from Shopify Admin at
+  // request time rather than the static locale catalogs.
+  | {text: string; link?: string};
 
 interface AnnouncementBarProps {
   items?: Announcement[];
+  /** Real active discounts from Shopify Admin -- when non-empty, these
+      replace the static placeholder items so customers see what's actually
+      on sale right now instead of generic marketing copy. See
+      ~/lib/discounts.ts for what counts as safe to advertise publicly. */
+  discounts?: ActiveDiscount[];
+}
+
+function discountToAnnouncement(discount: ActiveDiscount): Announcement {
+  const text =
+    discount.kind === 'code' ? `${discount.summary} — use code ${discount.code}` : discount.summary;
+  return {text, link: '/collections/all-products'};
 }
 
 const DEFAULT_ITEMS: Announcement[] = [
@@ -24,6 +38,7 @@ const DEFAULT_ITEMS: Announcement[] = [
  */
 function AnnouncementItem({item}: {item: Announcement}) {
   const t = useTranslation();
+  const label = 'key' in item ? t(item.key) : item.text;
   return (
     <span className="inline-flex items-center gap-6 mx-8">
       {item.link ? (
@@ -38,11 +53,11 @@ function AnnouncementItem({item}: {item: Announcement}) {
           tabIndex={-1}
           className="text-[11px] font-medium tracking-[0.1em] uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
         >
-          {t(item.key)}
+          {label}
         </Link>
       ) : (
         <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-[var(--color-text-tertiary)]">
-          {t(item.key)}
+          {label}
         </span>
       )}
       <span className="text-[var(--color-accent)] text-xs" aria-hidden="true">✦</span>
@@ -50,9 +65,22 @@ function AnnouncementItem({item}: {item: Announcement}) {
   );
 }
 
-export default function AnnouncementBar({items = DEFAULT_ITEMS}: AnnouncementBarProps) {
+export default function AnnouncementBar({items, discounts}: AnnouncementBarProps) {
+  const hasLiveDiscounts = !items && !!discounts && discounts.length > 0;
+  const resolvedItems = items ?? (hasLiveDiscounts ? discounts!.map(discountToAnnouncement) : DEFAULT_ITEMS);
   return (
     <div className="bg-[var(--color-bg-level-2)] text-[var(--color-text-primary)] overflow-hidden border-b border-[var(--color-border-muted)] py-2">
+      {/* A real active discount, unlike the static marketing copy below, has
+          no other sitewide surface a screen-reader user could discover it
+          from (the static items' destinations are "also reachable via
+          primary nav" -- a live discount generally isn't) -- so it gets one
+          accessible, non-animated, visually-hidden announcement here,
+          outside the aria-hidden scrolling marquee. */}
+      {hasLiveDiscounts && (
+        <p className="sr-only">
+          {discounts!.map((d) => (d.kind === 'code' ? `${d.summary} — use code ${d.code}` : d.summary)).join('. ')}
+        </p>
+      )}
       <div
         className="flex whitespace-nowrap will-change-transform motion-reduce:flex-wrap motion-reduce:justify-center motion-reduce:overflow-hidden motion-reduce:max-h-[17.6px]"
         style={{animation: 'h-announce-scroll 40s linear infinite'}}
@@ -69,18 +97,18 @@ export default function AnnouncementBar({items = DEFAULT_ITEMS}: AnnouncementBar
             so the second row's top sliver was bleeding into that padding
             allowance before it got clipped. Padding outside the clip
             boundary avoids that entirely. */}
-        {items.map((item, i) => (
+        {resolvedItems.map((item, i) => (
           <AnnouncementItem key={`base-${i}`} item={item} />
         ))}
         {/* Duplicate copies purely for the seamless scroll loop -- hidden
             whenever the animation itself is stopped. */}
         <div className="flex motion-reduce:hidden">
-          {items.map((item, i) => (
+          {resolvedItems.map((item, i) => (
             <AnnouncementItem key={`dup1-${i}`} item={item} />
           ))}
         </div>
         <div className="flex motion-reduce:hidden">
-          {items.map((item, i) => (
+          {resolvedItems.map((item, i) => (
             <AnnouncementItem key={`dup2-${i}`} item={item} />
           ))}
         </div>
