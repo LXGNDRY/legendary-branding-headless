@@ -31,9 +31,19 @@
  * default, not just the schema-safe one.
  */
 
-import {CacheLong, type WithCache} from '@shopify/hydrogen';
+import {CacheCustom, type WithCache} from '@shopify/hydrogen';
 
 const DEFAULT_ADMIN_API_VERSION = '2025-10';
+
+// Bump this whenever ACTIVE_DISCOUNTS_QUERY's shape or parseDiscountNodes's
+// interpretation of the response changes -- the cacheKey below includes it
+// so a deploy can never read back a cached response written under a
+// previous query shape. Without this, changing `codes(first: 1)` to
+// `codes(first: 2)` (to detect bulk-code campaigns) would have let an
+// already-cached, pre-fix response -- which only ever had 1 node because
+// that's all the old query asked for -- pass the new "exactly 1 code"
+// check and still advertise a bulk campaign's code (Codex-caught).
+const QUERY_VERSION = 2;
 
 export interface ActiveDiscount {
   id: string;
@@ -96,19 +106,19 @@ const ACTIVE_DISCOUNTS_QUERY = `
             title
             summary
             customerSelection { __typename }
-            codes(first: 1) { nodes { code } }
+            codes(first: 2) { nodes { code } }
           }
           ... on DiscountCodeBxgy {
             title
             summary
             customerSelection { __typename }
-            codes(first: 1) { nodes { code } }
+            codes(first: 2) { nodes { code } }
           }
           ... on DiscountCodeFreeShipping {
             title
             summary
             customerSelection { __typename }
-            codes(first: 1) { nodes { code } }
+            codes(first: 2) { nodes { code } }
           }
         }
       }
@@ -124,6 +134,15 @@ function parseDiscountNodes(nodes: DiscountNodeApiResult[]): ActiveDiscount[] {
 
       if (d.__typename === 'DiscountCodeBasic' || d.__typename === 'DiscountCodeBxgy' || d.__typename === 'DiscountCodeFreeShipping') {
         if (d.customerSelection.__typename !== 'DiscountCustomerAll') return null;
+        // DiscountCustomerAll describes WHO can redeem it, not whether this
+        // is a single shared code (safe to broadcast, e.g. "WELCOME_20") or
+        // a bulk-generated campaign with many individually limited-use
+        // codes (e.g. affiliate/influencer codes) -- those happen to also
+        // target all customers but publishing one arbitrary code sitewide
+        // would let it be exhausted or attributed wrong. Querying 2 codes
+        // and requiring exactly 1 total is how a single-code discount is
+        // distinguished from a bulk one without a dedicated "is bulk" field.
+        if (d.codes.nodes.length !== 1) return null;
         const code = d.codes.nodes[0]?.code;
         if (!code) return null;
         return {id: node.id, title: d.title, summary: d.summary, kind: 'code', code};
@@ -179,10 +198,16 @@ export async function fetchActiveDiscounts({
       },
       {
         displayName: 'Active discounts (Admin API)',
-        // Active discounts change infrequently -- a long TTL keeps this
-        // read-only Admin API call off the hot path for every page view.
-        cacheStrategy: CacheLong(),
-        cacheKey: ['active-discounts', shopDomain, apiVersion],
+        // A short, bounded TTL -- this reflects a discount's *current*
+        // active/inactive status, which can flip the moment a merchant
+        // disables it or a scheduled end time passes; CacheLong() (1h
+        // fresh + 23h stale-while-revalidate) would keep advertising an
+        // ended discount, including a code checkout no longer honors, for
+        // nearly a full day. 60s fresh + 5 minutes stale-while-revalidate
+        // still meaningfully keeps this off the Admin API's hot path
+        // without that staleness risk.
+        cacheStrategy: CacheCustom({mode: 'public', maxAge: 60, staleWhileRevalidate: 300}),
+        cacheKey: ['active-discounts', shopDomain, apiVersion, QUERY_VERSION],
         shouldCacheResponse: (body) => !!body?.data && !body.errors?.length,
       },
     );
