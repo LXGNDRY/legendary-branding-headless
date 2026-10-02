@@ -60,7 +60,14 @@ interface AdminDiscountsResponse {
   errors?: Array<{message: string}>;
 }
 
-const ACTIVE_DISCOUNTS_QUERY = `#graphql
+// Deliberately NOT tagged with the `#graphql` magic comment -- that tag
+// tells this repo's codegen (via .graphqlrc.ts's `documents` glob, which
+// matches this whole file) to validate the template literal against the
+// Storefront API schema. This query targets the Admin API instead, whose
+// schema is entirely different (discountNodes/DiscountAutomaticBasic/etc.
+// don't exist in the Storefront schema at all), so tagging it broke
+// codegen with "Cannot query field 'discountNodes' on type 'QueryRoot'".
+const ACTIVE_DISCOUNTS_QUERY = `
   query ActiveDiscounts {
     discountNodes(first: 20, query: "status:active") {
       nodes {
