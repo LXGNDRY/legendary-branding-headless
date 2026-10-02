@@ -34,7 +34,7 @@
   "product.shippingReturns": "Shipping & returns",
   "product.reviews": "Reviews",
   "shipping.worldwideDelivery": "Worldwide delivery",
-  "shipping.standard": "Free standard shipping on every order · $10 express",
+  "shipping.standard": "Free standard shipping on every order · ${expressCost} express",
   "shipping.duties": "Duties included · taxes calculated at checkout",
   "status.updating": "Updating…",
   "fabric.guide.eyebrow": "Fabric Weight Guide",
