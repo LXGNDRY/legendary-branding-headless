@@ -59,11 +59,27 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
     const lastShown = readLastShown();
     if (lastShown && Date.now() - lastShown < REPEAT_SUPPRESS_MS) return;
 
-    const timer = setTimeout(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    function attemptOpen() {
+      if (cancelled) return;
+      // The cart drawer and mobile menu both lock body scroll while open --
+      // if one of those is already up, wait rather than stacking a second
+      // focus-trapped overlay (and its higher z-index) on top of it.
+      if (document.body.style.overflow === 'hidden') {
+        timer = setTimeout(attemptOpen, 1000);
+        return;
+      }
       setOpen(true);
       writeLastShown(Date.now());
-    }, SHOW_DELAY_MS);
-    return () => clearTimeout(timer);
+    }
+
+    timer = setTimeout(attemptOpen, SHOW_DELAY_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
     // discounts.length is a reasonable proxy for "the discount set changed"
     // without re-triggering the timer on every re-render of the array.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,6 +95,16 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
     };
   }, [open]);
 
+  // A loader revalidation can replace a non-empty discount list with an
+  // empty one (the promotion expired, or the optional Admin API fetch
+  // started failing) while the popup is already open -- without this, the
+  // render guard below would unmount the dialog but the scroll-lock effect
+  // above stays keyed on a now-stale `open: true`, leaving body scroll
+  // locked with nothing visible to unlock it.
+  useEffect(() => {
+    if (discounts.length === 0) setOpen(false);
+  }, [discounts.length]);
+
   if (!open || discounts.length === 0) return null;
 
   return (
@@ -93,7 +119,7 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
         role="dialog"
         aria-modal="true"
         aria-labelledby="discounts-popup-heading"
-        className="relative z-10 w-full max-w-md rounded-lg border border-[var(--color-border-medium)] bg-[var(--color-bg-level-0)] p-6 shadow-2xl"
+        className="relative z-10 flex max-h-[85vh] w-full max-w-md flex-col overflow-y-auto rounded-lg border border-[var(--color-border-medium)] bg-[var(--color-bg-level-0)] p-6 shadow-2xl"
       >
         <button
           type="button"
