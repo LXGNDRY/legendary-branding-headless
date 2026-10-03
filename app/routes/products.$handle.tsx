@@ -711,25 +711,28 @@ export default function ProductPage() {
                   <Await resolve={activeDiscountsPromise} errorElement={null}>
                     {(activeDiscounts) =>
                       activeDiscounts.length > 0 && (
-                        <ul
-                          className="-mt-3 space-y-1 text-sm text-[var(--color-text-secondary)]"
+                        <div
+                          className="-mt-3 rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-bg-level-2)] p-4"
                           aria-label="Current promotions"
                         >
-                          {activeDiscounts.map((discount) => (
-                            <li key={discount.id} className="flex items-start gap-1.5">
-                              <span className="text-[var(--color-accent)]" aria-hidden="true">✦</span>
-                              <span>
-                                {discount.summary}
-                                {discount.kind === 'code' && (
-                                  <>
-                                    {' '}— use code{' '}
-                                    <span className="font-semibold text-[var(--color-text-primary)]">{discount.code}</span>
-                                  </>
-                                )}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
+                          <p className="h-eyebrow mb-2 text-[var(--color-accent)]">Active Offers</p>
+                          <ul className="space-y-1.5 text-sm text-[var(--color-text-secondary)]">
+                            {activeDiscounts.map((discount) => (
+                              <li key={discount.id} className="flex items-start gap-1.5">
+                                <span className="text-[var(--color-accent)]" aria-hidden="true">✦</span>
+                                <span>
+                                  {discount.summary}
+                                  {discount.kind === 'code' && (
+                                    <>
+                                      {' '}— use code{' '}
+                                      <span className="font-semibold text-[var(--color-text-primary)]">{discount.code}</span>
+                                    </>
+                                  )}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       )
                     }
                   </Await>

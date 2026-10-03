@@ -1,6 +1,6 @@
 import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
 import {Suspense} from 'react';
-import {useLoaderData, Await} from 'react-router';
+import {useLoaderData, useRouteLoaderData, Await} from 'react-router';
 import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
@@ -15,8 +15,10 @@ import VerifiedReviews from '~/components/sections/VerifiedReviews';
 import ReviewQuotes from '~/components/sections/ReviewQuotes';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
+import CurrentOffers from '~/components/sections/CurrentOffers';
 import {CacheLong} from '~/lib/cache';
 import {EXPRESS_SHIPPING_COST} from '~/lib/cart';
+import type {ActiveDiscount} from '~/lib/discounts';
 import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
 import {
   MAIN_MENU_QUERY,
@@ -180,6 +182,15 @@ export default function Homepage() {
   const newDropProducts = (newDrops?.products?.nodes ?? []) as ProductCardFragment[];
   const marqueLegendaireProducts = (marqueLegendaire?.products?.nodes ?? []) as ProductCardFragment[];
 
+  // Real active Shopify discounts, fetched once in the root loader (see
+  // app/root.tsx) rather than re-fetched per route. Streamed, not awaited --
+  // the root loader never blocks on this optional Admin API call, so this
+  // is a Promise resolved below via Suspense/Await, not a plain array.
+  // Degrades to no section rendered when PRIVATE_SHOPIFY_ADMIN_API_TOKEN is
+  // unset or the fetch fails, same as every other optional integration.
+  const activeDiscountsPromise = (useRouteLoaderData('root') as {activeDiscounts?: Promise<ActiveDiscount[]>} | undefined)
+    ?.activeDiscounts;
+
   return (
     <div>
       {/* 1 — Split hero */}
@@ -199,6 +210,15 @@ export default function Homepage() {
 
       {/* 3 — Stats */}
       <StatStrip />
+
+      {/* 3.5 — Current offers (real active Shopify discounts, when any exist) */}
+      {activeDiscountsPromise && (
+        <Suspense fallback={null}>
+          <Await resolve={activeDiscountsPromise} errorElement={null}>
+            {(activeDiscounts) => <CurrentOffers discounts={activeDiscounts} />}
+          </Await>
+        </Suspense>
+      )}
 
       {/* 4 — Featured categories */}
       <CategoryGrid
