@@ -1013,9 +1013,19 @@ export default function ProductPage() {
                 of the guide). `judgemeRating` is already resolved
                 synchronously by this point (unlike `reviews`, a separate,
                 slower per-product Judge.me fetch), so the heading and
-                expected row count are known up front -- reserving that
-                space keeps the layout stable while the review list itself
-                streams in. */}
+                expected row count are known up front. Codex also caught
+                that the first version of this fallback (three stacked
+                single-column bars) didn't match ProductReviewList's actual
+                layout -- a two-column grid of up to PAGE_SIZE (6) cards
+                plus an aggregate-rating row -- so it still underreserved
+                space for a well-reviewed product. Mirroring that shape here
+                closes most of the gap; the one case this can't cover is the
+                reviews promise resolving to an *empty* array despite a
+                nonzero judgemeRating.count (a timed-out or failed Judge.me
+                fetch, not the common path) -- that's the same accepted
+                graceful-degradation tradeoff already used for CurrentOffers
+                and the discounts popup elsewhere on this storefront, not a
+                case worth blocking the stream for. */}
             <Suspense
               fallback={
                 <section className="border-t border-[var(--color-border-muted)]" aria-hidden="true">
@@ -1024,9 +1034,10 @@ export default function ProductPage() {
                     <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
                       What Customers Are Saying
                     </h2>
-                    <div className="space-y-4">
-                      {Array.from({length: Math.max(1, Math.min(judgemeRating.count, 3))}).map((_, i) => (
-                        <div key={i} className="h-24 animate-pulse rounded-md bg-[var(--color-bg-level-2)]" />
+                    <div className="h-6 w-56 mb-8 animate-pulse rounded-md bg-[var(--color-bg-level-2)]" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {Array.from({length: Math.max(1, Math.min(judgemeRating.count, 6))}).map((_, i) => (
+                        <div key={i} className="h-44 animate-pulse rounded-lg bg-[var(--color-bg-level-2)]" />
                       ))}
                     </div>
                   </div>
