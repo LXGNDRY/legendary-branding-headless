@@ -334,7 +334,7 @@ export default function ProductCard({
       data-product-id={product.id}
     >
       {/* Media */}
-      <div className="relative overflow-hidden rounded-md aspect-[3/4] bg-[var(--color-bg-level-2)]">
+      <div className="relative overflow-hidden rounded-md aspect-square bg-[var(--color-bg-level-2)]">
         <Link
           to={`/products/${product.handle}`}
           prefetch="intent"
@@ -345,24 +345,24 @@ export default function ProductCard({
           {product.featuredImage ? (
             <Image
               data={product.featuredImage}
-              aspectRatio="3/4"
-              width={800}
-              height={1067}
+              aspectRatio="1/1"
+              width={900}
+              height={900}
               sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
               loading={loading}
               className="w-full h-full object-cover transition-transform duration-[550ms] ease-[var(--ease-expo)] group-hover:scale-[1.03]"
             />
           ) : (
-            <Placeholder aspect="aspect-[3/4]" label={product.title} />
+            <Placeholder aspect="aspect-square" label={product.title} />
           )}
 
           {/* Secondary image (crossfade on hover) */}
           {hasSecondImage && (
             <Image
               data={product.images!.nodes[1]}
-              aspectRatio="3/4"
-              width={800}
-              height={1067}
+              aspectRatio="1/1"
+              width={900}
+              height={900}
               sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
               loading="lazy"
               className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-[350ms] ease-[var(--ease-expo)] group-hover:opacity-100"

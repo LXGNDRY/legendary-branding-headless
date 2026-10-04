@@ -59,13 +59,13 @@ export default function VerifiedReviews({
               to={`/products/${product.handle}#reviews`}
               className="group block"
             >
-              <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-[var(--color-bg-level-2)] mb-3">
+              <div className="relative aspect-square overflow-hidden rounded-lg bg-[var(--color-bg-level-2)] mb-3">
                 {product.image?.url ? (
                   <Image
                     data={product.image}
-                    aspectRatio="3/4"
-                    width={400}
-                    height={533}
+                    aspectRatio="1/1"
+                    width={450}
+                    height={450}
                     className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 ease-[var(--ease-expo)] group-hover:scale-[1.04]"
                     sizes="(max-width: 768px) 50vw, 25vw"
                     loading="lazy"
