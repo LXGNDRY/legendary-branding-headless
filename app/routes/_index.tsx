@@ -39,7 +39,7 @@ const HOMEPAGE_QUERY = `#graphql
       }
     }
     recentlyAdded: collection(handle: "all-products") {
-      products(first: 4, sortKey: CREATED, reverse: true) {
+      products(first: 20, sortKey: CREATED, reverse: true) {
         nodes {
           ...ProductCard
         }
@@ -119,6 +119,12 @@ export async function loader({context}: LoaderFunctionArgs) {
     (c) => c.handle !== 'all-products' && c.handle !== 'marque-legendaire-luxury-streetwear',
   );
 
+  // Fetches a larger candidate window (20) than the 4 actually displayed --
+  // Codex-caught: the newest products often haven't accumulated reviews yet,
+  // so filtering straight down to a badge-only product within a 4-product
+  // window could leave the "Rated by the Culture" row with fewer than 4
+  // cards, or empty it entirely, even though older products in the
+  // collection do have ratings.
   const ratedProducts = ((recentlyAdded?.products?.nodes ?? []) as ProductCardFragment[])
     .map((product) => {
       const parsed = parseJudgemeBadge(product.reviewBadge?.value);
@@ -133,7 +139,8 @@ export async function loader({context}: LoaderFunctionArgs) {
           }
         : null;
     })
-    .filter((p): p is NonNullable<typeof p> => p !== null);
+    .filter((p): p is NonNullable<typeof p> => p !== null)
+    .slice(0, 4);
 
   const aggregateCount = ratedProducts.reduce((sum, p) => sum + p.reviewCount, 0);
   const aggregateRating =
@@ -157,7 +164,12 @@ export async function loader({context}: LoaderFunctionArgs) {
   return {
     categoryItems,
     newDrops,
-    recentlyAdded,
+    // recentlyAdded itself is deliberately not returned -- only
+    // ratedProducts (the derived, sliced-to-4 list) is used by the
+    // component. Returning the full 20-product candidate window would
+    // serialize ~16 unused ProductCard records (images, prices, tags,
+    // variants) into the initial hydration payload and every
+    // client-navigation response for no benefit (Codex-caught).
     marqueLegendaire,
     ratedProducts,
     aggregateRating,
