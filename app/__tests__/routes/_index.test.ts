@@ -35,7 +35,7 @@ describe('_index loader', () => {
     expect(result).toBeDefined();
     expect(result.categoryItems).toBeDefined();
     expect(result.newDrops).toBeDefined();
-    expect(result.recentlyAdded).toBeDefined();
+    expect(result.ratedProducts).toBeDefined();
   });
 
   it('calls storefront.query with the Homepage and MainMenu operations', async () => {

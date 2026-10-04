@@ -164,7 +164,12 @@ export async function loader({context}: LoaderFunctionArgs) {
   return {
     categoryItems,
     newDrops,
-    recentlyAdded,
+    // recentlyAdded itself is deliberately not returned -- only
+    // ratedProducts (the derived, sliced-to-4 list) is used by the
+    // component. Returning the full 20-product candidate window would
+    // serialize ~16 unused ProductCard records (images, prices, tags,
+    // variants) into the initial hydration payload and every
+    // client-navigation response for no benefit (Codex-caught).
     marqueLegendaire,
     ratedProducts,
     aggregateRating,
