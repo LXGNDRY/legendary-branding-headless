@@ -62,15 +62,24 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
 
-    function attemptOpen() {
+    async function claimAndOpen() {
+      // Re-check the suppression window here (not just once at the top of
+      // the effect) under the Web Lock below, since another tab can write a
+      // fresh timestamp (by showing its own copy of this popup) while this
+      // tab was waiting out the initial delay or the overlay-busy retry
+      // loop. Without the lock, two tabs whose timers expire in the same
+      // tick could both read the pre-claim timestamp before either writes,
+      // and both show the popup -- a plain re-read closes the common case
+      // (one tab already finished) but not that simultaneous one.
       if (cancelled) return;
-      // Other open tabs share this browser's localStorage -- re-check the
-      // suppression window here (not just once at the top of the effect),
-      // since another tab can write a fresh timestamp (by showing its own
-      // copy of this popup) while this tab was waiting out either the
-      // initial delay or the overlay-busy retry loop below.
       const lastShown = readLastShown();
       if (lastShown && Date.now() - lastShown < REPEAT_SUPPRESS_MS) return;
+      setOpen(true);
+      writeLastShown(Date.now());
+    }
+
+    function attemptOpen() {
+      if (cancelled) return;
       // The cart drawer, mobile menu, and size guide modal all hold the
       // shared body-scroll lock while open -- if one of those is already
       // up, wait rather than stacking a second focus-trapped overlay (and
@@ -79,8 +88,17 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
         timer = setTimeout(attemptOpen, 1000);
         return;
       }
-      setOpen(true);
-      writeLastShown(Date.now());
+      // The Web Locks API serializes the check-and-claim across every tab
+      // on this origin, so two tabs racing to open at the same instant
+      // can't both pass the suppression check before either writes the new
+      // timestamp. Falls back to the unsynchronized check on browsers
+      // without it (older Safari) -- a rarer, lower-stakes race than the
+      // one this guards against, not a reason to block the popup entirely.
+      if (typeof navigator !== 'undefined' && navigator.locks) {
+        void navigator.locks.request(STORAGE_KEY, claimAndOpen);
+      } else {
+        void claimAndOpen();
+      }
     }
 
     timer = setTimeout(attemptOpen, SHOW_DELAY_MS);
