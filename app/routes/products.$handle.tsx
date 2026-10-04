@@ -987,35 +987,13 @@ export default function ProductPage() {
           </div>
         </div>
 
-        {/* Fabric Weight Guide — always visible on the page (not tucked
-            behind a collapsed accordion, like the review section below it)
-            since it's core buying-decision info, not supplementary detail. */}
-        <section className="border-t border-[var(--color-border-muted)]">
-          <div className="h-container py-16">
-            <p className="h-eyebrow mb-3">{t('fabric.guide.eyebrow')}</p>
-            <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
-              {t('fabric.guide.heading')}
-            </h2>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
-              {FABRIC_WEIGHT_TIERS.map((tier) => (
-                <div key={tier.range}>
-                  <dt className="text-[var(--color-text-primary)] font-medium">
-                    {tier.range} GSM — {t(tier.nameKey)}
-                  </dt>
-                  <dd className="mt-1.5 text-[var(--color-text-secondary)] text-sm leading-relaxed">
-                    {t(tier.descriptionKey)}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </section>
-
         {/* Reviews — real per-product review list, fetched server-side via
             the Judge.me API and rendered by us (see ProductReviewList /
             fetchJudgemeProductReviews). Streamed in async, same pattern as
             the homepage's quote cards, since it's a non-critical section
-            behind a third-party fetch with its own timeout. */}
+            behind a third-party fetch with its own timeout. Placed above
+            the Fabric Weight Guide per owner request -- social proof earns
+            its spot before the educational GSM explainer. */}
         {judgemeRating && (
           <>
             {/* Stable, invisible scroll target for the rating link above --
@@ -1056,6 +1034,30 @@ export default function ProductPage() {
             </Suspense>
           </>
         )}
+
+        {/* Fabric Weight Guide — always visible on the page (not tucked
+            behind a collapsed accordion) since it's core buying-decision
+            info, not supplementary detail. */}
+        <section className="border-t border-[var(--color-border-muted)]">
+          <div className="h-container py-16">
+            <p className="h-eyebrow mb-3">{t('fabric.guide.eyebrow')}</p>
+            <h2 className="font-serif font-normal text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.1] text-[var(--color-text-primary)] mb-8">
+              {t('fabric.guide.heading')}
+            </h2>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
+              {FABRIC_WEIGHT_TIERS.map((tier) => (
+                <div key={tier.range}>
+                  <dt className="text-[var(--color-text-primary)] font-medium">
+                    {tier.range} GSM — {t(tier.nameKey)}
+                  </dt>
+                  <dd className="mt-1.5 text-[var(--color-text-secondary)] text-sm leading-relaxed">
+                    {t(tier.descriptionKey)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
 
         {/* Craft / trust stats */}
         {/* Related products */}
