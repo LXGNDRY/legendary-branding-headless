@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {Link} from 'react-router';
 import type {ActiveDiscount} from '~/lib/discounts';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {useBodyScrollLock, isBodyScrollLocked} from '~/hooks/useBodyScrollLock';
 
 /** How long after page load the popup appears, once eligible to show at all. */
 const SHOW_DELAY_MS = 5000;
@@ -56,23 +57,48 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
 
   useEffect(() => {
     if (discounts.length === 0) return;
-    const lastShown = readLastShown();
-    if (lastShown && Date.now() - lastShown < REPEAT_SUPPRESS_MS) return;
+    if (readLastShown() !== null && Date.now() - readLastShown()! < REPEAT_SUPPRESS_MS) return;
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
 
+    async function claimAndOpen() {
+      // Re-check the suppression window here (not just once at the top of
+      // the effect) under the Web Lock below, since another tab can write a
+      // fresh timestamp (by showing its own copy of this popup) while this
+      // tab was waiting out the initial delay or the overlay-busy retry
+      // loop. Without the lock, two tabs whose timers expire in the same
+      // tick could both read the pre-claim timestamp before either writes,
+      // and both show the popup -- a plain re-read closes the common case
+      // (one tab already finished) but not that simultaneous one.
+      if (cancelled) return;
+      const lastShown = readLastShown();
+      if (lastShown && Date.now() - lastShown < REPEAT_SUPPRESS_MS) return;
+      setOpen(true);
+      writeLastShown(Date.now());
+    }
+
     function attemptOpen() {
       if (cancelled) return;
-      // The cart drawer and mobile menu both lock body scroll while open --
-      // if one of those is already up, wait rather than stacking a second
-      // focus-trapped overlay (and its higher z-index) on top of it.
-      if (document.body.style.overflow === 'hidden') {
+      // The cart drawer, mobile menu, and size guide modal all hold the
+      // shared body-scroll lock while open -- if one of those is already
+      // up, wait rather than stacking a second focus-trapped overlay (and
+      // its higher z-index) on top of it.
+      if (isBodyScrollLocked()) {
         timer = setTimeout(attemptOpen, 1000);
         return;
       }
-      setOpen(true);
-      writeLastShown(Date.now());
+      // The Web Locks API serializes the check-and-claim across every tab
+      // on this origin, so two tabs racing to open at the same instant
+      // can't both pass the suppression check before either writes the new
+      // timestamp. Falls back to the unsynchronized check on browsers
+      // without it (older Safari) -- a rarer, lower-stakes race than the
+      // one this guards against, not a reason to block the popup entirely.
+      if (typeof navigator !== 'undefined' && navigator.locks) {
+        void navigator.locks.request(STORAGE_KEY, claimAndOpen);
+      } else {
+        void claimAndOpen();
+      }
     }
 
     timer = setTimeout(attemptOpen, SHOW_DELAY_MS);
@@ -85,15 +111,12 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discounts.length]);
 
-  // Lock body scroll while open, matching CartDrawer's behavior.
-  useEffect(() => {
-    if (!open) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = original;
-    };
-  }, [open]);
+  // Shares the module-level lock count with every other overlay (cart
+  // drawer, mobile menu, size guide modal) -- see useBodyScrollLock's own
+  // comment for why a naive per-component save/restore isn't safe once two
+  // overlays can be open at once (e.g. an in-flight add-to-cart opening the
+  // cart drawer while this popup is still showing).
+  useBodyScrollLock(open);
 
   // A loader revalidation can replace a non-empty discount list with an
   // empty one (the promotion expired, or the optional Admin API fetch

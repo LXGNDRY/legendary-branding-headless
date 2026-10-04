@@ -1,7 +1,7 @@
-import {useEffect} from 'react';
 import {Image} from '@shopify/hydrogen';
 import {Link} from 'react-router';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
 
 interface SizeGuideModalProps {
   open: boolean;
@@ -24,12 +24,7 @@ export default function SizeGuideModal({
   fitNote,
 }: SizeGuideModalProps) {
   const {containerRef} = useFocusTrap(open, onClose);
-
-  useEffect(() => {
-    if (!open) return;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
+  useBodyScrollLock(open);
 
   if (!open) return null;
 
