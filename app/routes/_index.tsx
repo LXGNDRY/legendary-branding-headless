@@ -16,7 +16,7 @@ import ReviewQuotes from '~/components/sections/ReviewQuotes';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import CurrentOffers from '~/components/sections/CurrentOffers';
-import {CacheLong} from '~/lib/cache';
+import {CacheLong, CacheShort} from '~/lib/cache';
 import {EXPRESS_SHIPPING_COST} from '~/lib/cart';
 import type {ActiveDiscount} from '~/lib/discounts';
 import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
@@ -32,14 +32,14 @@ const HOMEPAGE_QUERY = `#graphql
   query Homepage($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
     newDrops: collection(handle: "all-products") {
-      products(first: 8, sortKey: CREATED) {
+      products(first: 8, sortKey: CREATED, reverse: true) {
         nodes {
           ...ProductCard
         }
       }
     }
-    bestSellers: collection(handle: "all-products") {
-      products(first: 4, sortKey: BEST_SELLING) {
+    recentlyAdded: collection(handle: "all-products") {
+      products(first: 4, sortKey: CREATED, reverse: true) {
         nodes {
           ...ProductCard
         }
@@ -79,8 +79,17 @@ export async function loader({context}: LoaderFunctionArgs) {
     language: storefront.i18n.language,
   };
 
-  const [{newDrops, bestSellers, marqueLegendaire}, menuResult] = await Promise.all([
-    storefront.query(HOMEPAGE_QUERY, {variables, cache: CacheLong()}),
+  const [{newDrops, recentlyAdded, marqueLegendaire}, menuResult] = await Promise.all([
+    // CacheShort, not CacheLong -- these are live product listings (New
+    // Drops, Recently Added, Marque Légendaire), and CacheLong's 24h
+    // stale-while-revalidate meant a newly added or restocked product could
+    // take up to a day to actually surface on the homepage even though the
+    // underlying query is already fully dynamic. ~/lib/cache.ts's own
+    // docstring already named the homepage as a CacheShort use case; this
+    // query just hadn't been updated to match it.
+    storefront.query(HOMEPAGE_QUERY, {variables, cache: CacheShort()}),
+    // Nav structure changes far less often than the product catalog, so the
+    // menu query keeps the longer TTL.
     storefront.query(MAIN_MENU_QUERY, {variables, cache: CacheLong()}),
   ]);
 
@@ -110,7 +119,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     (c) => c.handle !== 'all-products' && c.handle !== 'marque-legendaire-luxury-streetwear',
   );
 
-  const ratedProducts = ((bestSellers?.products?.nodes ?? []) as ProductCardFragment[])
+  const ratedProducts = ((recentlyAdded?.products?.nodes ?? []) as ProductCardFragment[])
     .map((product) => {
       const parsed = parseJudgemeBadge(product.reviewBadge?.value);
       return parsed
@@ -148,7 +157,7 @@ export async function loader({context}: LoaderFunctionArgs) {
   return {
     categoryItems,
     newDrops,
-    bestSellers,
+    recentlyAdded,
     marqueLegendaire,
     ratedProducts,
     aggregateRating,
