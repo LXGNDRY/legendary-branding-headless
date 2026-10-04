@@ -69,7 +69,7 @@ export default function ProductGallery({
   if (!galleryImages.length) {
     return (
       <div className="space-y-3">
-        <Placeholder aspect="aspect-[3/4]" label={title} />
+        <Placeholder aspect="aspect-square" label={title} />
       </div>
     );
   }
@@ -93,9 +93,9 @@ export default function ProductGallery({
         <Image
           data={active}
           alt={active.altText || title}
-          aspectRatio="3/4"
-          width={900}
-          height={1200}
+          aspectRatio="1/1"
+          width={1000}
+          height={1000}
           sizes="(min-width: 768px) 50vw, 100vw"
           loading="eager"
           fetchPriority="high"
