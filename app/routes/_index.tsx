@@ -32,14 +32,14 @@ const HOMEPAGE_QUERY = `#graphql
   query Homepage($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
     newDrops: collection(handle: "all-products") {
-      products(first: 8, sortKey: CREATED) {
+      products(first: 8, sortKey: CREATED, reverse: true) {
         nodes {
           ...ProductCard
         }
       }
     }
-    bestSellers: collection(handle: "all-products") {
-      products(first: 4, sortKey: BEST_SELLING) {
+    recentlyAdded: collection(handle: "all-products") {
+      products(first: 4, sortKey: CREATED, reverse: true) {
         nodes {
           ...ProductCard
         }
@@ -79,9 +79,9 @@ export async function loader({context}: LoaderFunctionArgs) {
     language: storefront.i18n.language,
   };
 
-  const [{newDrops, bestSellers, marqueLegendaire}, menuResult] = await Promise.all([
+  const [{newDrops, recentlyAdded, marqueLegendaire}, menuResult] = await Promise.all([
     // CacheShort, not CacheLong -- these are live product listings (New
-    // Drops, Best Sellers, Marque Légendaire), and CacheLong's 24h
+    // Drops, Recently Added, Marque Légendaire), and CacheLong's 24h
     // stale-while-revalidate meant a newly added or restocked product could
     // take up to a day to actually surface on the homepage even though the
     // underlying query is already fully dynamic. ~/lib/cache.ts's own
@@ -119,7 +119,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     (c) => c.handle !== 'all-products' && c.handle !== 'marque-legendaire-luxury-streetwear',
   );
 
-  const ratedProducts = ((bestSellers?.products?.nodes ?? []) as ProductCardFragment[])
+  const ratedProducts = ((recentlyAdded?.products?.nodes ?? []) as ProductCardFragment[])
     .map((product) => {
       const parsed = parseJudgemeBadge(product.reviewBadge?.value);
       return parsed
@@ -157,7 +157,7 @@ export async function loader({context}: LoaderFunctionArgs) {
   return {
     categoryItems,
     newDrops,
-    bestSellers,
+    recentlyAdded,
     marqueLegendaire,
     ratedProducts,
     aggregateRating,

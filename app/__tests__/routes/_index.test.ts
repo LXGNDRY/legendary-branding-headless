@@ -18,7 +18,7 @@ describe('_index loader', () => {
       responses: {
         Homepage: {
           newDrops: {products: {nodes: []}},
-          bestSellers: {products: {nodes: []}},
+          recentlyAdded: {products: {nodes: []}},
         },
         MainMenu: {menu: {items: []}},
       },
@@ -35,7 +35,7 @@ describe('_index loader', () => {
     expect(result).toBeDefined();
     expect(result.categoryItems).toBeDefined();
     expect(result.newDrops).toBeDefined();
-    expect(result.bestSellers).toBeDefined();
+    expect(result.recentlyAdded).toBeDefined();
   });
 
   it('calls storefront.query with the Homepage and MainMenu operations', async () => {
