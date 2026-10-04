@@ -16,7 +16,7 @@ import ReviewQuotes from '~/components/sections/ReviewQuotes';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import CurrentOffers from '~/components/sections/CurrentOffers';
-import {CacheLong} from '~/lib/cache';
+import {CacheLong, CacheShort} from '~/lib/cache';
 import {EXPRESS_SHIPPING_COST} from '~/lib/cart';
 import type {ActiveDiscount} from '~/lib/discounts';
 import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
@@ -80,7 +80,16 @@ export async function loader({context}: LoaderFunctionArgs) {
   };
 
   const [{newDrops, bestSellers, marqueLegendaire}, menuResult] = await Promise.all([
-    storefront.query(HOMEPAGE_QUERY, {variables, cache: CacheLong()}),
+    // CacheShort, not CacheLong -- these are live product listings (New
+    // Drops, Best Sellers, Marque Légendaire), and CacheLong's 24h
+    // stale-while-revalidate meant a newly added or restocked product could
+    // take up to a day to actually surface on the homepage even though the
+    // underlying query is already fully dynamic. ~/lib/cache.ts's own
+    // docstring already named the homepage as a CacheShort use case; this
+    // query just hadn't been updated to match it.
+    storefront.query(HOMEPAGE_QUERY, {variables, cache: CacheShort()}),
+    // Nav structure changes far less often than the product catalog, so the
+    // menu query keeps the longer TTL.
     storefront.query(MAIN_MENU_QUERY, {variables, cache: CacheLong()}),
   ]);
 
