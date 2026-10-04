@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {Link} from 'react-router';
 import type {ActiveDiscount} from '~/lib/discounts';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {useBodyScrollLock, isBodyScrollLocked} from '~/hooks/useBodyScrollLock';
 
 /** How long after page load the popup appears, once eligible to show at all. */
 const SHOW_DELAY_MS = 5000;
@@ -56,18 +57,25 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
 
   useEffect(() => {
     if (discounts.length === 0) return;
-    const lastShown = readLastShown();
-    if (lastShown && Date.now() - lastShown < REPEAT_SUPPRESS_MS) return;
+    if (readLastShown() !== null && Date.now() - readLastShown()! < REPEAT_SUPPRESS_MS) return;
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
 
     function attemptOpen() {
       if (cancelled) return;
-      // The cart drawer and mobile menu both lock body scroll while open --
-      // if one of those is already up, wait rather than stacking a second
-      // focus-trapped overlay (and its higher z-index) on top of it.
-      if (document.body.style.overflow === 'hidden') {
+      // Other open tabs share this browser's localStorage -- re-check the
+      // suppression window here (not just once at the top of the effect),
+      // since another tab can write a fresh timestamp (by showing its own
+      // copy of this popup) while this tab was waiting out either the
+      // initial delay or the overlay-busy retry loop below.
+      const lastShown = readLastShown();
+      if (lastShown && Date.now() - lastShown < REPEAT_SUPPRESS_MS) return;
+      // The cart drawer, mobile menu, and size guide modal all hold the
+      // shared body-scroll lock while open -- if one of those is already
+      // up, wait rather than stacking a second focus-trapped overlay (and
+      // its higher z-index) on top of it.
+      if (isBodyScrollLocked()) {
         timer = setTimeout(attemptOpen, 1000);
         return;
       }
@@ -85,15 +93,12 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discounts.length]);
 
-  // Lock body scroll while open, matching CartDrawer's behavior.
-  useEffect(() => {
-    if (!open) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = original;
-    };
-  }, [open]);
+  // Shares the module-level lock count with every other overlay (cart
+  // drawer, mobile menu, size guide modal) -- see useBodyScrollLock's own
+  // comment for why a naive per-component save/restore isn't safe once two
+  // overlays can be open at once (e.g. an in-flight add-to-cart opening the
+  // cart drawer while this popup is still showing).
+  useBodyScrollLock(open);
 
   // A loader revalidation can replace a non-empty discount list with an
   // empty one (the promotion expired, or the optional Admin API fetch
