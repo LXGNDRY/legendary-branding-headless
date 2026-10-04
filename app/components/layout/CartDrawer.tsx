@@ -6,6 +6,7 @@ import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
 import {withCheckoutLocale} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
 import {useTranslation} from '~/lib/i18n';
 
 function CloseIcon() {
@@ -266,16 +267,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  // Lock body scroll
-  useEffect(() => {
-    const original = document.body.style.overflow;
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.body.style.overflow = original;
-    };
-  }, [open]);
+  useBodyScrollLock(open);
 
   function applyDiscount(e: React.FormEvent) {
     e.preventDefault();

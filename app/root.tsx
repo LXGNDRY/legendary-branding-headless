@@ -23,6 +23,7 @@ import Header from '~/components/layout/Header';
 import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
 import AnnouncementBar from '~/components/layout/AnnouncementBar';
+import DiscountsPopup from '~/components/ui/DiscountsPopup';
 import ChatWidget from '~/components/chat/ChatWidget';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
 import Analytics from '~/components/seo/Analytics';
@@ -340,7 +341,12 @@ export default function App() {
 
       <Suspense fallback={<AnnouncementBar />}>
         <Await resolve={activeDiscounts} errorElement={<AnnouncementBar />}>
-          {(discounts) => <AnnouncementBar discounts={discounts} />}
+          {(discounts) => (
+            <>
+              <AnnouncementBar discounts={discounts} />
+              <DiscountsPopup discounts={discounts} />
+            </>
+          )}
         </Await>
       </Suspense>
       <Header

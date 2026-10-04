@@ -5,6 +5,7 @@ import SearchTypeahead from '~/components/ui/SearchTypeahead';
 import BrandLogo from '~/components/ui/BrandLogo';
 import MarketSelector from '~/components/ui/MarketSelector';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
 import type {LocalizationData} from '~/lib/market';
 import type {NavCollectionItem} from '~/lib/nav';
 import {useTranslation} from '~/lib/i18n';
@@ -223,14 +224,7 @@ function MobileMenu({
   const {containerRef} = useFocusTrap(open, onClose);
   const [openItem, setOpenItem] = useState<string | null>(null);
 
-  // Prevent body scroll
-  useEffect(() => {
-    if (open) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = original; };
-    }
-  }, [open]);
+  useBodyScrollLock(open);
 
   // Collapse any expanded submenu whenever the drawer itself closes, so it
   // doesn't reopen already-expanded next time.
