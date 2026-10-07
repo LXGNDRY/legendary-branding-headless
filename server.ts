@@ -1,18 +1,9 @@
-import {
-  createRequestHandler,
-  type RouterContextProvider,
-  type ServerBuild,
-} from 'react-router';
+import type {ServerBuild} from 'react-router';
 import * as build from 'virtual:react-router/server-build';
-import {storefrontRedirect} from '@shopify/hydrogen';
+import {createRequestHandler, storefrontRedirect} from '@shopify/hydrogen';
 import {createAppLoadContext} from '~/lib/context';
 import {applySecurityHeaders, isAssetRequest} from '~/lib/security';
 import {initSentryServer, captureServerError} from '~/lib/sentry.server';
-
-const handleRequest = createRequestHandler(
-  build as unknown as ServerBuild,
-  import.meta.env.PROD ? 'production' : 'development',
-);
 
 // Mode is determined by import.meta.env.PROD (set by Vite/Rollup at build time).
 // On Oxygen production, PROD is always true. On local dev, it's false.
@@ -32,10 +23,15 @@ export default {
 
       const appContext = await createAppLoadContext(request, env, ctx);
 
-      let response = await handleRequest(
-        request,
-        appContext as unknown as RouterContextProvider,
-      );
+      // NOTE: Hydrogen's handler (not react-router's) is required -- it serves
+      // the same-origin Storefront API proxy that consent/analytics depend on.
+      const handleRequest = createRequestHandler({
+        build: build as unknown as ServerBuild,
+        mode: import.meta.env.PROD ? 'production' : 'development',
+        getLoadContext: () => appContext,
+      });
+
+      let response = await handleRequest(request);
 
       // Commit session cookie if modified
       if (appContext.session.isPending) {
