@@ -291,18 +291,21 @@ jobs:
         run: echo "::notice::Skipping E2E — no Storefront API credentials available to this run (expected for Dependabot/fork PRs)."
 
       # NOTE: apt on hosted runners can stall indefinitely on an unresponsive
-      # Ubuntu mirror, burning the whole job timeout. Bound each attempt and
-      # retry so a mirror hiccup costs minutes, not a cancelled job.
+      # Ubuntu mirror. apt's own network timeouts turn a stall into a fast
+      # error that the loop retries; slow-but-progressing installs are left
+      # alone. No external `timeout` wrapper: it kills npx but not the
+      # sudo'd apt-get, which then holds the dpkg lock against the retry.
       - name: Install Playwright browsers
         if: steps.verify-creds.outputs.skipped != 'true'
+        timeout-minutes: 16
         run: |
-          printf 'Acquire::Retries "3";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' \
+          printf 'Acquire::Retries "3";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nDPkg::Lock::Timeout "120";\n' \
             | sudo tee /etc/apt/apt.conf.d/99-ci-network-timeouts >/dev/null
           for attempt in 1 2; do
-            if timeout 480 npx playwright install --with-deps ${{ matrix.browser }}; then
+            if npx playwright install --with-deps ${{ matrix.browser }}; then
               exit 0
             fi
-            echo "::warning::Playwright install attempt $attempt failed or timed out; retrying."
+            echo "::warning::Playwright install attempt $attempt failed; retrying."
             sleep 10
           done
           exit 1
