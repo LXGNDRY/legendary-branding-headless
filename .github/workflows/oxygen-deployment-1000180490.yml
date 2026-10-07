@@ -227,7 +227,8 @@ jobs:
   e2e:
     name: E2E Tests (${{ matrix.project }})
     needs: quality
-    timeout-minutes: 20
+    # Install retries can take up to ~16m; leave room for build + suite.
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -297,8 +298,8 @@ jobs:
         run: |
           printf 'Acquire::Retries "3";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' \
             | sudo tee /etc/apt/apt.conf.d/99-ci-network-timeouts >/dev/null
-          for attempt in 1 2 3; do
-            if timeout 300 npx playwright install --with-deps ${{ matrix.browser }}; then
+          for attempt in 1 2; do
+            if timeout 480 npx playwright install --with-deps ${{ matrix.browser }}; then
               exit 0
             fi
             echo "::warning::Playwright install attempt $attempt failed or timed out; retrying."
