@@ -227,7 +227,8 @@ jobs:
   e2e:
     name: E2E Tests (${{ matrix.project }})
     needs: quality
-    timeout-minutes: 20
+    # Install retries can take up to ~16m; leave room for build + suite.
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -289,9 +290,25 @@ jobs:
         if: steps.verify-creds.outputs.skipped == 'true'
         run: echo "::notice::Skipping E2E — no Storefront API credentials available to this run (expected for Dependabot/fork PRs)."
 
+      # NOTE: apt on hosted runners can stall indefinitely on an unresponsive
+      # Ubuntu mirror. apt's own network timeouts turn a stall into a fast
+      # error that the loop retries; slow-but-progressing installs are left
+      # alone. No external `timeout` wrapper: it kills npx but not the
+      # sudo'd apt-get, which then holds the dpkg lock against the retry.
       - name: Install Playwright browsers
         if: steps.verify-creds.outputs.skipped != 'true'
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+        timeout-minutes: 16
+        run: |
+          printf 'Acquire::Retries "3";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nDPkg::Lock::Timeout "120";\n' \
+            | sudo tee /etc/apt/apt.conf.d/99-ci-network-timeouts >/dev/null
+          for attempt in 1 2; do
+            if npx playwright install --with-deps ${{ matrix.browser }}; then
+              exit 0
+            fi
+            echo "::warning::Playwright install attempt $attempt failed; retrying."
+            sleep 10
+          done
+          exit 1
 
       # `shopify hydrogen preview` (and `dev`) load env vars via Miniflare
       # from a local `.env` file — they do NOT read inherited shell/step

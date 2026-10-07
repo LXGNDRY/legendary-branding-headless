@@ -3,7 +3,6 @@ import {hydrogen} from '@shopify/hydrogen/vite';
 import {oxygen} from '@shopify/mini-oxygen/vite';
 import {reactRouter} from '@react-router/dev/vite';
 import tailwindcss from '@tailwindcss/vite';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   // Vite's default envPrefix is 'VITE_' only. root.tsx's client-side
@@ -21,8 +20,12 @@ export default defineConfig({
     hydrogen(),
     oxygen(),
     reactRouter(),
-    tsconfigPaths(),
   ],
+  // Replaces the vite-tsconfig-paths plugin -- Vite 8 resolves tsconfig
+  // "paths" natively, so the plugin (and its dependency) is redundant.
+  resolve: {
+    tsconfigPaths: true,
+  },
   build: {
     assetsInlineLimit: 0,
   },
