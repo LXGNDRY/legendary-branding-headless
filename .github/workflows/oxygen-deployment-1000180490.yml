@@ -289,9 +289,22 @@ jobs:
         if: steps.verify-creds.outputs.skipped == 'true'
         run: echo "::notice::Skipping E2E — no Storefront API credentials available to this run (expected for Dependabot/fork PRs)."
 
+      # NOTE: apt on hosted runners can stall indefinitely on an unresponsive
+      # Ubuntu mirror, burning the whole job timeout. Bound each attempt and
+      # retry so a mirror hiccup costs minutes, not a cancelled job.
       - name: Install Playwright browsers
         if: steps.verify-creds.outputs.skipped != 'true'
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+        run: |
+          printf 'Acquire::Retries "3";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' \
+            | sudo tee /etc/apt/apt.conf.d/99-ci-network-timeouts >/dev/null
+          for attempt in 1 2 3; do
+            if timeout 300 npx playwright install --with-deps ${{ matrix.browser }}; then
+              exit 0
+            fi
+            echo "::warning::Playwright install attempt $attempt failed or timed out; retrying."
+            sleep 10
+          done
+          exit 1
 
       # `shopify hydrogen preview` (and `dev`) load env vars via Miniflare
       # from a local `.env` file — they do NOT read inherited shell/step
