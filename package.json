@@ -19,7 +19,7 @@
   "type": "module",
   "dependencies": {
     "@graphql-codegen/cli": "7.4.3",
-    "@sentry/react": "10.71.0",
+    "@sentry/react": "11.2.0",
     "@shopify/cli": "4.8.3",
     "@shopify/hydrogen": "2026.4.6",
     "graphql": "16.14.2",
@@ -47,8 +47,7 @@
     "jsdom": "30.1.1",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
-    "vite": "6.4.3",
-    "vite-tsconfig-paths": "6.1.1",
+    "vite": "8.3.2",
     "vitest": "5.0.3"
   },
   "engines": {
