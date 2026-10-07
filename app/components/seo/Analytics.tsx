@@ -241,11 +241,14 @@ export default function Analytics({
     if (!customerPrivacy) return;
 
     const reconcile = () => {
+      // currentVisitorConsent() returns 'yes' | 'no' | '' (hydrogen 2026.4.6+)
+      // -- previously boolean | undefined. '' means Shopify has no recorded
+      // decision yet, equivalent to the old `undefined`.
       const visitorConsent = customerPrivacy.currentVisitorConsent();
       const shopifyState: StoredConsent | null =
-        visitorConsent.analytics === true
+        visitorConsent.analytics === 'yes'
           ? 'accepted'
-          : visitorConsent.analytics === false
+          : visitorConsent.analytics === 'no'
             ? 'rejected'
             : null;
       const stored = readStoredConsent();
