@@ -23,6 +23,12 @@ describe('trust', () => {
   });
 
   it('degrades to empty facts on a missing shop', () => {
-    expect(toStoreTrust(null)).toEqual({returnDays: null, refundPolicyUrl: null, paymentMethods: [], logoUrl: null});
+    expect(toStoreTrust(null)).toEqual({
+      returnDays: null,
+      refundPolicyUrl: null,
+      paymentMethods: [],
+      logoUrl: null,
+      returnCountries: [],
+    });
   });
 });

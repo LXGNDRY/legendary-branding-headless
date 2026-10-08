@@ -193,6 +193,7 @@ export function productSchema({
   variants,
   aggregateRating,
   returnDays,
+  returnCountries = [],
 }: {
   id: string;
   title: string;
@@ -212,11 +213,13 @@ export function productSchema({
   aggregateRating?: {ratingValue: number; reviewCount: number};
   /** Return window from the store's refund policy (see ~/lib/trust); omitted when it states none. */
   returnDays?: number | null;
+  /** Markets the policy applies to; Google accepts up to 50 country codes. */
+  returnCountries?: string[];
 }) {
   const returnPolicy = returnDays
     ? {
         '@type': 'MerchantReturnPolicy',
-        applicableCountry: 'US',
+        applicableCountry: returnCountries.length ? returnCountries.slice(0, 50) : 'US',
         returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
         merchantReturnDays: returnDays,
         returnMethod: 'https://schema.org/ReturnByMail',

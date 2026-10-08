@@ -186,10 +186,9 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     // Optional: a failure here only hides trust copy, never the page.
     context.storefront
       .query(STORE_TRUST_QUERY, {
-        variables: {
-          country: context.storefront.i18n.country,
-          language: context.storefront.i18n.language,
-        },
+        // NOTE: always the English source policy -- the return-window
+        // parser reads English text, and a translation must not hide it.
+        variables: {country: context.storefront.i18n.country, language: 'EN'},
         cache: CacheLong(),
       })
       .catch(() => null),
@@ -227,7 +226,10 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     localization: localizationResult.localization as LocalizationData,
     navCollections,
     shop,
-    storeTrust: toStoreTrust(storeTrustResult),
+    storeTrust: toStoreTrust(
+      storeTrustResult,
+      (localizationResult.localization as LocalizationData).availableCountries.map((c) => c.isoCode),
+    ),
     activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on
@@ -263,7 +265,7 @@ export function Layout({children}: {children: React.ReactNode}) {
             root's viewport tag, leaving mobile browsers to fall back to a
             ~980px desktop-width layout viewport. Same reasoning as the
             hardcoded charSet above it. */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="dark" />
         <meta name="theme-color" content="#0A0A0A" />
         <Meta />

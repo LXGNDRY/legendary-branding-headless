@@ -577,6 +577,7 @@ export default function ProductPage() {
       ? {ratingValue: judgemeRating.rating, reviewCount: judgemeRating.count}
       : undefined,
     returnDays: storeTrust.returnDays,
+    returnCountries: storeTrust.returnCountries,
   });
 
   const breadcrumbJsonLd = breadcrumbSchema([

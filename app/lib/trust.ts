@@ -10,6 +10,8 @@ export interface StoreTrust {
   /** Human-readable payment method names, cards first then wallets. */
   paymentMethods: string[];
   logoUrl: string | null;
+  /** ISO codes of every market the store sells to -- the store-wide return policy covers all of them. */
+  returnCountries: string[];
 }
 
 const CARD_BRAND_LABELS: Record<string, string> = {
@@ -75,7 +77,10 @@ interface StoreTrustQueryResult {
   } | null;
 }
 
-export function toStoreTrust(data: StoreTrustQueryResult | null | undefined): StoreTrust {
+export function toStoreTrust(
+  data: StoreTrustQueryResult | null | undefined,
+  countries: readonly string[] = [],
+): StoreTrust {
   const shop = data?.shop;
   return {
     returnDays: parseReturnWindowDays(shop?.refundPolicy?.body),
@@ -85,6 +90,7 @@ export function toStoreTrust(data: StoreTrustQueryResult | null | undefined): St
       shop?.paymentSettings?.supportedDigitalWallets,
     ),
     logoUrl: shop?.brand?.logo?.image?.url ?? null,
+    returnCountries: [...countries],
   };
 }
 
@@ -93,4 +99,5 @@ export const EMPTY_STORE_TRUST: StoreTrust = {
   refundPolicyUrl: null,
   paymentMethods: [],
   logoUrl: null,
+  returnCountries: [],
 };
