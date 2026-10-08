@@ -72,7 +72,8 @@ export default function QuickAddModal({
 
   const productFetcher = useFetcher<{product: QuickAddProduct | null}>();
   const cartFetcher = useFetcher<{errors?: Array<{message?: string}>}>();
-  const [selection, setSelection] = useState<OptionSelection>({});
+  // NOTE: only what the customer picked. Single-value defaults are derived below, never written by an effect, so a data reload can't wipe a pick.
+  const [choices, setChoices] = useState<OptionSelection>({});
 
   const product = productFetcher.data?.product ?? null;
   const loadFailed = productFetcher.state === 'idle' && productFetcher.data !== undefined && !product;
@@ -83,10 +84,6 @@ export default function QuickAddModal({
     }
   }, [handle, productFetcher]);
 
-  useEffect(() => {
-    if (product) setSelection(initialSelection(product.options));
-  }, [product]);
-
   // The cart drawer opens as soon as the add lands (fetcher `loading`), so
   // close then rather than at `idle` -- two modal focus traps must never be
   // active at once.
@@ -95,6 +92,8 @@ export default function QuickAddModal({
     if (added) onClose();
   }, [added, onClose]);
 
+  const defaults = useMemo(() => (product ? initialSelection(product.options) : {}), [product]);
+  const selection = useMemo(() => ({...defaults, ...choices}), [defaults, choices]);
   const optionNames = useMemo(() => product?.options.map((o) => o.name) ?? [], [product]);
   const variants = product?.variants.nodes ?? [];
   const selectedVariant = findSelectedVariant(variants, optionNames, selection);
@@ -217,7 +216,7 @@ export default function QuickAddModal({
                           : swatch?.color
                             ? {backgroundColor: swatch.color}
                             : undefined;
-                        const select = () => setSelection((current) => selectOptionValue(variants, current, option.name, value));
+                        const select = () => setChoices((current) => selectOptionValue(variants, {...defaults, ...current}, option.name, value));
                         const label = `${option.name}: ${value}${isAvailable ? '' : ' (unavailable)'}`;
 
                         if (isColor && swatchStyle) {
