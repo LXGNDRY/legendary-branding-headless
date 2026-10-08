@@ -18,7 +18,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@graphql-codegen/cli": "7.4.3",
+    "@graphql-codegen/cli": "7.4.5",
     "@sentry/react": "11.2.0",
     "@shopify/cli": "4.8.3",
     "@shopify/hydrogen": "2026.4.6",
@@ -49,6 +49,23 @@
     "typescript": "7.0.2",
     "vite": "8.3.2",
     "vitest": "5.0.3"
+  },
+  "overrides": {
+    "@shopify/graphql-codegen": {
+      "@graphql-codegen/add": "7.1.1",
+      "@graphql-codegen/typescript": "6.1.1",
+      "@graphql-codegen/typescript-operations": "6.1.10"
+    },
+    "lodash": "4.18.1",
+    "@shopify/mini-oxygen": {
+      "body-parser": "1.20.6",
+      "undici": "7.30.0"
+    },
+    "youch": {
+      "cookie": "0.7.2"
+    },
+    "qs": "6.16.0",
+    "ws": "8.21.3"
   },
   "engines": {
     "node": ">=22.13.0"
