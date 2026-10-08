@@ -26,6 +26,7 @@ import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import DiscountsPopup from '~/components/ui/DiscountsPopup';
 import ChatWidget from '~/components/chat/ChatWidget';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
+import {STORE_TRUST_QUERY, toStoreTrust} from '~/lib/trust';
 import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
@@ -92,13 +93,13 @@ export const meta: MetaFunction = () => [
   {title: 'Legendary Branding | Premium Streetwear'},
   {
     name: 'description',
-    content: 'Legendary Branding — premium streetwear built to last. 190GSM+ premium-weight tees, made to order. Shop the collection.',
+    content: 'Legendary Branding — premium streetwear built to last. 220GSM+ premium-weight tees, made to order. Shop the collection.',
   },
   {property: 'og:type', content: 'website'},
   {property: 'og:site_name', content: 'Legendary Branding'},
   {property: 'og:url', content: 'https://www.legendary-branding.com'},
   {property: 'og:title', content: 'Legendary Branding | Premium Streetwear'},
-  {property: 'og:description', content: 'Premium streetwear built to last. 190GSM+ premium-weight tees, made to order. Shop the collection.'},
+  {property: 'og:description', content: 'Premium streetwear built to last. 220GSM+ premium-weight tees, made to order. Shop the collection.'},
   {name: 'twitter:card', content: 'summary_large_image'},
   {name: 'twitter:title', content: 'Legendary Branding | Premium Streetwear'},
   {name: 'twitter:description', content: 'Premium streetwear built to last.'},
@@ -162,7 +163,7 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       })
     : Promise.resolve([]);
 
-  const [cartData, localizationResult, shop, menuResult] = await Promise.all([
+  const [cartData, localizationResult, shop, menuResult, storeTrustResult] = await Promise.all([
     cart.get(),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
@@ -182,6 +183,15 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       },
       cache: CacheLong(),
     }),
+    // Optional: a failure here only hides trust copy, never the page.
+    context.storefront
+      .query(STORE_TRUST_QUERY, {
+        // NOTE: always the English source policy -- the return-window
+        // parser reads English text, and a translation must not hide it.
+        variables: {country: context.storefront.i18n.country, language: 'EN'},
+        cache: CacheLong(),
+      })
+      .catch(() => null),
   ]);
 
   const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
@@ -216,6 +226,10 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     localization: localizationResult.localization as LocalizationData,
     navCollections,
     shop,
+    storeTrust: toStoreTrust(
+      storeTrustResult,
+      (localizationResult.localization as LocalizationData).availableCountries.map((c) => c.isoCode),
+    ),
     activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on

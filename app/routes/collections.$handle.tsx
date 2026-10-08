@@ -465,10 +465,10 @@ export default function CollectionPage() {
       {filterOpen && (
         <div className="fixed inset-0 z-[500] lg:hidden">
           <div className="absolute inset-0 bg-[var(--color-foreground)]/40" onClick={() => setFilterOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col">
+          <div className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col pb-[env(safe-area-inset-bottom)]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border-subtle)]">
               <p className="h-eyebrow text-[var(--color-foreground)]">Filters</p>
-              <button onClick={() => setFilterOpen(false)} aria-label="Close filters" className="p-1 text-[var(--color-foreground)]">
+              <button onClick={() => setFilterOpen(false)} aria-label="Close filters" className="min-h-11 min-w-11 inline-flex items-center justify-center text-[var(--color-foreground)]">
                 <CloseIcon />
               </button>
             </div>

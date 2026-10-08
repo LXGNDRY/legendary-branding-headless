@@ -134,7 +134,7 @@ export default function HeroSplit({
               height={1200}
               className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-[1.5s] ease-[var(--ease-expo)] group-hover:scale-[1.04]"
               sizes="36vw"
-              loading="eager"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
             <div className="absolute bottom-8 left-8 right-8">

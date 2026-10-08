@@ -231,7 +231,7 @@ export default function QuickAddModal({
                               aria-label={label}
                               title={value}
                               style={swatchStyle}
-                              className={`relative h-9 w-9 shrink-0 rounded-full border-2 transition-all duration-150 ${
+                              className={`relative h-11 w-11 shrink-0 rounded-full border-2 transition-all duration-150 ${
                                 isActive
                                   ? 'border-[var(--color-text-primary)] ring-2 ring-[var(--color-text-primary)] ring-offset-2'
                                   : isAvailable
@@ -250,7 +250,7 @@ export default function QuickAddModal({
                             disabled={!isSelectable}
                             aria-pressed={isActive}
                             aria-label={label}
-                            className={`flex h-10 min-w-[3rem] items-center justify-center rounded-md border px-4 text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 ${
+                            className={`flex h-11 min-w-[3rem] items-center justify-center rounded-md border px-4 text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 ${
                               isActive
                                 ? 'border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)]'
                                 : isAvailable
