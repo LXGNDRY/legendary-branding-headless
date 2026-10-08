@@ -7,6 +7,7 @@ declare global {
   }
 }
 import {Link} from 'react-router';
+import {markKlaviyoOnsiteLoading} from '~/lib/klaviyo-onsite';
 
 /**
  * Analytics component — loads GA4, Meta Pixel, and other tracking scripts
@@ -96,6 +97,7 @@ function loadKlaviyo(companyId: string) {
   script.async = true;
   script.type = 'text/javascript';
   script.src = `https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=${companyId}`;
+  markKlaviyoOnsiteLoading();
   document.head.appendChild(script);
 }
 
