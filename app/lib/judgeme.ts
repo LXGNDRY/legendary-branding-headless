@@ -40,6 +40,7 @@ export interface JudgemeQuote {
   /** First name + last-initial only -- never the customer's full name. */
   reviewerName: string;
   productHandle?: string;
+  productTitle?: string;
 }
 
 /** A single review rendered in full on a product page (see fetchJudgemeProductReviews). */
@@ -61,6 +62,7 @@ interface JudgemeApiReview {
   curated?: string | null;
   reviewer?: {name?: string | null} | null;
   product_handle?: string | null;
+  product_title?: string | null;
   created_at?: string | null;
 }
 
@@ -165,34 +167,90 @@ async function fetchJudgemeReviewsRaw({
 interface FetchJudgemeQuotesOptions {
   apiToken: string;
   shopDomain: string;
-  /** Only include reviews at or above this rating. Defaults to 4. */
+  /** Only include reviews at or above this rating. Defaults to 5. */
   minRating?: number;
   /** Only include reviews with at least this many characters of body text. */
   minBodyLength?: number;
   perPage?: number;
 }
 
+function normalizeReviewBody(body: string): string {
+  return body.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
+
+// NOTE: generic template reviews found on the store (2026-10-08) -- each is
+// either reused verbatim across unrelated products or a one-line stock
+// phrase, not a real customer's words. Matched after normalization; any
+// other text repeated across reviews is caught by isTemplatedReview too.
+const TEMPLATED_REVIEW_BODIES = new Set(
+  [
+    'Fits as expected, looks amazing in person. Definitely coming back for more.',
+    'The fabric is high-quality and the print hasn’t faded after several washes.',
+    'This shirt has become one of my go-to pieces. Super comfortable and it looks great.',
+    'Well worth the price. The stitching and fit are both solid.',
+    'I got the graphic holds up after multiple washes.',
+    'This piece fit breathes well and keeps me cool.',
+    'I get compliments every time I wear it.',
+    'Fits perfectly and the design is 🔥',
+    'Legendary Branding always delivers. This one’s a classic already.',
+  ].map(normalizeReviewBody),
+);
+
+function countBodies(reviews: JudgemeApiReview[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const review of reviews) {
+    const key = normalizeReviewBody(review.body ?? '');
+    if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/** A known stock phrase, or text that appears on more than one review in `bodyCounts`. */
+export function isTemplatedReview(body: string, bodyCounts?: Map<string, number>): boolean {
+  const key = normalizeReviewBody(body);
+  return TEMPLATED_REVIEW_BODIES.has(key) || (bodyCounts?.get(key) ?? 0) > 1;
+}
+
+/**
+ * Real reviews for the homepage, filtered to ones that read as genuine and
+ * on-brand. The catalog also carries generic templated reviews whose exact
+ * text recurs across unrelated products ("Fits as expected, looks amazing
+ * in person..."), so any body that appears more than once in the fetched
+ * set is dropped, along with short or spam-curated reviews. At most one
+ * quote per product, newest first.
+ */
 export async function fetchJudgemeQuotes({
   apiToken,
   shopDomain,
-  minRating = 4,
-  minBodyLength = 20,
-  perPage = 20,
+  minRating = 5,
+  minBodyLength = 80,
+  perPage = 100,
 }: FetchJudgemeQuotesOptions): Promise<JudgemeQuote[]> {
   const reviews = await fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage});
 
-  return reviews
-    .filter(
-      (r) => r.rating >= minRating && (r.body ?? '').trim().length >= minBodyLength,
-    )
-    .map((r) => ({
-      id: r.id,
-      rating: r.rating,
-      title: r.title?.trim() || undefined,
-      body: r.body!.trim(),
-      reviewerName: toDisplayName(r.reviewer?.name, r.id),
-      productHandle: r.product_handle ?? undefined,
-    }));
+  const bodyCounts = countBodies(reviews);
+
+  const seenProducts = new Set<string>();
+  const quotes: JudgemeQuote[] = [];
+  for (const review of reviews) {
+    const body = (review.body ?? '').trim();
+    if (review.rating < minRating || body.length < minBodyLength) continue;
+    if (review.curated === 'spam') continue;
+    if (isTemplatedReview(body, bodyCounts)) continue;
+    const productKey = review.product_handle ?? `review-${review.id}`;
+    if (seenProducts.has(productKey)) continue;
+    seenProducts.add(productKey);
+    quotes.push({
+      id: review.id,
+      rating: review.rating,
+      title: review.title?.trim() || undefined,
+      body,
+      reviewerName: toDisplayName(review.reviewer?.name, review.id),
+      productHandle: review.product_handle ?? undefined,
+      productTitle: review.product_title?.trim() || undefined,
+    });
+  }
+  return quotes;
 }
 
 interface JudgemeProductLookupResponse {
@@ -283,6 +341,9 @@ export async function fetchJudgemeProductReviews({
   perPage = 100,
   maxPages = 5,
 }: FetchJudgemeProductReviewsOptions): Promise<JudgemeReview[]> {
+  // NOTE: deliberately unfiltered -- this list must match the Judge.me
+  // star rating and review count shown site-wide, which include every
+  // published review. Hide unwanted reviews in Judge.me itself.
   const toReviews = (raw: JudgemeApiReview[]) =>
     raw
       .filter((r) => (r.body ?? '').trim().length > 0)

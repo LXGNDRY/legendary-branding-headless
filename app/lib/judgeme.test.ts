@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {parseJudgemeBadge, fetchJudgemeQuotes} from './judgeme';
+import {parseJudgemeBadge, fetchJudgemeQuotes, fetchJudgemeProductReviews, isTemplatedReview} from './judgeme';
 
 describe('parseJudgemeBadge', () => {
   it('returns null for null/undefined/empty input', () => {
@@ -55,8 +55,8 @@ describe('fetchJudgemeQuotes', () => {
   it('filters out reviews below minRating and minBodyLength, masks full names', async () => {
     const body = JSON.stringify({
       reviews: [
-        {id: 1, rating: 5, body: 'This is a wonderfully long review body.', reviewer: {name: 'Jordan Alvarez'}, hidden: false},
-        {id: 2, rating: 2, body: 'This is also a long enough review body.', reviewer: {name: 'Taylor Smith'}, hidden: false},
+        {id: 1, rating: 5, body: 'Picked this up after seeing it online and it genuinely exceeded what I expected from the fit.', reviewer: {name: 'Jordan Alvarez'}, hidden: false},
+        {id: 2, rating: 4, body: 'Four stars, long enough to pass the length filter but not the rating one.', reviewer: {name: 'Taylor Smith'}, hidden: false},
         {id: 3, rating: 5, body: 'short', reviewer: {name: 'Sam Jones'}, hidden: false},
         {id: 4, rating: 5, body: 'This one is hidden and should be excluded entirely.', reviewer: {name: 'Alex Kim'}, hidden: true},
       ],
@@ -74,7 +74,7 @@ describe('fetchJudgemeQuotes', () => {
   it('falls back to a deterministic placeholder name for a single-token name', async () => {
     const body = JSON.stringify({
       reviews: [
-        {id: 7, rating: 5, body: 'A sufficiently long review body for the quote card.', reviewer: {name: 'Madonna'}, hidden: false},
+        {id: 7, rating: 5, body: 'Picked this up after seeing it online and it genuinely exceeded what I expected from the fit.', reviewer: {name: 'Madonna'}, hidden: false},
       ],
     });
     global.fetch = vi.fn().mockResolvedValue(new Response(body, {status: 200}));
@@ -89,5 +89,75 @@ describe('fetchJudgemeQuotes', () => {
     global.fetch = vi.fn().mockResolvedValue(new Response(body, {status: 200}));
     const quotesAgain = await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com'});
     expect(quotesAgain[0].reviewerName).toBe(quotes[0].reviewerName);
+  });
+
+  it('drops templated text reused across reviews, spam, and repeat products', async () => {
+    const templated = 'Fits as expected, looks amazing in person. Definitely coming back for more and more again.';
+    const body = JSON.stringify({
+      reviews: [
+        {id: 1, rating: 5, body: templated, product_handle: 'tee', reviewer: {name: 'A B'}},
+        {id: 2, rating: 5, body: templated.toUpperCase(), product_handle: 'hoodie', reviewer: {name: 'C D'}},
+        {id: 3, rating: 5, body: 'Quiet luxury type beat. People keep asking about the patch on the sleeve every time I wear it.', product_handle: 'crew', product_title: 'Crewneck', reviewer: {name: 'Elliot Vance'}},
+        {id: 4, rating: 5, body: 'Second review on the same crewneck, also long enough to otherwise qualify for the homepage.', product_handle: 'crew', reviewer: {name: 'E F'}},
+        {id: 5, rating: 5, body: 'Flagged as spam by Judge.me curation but otherwise long enough to qualify for the homepage.', curated: 'spam', product_handle: 'hat', reviewer: {name: 'G H'}},
+      ],
+    });
+    global.fetch = vi.fn().mockResolvedValue(new Response(body, {status: 200}));
+
+    const quotes = await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com'});
+
+    expect(quotes.map((q) => q.id)).toEqual([3]);
+    expect(quotes[0].productTitle).toBe('Crewneck');
+    expect(quotes[0].productHandle).toBe('crew');
+  });
+
+  it('treats identical non-Latin reviews as duplicates', async () => {
+    const jp = 'このパーカーは本当に最高です。生地が厚くて、洗濯しても形が崩れません。毎日着ています。友達にも勧めました。サイズ感もちょうど良く、デザインもかっこいいです。';
+    const body = JSON.stringify({
+      reviews: [
+        {id: 1, rating: 5, body: jp, product_handle: 'a', reviewer: {name: 'A B'}},
+        {id: 2, rating: 5, body: jp, product_handle: 'b', reviewer: {name: 'C D'}},
+      ],
+    });
+    global.fetch = vi.fn().mockResolvedValue(new Response(body, {status: 200}));
+    const quotes = await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com', minBodyLength: 20});
+    expect(quotes).toEqual([]);
+  });
+});
+
+describe('templated reviews', () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('recognises known stock phrases regardless of apostrophe style', () => {
+    expect(isTemplatedReview("The fabric is high-quality and the print hasn't faded after several washes.")).toBe(true);
+    expect(isTemplatedReview('I get compliments every time I wear it.')).toBe(true);
+    expect(isTemplatedReview('Wore this in the rain twice now and it held up both times.')).toBe(false);
+  });
+
+  it('keeps every review on a product page list so it matches the Judge.me count', async () => {
+    const reviews = [
+      {id: 1, rating: 5, body: 'Fits as expected, looks amazing in person. Definitely coming back for more.', product_handle: 'tee'},
+      {id: 2, rating: 5, body: 'Same text twice on one product.', product_handle: 'tee'},
+      {id: 3, rating: 5, body: 'Same text twice on one product.', product_handle: 'tee'},
+      {id: 4, rating: 4, body: 'Ordered a medium and it fits like a large. Good to know before ordering.', product_handle: 'tee'},
+    ];
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/products/')) return new Response(JSON.stringify({product: {id: 42}}), {status: 200});
+      const page = new URL(url).searchParams.get('page');
+      return new Response(JSON.stringify({reviews: page === '1' ? reviews : []}), {status: 200});
+    }) as typeof fetch;
+
+    const result = await fetchJudgemeProductReviews({
+      apiToken: 'x',
+      shopDomain: 'test.myshopify.com',
+      productId: '1',
+      productHandle: 'tee',
+    });
+
+    expect(result.map((r) => r.id)).toEqual([1, 2, 3, 4]);
   });
 });
