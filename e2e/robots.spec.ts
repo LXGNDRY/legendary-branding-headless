@@ -13,6 +13,7 @@ test.describe('robots.txt', () => {
     expect(body).toContain('Disallow: /cart');
     expect(body).toContain('Disallow: /search');
     expect(body).toMatch(/Sitemap: https?:\/\/\S+\/sitemap\.xml/);
+    expect(body).toContain('User-agent: OAI-SearchBot');
     expect(body).not.toMatch(/^Disallow: \/$/m);
   });
 });

@@ -1,19 +1,34 @@
 /**
- * AI search/shopping and training crawlers the owner explicitly welcomes
- * (agentic commerce). They get the same rules as everyone else: a named
- * group REPLACES the wildcard group for that crawler, so it must repeat
- * every rule. Remove a name here to stop naming it; delete a name and add a
- * `Disallow: /` group to block it.
+ * AI SEARCH crawlers: these decide whether the brand can be found and cited in
+ * AI answers. Keep them allowed. Google-Extended is a control token (not a
+ * crawler): it gates Gemini grounding, i.e. Google serving this site's Search
+ * index content to Gemini at answer time, and it also permits Gemini training.
+ * It does not affect Google Search ranking or inclusion.
  */
-export const AI_CRAWLERS = [
-  'GPTBot',
-  'OAI-SearchBot',
-  'ClaudeBot',
+export const AI_SEARCH_CRAWLERS = [
+  'OAI-SearchBot', // ChatGPT search -- sites that opt out are not shown in its answers
+  'Claude-SearchBot',
   'PerplexityBot',
+  'meta-webindexer', // Meta AI search results and citations
+  'Amzn-SearchBot', // Alexa and other Amazon search
   'Google-Extended',
-  'meta-externalagent',
-  'Amazonbot',
 ] as const;
+
+/**
+ * Fetchers that load a page when a person asks an assistant about it. Several
+ * say they may ignore robots.txt (ChatGPT-User, Perplexity-User,
+ * meta-externalfetcher, Amzn-User); they are named so the intent is explicit
+ * and the rules still apply wherever they are honoured.
+ */
+export const AI_ASSISTANT_FETCHERS = ['ChatGPT-User', 'Claude-User', 'Perplexity-User', 'meta-externalfetcher', 'Amzn-User'] as const;
+
+/**
+ * Model-TRAINING crawlers. Owner policy: allowed (agentic commerce). This is
+ * independent of search visibility: OpenAI and Anthropic both document that
+ * search/assistant bots can stay allowed while these are blocked. Pass
+ * `allowTraining: false` to buildRobotsTxt to switch them to `Disallow: /`.
+ */
+export const AI_TRAINING_CRAWLERS = ['GPTBot', 'ClaudeBot', 'meta-externalagent', 'Amazonbot'] as const;
 
 /**
  * Pages with no search value: personal, transactional or thin. Prefix
@@ -35,19 +50,32 @@ export function isIndexableHost(host: string): boolean {
   return !host.toLowerCase().endsWith('.myshopify.dev');
 }
 
-export function buildRobotsTxt({origin, indexable}: {origin: string; indexable: boolean}): string {
+const group = (comment: string, agents: readonly string[], lines: readonly string[]) => [
+  `# ${comment}`,
+  ...agents.map((agent) => `User-agent: ${agent}`),
+  ...lines,
+  '',
+];
+
+export function buildRobotsTxt({
+  origin,
+  indexable,
+  allowTraining = true,
+}: {
+  origin: string;
+  indexable: boolean;
+  allowTraining?: boolean;
+}): string {
   if (!indexable) return 'User-agent: *\nDisallow: /\n';
 
   const rules = [...DISALLOWED_PATHS.map((path) => `Disallow: ${path}`), ...DISALLOWED_PARAMS.map((param) => `Disallow: /*?*${param}=`)];
+  // NOTE: a named group REPLACES the wildcard group for that crawler, so each one repeats every rule.
+  const open = ['Allow: /', ...rules];
 
   return [
-    'User-agent: *',
-    ...rules,
-    '',
-    ...AI_CRAWLERS.map((crawler) => `User-agent: ${crawler}`),
-    'Allow: /',
-    ...rules,
-    '',
+    ...group('Everyone else: Google, Bing, Apple, social previews, any crawler not named below', ['*'], rules),
+    ...group('AI search and assistant crawlers: allowed so the brand can be found and cited', [...AI_SEARCH_CRAWLERS, ...AI_ASSISTANT_FETCHERS], open),
+    ...group('AI model-training crawlers', AI_TRAINING_CRAWLERS, allowTraining ? open : ['Disallow: /']),
     `Sitemap: ${origin}/sitemap.xml`,
     '',
   ].join('\n');
