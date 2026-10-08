@@ -1,4 +1,5 @@
 import JsonLd from '~/components/ui/JsonLd';
+import {useStoreTrust} from '~/components/ui/TrustSignals';
 
 /**
  * SEO Schema.org JSON-LD generators
@@ -6,13 +7,15 @@ import JsonLd from '~/components/ui/JsonLd';
  * All functions return the JSON-LD data object — render with <JsonLd data={...} />
  */
 
-export function organizationSchema() {
+export function organizationSchema({logoUrl}: {logoUrl?: string | null} = {}) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Legendary Branding',
     url: 'https://www.legendary-branding.com',
-    logo: 'https://www.legendary-branding.com/favicon.ico',
+    // The brand logo set in Shopify admin (Settings → Brand) when there is
+    // one; the favicon is too small for Google's logo guidelines.
+    logo: logoUrl || 'https://www.legendary-branding.com/favicon.ico',
     // Only the two profiles actually configured/live for the brand --
     // verified against the store's real social settings. Twitter and
     // YouTube URLs were previously fabricated placeholders that pointed
@@ -25,6 +28,8 @@ export function organizationSchema() {
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
+      email: 'lb@legendary-branding.com',
+      url: 'https://www.legendary-branding.com/policies/contact',
       availableLanguage: ['English'],
     },
   };
@@ -187,6 +192,8 @@ export function productSchema({
   vendor,
   variants,
   aggregateRating,
+  returnDays,
+  returnCountries = [],
 }: {
   id: string;
   title: string;
@@ -204,7 +211,21 @@ export function productSchema({
   /** Judge.me's synced rating badge -- see parseJudgemeBadge. Omitted entirely
    * (rather than rendered as zero) for a product with no reviews yet. */
   aggregateRating?: {ratingValue: number; reviewCount: number};
+  /** Return window from the store's refund policy (see ~/lib/trust); omitted when it states none. */
+  returnDays?: number | null;
+  /** Markets the policy applies to; Google accepts up to 50 country codes. */
+  returnCountries?: string[];
 }) {
+  const returnPolicy = returnDays
+    ? {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: returnCountries.length ? returnCountries.slice(0, 50) : 'US',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: returnDays,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        merchantReturnLink: 'https://www.legendary-branding.com/policies/refund-policy',
+      }
+    : null;
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -229,6 +250,8 @@ export function productSchema({
         : 'https://schema.org/OutOfStock',
       url: `https://www.legendary-branding.com/products/${handle}`,
       itemCondition: 'https://schema.org/NewCondition',
+      seller: {'@type': 'Organization', name: 'Legendary Branding'},
+      ...(returnPolicy ? {hasMerchantReturnPolicy: returnPolicy} : {}),
     })),
     ...(aggregateRating
       ? {
@@ -247,9 +270,10 @@ export function productSchema({
  * Renders in root layout on every page
  */
 export function DefaultSeoSchema() {
+  const {logoUrl} = useStoreTrust();
   return (
     <>
-      <JsonLd data={organizationSchema()} />
+      <JsonLd data={organizationSchema({logoUrl})} />
       <JsonLd data={websiteSchema()} />
     </>
   );

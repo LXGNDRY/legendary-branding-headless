@@ -8,6 +8,7 @@ import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
 import {useTranslation} from '~/lib/i18n';
+import TrustSignals from '~/components/ui/TrustSignals';
 
 function CloseIcon() {
   return (
@@ -325,7 +326,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         // keyboard-focusable; inert does.
         aria-hidden={!open}
         inert={!open}
-        className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform ${
+        className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] pb-[env(safe-area-inset-bottom)] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{
@@ -512,6 +513,8 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 {t('cart.checkout')}
               </Button>
             )}
+
+            <TrustSignals />
 
             <div className="flex justify-center pt-1">
               <Link

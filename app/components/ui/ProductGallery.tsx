@@ -143,7 +143,7 @@ export default function ProductGallery({
                 aspectRatio="1/1"
                 width={200}
                 height={200}
-                sizes="10vw"
+                sizes="(min-width: 1024px) 8vw, 72px"
                 loading="lazy"
                 className="w-full object-cover"
               />

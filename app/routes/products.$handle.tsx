@@ -45,6 +45,7 @@ import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge, fetchJudgemeProductReviews} from '~/lib/judgeme';
 import ProductReviewList from '~/components/sections/ProductReviewList';
+import TrustSignals, {useStoreTrust} from '~/components/ui/TrustSignals';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
@@ -392,7 +393,7 @@ function StickyBuyBar({
             action={CartForm.ACTIONS.LinesAdd}
             inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
           >
-            <button type="submit" className="h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs">
+            <button type="submit" className="h-btn-primary min-h-11 shrink-0 whitespace-nowrap px-6 py-2 text-xs">
               {t('action.addToBag')}
             </button>
           </CartForm>
@@ -400,7 +401,7 @@ function StickyBuyBar({
           <button
             type="button"
             disabled
-            className={`h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs opacity-40 cursor-not-allowed ${!variant ? 'h-wiggle-bounce' : ''}`}
+            className={`h-btn-primary min-h-11 shrink-0 whitespace-nowrap px-6 py-2 text-xs opacity-40 cursor-not-allowed ${!variant ? 'h-wiggle-bounce' : ''}`}
           >
             {variant ? 'Sold Out' : 'Choose an option'}
           </button>
@@ -416,7 +417,7 @@ function QuantitySelector({value, onChange}: {value: number; onChange: (v: numbe
       <button
         type="button"
         onClick={() => onChange(Math.max(1, value - 1))}
-        className="w-10 h-10 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors disabled:opacity-40"
+        className="w-11 h-11 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors disabled:opacity-40"
         aria-label="Decrease quantity"
         disabled={value <= 1}
       >
@@ -428,7 +429,7 @@ function QuantitySelector({value, onChange}: {value: number; onChange: (v: numbe
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-10 h-10 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors"
+        className="w-11 h-11 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors"
         aria-label="Increase quantity"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
@@ -554,6 +555,7 @@ export default function ProductPage() {
   // for the full review list (formerly cdn.judge.me/widget_v3.js) has been
   // retired -- see fetchJudgemeProductReviews in ~/lib/judgeme for the
   // reviews list itself, fetched server-side instead.
+  const storeTrust = useStoreTrust();
   const judgemeBadgeHtml = product.metafields?.find((m) => m?.key === 'badge')?.value;
   const judgemeRating = parseJudgemeBadge(judgemeBadgeHtml);
 
@@ -574,6 +576,8 @@ export default function ProductPage() {
     aggregateRating: judgemeRating
       ? {ratingValue: judgemeRating.rating, reviewCount: judgemeRating.count}
       : undefined,
+    returnDays: storeTrust.returnDays,
+    returnCountries: storeTrust.returnCountries,
   });
 
   const breadcrumbJsonLd = breadcrumbSchema([
@@ -789,7 +793,7 @@ export default function ProductPage() {
                           // normal labeled text pill below is always
                           // legible instead.
                           if (isColor && swatchStyle) {
-                            const swatchClass = `relative h-9 w-9 rounded-full border-2 transition-all duration-150 shrink-0 ${
+                            const swatchClass = `relative h-11 w-11 rounded-full border-2 transition-all duration-150 shrink-0 ${
                               isActive
                                 ? 'border-[var(--color-text-primary)] ring-2 ring-offset-2 ring-[var(--color-text-primary)]'
                                 : isAvailable
@@ -917,9 +921,7 @@ export default function ProductPage() {
                   variant={selectedVariant as ProductVariantFragment | null | undefined}
                   quantity={quantity}
                 />
-                <p className="text-center text-[0.7rem] text-[var(--color-text-tertiary)]">
-                  {t('cart.secureCheckout')} · SSL encrypted
-                </p>
+                <TrustSignals />
                 {!selectedVariant?.availableForSale && selectedVariant && (
                   <section id="restock-signup" className="rounded-md border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] p-1">
                     <div className="px-3 pt-3">
