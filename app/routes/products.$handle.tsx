@@ -45,6 +45,7 @@ import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge, fetchJudgemeProductReviews} from '~/lib/judgeme';
 import ProductReviewList from '~/components/sections/ProductReviewList';
+import TrustSignals, {useStoreTrust} from '~/components/ui/TrustSignals';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
@@ -554,6 +555,7 @@ export default function ProductPage() {
   // for the full review list (formerly cdn.judge.me/widget_v3.js) has been
   // retired -- see fetchJudgemeProductReviews in ~/lib/judgeme for the
   // reviews list itself, fetched server-side instead.
+  const storeTrust = useStoreTrust();
   const judgemeBadgeHtml = product.metafields?.find((m) => m?.key === 'badge')?.value;
   const judgemeRating = parseJudgemeBadge(judgemeBadgeHtml);
 
@@ -574,6 +576,7 @@ export default function ProductPage() {
     aggregateRating: judgemeRating
       ? {ratingValue: judgemeRating.rating, reviewCount: judgemeRating.count}
       : undefined,
+    returnDays: storeTrust.returnDays,
   });
 
   const breadcrumbJsonLd = breadcrumbSchema([
@@ -917,9 +920,7 @@ export default function ProductPage() {
                   variant={selectedVariant as ProductVariantFragment | null | undefined}
                   quantity={quantity}
                 />
-                <p className="text-center text-[0.7rem] text-[var(--color-text-tertiary)]">
-                  {t('cart.secureCheckout')} · SSL encrypted
-                </p>
+                <TrustSignals />
                 {!selectedVariant?.availableForSale && selectedVariant && (
                   <section id="restock-signup" className="rounded-md border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] p-1">
                     <div className="px-3 pt-3">

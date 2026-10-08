@@ -8,6 +8,7 @@ import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
 import {useTranslation} from '~/lib/i18n';
+import TrustSignals from '~/components/ui/TrustSignals';
 
 function CloseIcon() {
   return (
@@ -512,6 +513,8 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 {t('cart.checkout')}
               </Button>
             )}
+
+            <TrustSignals />
 
             <div className="flex justify-center pt-1">
               <Link

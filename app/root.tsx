@@ -26,6 +26,7 @@ import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import DiscountsPopup from '~/components/ui/DiscountsPopup';
 import ChatWidget from '~/components/chat/ChatWidget';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
+import {STORE_TRUST_QUERY, toStoreTrust} from '~/lib/trust';
 import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
@@ -162,7 +163,7 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       })
     : Promise.resolve([]);
 
-  const [cartData, localizationResult, shop, menuResult] = await Promise.all([
+  const [cartData, localizationResult, shop, menuResult, storeTrustResult] = await Promise.all([
     cart.get(),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
@@ -182,6 +183,16 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       },
       cache: CacheLong(),
     }),
+    // Optional: a failure here only hides trust copy, never the page.
+    context.storefront
+      .query(STORE_TRUST_QUERY, {
+        variables: {
+          country: context.storefront.i18n.country,
+          language: context.storefront.i18n.language,
+        },
+        cache: CacheLong(),
+      })
+      .catch(() => null),
   ]);
 
   const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
@@ -216,6 +227,7 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     localization: localizationResult.localization as LocalizationData,
     navCollections,
     shop,
+    storeTrust: toStoreTrust(storeTrustResult),
     activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on

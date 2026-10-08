@@ -1,3 +1,4 @@
+import {useStoreTrust} from '~/components/ui/TrustSignals';
 interface Stat {
   value: string;
   label: string;
@@ -12,7 +13,6 @@ interface StatStripProps {
 const DEFAULT_STATS: Stat[] = [
   {value: '190GSM+', label: 'Fabric Weight'},
   {value: '380-460GSM', label: 'Hoodies'},
-  {value: '30 Days', label: 'Free Returns'},
   {value: 'Free', label: 'Shipping, Every Order'},
 ];
 
@@ -25,6 +25,12 @@ export default function StatStrip({
   className = '',
   variant = 'dark',
 }: StatStripProps) {
+  // NOTE: the returns stat comes from the store's refund policy (via the
+  // root loader) so it can't contradict it; hidden when no window is stated.
+  const {returnDays} = useStoreTrust();
+  const shownStats = stats === DEFAULT_STATS && returnDays
+    ? [...stats.slice(0, 2), {value: `${returnDays} Days`, label: 'Returns'}, ...stats.slice(2)]
+    : stats;
   const bg = variant === 'dark'
     ? 'bg-[var(--color-bg-level-1)] text-[var(--color-text-primary)] border-[var(--color-border-muted)]'
     : 'bg-[var(--color-bg-level-0)] text-[var(--color-text-primary)] border-[var(--color-border-muted)]';
@@ -36,7 +42,7 @@ export default function StatStrip({
       className={`flex flex-wrap border-y ${bg} ${className}`}
       role="list"
     >
-      {stats.map((stat) => (
+      {shownStats.map((stat) => (
         <div
           key={stat.label}
           className="flex flex-col items-center justify-center text-center px-6 md:px-10 py-10 flex-1 min-w-[140px] border-r border-inherit last:border-r-0"
