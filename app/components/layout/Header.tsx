@@ -246,16 +246,10 @@ function MobileMenu({
       // (they're only moved off-screen via CSS transform) -- `inert`
       // removes them from the tab order and assistive-tech focus too,
       // which is what axe's focusable-disabled/focusable-not-tabbable
-      // rules require for anything marked aria-hidden. Passed as a real
-      // string ('' present / undefined omitted) rather than a boolean:
-      // @types/react doesn't declare `inert`, and React stringifies an
-      // *unrecognized* attribute's boolean `false` as the literal text
-      // "false" instead of omitting it -- any string value, even "false",
-      // makes an element inert to the browser. A string value (rendered
-      // synchronously, so it's correct in the server-rendered HTML too,
-      // unlike a client-only effect) has no such ambiguity.
+      // rules require for anything marked aria-hidden. React 19 treats
+      // `inert` as a boolean (and `inert=""` as false), so pass a boolean.
       aria-hidden={!open}
-      {...({inert: !open ? '' : undefined} as {inert?: string})}
+      inert={!open}
     >
       <div className="flex items-center justify-between px-5 h-[60px] border-b border-[var(--color-border-muted)]">
         <Link
