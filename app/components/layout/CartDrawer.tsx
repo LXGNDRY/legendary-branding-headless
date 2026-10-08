@@ -322,10 +322,9 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         aria-label="Shopping cart"
         // See the matching comment in Header.tsx's MobileMenu -- aria-hidden
         // alone doesn't stop the closed drawer's buttons/links from being
-        // keyboard-focusable; inert does, passed as a string for the same
-        // reason documented there.
+        // keyboard-focusable; inert does.
         aria-hidden={!open}
-        {...({inert: !open ? '' : undefined} as {inert?: string})}
+        inert={!open}
         className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}

@@ -106,6 +106,14 @@ All three must pass with zero errors. No exceptions.
 - Run `npm audit` before committing new dependencies; no high/critical vulnerabilities.
 - Add new `@shopify/*` packages only when there is no existing utility in the installed Hydrogen version.
 
+### Upgrading `@shopify/*`, `react-router`, `react`, or `vite`
+A green build is **not** sufficient to merge these upgrades. Shopify ships behavioural changes in patch releases (e.g. Hydrogen 2026.4.6 made consent require Hydrogen's `createRequestHandler` proxy — it compiled cleanly and would have silently broken consent and analytics in production).
+1. Read the full release notes / CHANGELOG for **every** version skipped, not just what breaks the build. Grep the installed `.d.ts` for `@deprecated` notes on APIs this repo uses.
+2. Check declared peer ranges (`npm view <pkg>@<ver> peerDependencies`) — `--legacy-peer-deps` hides mismatches, so a clean install proves nothing about compatibility.
+3. Build, then run the built worker with `shopify hydrogen preview` and verify: homepage, PDP (variant switch + add to cart), cart drawer, and `POST /api/unstable/graphql.json` returns 200 (consent/analytics proxy).
+4. Run `npm run test:e2e` locally against the preview, including `e2e/storefront-proxy.spec.ts`.
+5. Record what was verified in the PR description. Never merge on CI green alone.
+
 ### Commits
 - One atomic milestone per commit. No WIP commits.
 - Format: `feat(m9): description` continuing from the last milestone number.

@@ -13,7 +13,7 @@ import type {RefObject} from 'react';
 export function useFocusTrap(
   active: boolean,
   onEscape?: () => void,
-): {containerRef: RefObject<HTMLDivElement>} {
+): {containerRef: RefObject<HTMLDivElement | null>} {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
