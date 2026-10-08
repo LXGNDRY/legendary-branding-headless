@@ -26,7 +26,7 @@ import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import DiscountsPopup from '~/components/ui/DiscountsPopup';
 import ChatWidget from '~/components/chat/ChatWidget';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
-import {STORE_TRUST_QUERY, toStoreTrust} from '~/lib/trust';
+import {STORE_TRUST_QUERY, toStoreTrust, withBudget} from '~/lib/trust';
 import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
@@ -105,6 +105,9 @@ export const meta: MetaFunction = () => [
   {name: 'twitter:description', content: 'Premium streetwear built to last.'},
 ];
 
+/** How long a page waits for the optional store trust lookup before rendering without it. */
+const STORE_TRUST_BUDGET_MS = 700;
+
 export async function loader({context, request}: LoaderFunctionArgs) {
   const {cart, customerAccount} = context;
 
@@ -163,6 +166,17 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       })
     : Promise.resolve([]);
 
+  // Optional trust facts: started now but only waited on for a short budget,
+  // so a slow lookup on a cold cache can't delay every route's response.
+  // waitUntil lets it finish and fill the cache for the next request.
+  const storeTrustLookup = context.storefront.query(STORE_TRUST_QUERY, {
+    // NOTE: always the English source policy -- the return-window parser
+    // reads English text, and a translation must not hide it.
+    variables: {country: context.storefront.i18n.country, language: 'EN'},
+    cache: CacheLong(),
+  });
+  (context.waitUntil ?? (() => {}))(storeTrustLookup.then(() => undefined, () => undefined));
+
   const [cartData, localizationResult, shop, menuResult, storeTrustResult] = await Promise.all([
     cart.get(),
     context.storefront.query(LOCALIZATION_QUERY, {
@@ -183,15 +197,7 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       },
       cache: CacheLong(),
     }),
-    // Optional: a failure here only hides trust copy, never the page.
-    context.storefront
-      .query(STORE_TRUST_QUERY, {
-        // NOTE: always the English source policy -- the return-window
-        // parser reads English text, and a translation must not hide it.
-        variables: {country: context.storefront.i18n.country, language: 'EN'},
-        cache: CacheLong(),
-      })
-      .catch(() => null),
+    withBudget(storeTrustLookup, STORE_TRUST_BUDGET_MS),
   ]);
 
   const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
