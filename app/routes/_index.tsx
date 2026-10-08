@@ -179,7 +179,7 @@ export async function loader({context}: LoaderFunctionArgs) {
 }
 
 const MARQUEE_ITEMS = [
-  '190GSM+ PREMIUM-WEIGHT TEES',
+  '220GSM+ PREMIUM-WEIGHT TEES',
   'MADE TO ORDER',
   'FREE SHIPPING ON EVERY ORDER',
   `$${EXPRESS_SHIPPING_COST} EXPRESS SHIPPING AVAILABLE`,
@@ -216,7 +216,7 @@ export default function Homepage() {
     <div>
       {/* 1 — Split hero */}
       <HeroSplit
-        eyebrow="190GSM+ · Made To Order · DTG Prints"
+        eyebrow="220GSM+ · Made To Order · DTG Prints"
         heading={`Legendary\nBranding.`}
         subtext="Premium Streetwear. Premium-weight essentials built to last."
         primaryLabel="Shop Now"
@@ -261,7 +261,7 @@ export default function Homepage() {
         theme="dark"
         eyebrow="Our Craft"
         heading="Built different. Made to last."
-        body="Every piece starts with fabric weight most brands won't touch: 190GSM+ premium-weight cotton, structured for the streets. Made to order. No shortcuts, no restocks."
+        body="Every piece starts with fabric weight most brands won't touch: 220GSM+ premium-weight cotton, structured for the streets. Made to order. No shortcuts, no restocks."
         primaryLabel="Shop the collection"
         primaryHref="/collections/all-products"
         secondaryLabel="Our story"
