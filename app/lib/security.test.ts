@@ -29,6 +29,23 @@ describe('Security headers', () => {
       expect(hsts).toContain('includeSubDomains');
     });
 
+    // Hosts observed loading the live "Join the GOAT Club" Klaviyo popup in a
+    // real browser; blocking either leaves the popup with broken images.
+    it('allows Klaviyo sign-up form image hosts in img-src', () => {
+      const imgSrc = SECURITY_HEADERS['Content-Security-Policy']
+        .split(';')
+        .map((d) => d.trim())
+        .find((d) => d.startsWith('img-src '));
+      expect(imgSrc).toBeDefined();
+      for (const host of [
+        '*.klaviyo.com',
+        'cdn.klaviyomail.com',
+        'd3k81ch9hvuctc.cloudfront.net',
+      ]) {
+        expect(imgSrc!.split(/\s+/)).toContain(host);
+      }
+    });
+
     it('disables payment API in permissions policy', () => {
       expect(SECURITY_HEADERS['Permissions-Policy']).toContain('payment=()');
     });

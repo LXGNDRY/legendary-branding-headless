@@ -3,6 +3,11 @@ import {Link} from 'react-router';
 import type {ActiveDiscount} from '~/lib/discounts';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useBodyScrollLock, isBodyScrollLocked} from '~/hooks/useBodyScrollLock';
+import {
+  hasKlaviyoFormOpened,
+  klaviyoGraceRemainingMs,
+  onKlaviyoFormOpen,
+} from '~/lib/klaviyo-onsite';
 
 /** How long after page load the popup appears, once eligible to show at all. */
 const SHOW_DELAY_MS = 5000;
@@ -71,7 +76,7 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
       // tick could both read the pre-claim timestamp before either writes,
       // and both show the popup -- a plain re-read closes the common case
       // (one tab already finished) but not that simultaneous one.
-      if (cancelled) return;
+      if (cancelled || hasKlaviyoFormOpened()) return;
       const lastShown = readLastShown();
       if (lastShown && Date.now() - lastShown < REPEAT_SUPPRESS_MS) return;
       setOpen(true);
@@ -80,6 +85,16 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
 
     function attemptOpen() {
       if (cancelled) return;
+      // Klaviyo's sign-up popup takes precedence: never show ours on a page
+      // view where it opened, and give it its full grace window to open
+      // first. Not recording a "shown" timestamp here means ours can still
+      // appear on a later visit while Klaviyo's own cooldown suppresses it.
+      if (hasKlaviyoFormOpened()) return;
+      const klaviyoGrace = klaviyoGraceRemainingMs();
+      if (klaviyoGrace > 0) {
+        timer = setTimeout(attemptOpen, klaviyoGrace);
+        return;
+      }
       // The cart drawer, mobile menu, and size guide modal all hold the
       // shared body-scroll lock while open -- if one of those is already
       // up, wait rather than stacking a second focus-trapped overlay (and
@@ -110,6 +125,10 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
     // without re-triggering the timer on every re-render of the array.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discounts.length]);
+
+  // Klaviyo can still open after ours (e.g. consent accepted mid-visit);
+  // yield immediately so the two dialogs never stack.
+  useEffect(() => onKlaviyoFormOpen(() => setOpen(false)), []);
 
   // Shares the module-level lock count with every other overlay (cart
   // drawer, mobile menu, size guide modal) -- see useBodyScrollLock's own
