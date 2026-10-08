@@ -280,7 +280,7 @@ export default function App() {
 
   // Auto-open cart drawer when an add-to-cart action completes.
   // The submitted action lives inside the JSON value under
-  // CartForm.INPUT_NAME (see ProductCard.handleQuickAdd and CartForm's own
+  // CartForm.INPUT_NAME (see QuickAddModal.handleAdd and CartForm's own
   // submissions), not a plain "cartAction" field -- reading the wrong key
   // meant this never actually fired.
   useEffect(() => {

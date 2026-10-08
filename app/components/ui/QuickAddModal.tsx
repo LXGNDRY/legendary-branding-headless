@@ -87,8 +87,10 @@ export default function QuickAddModal({
     if (product) setSelection(initialSelection(product.options));
   }, [product]);
 
-  // The cart drawer opens as soon as the add lands; get out of its way.
-  const added = cartFetcher.state === 'idle' && cartFetcher.data != null && !cartFetcher.data.errors?.length;
+  // The cart drawer opens as soon as the add lands (fetcher `loading`), so
+  // close then rather than at `idle` -- two modal focus traps must never be
+  // active at once.
+  const added = cartFetcher.state !== 'submitting' && cartFetcher.data != null && !cartFetcher.data.errors?.length;
   useEffect(() => {
     if (added) onClose();
   }, [added, onClose]);
