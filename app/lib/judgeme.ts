@@ -40,6 +40,7 @@ export interface JudgemeQuote {
   /** First name + last-initial only -- never the customer's full name. */
   reviewerName: string;
   productHandle?: string;
+  productTitle?: string;
 }
 
 /** A single review rendered in full on a product page (see fetchJudgemeProductReviews). */
@@ -61,6 +62,7 @@ interface JudgemeApiReview {
   curated?: string | null;
   reviewer?: {name?: string | null} | null;
   product_handle?: string | null;
+  product_title?: string | null;
   created_at?: string | null;
 }
 
@@ -165,34 +167,61 @@ async function fetchJudgemeReviewsRaw({
 interface FetchJudgemeQuotesOptions {
   apiToken: string;
   shopDomain: string;
-  /** Only include reviews at or above this rating. Defaults to 4. */
+  /** Only include reviews at or above this rating. Defaults to 5. */
   minRating?: number;
   /** Only include reviews with at least this many characters of body text. */
   minBodyLength?: number;
   perPage?: number;
 }
 
+function normalizeReviewBody(body: string): string {
+  return body.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+/**
+ * Real reviews for the homepage, filtered to ones that read as genuine and
+ * on-brand. The catalog also carries generic templated reviews whose exact
+ * text recurs across unrelated products ("Fits as expected, looks amazing
+ * in person..."), so any body that appears more than once in the fetched
+ * set is dropped, along with short or spam-curated reviews. At most one
+ * quote per product, newest first.
+ */
 export async function fetchJudgemeQuotes({
   apiToken,
   shopDomain,
-  minRating = 4,
-  minBodyLength = 20,
-  perPage = 20,
+  minRating = 5,
+  minBodyLength = 80,
+  perPage = 100,
 }: FetchJudgemeQuotesOptions): Promise<JudgemeQuote[]> {
   const reviews = await fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage});
 
-  return reviews
-    .filter(
-      (r) => r.rating >= minRating && (r.body ?? '').trim().length >= minBodyLength,
-    )
-    .map((r) => ({
-      id: r.id,
-      rating: r.rating,
-      title: r.title?.trim() || undefined,
-      body: r.body!.trim(),
-      reviewerName: toDisplayName(r.reviewer?.name, r.id),
-      productHandle: r.product_handle ?? undefined,
-    }));
+  const bodyCounts = new Map<string, number>();
+  for (const review of reviews) {
+    const key = normalizeReviewBody(review.body ?? '');
+    if (key) bodyCounts.set(key, (bodyCounts.get(key) ?? 0) + 1);
+  }
+
+  const seenProducts = new Set<string>();
+  const quotes: JudgemeQuote[] = [];
+  for (const review of reviews) {
+    const body = (review.body ?? '').trim();
+    if (review.rating < minRating || body.length < minBodyLength) continue;
+    if (review.curated === 'spam') continue;
+    if ((bodyCounts.get(normalizeReviewBody(body)) ?? 0) > 1) continue;
+    const productKey = review.product_handle ?? `review-${review.id}`;
+    if (seenProducts.has(productKey)) continue;
+    seenProducts.add(productKey);
+    quotes.push({
+      id: review.id,
+      rating: review.rating,
+      title: review.title?.trim() || undefined,
+      body,
+      reviewerName: toDisplayName(review.reviewer?.name, review.id),
+      productHandle: review.product_handle ?? undefined,
+      productTitle: review.product_title?.trim() || undefined,
+    });
+  }
+  return quotes;
 }
 
 interface JudgemeProductLookupResponse {
