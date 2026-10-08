@@ -227,9 +227,14 @@ jobs:
   e2e:
     name: E2E Tests (${{ matrix.project }})
     needs: quality
-    # Install retries can take up to ~16m; leave room for build + suite.
-    timeout-minutes: 30
+    timeout-minutes: 20
     runs-on: ubuntu-latest
+    # NOTE: Playwright's official image ships the browsers and their system
+    # libraries, so no apt downloads at job time (Ubuntu mirror stalls
+    # previously cancelled whole E2E jobs). The tag must equal the exact
+    # @playwright/test version in package.json -- bump both together.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
     strategy:
       fail-fast: false
       matrix:
@@ -290,25 +295,21 @@ jobs:
         if: steps.verify-creds.outputs.skipped == 'true'
         run: echo "::notice::Skipping E2E — no Storefront API credentials available to this run (expected for Dependabot/fork PRs)."
 
-      # NOTE: apt on hosted runners can stall indefinitely on an unresponsive
-      # Ubuntu mirror. apt's own network timeouts turn a stall into a fast
-      # error that the loop retries; slow-but-progressing installs are left
-      # alone. No external `timeout` wrapper: it kills npx but not the
-      # sudo'd apt-get, which then holds the dpkg lock against the retry.
-      - name: Install Playwright browsers
-        if: steps.verify-creds.outputs.skipped != 'true'
-        timeout-minutes: 16
+      # Runs even when E2E is skipped (Dependabot/fork PRs), so a
+      # @playwright/test bump without a matching image bump fails its PR.
+      - name: Verify container ships this Playwright version's browsers
         run: |
-          printf 'Acquire::Retries "3";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nDPkg::Lock::Timeout "120";\n' \
-            | sudo tee /etc/apt/apt.conf.d/99-ci-network-timeouts >/dev/null
-          for attempt in 1 2; do
-            if npx playwright install --with-deps ${{ matrix.browser }}; then
-              exit 0
-            fi
-            echo "::warning::Playwright install attempt $attempt failed; retrying."
-            sleep 10
-          done
-          exit 1
+          node -e '
+            const fs = require("fs");
+            const pw = require("playwright-core");
+            const version = require("@playwright/test/package.json").version;
+            const exe = pw["${{ matrix.browser }}"].executablePath();
+            if (!fs.existsSync(exe)) {
+              console.log(`::error::@playwright/test ${version} expects ${exe}, which this container lacks. Set the E2E container image to mcr.microsoft.com/playwright:v${version}-noble.`);
+              process.exit(1);
+            }
+            console.log(`Playwright ${version}: ${exe}`);
+          '
 
       # `shopify hydrogen preview` (and `dev`) load env vars via Miniflare
       # from a local `.env` file — they do NOT read inherited shell/step
