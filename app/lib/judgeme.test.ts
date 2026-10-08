@@ -137,7 +137,7 @@ describe('templated reviews', () => {
     expect(isTemplatedReview('Wore this in the rain twice now and it held up both times.')).toBe(false);
   });
 
-  it('drops templated and repeated reviews from a product page list', async () => {
+  it('keeps every review on a product page list so it matches the Judge.me count', async () => {
     const reviews = [
       {id: 1, rating: 5, body: 'Fits as expected, looks amazing in person. Definitely coming back for more.', product_handle: 'tee'},
       {id: 2, rating: 5, body: 'Same text twice on one product.', product_handle: 'tee'},
@@ -158,6 +158,6 @@ describe('templated reviews', () => {
       productHandle: 'tee',
     });
 
-    expect(result.map((r) => r.id)).toEqual([4]);
+    expect(result.map((r) => r.id)).toEqual([1, 2, 3, 4]);
   });
 });

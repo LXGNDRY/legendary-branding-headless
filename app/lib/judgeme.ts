@@ -341,10 +341,12 @@ export async function fetchJudgemeProductReviews({
   perPage = 100,
   maxPages = 5,
 }: FetchJudgemeProductReviewsOptions): Promise<JudgemeReview[]> {
-  const toReviews = (raw: JudgemeApiReview[]) => {
-    const bodyCounts = countBodies(raw);
-    return raw
-      .filter((r) => (r.body ?? '').trim().length > 0 && !isTemplatedReview(r.body!, bodyCounts))
+  // NOTE: deliberately unfiltered -- this list must match the Judge.me
+  // star rating and review count shown site-wide, which include every
+  // published review. Hide unwanted reviews in Judge.me itself.
+  const toReviews = (raw: JudgemeApiReview[]) =>
+    raw
+      .filter((r) => (r.body ?? '').trim().length > 0)
       .map((r) => ({
         id: r.id,
         rating: r.rating,
@@ -353,7 +355,6 @@ export async function fetchJudgemeProductReviews({
         reviewerName: toDisplayName(r.reviewer?.name, r.id),
         createdAt: r.created_at ?? undefined,
       }));
-  };
 
   const internalId = await resolveJudgemeProductId({apiToken, shopDomain, externalId: productId});
   if (internalId) {
