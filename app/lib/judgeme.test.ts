@@ -110,4 +110,17 @@ describe('fetchJudgemeQuotes', () => {
     expect(quotes[0].productTitle).toBe('Crewneck');
     expect(quotes[0].productHandle).toBe('crew');
   });
+
+  it('treats identical non-Latin reviews as duplicates', async () => {
+    const jp = 'このパーカーは本当に最高です。生地が厚くて、洗濯しても形が崩れません。毎日着ています。友達にも勧めました。サイズ感もちょうど良く、デザインもかっこいいです。';
+    const body = JSON.stringify({
+      reviews: [
+        {id: 1, rating: 5, body: jp, product_handle: 'a', reviewer: {name: 'A B'}},
+        {id: 2, rating: 5, body: jp, product_handle: 'b', reviewer: {name: 'C D'}},
+      ],
+    });
+    global.fetch = vi.fn().mockResolvedValue(new Response(body, {status: 200}));
+    const quotes = await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com', minBodyLength: 20});
+    expect(quotes).toEqual([]);
+  });
 });

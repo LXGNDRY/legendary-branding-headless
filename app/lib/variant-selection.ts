@@ -43,6 +43,34 @@ export function isOptionValueAvailable(
   );
 }
 
+/** Whether any in-stock variant has this value, regardless of other choices. */
+export function isOptionValueInStock(variants: SelectableVariant[], optionName: string, value: string): boolean {
+  return variants.some(
+    (variant) =>
+      variant.availableForSale &&
+      variant.selectedOptions.some((option) => option.name === optionName && option.value === value),
+  );
+}
+
+/**
+ * Applies a choice and drops any other choice it can't be combined with in
+ * stock, so picking White after Black/S (where only White/M exists) lands on
+ * White with size cleared instead of leaving the customer stuck.
+ */
+export function selectOptionValue(
+  variants: SelectableVariant[],
+  selection: OptionSelection,
+  optionName: string,
+  value: string,
+): OptionSelection {
+  const next: OptionSelection = {[optionName]: value};
+  for (const [name, current] of Object.entries(selection)) {
+    if (name === optionName) continue;
+    if (isOptionValueAvailable(variants, name, current, next)) next[name] = current;
+  }
+  return next;
+}
+
 /** Pre-selects options that only have one value (e.g. "Title: Default Title"), so the customer is only asked real questions. */
 export function initialSelection(options: Array<{name: string; optionValues: Array<{name: string}>}>): OptionSelection {
   const selection: OptionSelection = {};

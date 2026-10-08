@@ -1,5 +1,11 @@
 import {describe, expect, it} from 'vitest';
-import {findSelectedVariant, initialSelection, isOptionValueAvailable} from './variant-selection';
+import {
+  findSelectedVariant,
+  initialSelection,
+  isOptionValueAvailable,
+  isOptionValueInStock,
+  selectOptionValue,
+} from './variant-selection';
 
 const v = (id: string, color: string, size: string, availableForSale = true) => ({
   id,
@@ -32,5 +38,12 @@ describe('variant-selection', () => {
         {name: 'Size', optionValues: [{name: 'S'}, {name: 'M'}]},
       ]),
     ).toEqual({Title: 'Default Title'});
+  });
+
+  it('switching to a value incompatible with other choices clears them instead of trapping the customer', () => {
+    // Only Black/S and White/M are in stock.
+    expect(isOptionValueInStock(variants, 'Color', 'White')).toBe(true);
+    expect(selectOptionValue(variants, {Color: 'Black', Size: 'S'}, 'Color', 'White')).toEqual({Color: 'White'});
+    expect(selectOptionValue(variants, {Color: 'White'}, 'Size', 'M')).toEqual({Size: 'M', Color: 'White'});
   });
 });

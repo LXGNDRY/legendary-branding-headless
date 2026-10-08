@@ -10,6 +10,8 @@ import {
   findSelectedVariant,
   initialSelection,
   isOptionValueAvailable,
+  isOptionValueInStock,
+  selectOptionValue,
   type OptionSelection,
 } from '~/lib/variant-selection';
 
@@ -203,14 +205,17 @@ export default function QuickAddModal({
                     <div className="flex flex-wrap gap-2">
                       {option.optionValues.map(({name: value, swatch}) => {
                         const isActive = selection[option.name] === value;
+                        // Out of stock with the current choices: styled as unavailable,
+                        // but still selectable if some other combination has it.
                         const isAvailable = isOptionValueAvailable(variants, option.name, value, selection);
+                        const isSelectable = isOptionValueInStock(variants, option.name, value);
                         const swatchImageUrl = swatch?.image?.previewImage?.url;
                         const swatchStyle = swatchImageUrl
                           ? {backgroundImage: `url(${swatchImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center'}
                           : swatch?.color
                             ? {backgroundColor: swatch.color}
                             : undefined;
-                        const select = () => setSelection((current) => ({...current, [option.name]: value}));
+                        const select = () => setSelection((current) => selectOptionValue(variants, current, option.name, value));
                         const label = `${option.name}: ${value}${isAvailable ? '' : ' (unavailable)'}`;
 
                         if (isColor && swatchStyle) {
@@ -219,7 +224,7 @@ export default function QuickAddModal({
                               key={value}
                               type="button"
                               onClick={select}
-                              disabled={!isAvailable}
+                              disabled={!isSelectable}
                               aria-pressed={isActive}
                               aria-label={label}
                               title={value}
@@ -229,7 +234,7 @@ export default function QuickAddModal({
                                   ? 'border-[var(--color-text-primary)] ring-2 ring-[var(--color-text-primary)] ring-offset-2'
                                   : isAvailable
                                     ? 'border-[var(--color-border-medium)] hover:border-[var(--color-text-primary)]'
-                                    : 'cursor-not-allowed border-[var(--color-border-muted)] opacity-40'
+                                    : `border-[var(--color-border-muted)] opacity-40 ${isSelectable ? '' : 'cursor-not-allowed'}`
                               }`}
                             />
                           );
@@ -240,7 +245,7 @@ export default function QuickAddModal({
                             key={value}
                             type="button"
                             onClick={select}
-                            disabled={!isAvailable}
+                            disabled={!isSelectable}
                             aria-pressed={isActive}
                             aria-label={label}
                             className={`flex h-10 min-w-[3rem] items-center justify-center rounded-md border px-4 text-[0.7rem] font-semibold tracking-[0.1em] uppercase transition-all duration-150 ${
@@ -248,7 +253,7 @@ export default function QuickAddModal({
                                 ? 'border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)]'
                                 : isAvailable
                                   ? 'border-[var(--color-border-medium)] text-[var(--color-text-primary)] hover:border-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-2)]'
-                                  : 'cursor-not-allowed border-[var(--color-border-muted)] text-[var(--color-text-tertiary)] line-through opacity-50'
+                                  : `border-[var(--color-border-muted)] text-[var(--color-text-tertiary)] line-through opacity-50 ${isSelectable ? '' : 'cursor-not-allowed'}`
                             }`}
                           >
                             {value}

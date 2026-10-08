@@ -60,7 +60,9 @@ export async function loader({request, context}: LoaderFunctionArgs) {
       {product: product ?? null},
       {
         status: product ? 200 : 404,
-        headers: {'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'},
+        // NOTE: private -- the response varies by the session's market
+        // (currency, translations), which the URL doesn't carry.
+        headers: {'Cache-Control': 'private, max-age=60'},
       },
     );
   } catch {

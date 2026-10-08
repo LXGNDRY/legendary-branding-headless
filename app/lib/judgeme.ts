@@ -175,7 +175,7 @@ interface FetchJudgemeQuotesOptions {
 }
 
 function normalizeReviewBody(body: string): string {
-  return body.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return body.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
 /**

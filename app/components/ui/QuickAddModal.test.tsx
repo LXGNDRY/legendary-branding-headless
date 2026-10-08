@@ -50,7 +50,7 @@ describe('QuickAddModal', () => {
 
     fireEvent.click(screen.getByRole('button', {name: 'Color: Black'}));
     expect(add).toBeDisabled();
-    expect(screen.getByRole('button', {name: 'Size: M (unavailable)'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Size: M (unavailable)'})).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', {name: 'Size: S'}));
     expect(add).toBeEnabled();
