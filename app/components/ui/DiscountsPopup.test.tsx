@@ -67,6 +67,29 @@ describe('DiscountsPopup vs Klaviyo', () => {
     expect(window.localStorage.getItem('lb_discounts_popup_last_shown')).toBeNull();
   });
 
+  it('does not open if Klaviyo opens while the cross-tab lock is queued', async () => {
+    let releaseLock: (() => Promise<void>) | undefined;
+    const request = vi.fn((_name: string, cb: () => Promise<void>) => {
+      releaseLock = cb;
+      return Promise.resolve();
+    });
+    vi.stubGlobal('navigator', {...navigator, locks: {request}});
+    try {
+      renderPopup();
+      await act(async () => vi.advanceTimersByTime(5_000));
+      expect(request).toHaveBeenCalledTimes(1);
+      markKlaviyoOnsiteLoading();
+      klaviyoOpens();
+      await act(async () => {
+        await releaseLock!();
+      });
+      expect(dialog()).toBeNull();
+      expect(window.localStorage.getItem('lb_discounts_popup_last_shown')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('closes immediately if Klaviyo opens while it is already showing', async () => {
     renderPopup();
     await act(async () => vi.advanceTimersByTime(5_000));

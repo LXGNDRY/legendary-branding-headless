@@ -76,7 +76,7 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
       // tick could both read the pre-claim timestamp before either writes,
       // and both show the popup -- a plain re-read closes the common case
       // (one tab already finished) but not that simultaneous one.
-      if (cancelled) return;
+      if (cancelled || hasKlaviyoFormOpened()) return;
       const lastShown = readLastShown();
       if (lastShown && Date.now() - lastShown < REPEAT_SUPPRESS_MS) return;
       setOpen(true);
