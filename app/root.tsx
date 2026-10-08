@@ -251,7 +251,7 @@ export function Layout({children}: {children: React.ReactNode}) {
             root's viewport tag, leaving mobile browsers to fall back to a
             ~980px desktop-width layout viewport. Same reasoning as the
             hardcoded charSet above it. */}
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="color-scheme" content="dark" />
         <meta name="theme-color" content="#0A0A0A" />
         <Meta />

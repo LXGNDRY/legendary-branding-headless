@@ -66,7 +66,7 @@ export default function StreetHero({
               aspectRatio={showRight ? '3/4' : '16/9'}
               width={showRight ? 800 : 1600}
               height={showRight ? 1067 : 900}
-              sizes={showRight ? '50vw' : '100vw'}
+              sizes={showRight ? '(min-width: 768px) 50vw, 100vw' : '100vw'}
               loading="eager"
               fetchPriority="high"
               decoding="sync"

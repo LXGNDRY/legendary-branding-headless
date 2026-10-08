@@ -325,7 +325,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
         // keyboard-focusable; inert does.
         aria-hidden={!open}
         inert={!open}
-        className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform ${
+        className={`fixed inset-y-0 right-0 z-[500] w-full sm:w-[420px] pb-[env(safe-area-inset-bottom)] bg-[var(--color-bg-level-1)] flex flex-col shadow-2xl border-l border-[var(--color-border-muted)] transition-transform ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{
