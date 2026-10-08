@@ -191,7 +191,8 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
     ? product.descriptionHtml.replace(/<[^>]+>/g, '').slice(0, 155)
     : `Shop ${product?.title ?? 'this product'} at Legendary Branding.`;
   const ogImage = product?.images?.nodes?.[0]?.url ?? '';
-  const canonical = `https://www.legendary-branding.com${location.pathname}`;
+  // NOTE: from the handle, not the URL path, so a trailing slash or different casing can't create a second canonical.
+  const canonical = `https://www.legendary-branding.com/products/${product?.handle ?? location.pathname.replace(/^\/products\//, '').replace(/\/+$/, '')}`;
   return [
     {title: `${product?.title ?? 'Product'} | LEGENDARY BRANDING`},
     {name: 'description', content: description},
