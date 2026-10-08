@@ -2,7 +2,7 @@ import {useEffect, useRef} from 'react';
 
 export function useReveal<T extends HTMLElement>(
   options: IntersectionObserverInit = {},
-): React.RefObject<T> {
+): React.RefObject<T | null> {
   const ref = useRef<T>(null);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function useReveal<T extends HTMLElement>(
 
 export function useRevealChildren<T extends HTMLElement>(
   options: IntersectionObserverInit = {},
-): React.RefObject<T> {
+): React.RefObject<T | null> {
   const ref = useRef<T>(null);
 
   useEffect(() => {
