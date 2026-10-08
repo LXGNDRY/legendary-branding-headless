@@ -301,6 +301,7 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 | `server.ts` | Cloudflare Worker entry — request handler mode must be `'production'` in all non-dev builds |
 | `app/root.tsx` | Root layout, `ErrorBoundary` (must gate stack traces behind `import.meta.env.DEV`) |
 | `app/lib/context.ts` | App load context — env var validation lives here |
+| `app/lib/robots.ts` | robots.txt rules (served by `app/routes/[robots.txt].ts`). Oxygen `*.myshopify.dev` hosts serve `Disallow: /` so previews never compete with the live domain — seeing that on a preview URL is expected |
 | `app/lib/session.ts` | `AppSession` — httpOnly, sameSite: lax, secret rotation |
 | `app/routes.ts` | `flatRoutes()` from `@react-router/fs-routes` — do not manually define routes here |
 | `app/components/ui/` | Shared UI primitives — `Placeholder`, `ProductCard`, `ProductGallery`, etc. |
