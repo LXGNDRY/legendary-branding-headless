@@ -31,7 +31,8 @@ const WALLET_LABELS: Record<string, string> = {
 };
 
 // Words that mark a sentence as describing the eligibility/request deadline rather than, say, shipping time.
-const WINDOW_WORDS = /\b(request|eligible|eligibility|within|from the date|window|period|initiate|accept|allow)/i;
+const WINDOW_WORDS =
+  /\b(request|eligible|eligibility|within|from the date|window|period|initiate|accept|allow|you have|to return|must (be )?return|(may|can|could) (be )?return|returned)/i;
 
 /**
  * Reads the return window ("30 days" / "30-day") from the refund policy
@@ -42,7 +43,11 @@ const WINDOW_WORDS = /\b(request|eligible|eligibility|within|from the date|windo
  */
 export function parseReturnWindowDays(policyBody: string | null | undefined): number | null {
   if (!policyBody) return null;
-  const text = policyBody.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  // Block-level tags become sentence breaks so adjacent paragraphs without end punctuation stay separate sentences.
+  const text = policyBody
+    .replace(/<\/(p|li|ul|ol|div|h[1-6]|tr|td|th|blockquote)>|<br\s*\/?>/gi, '. ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ');
   const found = new Set<number>();
   for (const sentence of text.split(/(?<=[.!?])\s+/)) {
     if (!/return/i.test(sentence) || !WINDOW_WORDS.test(sentence)) continue;

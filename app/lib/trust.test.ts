@@ -43,6 +43,18 @@ describe('trust', () => {
     expect(parseReturnWindowDays('Refunds arrive within 5 business days.')).toBeNull();
   });
 
+  it('recognises direct "days to return" wording', () => {
+    expect(parseReturnWindowDays('You have 30 days to return your item.')).toBe(30);
+    expect(parseReturnWindowDays('Items must be returned within 14 days of delivery.')).toBe(14);
+  });
+
+  it('keeps HTML blocks separate even without end punctuation', () => {
+    expect(
+      parseReturnWindowDays('<p>Returns are accepted within 30 days</p><p>Return shipping takes 5 days</p>'),
+    ).toBe(30);
+    expect(parseReturnWindowDays('<h2>Return Window</h2><p>You have 30 days to return it</p><p>Refunds take 5 days</p>')).toBe(30);
+  });
+
   it('omits the claim when the policy gives conflicting windows', () => {
     expect(parseReturnWindowDays('Returns are accepted within 30 days. Returns are accepted within 60 days for members.')).toBeNull();
   });
