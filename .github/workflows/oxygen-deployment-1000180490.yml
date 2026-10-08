@@ -337,31 +337,16 @@ jobs:
       # every single E2E test fail regardless of the actual app's health.
       # Testing a locally-served production build sidesteps that entirely
       # and removes the dependency on a live deploy succeeding first.
-      - name: "TEMP diagnostic: inspect preview CSS in container"
-        if: steps.verify-creds.outputs.skipped != 'true' && matrix.project == 'chromium'
+      # NOTE: Mini-Oxygen's worker fetches static assets from its own assets
+      # server via `http://localhost:<port>`. In a job container /etc/hosts
+      # maps localhost to ::1 too, but the container network has no IPv6,
+      # so every CSS/JS/font request 500s and pages render unstyled. Pin
+      # localhost to IPv4 (/etc/hosts is bind-mounted, so rewrite in place).
+      - name: Resolve localhost to IPv4 inside the container
         run: |
-          npx shopify hydrogen preview --port 3999 > /tmp/pv.log 2>&1 &
-          for i in $(seq 1 60); do curl -s -o /dev/null http://127.0.0.1:3999/robots.txt && break; sleep 2; done
-          echo "== env: CI=$CI HOME=$HOME USER=$(id -un) node=$(node -v)"
-          curl -s -D /tmp/h.txt http://127.0.0.1:3999/ -o /tmp/home.html
-          echo "== home status/headers"; head -1 /tmp/h.txt; grep -iE "content-security-policy|strict-transport|location" /tmp/h.txt | cut -c1-400
-          echo "== stylesheet links"; grep -oE '<link[^>]+stylesheet[^>]*>' /tmp/home.html | head -3
-          css=$(grep -oE 'href="[^"]+\.css"' /tmp/home.html | head -1 | cut -d'"' -f2); echo "css=$css"
-          curl -s -D - -o /tmp/app.css "http://127.0.0.1:3999$css" | head -12; wc -c /tmp/app.css
-          echo "== chromium view"; node -e '
-            const {chromium} = require("@playwright/test");
-            (async () => {
-              const b = await chromium.launch(); const p = await b.newPage();
-              p.on("console", m => console.log("console:", m.type(), m.text().slice(0,200)));
-              p.on("requestfailed", r => console.log("failed:", r.failure()?.errorText, r.url()));
-              p.on("response", r => { if (/\.css/.test(r.url())) console.log("css resp:", r.status(), r.url()); });
-              await p.goto("http://127.0.0.1:3999/", {waitUntil: "load"});
-              console.log("sheets:", await p.evaluate(() => [...document.styleSheets].map(s => s.href + " rules=" + (()=>{try{return s.cssRules.length}catch(e){return "ERR "+e.message}})())));
-              console.log("bodyBg:", await p.evaluate(() => getComputedStyle(document.body).backgroundColor));
-              await b.close();
-            })();'
-          kill %1 || true
-          tail -20 /tmp/pv.log
+          grep -vE '^\s*::1\s' /etc/hosts > /tmp/hosts.ipv4
+          cat /tmp/hosts.ipv4 > /etc/hosts
+          getent hosts localhost
 
       - name: Run E2E tests against local production build
         if: steps.verify-creds.outputs.skipped != 'true'
