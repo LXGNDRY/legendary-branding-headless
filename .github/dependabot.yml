@@ -16,6 +16,14 @@ updates:
     labels: []
     commit-message:
       prefix: "chore(deps)"
+    # React Router majors need React + Hydrogen support first, so they ship
+    # as a planned migration with Hydrogen, never as a standalone bump.
+    # Remove this once the repo is on React Router 8.
+    ignore:
+      - dependency-name: "react-router"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@react-router/*"
+        update-types: ["version-update:semver-major"]
     groups:
       # Group all non-major patches together for less PR noise
       patch-updates:
