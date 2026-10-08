@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {parseJudgemeBadge, fetchJudgemeQuotes} from './judgeme';
+import {parseJudgemeBadge, fetchJudgemeQuotes, fetchJudgemeProductReviews, isTemplatedReview} from './judgeme';
 
 describe('parseJudgemeBadge', () => {
   it('returns null for null/undefined/empty input', () => {
@@ -122,5 +122,42 @@ describe('fetchJudgemeQuotes', () => {
     global.fetch = vi.fn().mockResolvedValue(new Response(body, {status: 200}));
     const quotes = await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com', minBodyLength: 20});
     expect(quotes).toEqual([]);
+  });
+});
+
+describe('templated reviews', () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('recognises known stock phrases regardless of apostrophe style', () => {
+    expect(isTemplatedReview("The fabric is high-quality and the print hasn't faded after several washes.")).toBe(true);
+    expect(isTemplatedReview('I get compliments every time I wear it.')).toBe(true);
+    expect(isTemplatedReview('Wore this in the rain twice now and it held up both times.')).toBe(false);
+  });
+
+  it('drops templated and repeated reviews from a product page list', async () => {
+    const reviews = [
+      {id: 1, rating: 5, body: 'Fits as expected, looks amazing in person. Definitely coming back for more.', product_handle: 'tee'},
+      {id: 2, rating: 5, body: 'Same text twice on one product.', product_handle: 'tee'},
+      {id: 3, rating: 5, body: 'Same text twice on one product.', product_handle: 'tee'},
+      {id: 4, rating: 4, body: 'Ordered a medium and it fits like a large. Good to know before ordering.', product_handle: 'tee'},
+    ];
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/products/')) return new Response(JSON.stringify({product: {id: 42}}), {status: 200});
+      const page = new URL(url).searchParams.get('page');
+      return new Response(JSON.stringify({reviews: page === '1' ? reviews : []}), {status: 200});
+    }) as typeof fetch;
+
+    const result = await fetchJudgemeProductReviews({
+      apiToken: 'x',
+      shopDomain: 'test.myshopify.com',
+      productId: '1',
+      productHandle: 'tee',
+    });
+
+    expect(result.map((r) => r.id)).toEqual([4]);
   });
 });
