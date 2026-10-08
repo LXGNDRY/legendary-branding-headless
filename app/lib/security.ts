@@ -21,7 +21,9 @@ export const SECURITY_HEADERS: Record<string, string> = {
     // Fonts: self-hosted (see app.css's @font-face rules) + Shopify CDN
     "font-src 'self' cdn.shopify.com",
     // Images: product CDNs + analytics pixel beacons + review/form assets
-    "img-src 'self' data: blob: *.shopify.com cdn.shopify.com www.facebook.com www.google-analytics.com *.klaviyo.com cdn.judge.me judgeme-review-images-cdn.judge.me",
+    // Klaviyo serves sign-up form images from cdn.klaviyomail.com and its
+    // legacy CloudFront CDN, not *.klaviyo.com.
+    "img-src 'self' data: blob: *.shopify.com cdn.shopify.com www.facebook.com www.google-analytics.com *.klaviyo.com cdn.klaviyomail.com d3k81ch9hvuctc.cloudfront.net cdn.judge.me judgeme-review-images-cdn.judge.me",
     // Media
     "media-src 'self' data: blob: *.shopify.com",
     // Iframe: Shopify checkout, shop pay, Klaviyo onsite forms
