@@ -1,8 +1,12 @@
-import {expect, test} from '@playwright/test';
+import {expect, test, type Page} from '@playwright/test';
+import {findPurchasableProductPath} from './helpers/purchasable-product';
 
-const PRODUCT_HANDLE =
-  process.env.E2E_PRODUCT_HANDLE || 'legendary-world-round-t-shirt';
-const PRODUCT_PATH = `/products/${PRODUCT_HANDLE}?Color=Black&Size=S`;
+// NOTE: chosen at run time from the live catalog, not a fixed handle, so unpublishing or selling out one product cannot break the suite. Memoized per worker.
+let purchasablePath: Promise<string> | undefined;
+function productPath(page: Page) {
+  purchasablePath ??= findPurchasableProductPath(page);
+  return purchasablePath;
+}
 const TRUSTED_CHECKOUT_HOSTS = new Set([
   'legendary-branding.com',
   'www.legendary-branding.com',
@@ -26,7 +30,7 @@ function expectTrustedCheckout(href: string | null, baseURL?: string) {
 
 test.describe('Golden commerce journey', () => {
   test('PDP communicates shipping charges and provides product-specific fit guidance', async ({page}) => {
-    await page.goto(PRODUCT_PATH, {waitUntil: 'networkidle'});
+    await page.goto(await productPath(page), {waitUntil: 'networkidle'});
     await expect(page.getByRole('heading', {level: 1})).toBeVisible();
 
     await page.locator('#variant-options').getByRole('button', {name: 'Size Guide'}).click();
@@ -46,7 +50,7 @@ test.describe('Golden commerce journey', () => {
   });
 
   test('international market selection updates and persists for the session', async ({page}) => {
-    await page.goto(PRODUCT_PATH, {waitUntil: 'networkidle'});
+    await page.goto(await productPath(page), {waitUntil: 'networkidle'});
     const countrySelector = page.getByLabel('Shipping country and market').first();
     await expect(countrySelector).toBeAttached();
 
@@ -69,7 +73,7 @@ test.describe('Golden commerce journey', () => {
     page,
     baseURL,
   }) => {
-    await page.goto(PRODUCT_PATH, {waitUntil: 'domcontentloaded'});
+    await page.goto(await productPath(page), {waitUntil: 'domcontentloaded'});
     await expect(page.getByRole('heading', {level: 1})).toBeVisible();
 
     const addToCart = page.getByTestId('add-to-cart');
@@ -101,18 +105,12 @@ test.describe('Golden commerce journey', () => {
     await expect(page).toHaveURL(/\/cart$/);
     await expect(page.getByText(/Subtotal \(1 item\)/i)).toBeVisible();
 
-    // NOTE: this store's `cartLinesUpdate` does not update the target line's
-    // quantity in place — it deterministically creates a second line at
-    // quantity 1 instead, leaving the original line untouched (confirmed by
-    // calling the Storefront API directly, with no app code involved, so
-    // this is a platform/app-side behavior on this store, not a bug in this
-    // codebase — see PR description). Because of that, a line can never
-    // legitimately reach quantity >1 through the UI today, so its "Decrease
-    // quantity" button (disabled at quantity <= 1) can never be exercised.
-    // This test verifies what the storefront can actually guarantee: the
-    // aggregate cart total updates correctly, the checkout link stays
-    // trustworthy, and removing lines empties the cart — without asserting
-    // an in-place quantity decrement the platform doesn't currently honor.
+    // NOTE: depending on the product, `cartLinesUpdate` either raises the
+    // line to quantity 2 or adds a second line at quantity 1 (the product this
+    // test used to hard-code did the latter), so the number of removals below
+    // is not fixed. The test asserts what holds either way: the aggregate
+    // total updates, the checkout link stays trustworthy, and removing lines
+    // empties the cart.
     const updateResponse = page.waitForResponse(isCartMutation);
     const cartPage = page.locator('#main-content');
     await cartPage
@@ -129,18 +127,19 @@ test.describe('Golden commerce journey', () => {
       baseURL,
     );
 
-    const firstRemoveResponse = page.waitForResponse(isCartMutation);
-    await cartPage.getByRole('button', {name: /^Remove /}).first().click();
-    const firstRemovedCartResponse = await firstRemoveResponse;
-    expect(firstRemovedCartResponse.ok()).toBe(true);
-    expect(await firstRemovedCartResponse.text()).toMatch(/"totalQuantity",\s*1/);
-    await expect(page.getByText(/Subtotal \(1 item\)/i)).toBeVisible();
-
-    const removeResponse = page.waitForResponse(isCartMutation);
-    await cartPage.getByRole('button', {name: /^Remove /}).first().click();
-    const removedCartResponse = await removeResponse;
-    expect(removedCartResponse.ok()).toBe(true);
-    expect(await removedCartResponse.text()).toMatch(/"totalQuantity",\s*0/);
+    let remaining = 2;
+    for (let removals = 0; remaining > 0 && removals < 3; removals += 1) {
+      const removeResponse = page.waitForResponse(isCartMutation);
+      await cartPage.getByRole('button', {name: /^Remove /}).first().click();
+      const removedCartResponse = await removeResponse;
+      expect(removedCartResponse.ok()).toBe(true);
+      const totalQuantity = (await removedCartResponse.text()).match(/"totalQuantity",\s*(\d+)/);
+      expect(totalQuantity, 'cart response carried no totalQuantity').toBeTruthy();
+      const next = Number(totalQuantity![1]);
+      expect(next).toBeLessThan(remaining);
+      remaining = next;
+    }
+    expect(remaining).toBe(0);
     await expect(page.getByText(/Your cart is empty/i)).toBeVisible();
   });
 });
