@@ -21,7 +21,7 @@
     "@graphql-codegen/cli": "7.4.5",
     "@sentry/react": "11.2.0",
     "@shopify/cli": "4.8.3",
-    "@shopify/hydrogen": "2026.4.6",
+    "@shopify/hydrogen": "2026.4.7",
     "graphql": "16.14.2",
     "isbot": "4.4.0",
     "react": "19.2.8",
