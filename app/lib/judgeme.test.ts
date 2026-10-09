@@ -160,4 +160,100 @@ describe('templated reviews', () => {
 
     expect(result.map((r) => r.id)).toEqual([1, 2, 3, 4]);
   });
+
+  const widgetReview = (uuid: string, extra: Record<string, unknown> = {}) => ({
+    uuid,
+    rating: 5,
+    title: 'Great',
+    body_html: '<p>Heavy fabric &amp; a great fit.</p>',
+    reviewer_name: 'Theo Williams',
+    created_at: '2026-10-05T06:45:15.000Z',
+    ...extra,
+  });
+
+  it('reads every page from the public widget endpoint without an API token', async () => {
+    const urls: string[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      urls.push(url.toString());
+      const page = Number(url.searchParams.get('page'));
+      return new Response(
+        JSON.stringify({
+          reviews: [widgetReview(`a${page}`), widgetReview(`b${page}`)],
+          pagination: {total_pages: 3},
+        }),
+        {status: 200},
+      );
+    }) as typeof fetch;
+
+    const result = await fetchJudgemeProductReviews({
+      shopDomain: 'test.myshopify.com',
+      productId: '8507670364313',
+      productHandle: 'wide-leg',
+    });
+
+    expect(result).toHaveLength(6);
+    expect(urls.every((u) => u.includes('reviews_for_widget') && u.includes('product_id=8507670364313'))).toBe(true);
+    expect(urls.some((u) => u.includes('api_token'))).toBe(false);
+    expect(result[0]).toMatchObject({
+      rating: 5,
+      title: 'Great',
+      body: 'Heavy fabric & a great fit.',
+      reviewerName: 'Theo W.',
+    });
+  });
+
+  it('skips widget reviews without text and falls back to the private API when the widget is empty', async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('reviews_for_widget')) {
+        return new Response(JSON.stringify({reviews: [widgetReview('x', {body_html: '<p> </p>'})], pagination: {total_pages: 1}}), {status: 200});
+      }
+      if (url.includes('/products/')) return new Response(JSON.stringify({product: {id: 42}}), {status: 200});
+      const page = new URL(url).searchParams.get('page');
+      return new Response(
+        JSON.stringify({reviews: page === '1' ? [{id: 9, rating: 5, body: 'Private path review.', product_handle: 'tee'}] : []}),
+        {status: 200},
+      );
+    }) as typeof fetch;
+
+    const result = await fetchJudgemeProductReviews({
+      apiToken: 'x',
+      shopDomain: 'test.myshopify.com',
+      productId: '1',
+      productHandle: 'tee',
+    });
+    expect(result.map((r) => r.id)).toEqual([9]);
+  });
+
+  it('returns an empty list when the widget endpoint fails and no token is set', async () => {
+    global.fetch = vi.fn().mockResolvedValue(new Response('', {status: 500}));
+    const result = await fetchJudgemeProductReviews({shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee'});
+    expect(result).toEqual([]);
+  });
+
+  it('falls back instead of returning a partial list when a later widget page fails', async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('reviews_for_widget')) {
+        const page = Number(new URL(url).searchParams.get('page'));
+        if (page === 2) return new Response('', {status: 500});
+        return new Response(JSON.stringify({reviews: [widgetReview(`w${page}`)], pagination: {total_pages: 2}}), {status: 200});
+      }
+      if (url.includes('/products/')) return new Response(JSON.stringify({product: {id: 42}}), {status: 200});
+      const page = new URL(url).searchParams.get('page');
+      return new Response(
+        JSON.stringify({reviews: page === '1' ? [{id: 9, rating: 5, body: 'Private path review.', product_handle: 'tee'}] : []}),
+        {status: 200},
+      );
+    }) as typeof fetch;
+
+    const result = await fetchJudgemeProductReviews({
+      apiToken: 'x',
+      shopDomain: 'test.myshopify.com',
+      productId: '1',
+      productHandle: 'tee',
+    });
+    expect(result.map((r) => r.id)).toEqual([9]);
+  });
 });
