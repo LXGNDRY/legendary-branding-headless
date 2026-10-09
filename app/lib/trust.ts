@@ -32,7 +32,7 @@ const WALLET_LABELS: Record<string, string> = {
 
 // Words that mark a sentence as describing the eligibility/request deadline rather than, say, shipping time.
 const WINDOW_WORDS =
-  /\b(request|eligible|eligibility|within|from the date|window|period|initiate|accept|allow|you have|to return|must (be )?return|(may|can|could) (be )?return|returned)/i;
+  /\b(request|eligible|eligibility|within|from the date|window|period|initiate|accept|allow|you have|to return|must (be )?return|(may|can|could) (be )?return|returned|\d+[\s-]*days?[\s-]+return(s|\s+policy)?\b(?!\s+(shipping|processing|transit|label)))/i;
 
 /**
  * Reads the return window ("30 days" / "30-day") from the refund policy
