@@ -32,7 +32,11 @@ const WALLET_LABELS: Record<string, string> = {
 
 // Words that mark a sentence as describing the eligibility/request deadline rather than, say, shipping time.
 const WINDOW_WORDS =
-  /\b(request|eligible|eligibility|within|from the date|window|period|initiate|accept|allow|you have|to return|must (be )?return|(may|can|could) (be )?return|returned|\d+[\s-]*days?[\s-]+return(s|\s+policy)?\b(?!\s+(shipping|processing|transit|label)))/i;
+  /\b(request|eligible|eligibility|within|from the date|window|period|initiate|accept|allow|you have|to return|must (be )?return|(may|can|could) (be )?return|returned)/i;
+
+// A duration attached directly to the return phrase ("30-day returns", "30-day return policy"), valid in any sentence. Handling-time uses ("5-day return labels") are excluded.
+const CONCISE_RETURN_WINDOW =
+  /\b(\d{1,3})[\s-]*days?[\s-]+returns?\b(?![\s-]+(?:shipping|processing|transit|postage|labels?|fees?)\b)/gi;
 
 /**
  * Reads the return window ("30 days" / "30-day") from the refund policy
@@ -50,6 +54,10 @@ export function parseReturnWindowDays(policyBody: string | null | undefined): nu
     .replace(/\s+/g, ' ');
   const found = new Set<number>();
   for (const sentence of text.split(/(?<=[.!?])\s+/)) {
+    for (const match of sentence.matchAll(CONCISE_RETURN_WINDOW)) {
+      const days = Number(match[1]);
+      if (days > 0 && days <= 365) found.add(days);
+    }
     if (!/return/i.test(sentence) || !WINDOW_WORDS.test(sentence)) continue;
     for (const match of sentence.matchAll(/\b(\d{1,3})[\s-]*(?:calendar\s+)?days?\b/gi)) {
       const days = Number(match[1]);
