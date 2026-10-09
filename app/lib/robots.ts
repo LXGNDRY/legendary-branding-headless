@@ -72,8 +72,12 @@ export function buildRobotsTxt({
   // NOTE: a named group REPLACES the wildcard group for that crawler, so each one repeats every rule.
   const open = ['Allow: /', ...rules];
 
+  // NOTE: Google's Storebot validates Merchant Center checkout links (/cart/{variant}:{qty}) and follows them to Shopify checkout on the same host (/checkouts/...); the longer Allows beat 'Disallow: /cart' and 'Disallow: /checkout' for those paths only.
+  const storebot = ['Allow: /cart/', 'Allow: /checkouts/', ...rules];
+
   return [
     ...group('Everyone else: Google, Bing, Apple, social previews, any crawler not named below', ['*'], rules),
+    ...group('Google Merchant Center crawler: may follow cart permalinks', ['Storebot-Google'], storebot),
     ...group('AI search and assistant crawlers: allowed so the brand can be found and cited', [...AI_SEARCH_CRAWLERS, ...AI_ASSISTANT_FETCHERS], open),
     ...group('AI model-training crawlers', AI_TRAINING_CRAWLERS, allowTraining ? open : ['Disallow: /']),
     `Sitemap: ${origin}/sitemap.xml`,

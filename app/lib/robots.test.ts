@@ -59,6 +59,15 @@ describe('buildRobotsTxt', () => {
     }
   });
 
+  it('lets Storebot follow cart permalinks while keeping the bare cart page blocked', () => {
+    const block = blockFor(text, 'Storebot-Google');
+    expect(block).toContain('Allow: /cart/');
+    expect(block).toContain('Allow: /checkouts/');
+    expect(rulesOf(block)).toEqual(rulesOf(blockFor(text, '*')));
+    expect(blockFor(text, '*')).not.toContain('Allow: /cart/');
+    expect(blockFor(text, '*')).not.toContain('Allow: /checkouts/');
+  });
+
   it('declares the sitemap once, on the canonical host', () => {
     expect(lines(text).filter((line) => line.startsWith('Sitemap:'))).toEqual([`Sitemap: ${ORIGIN}/sitemap.xml`]);
   });
