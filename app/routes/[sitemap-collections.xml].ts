@@ -1,7 +1,7 @@
 import type {LoaderFunctionArgs} from 'react-router';
 import {CacheLong} from '~/lib/cache';
 import {SITEMAP_HEADERS, urlEntry, urlsetXml} from '~/lib/sitemap';
-import {paginate, sitemapOrigin, type SitemapConnection, type SitemapNode} from '~/lib/sitemap-data';
+import {paginate, sitemapOrigin, sitemapVariables, type SitemapConnection, type SitemapNode} from '~/lib/sitemap-data';
 
 const COLLECTIONS_QUERY = `#graphql
   query SitemapCollections($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
@@ -17,7 +17,7 @@ type CollectionNode = SitemapNode & {products: {nodes: {id: string}[]}};
 
 export async function loader({request, context}: LoaderFunctionArgs) {
   const origin = sitemapOrigin(context.env, request);
-  const variables = {country: context.storefront.i18n.country, language: context.storefront.i18n.language, first: 250};
+  const variables = sitemapVariables(250);
   const collections = await paginate<CollectionNode>(
     async (after) =>
       (await context.storefront.query(COLLECTIONS_QUERY, {variables: {...variables, after}, cache: CacheLong()})).collections as SitemapConnection<CollectionNode>,

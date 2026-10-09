@@ -1,7 +1,7 @@
 import type {LoaderFunctionArgs} from 'react-router';
 import {CacheLong} from '~/lib/cache';
 import {SITEMAP_HEADERS, urlEntry, urlsetXml} from '~/lib/sitemap';
-import {paginate, sitemapOrigin, type SitemapConnection} from '~/lib/sitemap-data';
+import {paginate, sitemapOrigin, sitemapVariables, type SitemapConnection} from '~/lib/sitemap-data';
 
 const ARTICLES_QUERY = `#graphql
   query SitemapArticles($blogHandle: String!, $country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
@@ -14,7 +14,7 @@ const ARTICLES_QUERY = `#graphql
 
 export async function loader({request, context}: LoaderFunctionArgs) {
   const origin = sitemapOrigin(context.env, request);
-  const variables = {country: context.storefront.i18n.country, language: context.storefront.i18n.language, first: 250};
+  const variables = sitemapVariables(250);
   const articles = await paginate(
     async (after) =>
       (await context.storefront.query(ARTICLES_QUERY, {variables: {...variables, after, blogHandle: 'legendary_blogging'}, cache: CacheLong()})).blog

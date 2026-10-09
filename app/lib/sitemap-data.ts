@@ -1,4 +1,5 @@
 import type {AppLoadContext} from 'react-router';
+import {DEFAULT_COUNTRY, DEFAULT_LANGUAGE} from '~/lib/market';
 
 export type SitemapNode = {handle: string; updatedAt?: string};
 export type SitemapConnection<T extends SitemapNode = SitemapNode> = {
@@ -32,4 +33,14 @@ export async function paginate<T extends SitemapNode>(
 export function sitemapOrigin(env: AppLoadContext['env'], request: Request) {
   const domain = env.PUBLIC_CHECKOUT_DOMAIN?.trim().replace(/^www\./, '');
   return domain ? `https://www.${domain}` : new URL(request.url).origin;
+}
+
+/**
+ * Storefront variables for a sitemap query. Pinned to the default market, not
+ * the visitor's: `@inContext(country:)` hides products not published there, so
+ * a request-derived market would give crawlers in different countries different
+ * sitemaps.
+ */
+export function sitemapVariables(first: number) {
+  return {country: DEFAULT_COUNTRY, language: DEFAULT_LANGUAGE, first};
 }
