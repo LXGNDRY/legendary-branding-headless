@@ -43,7 +43,8 @@ import {CacheLong} from '~/lib/cache';
 import {requireSameOrigin} from '~/lib/security';
 import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
-import {parseJudgemeBadge, fetchJudgemeProductReviews} from '~/lib/judgeme';
+import {parseJudgemeBadge, fetchJudgemeProductReviews, summarizeReviews} from '~/lib/judgeme';
+import {withBudget} from '~/lib/trust';
 import ProductReviewList from '~/components/sections/ProductReviewList';
 import TrustSignals, {useStoreTrust} from '~/components/ui/TrustSignals';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
@@ -90,6 +91,8 @@ type ProductFull = {
  * keys (see the `fabric.tier.*` entries in app/locales/*.json) so the
  * guide is localized like the rest of the PDP.
  */
+const REVIEW_SUMMARY_BUDGET_MS = 1200;
+
 const FABRIC_WEIGHT_TIERS = [
   {range: '190–210', nameKey: 'fabric.tier.lightweight.name', descriptionKey: 'fabric.tier.lightweight.description'},
   {range: '220–240', nameKey: 'fabric.tier.midweight.name', descriptionKey: 'fabric.tier.midweight.description'},
@@ -254,10 +257,15 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
     productHandle: handle,
   });
 
+  // NOTE: a short wait so the stars, JSON-LD and review list come from the same reviews. The Judge.me badge metafield can be missing or stale; past the budget the page streams the list and falls back to the badge.
+  const loadedReviews = await withBudget(reviews, REVIEW_SUMMARY_BUDGET_MS);
+  const reviewSummary = loadedReviews ? summarizeReviews(loadedReviews) : null;
+
   return {
     product: product as ProductFull,
     relatedProducts,
     reviews,
+    reviewSummary,
   };
 }
 
@@ -475,7 +483,7 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
 
 export default function ProductPage() {
   const t = useTranslation();
-  const {product, relatedProducts, reviews} = useLoaderData<typeof loader>();
+  const {product, relatedProducts, reviews, reviewSummary} = useLoaderData<typeof loader>();
   // Real active Shopify discounts, fetched once in the root loader (see
   // app/root.tsx) rather than re-fetched per PDP. Streamed, not awaited --
   // the root loader never blocks on this optional Admin API call, so this
@@ -556,7 +564,7 @@ export default function ProductPage() {
   // reviews list itself, fetched server-side instead.
   const storeTrust = useStoreTrust();
   const judgemeBadgeHtml = product.metafields?.find((m) => m?.key === 'badge')?.value;
-  const judgemeRating = parseJudgemeBadge(judgemeBadgeHtml);
+  const judgemeRating = reviewSummary ?? parseJudgemeBadge(judgemeBadgeHtml);
 
   const productJsonLd = productSchema({
     id: product.id,
@@ -995,7 +1003,6 @@ export default function ProductPage() {
             behind a third-party fetch with its own timeout. Placed above
             the Fabric Weight Guide per owner request -- social proof earns
             its spot before the educational GSM explainer. */}
-        {judgemeRating && (
           <>
             {/* Stable, invisible scroll target for the rating link above --
                 kept outside the Suspense boundary so it exists immediately,
@@ -1029,6 +1036,7 @@ export default function ProductPage() {
                 case worth blocking the stream for. */}
             <Suspense
               fallback={
+                judgemeRating && (
                 <section className="border-t border-[var(--color-border-muted)]" aria-hidden="true">
                   <div className="h-container py-16">
                     <p className="h-eyebrow mb-3">Reviews</p>
@@ -1043,11 +1051,14 @@ export default function ProductPage() {
                     </div>
                   </div>
                 </section>
+                )
               }
             >
               <Await resolve={reviews}>
-                {(resolvedReviews) =>
-                  resolvedReviews.length > 0 ? (
+                {(resolvedReviews) => {
+                  // NOTE: derived here too, so reviews that resolve after the loader's wait still render when the badge is missing.
+                  const listRating = judgemeRating ?? summarizeReviews(resolvedReviews);
+                  return resolvedReviews.length > 0 && listRating ? (
                     <section className="border-t border-[var(--color-border-muted)]">
                       <div className="h-container py-16">
                         <p className="h-eyebrow mb-3">Reviews</p>
@@ -1061,17 +1072,16 @@ export default function ProductPage() {
                           // previous product's expanded count into the next one.
                           key={product.id}
                           reviews={resolvedReviews}
-                          aggregateRating={judgemeRating.rating}
-                          aggregateCount={judgemeRating.count}
+                          aggregateRating={listRating.rating}
+                          aggregateCount={listRating.count}
                         />
                       </div>
                     </section>
-                  ) : null
-                }
+                  ) : null;
+                }}
               </Await>
             </Suspense>
           </>
-        )}
 
         {/* Fabric Weight Guide — always visible on the page (not tucked
             behind a collapsed accordion) since it's core buying-decision
