@@ -245,16 +245,14 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   // instead of blocking the PDP on Judge.me's availability. See
   // fetchJudgemeProductReviews for why this replaced the old raw-HTML
   // widget metafield render (Judge.me retired the script it depended on).
-  const reviews = context.env.PRIVATE_JUDGEME_API_TOKEN
-    ? fetchJudgemeProductReviews({
-        apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
-        shopDomain: context.env.PUBLIC_STORE_DOMAIN,
-        // Storefront API IDs are GIDs (gid://shopify/Product/1234567890) --
-        // Judge.me's product lookup wants the trailing numeric Shopify ID.
-        productId: product.id.split('/').pop()!,
-        productHandle: handle,
-      })
-    : Promise.resolve([]);
+  const reviews = fetchJudgemeProductReviews({
+    apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
+    shopDomain: context.env.PUBLIC_STORE_DOMAIN,
+    // Storefront API IDs are GIDs (gid://shopify/Product/1234567890) --
+    // Judge.me wants the trailing numeric Shopify ID.
+    productId: product.id.split('/').pop()!,
+    productHandle: handle,
+  });
 
   return {
     product: product as ProductFull,
