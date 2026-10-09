@@ -38,6 +38,9 @@ const WINDOW_WORDS =
 const CONCISE_RETURN_WINDOW =
   /\b(\d{1,3})[\s-]*days?[\s-]+returns?\b(?![\s-]+(?:shipping|processing|transit|postage|labels?|fees?)\b)/gi;
 
+// Marks a clause next to a "N-day returns" phrase as an exception ("except sale items have 14 days") rather than, say, shipping time.
+const EXCEPTION_CLAUSE = /\b(except|unless|only|sale|final|exchanges?|members?|returns?|returned)\b/i;
+
 /**
  * Reads the return window ("30 days" / "30-day") from the refund policy
  * text. Only a duration in a sentence that mentions returns AND describes a
@@ -54,9 +57,19 @@ export function parseReturnWindowDays(policyBody: string | null | undefined): nu
     .replace(/\s+/g, ' ');
   const found = new Set<number>();
   for (const sentence of text.split(/(?<=[.!?])\s+/)) {
-    for (const match of sentence.matchAll(CONCISE_RETURN_WINDOW)) {
+    const concise = [...sentence.matchAll(CONCISE_RETURN_WINDOW)];
+    for (const match of concise) {
       const days = Number(match[1]);
       if (days > 0 && days <= 365) found.add(days);
+    }
+    if (concise.length > 0) {
+      for (const clause of sentence.split(/[,;]|\b(?:but|however|although)\b/i)) {
+        if (!EXCEPTION_CLAUSE.test(clause) || new RegExp(CONCISE_RETURN_WINDOW.source, 'i').test(clause)) continue;
+        for (const match of clause.matchAll(/\b(\d{1,3})[\s-]*days?\b/gi)) {
+          const days = Number(match[1]);
+          if (days > 0 && days <= 365) found.add(days);
+        }
+      }
     }
     if (!/return/i.test(sentence) || !WINDOW_WORDS.test(sentence)) continue;
     for (const match of sentence.matchAll(/\b(\d{1,3})[\s-]*(?:calendar\s+)?days?\b/gi)) {
