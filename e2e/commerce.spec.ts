@@ -1,8 +1,12 @@
-import {expect, test} from '@playwright/test';
+import {expect, test, type Page} from '@playwright/test';
+import {findPurchasableProductPath} from './helpers/purchasable-product';
 
-const PRODUCT_HANDLE =
-  process.env.E2E_PRODUCT_HANDLE || 'legendary-world-round-t-shirt';
-const PRODUCT_PATH = `/products/${PRODUCT_HANDLE}?Color=Black&Size=S`;
+// NOTE: chosen at run time from the live catalog, not a fixed handle, so unpublishing or selling out one product cannot break the suite. Memoized per worker.
+let purchasablePath: Promise<string> | undefined;
+function productPath(page: Page) {
+  purchasablePath ??= findPurchasableProductPath(page);
+  return purchasablePath;
+}
 const TRUSTED_CHECKOUT_HOSTS = new Set([
   'legendary-branding.com',
   'www.legendary-branding.com',
@@ -26,7 +30,7 @@ function expectTrustedCheckout(href: string | null, baseURL?: string) {
 
 test.describe('Golden commerce journey', () => {
   test('PDP communicates shipping charges and provides product-specific fit guidance', async ({page}) => {
-    await page.goto(PRODUCT_PATH, {waitUntil: 'networkidle'});
+    await page.goto(await productPath(page), {waitUntil: 'networkidle'});
     await expect(page.getByRole('heading', {level: 1})).toBeVisible();
 
     await page.locator('#variant-options').getByRole('button', {name: 'Size Guide'}).click();
@@ -46,7 +50,7 @@ test.describe('Golden commerce journey', () => {
   });
 
   test('international market selection updates and persists for the session', async ({page}) => {
-    await page.goto(PRODUCT_PATH, {waitUntil: 'networkidle'});
+    await page.goto(await productPath(page), {waitUntil: 'networkidle'});
     const countrySelector = page.getByLabel('Shipping country and market').first();
     await expect(countrySelector).toBeAttached();
 
@@ -69,7 +73,7 @@ test.describe('Golden commerce journey', () => {
     page,
     baseURL,
   }) => {
-    await page.goto(PRODUCT_PATH, {waitUntil: 'domcontentloaded'});
+    await page.goto(await productPath(page), {waitUntil: 'domcontentloaded'});
     await expect(page.getByRole('heading', {level: 1})).toBeVisible();
 
     const addToCart = page.getByTestId('add-to-cart');
