@@ -52,6 +52,38 @@ export const NAV_COLLECTIONS_QUERY = `#graphql
   }
 ` as const;
 
+// Every collection published to this storefront's sales channel (the Storefront
+// API never returns an unpublished one), newest first. Used to add collections
+// the merchant has not put in the Main Menu yet, so a new collection reaches the
+// header and footer without anyone editing the menu or the code.
+export const NAV_ALL_COLLECTIONS_QUERY = `#graphql
+  query NavAllCollections($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
+    @inContext(country: $country, language: $language) {
+    collections(first: $first, after: $after, sortKey: ID, reverse: true) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        id
+        title
+        handle
+        image {
+          url
+          altText
+          width
+          height
+        }
+        products(first: 1) {
+          nodes {
+            id
+          }
+        }
+      }
+    }
+  }
+` as const;
+
 export type MenuItemNode = {
   id: string;
   title: string;
@@ -94,4 +126,39 @@ export function resolveMenuCollections(
     });
   }
   return resolved;
+}
+
+export type PublishedCollectionNode = {
+  id: string;
+  title: string;
+  handle: string;
+  image?: NavCollectionItem['image'];
+  products?: {nodes: {id: string}[]} | null;
+} | null;
+
+/**
+ * The Main Menu's collections in the merchant's own order, followed by any other
+ * published collection that has products and is not already in the menu. A
+ * collection the merchant wants first (or relabelled) goes in the menu; one they
+ * never added still shows up instead of silently missing from the header.
+ */
+export function mergeNavCollections(
+  menuCollections: NavCollectionItem[],
+  publishedCollections: PublishedCollectionNode[],
+): NavCollectionItem[] {
+  const seen = new Set(menuCollections.map((c) => c.handle));
+  const extras: NavCollectionItem[] = [];
+  for (const node of publishedCollections) {
+    if (!node || seen.has(node.handle)) continue;
+    if (!node.products?.nodes?.length) continue;
+    seen.add(node.handle);
+    extras.push({
+      id: node.id,
+      title: node.title,
+      handle: node.handle,
+      url: `/collections/${node.handle}`,
+      image: node.image ?? null,
+    });
+  }
+  return [...menuCollections, ...extras];
 }
