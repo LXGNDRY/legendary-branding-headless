@@ -216,7 +216,13 @@ export default function QuickAddModal({
                           : swatch?.color
                             ? {backgroundColor: swatch.color}
                             : undefined;
-                        const select = () => setChoices((current) => selectOptionValue(variants, {...defaults, ...current}, option.name, value));
+                        const select = () =>
+                          setChoices((current) => {
+                            const next = selectOptionValue(variants, {...defaults, ...current}, option.name, value);
+                            // NOTE: default-only keys stay derived so a reload that changes them isn't masked by a stale copy.
+                            for (const key of Object.keys(defaults)) delete next[key];
+                            return next;
+                          });
                         const label = `${option.name}: ${value}${isAvailable ? '' : ' (unavailable)'}`;
 
                         if (isColor && swatchStyle) {

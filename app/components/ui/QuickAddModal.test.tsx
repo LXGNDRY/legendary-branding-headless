@@ -32,7 +32,10 @@ const product: QuickAddProduct = {
 
 function renderModal(cartAction = vi.fn(() => ({}))) {
   // NOTE: a fresh product object on every load, like a real network response after revalidation.
-  const loader = vi.fn(() => ({product: structuredClone(product)}));
+  // The second and later loads carry a marker title so tests can wait for the reloaded data to render.
+  const loader = vi.fn(() => ({
+    product: {...structuredClone(product), title: loader.mock.calls.length > 1 ? `${product.title} (reloaded)` : product.title},
+  }));
   const Stub = createRoutesStub([
     {path: '/', Component: () => <QuickAddModal handle={product.handle} title={product.title} onClose={() => {}} />},
     {path: '/api/quick-add', loader},
@@ -74,8 +77,7 @@ describe('QuickAddModal', () => {
 
     // The cart action revalidates the product loader, which hands the modal a new object.
     await waitFor(() => expect(cartAction).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(loader.mock.calls.length).toBeGreaterThanOrEqual(2));
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await screen.findByText(`${product.title} (reloaded)`);
 
     expect(screen.getByRole('button', {name: 'Color: Black'})).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', {name: 'Size: S'})).toHaveAttribute('aria-pressed', 'true');
