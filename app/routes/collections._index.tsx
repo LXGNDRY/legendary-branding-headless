@@ -4,6 +4,7 @@ import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Placeholder from '~/components/ui/Placeholder';
 import {CacheShort} from '~/lib/cache';
+import {fetchAllPages} from '~/lib/pagination';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema} from '~/components/seo/SeoSchema';
 
@@ -22,9 +23,13 @@ type CollectionNode = {
 };
 
 const COLLECTIONS_QUERY = `#graphql
-  query Collections($country: CountryCode, $language: LanguageCode, $first: Int!)
+  query Collections($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
     @inContext(country: $country, language: $language) {
-    collections(first: $first, sortKey: UPDATED_AT) {
+    collections(first: $first, after: $after, sortKey: UPDATED_AT) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       nodes {
         id
         title
@@ -57,16 +62,20 @@ export const meta: MetaFunction = () => [
 
 export async function loader({context}: LoaderFunctionArgs) {
   const {storefront} = context;
-  const {collections} = await storefront.query(COLLECTIONS_QUERY, {
-    variables: {
-      first: 50,
-      country: storefront.i18n.country,
-      language: storefront.i18n.language,
-    },
-    // NOTE: CacheShort so a newly published collection shows up within minutes.
-    cache: CacheShort(),
+  const nodes = await fetchAllPages<CollectionNode>(async (after) => {
+    const {collections} = await storefront.query(COLLECTIONS_QUERY, {
+      variables: {
+        first: 50,
+        after,
+        country: storefront.i18n.country,
+        language: storefront.i18n.language,
+      },
+      // NOTE: CacheShort so a newly published collection shows up within minutes.
+      cache: CacheShort(),
+    });
+    return collections as {nodes: CollectionNode[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
   });
-  return {collections};
+  return {collections: {nodes}};
 }
 
 export default function CollectionsIndex() {

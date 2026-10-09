@@ -31,6 +31,7 @@ import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
 import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
+import {fetchAllPages} from '~/lib/pagination';
 import {
   MAIN_MENU_QUERY,
   NAV_ALL_COLLECTIONS_QUERY,
@@ -210,17 +211,18 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     .map((item) => item.resourceId!);
 
   // Optional: if this lookup fails the header falls back to the Main Menu alone.
-  const publishedCollectionsLookup = context.storefront
-    .query(NAV_ALL_COLLECTIONS_QUERY, {
+  const publishedCollectionsLookup = fetchAllPages<NonNullable<PublishedCollectionNode>>(async (after) => {
+    const result = await context.storefront.query(NAV_ALL_COLLECTIONS_QUERY, {
       variables: {
         country: context.storefront.i18n.country,
         language: context.storefront.i18n.language,
         first: 50,
+        after,
       },
       cache: CacheShort(),
-    })
-    .then((result) => (result.collections?.nodes ?? []) as PublishedCollectionNode[])
-    .catch(() => [] as PublishedCollectionNode[]);
+    });
+    return result.collections as {nodes: NonNullable<PublishedCollectionNode>[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
+  }).catch(() => [] as PublishedCollectionNode[]);
 
   const menuCollections: NavCollectionItem[] = collectionIds.length
     ? resolveMenuCollections(

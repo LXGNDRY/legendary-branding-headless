@@ -57,9 +57,13 @@ export const NAV_COLLECTIONS_QUERY = `#graphql
 // the merchant has not put in the Main Menu yet, so a new collection reaches the
 // header and footer without anyone editing the menu or the code.
 export const NAV_ALL_COLLECTIONS_QUERY = `#graphql
-  query NavAllCollections($country: CountryCode, $language: LanguageCode, $first: Int!)
+  query NavAllCollections($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
     @inContext(country: $country, language: $language) {
-    collections(first: $first, sortKey: ID, reverse: true) {
+    collections(first: $first, after: $after, sortKey: ID, reverse: true) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       nodes {
         id
         title
