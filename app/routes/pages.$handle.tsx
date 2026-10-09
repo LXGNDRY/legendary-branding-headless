@@ -5,6 +5,7 @@ import {
 } from 'react-router';
 import Container from '~/components/ui/Container';
 import ContentBlocks from '~/components/sections/ContentBlocks';
+import {canonicalPagePath} from '~/lib/page-routes';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema} from '~/components/seo/SeoSchema';
@@ -44,7 +45,7 @@ interface ContentBlock {
 
 export const meta: MetaFunction<typeof loader> = ({data, params}) => {
   const title = `${data?.page?.title ?? 'Page'} | LEGENDARY BRANDING`;
-  const canonical = `https://www.legendary-branding.com/pages/${params.handle ?? ''}`;
+  const canonical = `https://www.legendary-branding.com${canonicalPagePath(params.handle ?? '')}`;
 
   return [
     {title},

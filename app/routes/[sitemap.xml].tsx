@@ -1,81 +1,12 @@
 import type {LoaderFunctionArgs} from 'react-router';
-import {CacheLong} from '~/lib/cache';
-import {urlEntry} from '~/lib/sitemap';
+import {SITEMAP_HEADERS, sitemapIndexXml} from '~/lib/sitemap';
+import {sitemapOrigin} from '~/lib/sitemap-data';
 
-const PRODUCTS_QUERY = `#graphql
-  query SitemapProducts($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
-    @inContext(country: $country, language: $language) {
-    products(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }
-  }
-` as const;
-const COLLECTIONS_QUERY = `#graphql
-  query SitemapCollections($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
-    @inContext(country: $country, language: $language) {
-    collections(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }
-  }
-` as const;
-const PAGES_QUERY = `#graphql
-  query SitemapPages($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
-    @inContext(country: $country, language: $language) {
-    pages(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }
-  }
-` as const;
-const ARTICLES_QUERY = `#graphql
-  query SitemapArticles($blogHandle: String!, $country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
-    @inContext(country: $country, language: $language) {
-    blog(handle: $blogHandle) {
-      articles(first: $first, after: $after) { nodes { handle updatedAt: publishedAt } pageInfo { hasNextPage endCursor } }
-    }
-  }
-` as const;
-
-type Node = {handle: string; updatedAt: string};
-type Connection = {nodes: Node[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
-
-async function paginate(queryPage: (after: string | null) => Promise<Connection | null | undefined>) {
-  const nodes: Node[] = [];
-  let after: string | null = null;
-  for (let page = 0; page < 100; page += 1) {
-    const connection = await queryPage(after);
-    if (!connection) break;
-    nodes.push(...connection.nodes);
-    if (!connection.pageInfo.hasNextPage || !connection.pageInfo.endCursor) break;
-    after = connection.pageInfo.endCursor;
-  }
-  return nodes;
-}
-
-export async function loader({request, context}: LoaderFunctionArgs) {
-  // PUBLIC_CHECKOUT_DOMAIN is documented/configured as the bare apex
-  // (legendary-branding.com), but the live site is actually served from
-  // and canonicalizes to the www subdomain (the apex 301-redirects there
-  // -- see the canonical <link>/og:url fixes across the rest of the app).
-  // Prefixing www here keeps the sitemap's <loc> entries on the same host
-  // as those canonical tags instead of silently reverting to the
-  // redirecting apex host whenever this env var is set.
-  const domain = context.env.PUBLIC_CHECKOUT_DOMAIN?.trim().replace(/^www\./, '');
-  const origin = domain ? `https://www.${domain}` : new URL(request.url).origin;
-  const variables = {country: context.storefront.i18n.country, language: context.storefront.i18n.language, first: 250};
-
-  const [products, collections, pages, articles] = await Promise.all([
-    paginate(async (after) => (await context.storefront.query(PRODUCTS_QUERY, {variables: {...variables, after}, cache: CacheLong()})).products as Connection),
-    paginate(async (after) => (await context.storefront.query(COLLECTIONS_QUERY, {variables: {...variables, after}, cache: CacheLong()})).collections as Connection),
-    paginate(async (after) => (await context.storefront.query(PAGES_QUERY, {variables: {...variables, after}, cache: CacheLong()})).pages as Connection),
-    paginate(async (after) => (await context.storefront.query(ARTICLES_QUERY, {variables: {...variables, after, blogHandle: 'legendary_blogging'}, cache: CacheLong()})).blog?.articles as Connection | undefined),
-  ]);
-
-  const entries = [
-    urlEntry(origin, '/'),
-    urlEntry(origin, '/collections'),
-    urlEntry(origin, '/journal'),
-    ...collections.map((item) => urlEntry(origin, `/collections/${item.handle}`, item.updatedAt)),
-    // NOTE: no <lastmod> for products -- Shopify bumps Product.updatedAt on every inventory adjustment (each order), which is not a real content change.
-    ...products.map((item) => urlEntry(origin, `/products/${item.handle}`)),
-    ...pages.map((item) => urlEntry(origin, `/pages/${item.handle}`, item.updatedAt)),
-    ...articles.map((item) => urlEntry(origin, `/journal/${item.handle}`, item.updatedAt)),
-  ];
-
-  return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>`, {
-    headers: {'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'},
-  });
+// NOTE: an index of per-type sitemaps so Search Console reports indexing for products, collections, pages and the journal separately.
+export function loader({request, context}: LoaderFunctionArgs) {
+  const origin = sitemapOrigin(context.env, request);
+  return new Response(
+    sitemapIndexXml(origin, ['/sitemap-pages.xml', '/sitemap-collections.xml', '/sitemap-products.xml', '/sitemap-journal.xml']),
+    {headers: SITEMAP_HEADERS},
+  );
 }
