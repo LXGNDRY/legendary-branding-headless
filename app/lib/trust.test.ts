@@ -52,6 +52,9 @@ describe('trust', () => {
     expect(parseReturnWindowDays('Our 30-day return policy applies to unworn items.')).toBe(30);
     expect(parseReturnWindowDays('Enjoy 30 day returns on every order.')).toBe(30);
     expect(parseReturnWindowDays('Return shipping: 5-day return shipping labels are emailed.')).toBeNull();
+    expect(parseReturnWindowDays('We email 5-day return-labels.')).toBeNull();
+    expect(parseReturnWindowDays('Orders ship in 2 days, and we offer 30-day returns.')).toBe(30);
+    expect(parseReturnWindowDays('We offer 30-day returns, except sale items have 14 days.')).toBeNull();
   });
 
   it('keeps HTML blocks separate even without end punctuation', () => {
