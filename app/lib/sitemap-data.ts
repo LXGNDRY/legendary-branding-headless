@@ -7,6 +7,13 @@ export type SitemapConnection<T extends SitemapNode = SitemapNode> = {
   pageInfo: {hasNextPage: boolean; endCursor?: string | null};
 };
 
+// NOTE: Shopify handles are letters, digits, hyphens and underscores. Anything else (a slash, query string or '@') would make a malformed or parameterized sitemap URL, so it is dropped.
+const SAFE_HANDLE = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
+
+export function isSafeHandle(handle: string) {
+  return SAFE_HANDLE.test(handle);
+}
+
 /** Reads every page of a Storefront connection (bounded) so a growing catalog never silently truncates. */
 export async function paginate<T extends SitemapNode>(
   queryPage: (after: string | null) => Promise<SitemapConnection<T> | null | undefined>,
@@ -16,7 +23,7 @@ export async function paginate<T extends SitemapNode>(
   for (let page = 0; page < 100; page += 1) {
     const connection = await queryPage(after);
     if (!connection) break;
-    nodes.push(...connection.nodes);
+    nodes.push(...connection.nodes.filter((node) => isSafeHandle(node.handle)));
     if (!connection.pageInfo.hasNextPage || !connection.pageInfo.endCursor) break;
     after = connection.pageInfo.endCursor;
   }

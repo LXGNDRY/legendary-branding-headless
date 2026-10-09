@@ -302,7 +302,7 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 | `app/root.tsx` | Root layout, `ErrorBoundary` (must gate stack traces behind `import.meta.env.DEV`) |
 | `app/lib/context.ts` | App load context — env var validation lives here |
 | `app/lib/robots.ts` | robots.txt rules (served by `app/routes/[robots.txt].ts`). Oxygen `*.myshopify.dev` hosts serve `Disallow: /` so previews never compete with the live domain — seeing that on a preview URL is expected |
-| `app/routes/[sitemap*.xml]`, `app/lib/sitemap*.ts`, `app/lib/page-routes.ts` | `/sitemap.xml` is an index of per-type sitemaps (pages, collections, products with images, journal). `canonicalPagePath` decides whether a Shopify Page is canonical under `/policies/` or `/pages/` — both routes can render any page handle, so the sitemap and both canonicals follow it |
+| `app/routes/[sitemap*.xml]`, `app/lib/sitemap*.ts`, `app/lib/page-routes.ts` | `/sitemap.xml` is an index of per-type sitemaps (pages, collections, products with images, journal), built in the default market with a handle guard so no parameterized URL can enter. `app/lib/page-routes.ts` only chooses whether the sitemap lists a Shopify Page under `/policies/` or `/pages/`; it does not change any canonical. Audit and evidence: `docs/audits/2026-10-09-sitemap/` |
 | `app/lib/session.ts` | `AppSession` — httpOnly, sameSite: lax, secret rotation |
 | `app/routes.ts` | `flatRoutes()` from `@react-router/fs-routes` — do not manually define routes here |
 | `app/components/ui/` | Shared UI primitives — `Placeholder`, `ProductCard`, `ProductGallery`, etc. |

@@ -3,9 +3,8 @@ import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema, faqPageSchema, parseFaqFromHtml} from '~/components/seo/SeoSchema';
-import {canonicalPagePath, isPolicyPageHandle, type PolicyPageHandle} from '~/lib/page-routes';
 
-const PAGE_TITLES: Record<PolicyPageHandle, string> = {
+const PAGE_TITLES: Record<string, string> = {
   'refund-policy': 'Refund & Return Policy',
   'terms-of-service': 'Terms of Service',
   'privacy-with-legendary-branding': 'Privacy Policy',
@@ -55,7 +54,7 @@ type ShopPolicies = {
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   const title = `${data?.title ?? 'Policy'} | LEGENDARY BRANDING`;
   const description = data?.title ? `${data.title} | Legendary Branding` : 'Legendary Branding policies.';
-  const canonical = `https://www.legendary-branding.com${canonicalPagePath(data?.handle ?? '')}`;
+  const canonical = `https://www.legendary-branding.com/policies/${data?.handle ?? ''}`;
 
   return [
     {title},
@@ -70,7 +69,7 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
 export async function loader({params, context}: LoaderFunctionArgs) {
   const handle = params.handle ?? '';
   const fallbackTitle =
-    (isPolicyPageHandle(handle) ? PAGE_TITLES[handle] : undefined) ??
+    PAGE_TITLES[handle] ??
     handle
       .replace(/[-_]/g, ' ')
       .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -106,7 +105,7 @@ export async function loader({params, context}: LoaderFunctionArgs) {
   // intentionally has no body -- it renders its own form block below) --
   // a true 404, not the soft "Content for this page is not available"
   // placeholder, which would otherwise return 200 for any garbage handle.
-  if (!bodyHtml && !isPolicyPageHandle(handle)) {
+  if (!bodyHtml && !(handle in PAGE_TITLES)) {
     throw new Response('Policy page not found', {status: 404});
   }
 

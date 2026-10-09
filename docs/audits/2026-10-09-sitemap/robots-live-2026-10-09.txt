@@ -1,0 +1,64 @@
+# Everyone else: Google, Bing, Apple, social previews, any crawler not named below
+User-agent: *
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+Disallow: /wishlist
+Disallow: /search
+Disallow: /api/
+Disallow: /*?*sort=
+Disallow: /*?*price_min=
+Disallow: /*?*price_max=
+Disallow: /*?*in_stock=
+Disallow: /*?*type=
+Disallow: /*?*tag=
+Disallow: /*?*vendor=
+
+# AI search and assistant crawlers: allowed so the brand can be found and cited
+User-agent: OAI-SearchBot
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: meta-webindexer
+User-agent: Amzn-SearchBot
+User-agent: Google-Extended
+User-agent: ChatGPT-User
+User-agent: Claude-User
+User-agent: Perplexity-User
+User-agent: meta-externalfetcher
+User-agent: Amzn-User
+Allow: /
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+Disallow: /wishlist
+Disallow: /search
+Disallow: /api/
+Disallow: /*?*sort=
+Disallow: /*?*price_min=
+Disallow: /*?*price_max=
+Disallow: /*?*in_stock=
+Disallow: /*?*type=
+Disallow: /*?*tag=
+Disallow: /*?*vendor=
+
+# AI model-training crawlers
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: meta-externalagent
+User-agent: Amazonbot
+Allow: /
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+Disallow: /wishlist
+Disallow: /search
+Disallow: /api/
+Disallow: /*?*sort=
+Disallow: /*?*price_min=
+Disallow: /*?*price_max=
+Disallow: /*?*in_stock=
+Disallow: /*?*type=
+Disallow: /*?*tag=
+Disallow: /*?*vendor=
+
+Sitemap: https://www.legendary-branding.com/sitemap.xml

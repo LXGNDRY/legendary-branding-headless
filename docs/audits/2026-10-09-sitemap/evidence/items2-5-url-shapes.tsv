@@ -1,0 +1,55 @@
+url	status	location	canonical	meta_robots	x_robots	hreflang_tags	final
+/en-ca	404	-	/404	noindex, follow		0	404 /en-ca 0
+/en-ca/	404	-	/404	noindex, follow		0	404 /en-ca/ 0
+/en-ca/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /en-ca/products/legendary-wide-leg-sweatpants 0
+/en-ca/collections/all-products	404	-	/404	noindex, follow		0	404 /en-ca/collections/all-products 0
+/fr	404	-	/404	noindex, follow		0	404 /fr 0
+/fr/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /fr/products/legendary-wide-leg-sweatpants 0
+/fr-ca/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /fr-ca/products/legendary-wide-leg-sweatpants 0
+/en-gb/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /en-gb/products/legendary-wide-leg-sweatpants 0
+/en-us/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /en-us/products/legendary-wide-leg-sweatpants 0
+/ca/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /ca/products/legendary-wide-leg-sweatpants 0
+/uk/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /uk/products/legendary-wide-leg-sweatpants 0
+/de/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /de/products/legendary-wide-leg-sweatpants 0
+/es/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /es/products/legendary-wide-leg-sweatpants 0
+/products/legendary-wide-leg-sweatpants?variant=45660053635225	200	-	/products/legendary-wide-leg-sweatpants			0	200 /products/legendary-wide-leg-sweatpants?variant=45660053635225 0
+/products/legendary-wide-leg-sweatpants?country=CA	200	-	/products/legendary-wide-leg-sweatpants			0	200 /products/legendary-wide-leg-sweatpants?country=CA 0
+/products/legendary-wide-leg-sweatpants?currency=CAD	200	-	/products/legendary-wide-leg-sweatpants			0	200 /products/legendary-wide-leg-sweatpants?currency=CAD 0
+/products/legendary-wide-leg-sweatpants?locale=fr	200	-	/products/legendary-wide-leg-sweatpants			0	200 /products/legendary-wide-leg-sweatpants?locale=fr 0
+/products/legendary-wide-leg-sweatpants?utm_source=test	200	-	/products/legendary-wide-leg-sweatpants			0	200 /products/legendary-wide-leg-sweatpants?utm_source=test 0
+/products/legendary-wide-leg-sweatpants?_pos=1&_sid=abc&_ss=r	200	-	/products/legendary-wide-leg-sweatpants			0	200 /products/legendary-wide-leg-sweatpants?_pos=1&_sid=abc&_ss=r 0
+/collections/all-products?sort=price-ascending	200	-	/collections/all-products			0	200 /collections/all-products?sort=price-ascending 0
+/collections/all-products?page=2	200	-	/collections/all-products			0	200 /collections/all-products?page=2 0
+/collections/all-products/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /collections/all-products/products/legendary-wide-leg-sweatpants 0
+/collections/hoodies-jackets/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /collections/hoodies-jackets/products/legendary-wide-leg-sweatpants 0
+/products/legendary-wide-leg-sweatpants.json	404	-	/products/legendary-wide-leg-sweatpants.json			0	404 /products/legendary-wide-leg-sweatpants.json 0
+/products/legendary-wide-leg-sweatpants.js	404	-	/products/legendary-wide-leg-sweatpants.js			0	404 /products/legendary-wide-leg-sweatpants.js 0
+/products/legendary-wide-leg-sweatpants/	200	-	/products/legendary-wide-leg-sweatpants			0	200 /products/legendary-wide-leg-sweatpants/ 0
+/Products/legendary-wide-leg-sweatpants	200	-	/products/legendary-wide-leg-sweatpants			0	200 /Products/legendary-wide-leg-sweatpants 0
+/products/LEGENDARY-WIDE-LEG-SWEATPANTS	200	-	/products/legendary-wide-leg-sweatpants			0	200 /products/LEGENDARY-WIDE-LEG-SWEATPANTS 0
+/collections/all	404	-	-			0	404 /collections/all 0
+/collection/all-products	404	-	/404	noindex, follow		0	404 /collection/all-products 0
+/product/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /product/legendary-wide-leg-sweatpants 0
+/web-pixels@abc123/sandbox/modern/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /web-pixels@abc123/sandbox/modern/products/legendary-wide-leg-sweatpants 0
+/web-pixels-manager@1.0/sandbox	404	-	/404	noindex, follow		0	404 /web-pixels-manager@1.0/sandbox 0
+/wpm@abc123/web-pixel-123@456/sandbox/modern/products/legendary-wide-leg-sweatpants	404	-	/404	noindex, follow		0	404 /wpm@abc123/web-pixel-123@456/sandbox/modern/products/legendary-wide-leg-sweatpants 0
+/cart	200	-	-			0	200 /cart 0
+/cart/c/abc	404	-	/404	noindex, follow		0	404 /cart/c/abc 0
+/cart/45660053635225:1	404	-	/404	noindex, follow		0	404 /cart/45660053635225:1 0
+/checkouts/abc	404	-	/404	noindex, follow		0	404 /checkouts/abc 0
+/account	302	/account/login	-			0	406 https://shopify.com/authentication/49013915801/oauth/authorize?client_id=f633eeb8-78a2-4ccc-8eac-5ef78f0ae1ce&scope=openid+email+customer-account-api%3Afull&response_type=code&redirect_uri=https%3A%2F%2Fwww.legendary-branding.com%2Faccount%2Fauthorize&state=QoZeyyVCew8OgXw6zLK4lEF8rFSxAtb8ulxQPPL3cAA&nonce=db4965fba0de37fbc654bfa1190ba4ec&locale=en&code_challenge=PX7IxdgVMKBtm-U41tqP9zhz-mQa2YFaCMbQZxjbYoo&code_challenge_method=S256 2
+/account/login	302	https://shopify.com/authentication/49013915801/oauth/authorize?client_id=f633eeb8-78a2-4ccc-8eac-5ef78f0ae1ce&scope=openid+email+customer-account-api%3Afull&response_type=code&redirect_uri=https%3A%2F%2Fwww.legendary-branding.com%2Faccount%2Fauthorize&state=jFhI_61Pka2h9jtUp6iSoI6mwrIfDmUNz5QQT_LbJ1U&nonce=1ae451486d486140953856c9e121bf8b&locale=en&code_challenge=HdeddK1lXBW_ha9mqf1Yy_s-SRnpRXTTfDyell2865Q&code_challenge_method=S256	-			0	406 https://shopify.com/authentication/49013915801/oauth/authorize?client_id=f633eeb8-78a2-4ccc-8eac-5ef78f0ae1ce&scope=openid+email+customer-account-api%3Afull&response_type=code&redirect_uri=https%3A%2F%2Fwww.legendary-branding.com%2Faccount%2Fauthorize&state=PuYyI2_8LZ71y9aDA9YkXUlvXokSyBicSKaZ1j7DKcs&nonce=b25aa8d0d5af58e7ed3ee5a96b539ec2&locale=en&code_challenge=AQuH1i8GgVUlCSFVKiyVbAOmqMH_giZSUV-7M90GIRs&code_challenge_method=S256 1
+/search?q=hoodie	200	-	-	noindex, follow		0	200 /search?q=hoodie 0
+/search	200	-	-	noindex, follow		0	200 /search 0
+/pages/search-results-page	404	-	-			0	404 /pages/search-results-page 0
+/apps/anything	404	-	/404	noindex, follow		0	404 /apps/anything 0
+/a/s/anything	404	-	/404	noindex, follow		0	404 /a/s/anything 0
+/services/login_with_shop/login	404	-	/404	noindex, follow		0	404 /services/login_with_shop/login 0
+/blogs/news	404	-	/404	noindex, follow		0	404 /blogs/news 0
+/blogs/legendary_blogging	404	-	/404	noindex, follow		0	404 /blogs/legendary_blogging 0
+/blogs/legendary_blogging/some-article	404	-	/404	noindex, follow		0	404 /blogs/legendary_blogging/some-article 0
+/journal?page=2	200	-	/journal			0	200 /journal?page=2 0
+/sitemap_products_1.xml	404	-	/404	noindex, follow		0	404 /sitemap_products_1.xml 0
+/sitemap_pages_1.xml	404	-	/404	noindex, follow		0	404 /sitemap_pages_1.xml 0
+/sitemap.xml	200	-	-			0	200 /sitemap.xml 0
+/robots.txt	200	-	-			0	200 /robots.txt 0
