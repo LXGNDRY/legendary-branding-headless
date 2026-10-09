@@ -1003,7 +1003,6 @@ export default function ProductPage() {
             behind a third-party fetch with its own timeout. Placed above
             the Fabric Weight Guide per owner request -- social proof earns
             its spot before the educational GSM explainer. */}
-        {judgemeRating && (
           <>
             {/* Stable, invisible scroll target for the rating link above --
                 kept outside the Suspense boundary so it exists immediately,
@@ -1037,6 +1036,7 @@ export default function ProductPage() {
                 case worth blocking the stream for. */}
             <Suspense
               fallback={
+                judgemeRating && (
                 <section className="border-t border-[var(--color-border-muted)]" aria-hidden="true">
                   <div className="h-container py-16">
                     <p className="h-eyebrow mb-3">Reviews</p>
@@ -1051,11 +1051,14 @@ export default function ProductPage() {
                     </div>
                   </div>
                 </section>
+                )
               }
             >
               <Await resolve={reviews}>
-                {(resolvedReviews) =>
-                  resolvedReviews.length > 0 ? (
+                {(resolvedReviews) => {
+                  // NOTE: derived here too, so reviews that resolve after the loader's wait still render when the badge is missing.
+                  const listRating = judgemeRating ?? summarizeReviews(resolvedReviews);
+                  return resolvedReviews.length > 0 && listRating ? (
                     <section className="border-t border-[var(--color-border-muted)]">
                       <div className="h-container py-16">
                         <p className="h-eyebrow mb-3">Reviews</p>
@@ -1069,17 +1072,16 @@ export default function ProductPage() {
                           // previous product's expanded count into the next one.
                           key={product.id}
                           reviews={resolvedReviews}
-                          aggregateRating={judgemeRating.rating}
-                          aggregateCount={judgemeRating.count}
+                          aggregateRating={listRating.rating}
+                          aggregateCount={listRating.count}
                         />
                       </div>
                     </section>
-                  ) : null
-                }
+                  ) : null;
+                }}
               </Await>
             </Suspense>
           </>
-        )}
 
         {/* Fabric Weight Guide — always visible on the page (not tucked
             behind a collapsed accordion) since it's core buying-decision
