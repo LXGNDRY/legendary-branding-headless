@@ -91,7 +91,7 @@ export default function HeroSplit({
               {heading}
             </h1>
             {subtext && (
-              <p className="text-white/70 text-base md:text-lg mb-10 max-w-md leading-relaxed">
+              <p className="text-white/70 text-base md:text-lg mb-10 max-w-md leading-relaxed whitespace-pre-line">
                 {subtext}
               </p>
             )}
