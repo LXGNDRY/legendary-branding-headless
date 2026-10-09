@@ -43,7 +43,8 @@ import {CacheLong} from '~/lib/cache';
 import {requireSameOrigin} from '~/lib/security';
 import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
-import {parseJudgemeBadge, fetchJudgemeProductReviews} from '~/lib/judgeme';
+import {parseJudgemeBadge, fetchJudgemeProductReviews, summarizeReviews} from '~/lib/judgeme';
+import {withBudget} from '~/lib/trust';
 import ProductReviewList from '~/components/sections/ProductReviewList';
 import TrustSignals, {useStoreTrust} from '~/components/ui/TrustSignals';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
@@ -90,6 +91,8 @@ type ProductFull = {
  * keys (see the `fabric.tier.*` entries in app/locales/*.json) so the
  * guide is localized like the rest of the PDP.
  */
+const REVIEW_SUMMARY_BUDGET_MS = 1200;
+
 const FABRIC_WEIGHT_TIERS = [
   {range: '190–210', nameKey: 'fabric.tier.lightweight.name', descriptionKey: 'fabric.tier.lightweight.description'},
   {range: '220–240', nameKey: 'fabric.tier.midweight.name', descriptionKey: 'fabric.tier.midweight.description'},
@@ -254,10 +257,15 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
     productHandle: handle,
   });
 
+  // NOTE: a short wait so the stars, JSON-LD and review list come from the same reviews. The Judge.me badge metafield can be missing or stale; past the budget the page streams the list and falls back to the badge.
+  const loadedReviews = await withBudget(reviews, REVIEW_SUMMARY_BUDGET_MS);
+  const reviewSummary = loadedReviews ? summarizeReviews(loadedReviews) : null;
+
   return {
     product: product as ProductFull,
     relatedProducts,
     reviews,
+    reviewSummary,
   };
 }
 
@@ -475,7 +483,7 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
 
 export default function ProductPage() {
   const t = useTranslation();
-  const {product, relatedProducts, reviews} = useLoaderData<typeof loader>();
+  const {product, relatedProducts, reviews, reviewSummary} = useLoaderData<typeof loader>();
   // Real active Shopify discounts, fetched once in the root loader (see
   // app/root.tsx) rather than re-fetched per PDP. Streamed, not awaited --
   // the root loader never blocks on this optional Admin API call, so this
@@ -556,7 +564,7 @@ export default function ProductPage() {
   // reviews list itself, fetched server-side instead.
   const storeTrust = useStoreTrust();
   const judgemeBadgeHtml = product.metafields?.find((m) => m?.key === 'badge')?.value;
-  const judgemeRating = parseJudgemeBadge(judgemeBadgeHtml);
+  const judgemeRating = reviewSummary ?? parseJudgemeBadge(judgemeBadgeHtml);
 
   const productJsonLd = productSchema({
     id: product.id,
