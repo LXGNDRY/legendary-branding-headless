@@ -22,7 +22,7 @@ test.describe('sitemap', () => {
     for (const child of CHILDREN) expect(body).toContain(`${child}</loc>`);
   });
 
-  test('every child is a urlset of absolute https URLs', async ({request}) => {
+  test('every child is a urlset of absolute URLs on one host', async ({request}) => {
     for (const child of CHILDREN) {
       const response = await request.get(child);
       expect(response.status(), child).toBe(200);
@@ -30,7 +30,9 @@ test.describe('sitemap', () => {
       expect(body, child).toContain('<urlset');
       const locs = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
       expect(locs.length, child).toBeGreaterThan(0);
-      for (const loc of locs) expect(loc, child).toMatch(/^https:\/\//);
+      // NOTE: the host is https://www.<PUBLIC_CHECKOUT_DOMAIN> in production and the request origin when that variable is unset (CI preview).
+      for (const loc of locs) expect(loc, child).toMatch(/^https?:\/\//);
+      expect(new Set(locs.map((loc) => new URL(loc).host)).size, child).toBe(1);
     }
   });
 
