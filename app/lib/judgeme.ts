@@ -367,6 +367,8 @@ async function fetchJudgemeWidgetReviews(shopDomain: string, productId: string, 
   const rest = await Promise.all(
     Array.from({length: Math.max(totalPages - 1, 0)}, (_, i) => fetchJudgemeWidgetPage(shopDomain, productId, i + 2)),
   );
+  // NOTE: a missing page means a partial list, so treat it as a failed fetch and let the caller fall back.
+  if (rest.some((page) => page === null)) return [];
   const raw = [first, ...rest].flatMap((page) => page?.reviews ?? []);
   return [...new Map(raw.map((r) => [r.uuid, r])).values()]
     .map((r) => ({review: r, body: htmlToText(r.body_html ?? '')}))

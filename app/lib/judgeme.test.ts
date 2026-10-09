@@ -231,4 +231,29 @@ describe('templated reviews', () => {
     const result = await fetchJudgemeProductReviews({shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee'});
     expect(result).toEqual([]);
   });
+
+  it('falls back instead of returning a partial list when a later widget page fails', async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('reviews_for_widget')) {
+        const page = Number(new URL(url).searchParams.get('page'));
+        if (page === 2) return new Response('', {status: 500});
+        return new Response(JSON.stringify({reviews: [widgetReview(`w${page}`)], pagination: {total_pages: 2}}), {status: 200});
+      }
+      if (url.includes('/products/')) return new Response(JSON.stringify({product: {id: 42}}), {status: 200});
+      const page = new URL(url).searchParams.get('page');
+      return new Response(
+        JSON.stringify({reviews: page === '1' ? [{id: 9, rating: 5, body: 'Private path review.', product_handle: 'tee'}] : []}),
+        {status: 200},
+      );
+    }) as typeof fetch;
+
+    const result = await fetchJudgemeProductReviews({
+      apiToken: 'x',
+      shopDomain: 'test.myshopify.com',
+      productId: '1',
+      productHandle: 'tee',
+    });
+    expect(result.map((r) => r.id)).toEqual([9]);
+  });
 });
