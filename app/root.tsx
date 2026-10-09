@@ -33,8 +33,11 @@ import {CacheLong} from '~/lib/cache';
 import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
 import {
   MAIN_MENU_QUERY,
+  NAV_ALL_COLLECTIONS_QUERY,
   NAV_COLLECTIONS_QUERY,
+  mergeNavCollections,
   resolveMenuCollections,
+  type PublishedCollectionNode,
   type MenuItemNode,
   type NavCollectionItem,
 } from '~/lib/nav';
@@ -190,12 +193,13 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       storefront: context.storefront,
       publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
     }),
+    // NOTE: CacheShort, not CacheLong -- a collection the merchant adds or publishes should reach the header within minutes, not up to a day.
     context.storefront.query(MAIN_MENU_QUERY, {
       variables: {
         country: context.storefront.i18n.country,
         language: context.storefront.i18n.language,
       },
-      cache: CacheLong(),
+      cache: CacheShort(),
     }),
     withBudget(storeTrustLookup, STORE_TRUST_BUDGET_MS),
   ]);
@@ -205,7 +209,20 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     .filter((item) => item.type === 'COLLECTION' && item.resourceId)
     .map((item) => item.resourceId!);
 
-  const navCollections: NavCollectionItem[] = collectionIds.length
+  // Optional: if this lookup fails the header falls back to the Main Menu alone.
+  const publishedCollectionsLookup = context.storefront
+    .query(NAV_ALL_COLLECTIONS_QUERY, {
+      variables: {
+        country: context.storefront.i18n.country,
+        language: context.storefront.i18n.language,
+        first: 50,
+      },
+      cache: CacheShort(),
+    })
+    .then((result) => (result.collections?.nodes ?? []) as PublishedCollectionNode[])
+    .catch(() => [] as PublishedCollectionNode[]);
+
+  const menuCollections: NavCollectionItem[] = collectionIds.length
     ? resolveMenuCollections(
         menuItems,
         (
@@ -215,11 +232,12 @@ export async function loader({context, request}: LoaderFunctionArgs) {
               country: context.storefront.i18n.country,
               language: context.storefront.i18n.language,
             },
-            cache: CacheLong(),
+            cache: CacheShort(),
           })
         ).nodes,
       )
     : [];
+  const navCollections = mergeNavCollections(menuCollections, await publishedCollectionsLookup);
 
   return {
     cart: cartData as CartData,

@@ -3,7 +3,7 @@ import {useLoaderData, Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Placeholder from '~/components/ui/Placeholder';
-import {CacheLong} from '~/lib/cache';
+import {CacheShort} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema} from '~/components/seo/SeoSchema';
 
@@ -59,11 +59,12 @@ export async function loader({context}: LoaderFunctionArgs) {
   const {storefront} = context;
   const {collections} = await storefront.query(COLLECTIONS_QUERY, {
     variables: {
-      first: 20,
+      first: 50,
       country: storefront.i18n.country,
       language: storefront.i18n.language,
     },
-    cache: CacheLong(),
+    // NOTE: CacheShort so a newly published collection shows up within minutes.
+    cache: CacheShort(),
   });
   return {collections};
 }
