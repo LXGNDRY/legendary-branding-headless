@@ -35,6 +35,13 @@ export function parseJudgemeBadge(
   return {rating: parseFloat(rating), count: parsedCount};
 }
 
+/** Average rating and count of a fetched review list, so the stars can be drawn from the same reviews the page lists. */
+export function summarizeReviews(reviews: readonly {rating: number}[]): {rating: number; count: number} | null {
+  if (reviews.length === 0) return null;
+  const total = reviews.reduce((sum, review) => sum + review.rating, 0);
+  return {rating: Number((total / reviews.length).toFixed(2)), count: reviews.length};
+}
+
 export interface JudgemeQuote {
   id: number;
   rating: number;

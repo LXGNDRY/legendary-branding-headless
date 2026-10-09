@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {parseJudgemeBadge, fetchJudgemeQuotes, fetchJudgemeProductReviews, isTemplatedReview} from './judgeme';
+import {parseJudgemeBadge, fetchJudgemeQuotes, fetchJudgemeProductReviews, isTemplatedReview, summarizeReviews} from './judgeme';
 
 describe('parseJudgemeBadge', () => {
   it('returns null for null/undefined/empty input', () => {
@@ -255,5 +255,15 @@ describe('templated reviews', () => {
       productHandle: 'tee',
     });
     expect(result.map((r) => r.id)).toEqual([9]);
+  });
+});
+
+describe('summarizeReviews', () => {
+  it('averages the listed reviews to two decimals', () => {
+    expect(summarizeReviews([{rating: 5}, {rating: 5}, {rating: 4}])).toEqual({rating: 4.67, count: 3});
+  });
+
+  it('returns null when there are no reviews', () => {
+    expect(summarizeReviews([])).toBeNull();
   });
 });
