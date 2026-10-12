@@ -262,14 +262,14 @@ function MobileMenu({
         </Link>
         <button
           onClick={onClose}
-          className="p-2 text-[var(--color-text-primary)] hover:text-[var(--color-text-secondary)] transition-colors"
+          className="min-h-11 min-w-11 inline-flex items-center justify-center text-[var(--color-text-primary)] hover:text-[var(--color-text-secondary)] transition-colors"
           aria-label="Close menu"
         >
           <CloseIcon />
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-6 pt-10 pb-8">
+      <nav className="flex-1 overflow-y-auto px-6 pt-10 pb-[calc(2rem+env(safe-area-inset-bottom))]">
         <ul className="space-y-5 mb-12">
           {nav.map((item) => {
             const hasSubmenu = Boolean(item.groups?.length);
@@ -293,7 +293,7 @@ function MobileMenu({
                       aria-expanded={isOpen}
                       aria-controls={submenuId}
                       aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label} submenu`}
-                      className="p-2 -m-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                      className="min-h-11 min-w-11 inline-flex items-center justify-center -m-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
                     >
                       <span className={`inline-block transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
                         <ChevronDownIcon />
@@ -459,7 +459,7 @@ export default function Header({
           <div className="flex items-center justify-between h-[60px] lg:h-[68px] gap-4">
             {/* Mobile: hamburger */}
             <button
-              className="lg:hidden p-1.5 text-[var(--color-text-primary)] hover:text-[var(--color-text-secondary)] transition-colors"
+              className="lg:hidden min-h-11 min-w-11 inline-flex items-center justify-center text-[var(--color-text-primary)] hover:text-[var(--color-text-secondary)] transition-colors"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
               aria-expanded={mobileOpen}
@@ -508,10 +508,10 @@ export default function Header({
             </nav>
 
             {/* Right icons */}
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <div className="flex items-center sm:gap-1 shrink-0">
               <button
                 onClick={() => setSearchOpen((s) => !s)}
-                className="p-2 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+                className="min-h-11 min-w-11 inline-flex items-center justify-center text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
                 aria-label={searchOpen ? t('nav.search') : t('nav.search')}
                 aria-expanded={searchOpen}
               >
@@ -521,7 +521,7 @@ export default function Header({
               {accountsEnabled && (
                 <Link
                   to={isLoggedIn ? '/account' : '/account/login'}
-                  className="hidden sm:flex p-2 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+                  className="hidden sm:inline-flex min-h-11 min-w-11 items-center justify-center text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
                   aria-label={isLoggedIn ? t('nav.myAccount') : t('nav.signIn')}
                 >
                   <UserIcon />
@@ -530,7 +530,7 @@ export default function Header({
 
               <Link
                 to="/wishlist"
-                className="relative hidden sm:flex p-2 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+                className="relative hidden sm:inline-flex min-h-11 min-w-11 items-center justify-center text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
                 aria-label={`${t('nav.wishlist')}${wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
               >
                 <WishlistIcon />
@@ -540,7 +540,7 @@ export default function Header({
               <button
                 type="button"
                 onClick={onOpenCart}
-                className="relative p-2 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+                className="relative min-h-11 min-w-11 inline-flex items-center justify-center text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
                 aria-label={`Cart${cartCount > 0 ? ` (${cartCount} items)` : ''}`}
               >
                 <CartIcon />

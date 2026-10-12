@@ -12,6 +12,9 @@
 
 const JUDGEME_API_BASE = 'https://judge.me/api/v1/reviews';
 const JUDGEME_PRODUCTS_BASE = 'https://judge.me/api/v1/products/-1';
+// NOTE: the public endpoint Judge.me's own storefront widget reads. It needs no API token and is keyed by the Shopify product ID, so it avoids the internal-ID lookup and handle matching the private API needs.
+const JUDGEME_WIDGET_BASE = 'https://api.judge.me/reviews/reviews_for_widget';
+const JUDGEME_WIDGET_PAGE_SIZE = 30;
 
 /**
  * Judge.me's badge metafield embeds the product's real synced rating as
@@ -32,6 +35,13 @@ export function parseJudgemeBadge(
   return {rating: parseFloat(rating), count: parsedCount};
 }
 
+/** Average rating and count of a fetched review list, so the stars can be drawn from the same reviews the page lists. */
+export function summarizeReviews(reviews: readonly {rating: number}[]): {rating: number; count: number} | null {
+  if (reviews.length === 0) return null;
+  const total = reviews.reduce((sum, review) => sum + review.rating, 0);
+  return {rating: Number((total / reviews.length).toFixed(2)), count: reviews.length};
+}
+
 export interface JudgemeQuote {
   id: number;
   rating: number;
@@ -40,11 +50,12 @@ export interface JudgemeQuote {
   /** First name + last-initial only -- never the customer's full name. */
   reviewerName: string;
   productHandle?: string;
+  productTitle?: string;
 }
 
 /** A single review rendered in full on a product page (see fetchJudgemeProductReviews). */
 export interface JudgemeReview {
-  id: number;
+  id: string | number;
   rating: number;
   title?: string;
   body: string;
@@ -61,6 +72,7 @@ interface JudgemeApiReview {
   curated?: string | null;
   reviewer?: {name?: string | null} | null;
   product_handle?: string | null;
+  product_title?: string | null;
   created_at?: string | null;
 }
 
@@ -86,8 +98,12 @@ const FALLBACK_REVIEWER_NAMES = [
  * Deterministically picks a fallback name for a given review ID -- stable
  * across requests/cache refills rather than re-randomizing on every fetch.
  */
-function fallbackReviewerName(reviewId: number): string {
-  return FALLBACK_REVIEWER_NAMES[reviewId % FALLBACK_REVIEWER_NAMES.length];
+function fallbackReviewerName(reviewId: string | number): string {
+  const seed =
+    typeof reviewId === 'number'
+      ? reviewId
+      : [...reviewId].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 7);
+  return FALLBACK_REVIEWER_NAMES[seed % FALLBACK_REVIEWER_NAMES.length];
 }
 
 /**
@@ -97,7 +113,7 @@ function fallbackReviewerName(reviewId: number): string {
  * to a deterministic placeholder name rather than ever rendering the name
  * unmasked or showing a generic "Customer" for every such review.
  */
-function toDisplayName(fullName: string | null | undefined, reviewId: number): string {
+function toDisplayName(fullName: string | null | undefined, reviewId: string | number): string {
   const trimmed = (fullName ?? '').trim();
   if (!trimmed) return fallbackReviewerName(reviewId);
   const parts = trimmed.split(/\s+/);
@@ -165,34 +181,90 @@ async function fetchJudgemeReviewsRaw({
 interface FetchJudgemeQuotesOptions {
   apiToken: string;
   shopDomain: string;
-  /** Only include reviews at or above this rating. Defaults to 4. */
+  /** Only include reviews at or above this rating. Defaults to 5. */
   minRating?: number;
   /** Only include reviews with at least this many characters of body text. */
   minBodyLength?: number;
   perPage?: number;
 }
 
+function normalizeReviewBody(body: string): string {
+  return body.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
+
+// NOTE: generic template reviews found on the store (2026-10-08) -- each is
+// either reused verbatim across unrelated products or a one-line stock
+// phrase, not a real customer's words. Matched after normalization; any
+// other text repeated across reviews is caught by isTemplatedReview too.
+const TEMPLATED_REVIEW_BODIES = new Set(
+  [
+    'Fits as expected, looks amazing in person. Definitely coming back for more.',
+    'The fabric is high-quality and the print hasn’t faded after several washes.',
+    'This shirt has become one of my go-to pieces. Super comfortable and it looks great.',
+    'Well worth the price. The stitching and fit are both solid.',
+    'I got the graphic holds up after multiple washes.',
+    'This piece fit breathes well and keeps me cool.',
+    'I get compliments every time I wear it.',
+    'Fits perfectly and the design is 🔥',
+    'Legendary Branding always delivers. This one’s a classic already.',
+  ].map(normalizeReviewBody),
+);
+
+function countBodies(reviews: JudgemeApiReview[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const review of reviews) {
+    const key = normalizeReviewBody(review.body ?? '');
+    if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/** A known stock phrase, or text that appears on more than one review in `bodyCounts`. */
+export function isTemplatedReview(body: string, bodyCounts?: Map<string, number>): boolean {
+  const key = normalizeReviewBody(body);
+  return TEMPLATED_REVIEW_BODIES.has(key) || (bodyCounts?.get(key) ?? 0) > 1;
+}
+
+/**
+ * Real reviews for the homepage, filtered to ones that read as genuine and
+ * on-brand. The catalog also carries generic templated reviews whose exact
+ * text recurs across unrelated products ("Fits as expected, looks amazing
+ * in person..."), so any body that appears more than once in the fetched
+ * set is dropped, along with short or spam-curated reviews. At most one
+ * quote per product, newest first.
+ */
 export async function fetchJudgemeQuotes({
   apiToken,
   shopDomain,
-  minRating = 4,
-  minBodyLength = 20,
-  perPage = 20,
+  minRating = 5,
+  minBodyLength = 80,
+  perPage = 100,
 }: FetchJudgemeQuotesOptions): Promise<JudgemeQuote[]> {
   const reviews = await fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage});
 
-  return reviews
-    .filter(
-      (r) => r.rating >= minRating && (r.body ?? '').trim().length >= minBodyLength,
-    )
-    .map((r) => ({
-      id: r.id,
-      rating: r.rating,
-      title: r.title?.trim() || undefined,
-      body: r.body!.trim(),
-      reviewerName: toDisplayName(r.reviewer?.name, r.id),
-      productHandle: r.product_handle ?? undefined,
-    }));
+  const bodyCounts = countBodies(reviews);
+
+  const seenProducts = new Set<string>();
+  const quotes: JudgemeQuote[] = [];
+  for (const review of reviews) {
+    const body = (review.body ?? '').trim();
+    if (review.rating < minRating || body.length < minBodyLength) continue;
+    if (review.curated === 'spam') continue;
+    if (isTemplatedReview(body, bodyCounts)) continue;
+    const productKey = review.product_handle ?? `review-${review.id}`;
+    if (seenProducts.has(productKey)) continue;
+    seenProducts.add(productKey);
+    quotes.push({
+      id: review.id,
+      rating: review.rating,
+      title: review.title?.trim() || undefined,
+      body,
+      reviewerName: toDisplayName(review.reviewer?.name, review.id),
+      productHandle: review.product_handle ?? undefined,
+      productTitle: review.product_title?.trim() || undefined,
+    });
+  }
+  return quotes;
 }
 
 interface JudgemeProductLookupResponse {
@@ -235,15 +307,99 @@ async function resolveJudgemeProductId({
   }
 }
 
+interface JudgemeWidgetReview {
+  uuid: string;
+  rating: number;
+  title?: string | null;
+  body_html?: string | null;
+  reviewer_name?: string | null;
+  created_at?: string | null;
+}
+
+interface JudgemeWidgetResponse {
+  reviews?: JudgemeWidgetReview[];
+  pagination?: {total_pages?: number};
+}
+
+const HTML_ENTITIES: Record<string, string> = {amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' '};
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<\/(p|div|li)>|<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&(#\d+|#x[\da-f]+|[a-z]+);/gi, (match, entity: string) => {
+      if (entity[0] === '#') {
+        const code = entity[1].toLowerCase() === 'x' ? parseInt(entity.slice(2), 16) : parseInt(entity.slice(1), 10);
+        return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+      }
+      return HTML_ENTITIES[entity.toLowerCase()] ?? match;
+    })
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+async function fetchJudgemeWidgetPage(
+  shopDomain: string,
+  productId: string,
+  page: number,
+): Promise<JudgemeWidgetResponse | null> {
+  const url = new URL(JUDGEME_WIDGET_BASE);
+  url.searchParams.set('url', shopDomain);
+  url.searchParams.set('shop_domain', shopDomain);
+  url.searchParams.set('platform', 'shopify');
+  url.searchParams.set('product_id', productId);
+  url.searchParams.set('per_page', String(JUDGEME_WIDGET_PAGE_SIZE));
+  url.searchParams.set('page', String(page));
+  try {
+    const response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(5000),
+      cf: {cacheTtl: 3600, cacheEverything: true},
+    } as RequestInit);
+    if (!response.ok) {
+      console.error(`[judgeme] widget API responded with ${response.status}`);
+      return null;
+    }
+    return (await response.json()) as JudgemeWidgetResponse;
+  } catch (error) {
+    console.error('[judgeme] widget request failed', error);
+    return null;
+  }
+}
+
+/** Every published review for a product from Judge.me's public widget endpoint; empty on any failure. */
+async function fetchJudgemeWidgetReviews(shopDomain: string, productId: string, maxPages: number): Promise<JudgemeReview[]> {
+  const first = await fetchJudgemeWidgetPage(shopDomain, productId, 1);
+  if (!first) return [];
+  const totalPages = Math.min(first.pagination?.total_pages ?? 1, maxPages);
+  const rest = await Promise.all(
+    Array.from({length: Math.max(totalPages - 1, 0)}, (_, i) => fetchJudgemeWidgetPage(shopDomain, productId, i + 2)),
+  );
+  // NOTE: a missing page means a partial list, so treat it as a failed fetch and let the caller fall back.
+  if (rest.some((page) => page === null)) return [];
+  const raw = [first, ...rest].flatMap((page) => page?.reviews ?? []);
+  return [...new Map(raw.map((r) => [r.uuid, r])).values()]
+    .map((r) => ({review: r, body: htmlToText(r.body_html ?? '')}))
+    .filter(({review, body}) => body.length > 0 && typeof review.rating === 'number')
+    .map(({review, body}) => ({
+      id: review.uuid,
+      rating: review.rating,
+      title: review.title?.trim() || undefined,
+      body,
+      reviewerName: toDisplayName(review.reviewer_name, review.uuid),
+      createdAt: review.created_at ?? undefined,
+    }));
+}
+
 interface FetchJudgemeProductReviewsOptions {
-  apiToken: string;
+  /** Optional: only the private-API fallback needs it; the public widget path works without. */
+  apiToken?: string;
   shopDomain: string;
   /** Shopify product ID (numeric, as a string) -- resolved to Judge.me's internal ID first. */
   productId: string;
   /** Belt-and-suspenders check against the returned rows, and the fallback-path filter. */
   productHandle: string;
   perPage?: number;
-  /** Fallback path only: how many 100-review pages to search across, in parallel. */
+  /** How many pages to fetch (30 per page on the public path, 100 on the private fallback), in parallel. */
   maxPages?: number;
 }
 
@@ -283,6 +439,13 @@ export async function fetchJudgemeProductReviews({
   perPage = 100,
   maxPages = 5,
 }: FetchJudgemeProductReviewsOptions): Promise<JudgemeReview[]> {
+  const widgetReviews = await fetchJudgemeWidgetReviews(shopDomain, productId, maxPages);
+  if (widgetReviews.length > 0) return widgetReviews;
+  if (!apiToken) return [];
+
+  // NOTE: deliberately unfiltered -- this list must match the Judge.me
+  // star rating and review count shown site-wide, which include every
+  // published review. Hide unwanted reviews in Judge.me itself.
   const toReviews = (raw: JudgemeApiReview[]) =>
     raw
       .filter((r) => (r.body ?? '').trim().length > 0)

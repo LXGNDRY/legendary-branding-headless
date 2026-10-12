@@ -1,5 +1,6 @@
 import type {LoaderFunctionArgs} from 'react-router';
 import {CacheLong} from '~/lib/cache';
+import {urlEntry} from '~/lib/sitemap';
 
 const PRODUCTS_QUERY = `#graphql
   query SitemapProducts($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
@@ -44,14 +45,6 @@ async function paginate(queryPage: (after: string | null) => Promise<Connection 
   return nodes;
 }
 
-export function escapeXml(value: string) {
-  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
-}
-
-function urlEntry(origin: string, path: string, options: {lastmod?: string; priority: string; changefreq: string}) {
-  return `  <url>\n    <loc>${escapeXml(`${origin}${path}`)}</loc>${options.lastmod ? `\n    <lastmod>${escapeXml(options.lastmod)}</lastmod>` : ''}\n    <changefreq>${options.changefreq}</changefreq>\n    <priority>${options.priority}</priority>\n  </url>`;
-}
-
 export async function loader({request, context}: LoaderFunctionArgs) {
   // PUBLIC_CHECKOUT_DOMAIN is documented/configured as the bare apex
   // (legendary-branding.com), but the live site is actually served from
@@ -72,13 +65,14 @@ export async function loader({request, context}: LoaderFunctionArgs) {
   ]);
 
   const entries = [
-    urlEntry(origin, '/', {priority: '1.0', changefreq: 'daily'}),
-    urlEntry(origin, '/collections', {priority: '0.9', changefreq: 'daily'}),
-    urlEntry(origin, '/journal', {priority: '0.6', changefreq: 'weekly'}),
-    ...collections.map((item) => urlEntry(origin, `/collections/${item.handle}`, {lastmod: item.updatedAt, priority: '0.8', changefreq: 'weekly'})),
-    ...products.map((item) => urlEntry(origin, `/products/${item.handle}`, {lastmod: item.updatedAt, priority: '0.7', changefreq: 'weekly'})),
-    ...pages.map((item) => urlEntry(origin, `/pages/${item.handle}`, {lastmod: item.updatedAt, priority: '0.5', changefreq: 'monthly'})),
-    ...articles.map((item) => urlEntry(origin, `/journal/${item.handle}`, {lastmod: item.updatedAt, priority: '0.6', changefreq: 'monthly'})),
+    urlEntry(origin, '/'),
+    urlEntry(origin, '/collections'),
+    urlEntry(origin, '/journal'),
+    ...collections.map((item) => urlEntry(origin, `/collections/${item.handle}`, item.updatedAt)),
+    // NOTE: no <lastmod> for products -- Shopify bumps Product.updatedAt on every inventory adjustment (each order), which is not a real content change.
+    ...products.map((item) => urlEntry(origin, `/products/${item.handle}`)),
+    ...pages.map((item) => urlEntry(origin, `/pages/${item.handle}`, item.updatedAt)),
+    ...articles.map((item) => urlEntry(origin, `/journal/${item.handle}`, item.updatedAt)),
   ];
 
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>`, {

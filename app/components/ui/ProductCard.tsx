@@ -1,8 +1,10 @@
-import {Link, useFetcher} from 'react-router';
-import {CartForm, Image, Money} from '@shopify/hydrogen';
+import {useCallback, useState} from 'react';
+import {Link} from 'react-router';
+import {Image, Money} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Badge from '~/components/ui/Badge';
 import WishlistButton from '~/components/ui/WishlistButton';
+import QuickAddModal from '~/components/ui/QuickAddModal';
 import Placeholder from '~/components/ui/Placeholder';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge} from '~/lib/judgeme';
@@ -215,27 +217,14 @@ export default function ProductCard({
     product.images.nodes.length > 1 &&
     product.images.nodes[1];
 
-  const quickAddVariant = product.selectedOrFirstAvailableVariant;
-  const canQuickAdd = Boolean(quickAddVariant?.id && quickAddVariant.availableForSale);
-  const quickAddFetcher = useFetcher<{errors?: Array<{message?: string}>}>();
-  const isAdding = quickAddFetcher.state !== 'idle';
-  const justAdded =
-    quickAddFetcher.state === 'idle' &&
-    quickAddFetcher.data != null &&
-    !quickAddFetcher.data.errors?.length;
+  // Quick add opens a chooser instead of adding a default variant, so the
+  // customer always picks their own size/color (see QuickAddModal).
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const closeQuickAdd = useCallback(() => setQuickAddOpen(false), []);
 
   function handleQuickAdd(e: React.MouseEvent) {
     e.preventDefault();
-    if (!quickAddVariant?.id || isAdding) return;
-    quickAddFetcher.submit(
-      {
-        [CartForm.INPUT_NAME]: JSON.stringify({
-          action: CartForm.ACTIONS.LinesAdd,
-          inputs: {lines: [{merchandiseId: quickAddVariant.id, quantity: 1}]},
-        }),
-      },
-      {method: 'post', action: '/cart'},
-    );
+    setQuickAddOpen(true);
   }
 
   // List layout
@@ -418,18 +407,21 @@ export default function ProductCard({
             to reach the control directly. Slides up on hover only for
             devices with an actual fine pointer and no coarse pointer at
             all. */}
-        {showQuickAdd && product.availableForSale && canQuickAdd && (
+        {showQuickAdd && product.availableForSale && (
           <div className="absolute bottom-0 left-0 right-0 translate-y-0 opacity-100 transition-all duration-[300ms] ease-[var(--ease-expo)] [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:translate-y-full [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:opacity-0 [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:group-hover:translate-y-0 [@media(hover:hover)_and_(pointer:fine)_and_(not_(any-pointer:coarse))]:group-hover:opacity-100 z-10 p-3">
             <button
               type="button"
               onClick={handleQuickAdd}
-              disabled={isAdding}
+              aria-haspopup="dialog"
               className="w-full justify-center bg-[var(--color-text-primary)] text-[var(--color-bg-level-0)] text-[0.7rem] font-semibold tracking-[0.12em] uppercase py-2.5 hover:bg-[var(--color-accent)] hover:text-[var(--color-text-inverse)] transition-colors duration-200 rounded-full disabled:opacity-60"
-              aria-label={`Quick add ${product.title} to bag`}
+              aria-label={`Choose options and add ${product.title} to bag`}
             >
-              {isAdding ? t('status.updating') : justAdded ? '✓' : t('action.addToBag')}
+              {t('action.addToBag')}
             </button>
           </div>
+        )}
+        {quickAddOpen && (
+          <QuickAddModal handle={product.handle} title={product.title} onClose={closeQuickAdd} />
         )}
       </div>
 

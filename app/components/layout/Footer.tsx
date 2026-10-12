@@ -2,6 +2,7 @@ import {Link} from 'react-router';
 import NewsletterForm from '~/components/ui/NewsletterForm';
 import MarketSelector from '~/components/ui/MarketSelector';
 import BrandLogo from '~/components/ui/BrandLogo';
+import TrustSignals from '~/components/ui/TrustSignals';
 import type {LocalizationData} from '~/lib/market';
 import type {NavCollectionItem} from '~/lib/nav';
 
@@ -125,6 +126,8 @@ export default function Footer({
           <FooterColumn heading="Company" links={COMPANY_LINKS} />
           <FooterColumn heading="Legal" links={LEGAL_LINKS} />
         </div>
+
+        <TrustSignals className="border-t border-[var(--color-border-muted)] py-6" />
 
         {/* Bottom bar */}
         <div className="border-t border-[var(--color-border-muted)] pt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">

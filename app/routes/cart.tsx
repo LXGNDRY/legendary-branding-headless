@@ -8,6 +8,7 @@ import Button from '~/components/ui/Button';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
 import {withCheckoutLocale} from '~/lib/cart';
 import {requireSameOrigin} from '~/lib/security';
+import TrustSignals from '~/components/ui/TrustSignals';
 
 export const meta: MetaFunction = () => [
   {title: 'Cart | LEGENDARY BRANDING'},
@@ -492,6 +493,7 @@ export default function CartPage() {
             <p className="mt-4 text-center text-[11px] text-[var(--color-text-secondary)] tracking-wide">
               Taxes and shipping calculated at checkout
             </p>
+            <TrustSignals className="mt-4" />
           </div>
         </div>
       )}

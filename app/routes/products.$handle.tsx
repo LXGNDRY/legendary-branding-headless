@@ -43,8 +43,10 @@ import {CacheLong} from '~/lib/cache';
 import {requireSameOrigin} from '~/lib/security';
 import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
-import {parseJudgemeBadge, fetchJudgemeProductReviews} from '~/lib/judgeme';
+import {parseJudgemeBadge, fetchJudgemeProductReviews, summarizeReviews} from '~/lib/judgeme';
+import {withBudget} from '~/lib/trust';
 import ProductReviewList from '~/components/sections/ProductReviewList';
+import TrustSignals, {useStoreTrust} from '~/components/ui/TrustSignals';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
@@ -89,6 +91,8 @@ type ProductFull = {
  * keys (see the `fabric.tier.*` entries in app/locales/*.json) so the
  * guide is localized like the rest of the PDP.
  */
+const REVIEW_SUMMARY_BUDGET_MS = 1200;
+
 const FABRIC_WEIGHT_TIERS = [
   {range: '190–210', nameKey: 'fabric.tier.lightweight.name', descriptionKey: 'fabric.tier.lightweight.description'},
   {range: '220–240', nameKey: 'fabric.tier.midweight.name', descriptionKey: 'fabric.tier.midweight.description'},
@@ -190,7 +194,8 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
     ? product.descriptionHtml.replace(/<[^>]+>/g, '').slice(0, 155)
     : `Shop ${product?.title ?? 'this product'} at Legendary Branding.`;
   const ogImage = product?.images?.nodes?.[0]?.url ?? '';
-  const canonical = `https://www.legendary-branding.com${location.pathname}`;
+  // NOTE: from the handle, not the URL path, so a trailing slash or different casing can't create a second canonical.
+  const canonical = `https://www.legendary-branding.com/products/${product?.handle ?? location.pathname.replace(/^\/products\//, '').replace(/\/+$/, '')}`;
   return [
     {title: `${product?.title ?? 'Product'} | LEGENDARY BRANDING`},
     {name: 'description', content: description},
@@ -243,21 +248,24 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   // instead of blocking the PDP on Judge.me's availability. See
   // fetchJudgemeProductReviews for why this replaced the old raw-HTML
   // widget metafield render (Judge.me retired the script it depended on).
-  const reviews = context.env.PRIVATE_JUDGEME_API_TOKEN
-    ? fetchJudgemeProductReviews({
-        apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
-        shopDomain: context.env.PUBLIC_STORE_DOMAIN,
-        // Storefront API IDs are GIDs (gid://shopify/Product/1234567890) --
-        // Judge.me's product lookup wants the trailing numeric Shopify ID.
-        productId: product.id.split('/').pop()!,
-        productHandle: handle,
-      })
-    : Promise.resolve([]);
+  const reviews = fetchJudgemeProductReviews({
+    apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
+    shopDomain: context.env.PUBLIC_STORE_DOMAIN,
+    // Storefront API IDs are GIDs (gid://shopify/Product/1234567890) --
+    // Judge.me wants the trailing numeric Shopify ID.
+    productId: product.id.split('/').pop()!,
+    productHandle: handle,
+  });
+
+  // NOTE: a short wait so the stars, JSON-LD and review list come from the same reviews. The Judge.me badge metafield can be missing or stale; past the budget the page streams the list and falls back to the badge.
+  const loadedReviews = await withBudget(reviews, REVIEW_SUMMARY_BUDGET_MS);
+  const reviewSummary = loadedReviews ? summarizeReviews(loadedReviews) : null;
 
   return {
     product: product as ProductFull,
     relatedProducts,
     reviews,
+    reviewSummary,
   };
 }
 
@@ -392,7 +400,7 @@ function StickyBuyBar({
             action={CartForm.ACTIONS.LinesAdd}
             inputs={{lines: [{merchandiseId: variant.id, quantity}]}}
           >
-            <button type="submit" className="h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs">
+            <button type="submit" className="h-btn-primary min-h-11 shrink-0 whitespace-nowrap px-6 py-2 text-xs">
               {t('action.addToBag')}
             </button>
           </CartForm>
@@ -400,7 +408,7 @@ function StickyBuyBar({
           <button
             type="button"
             disabled
-            className={`h-btn-primary shrink-0 whitespace-nowrap px-6 py-2 text-xs opacity-40 cursor-not-allowed ${!variant ? 'h-wiggle-bounce' : ''}`}
+            className={`h-btn-primary min-h-11 shrink-0 whitespace-nowrap px-6 py-2 text-xs opacity-40 cursor-not-allowed ${!variant ? 'h-wiggle-bounce' : ''}`}
           >
             {variant ? 'Sold Out' : 'Choose an option'}
           </button>
@@ -416,7 +424,7 @@ function QuantitySelector({value, onChange}: {value: number; onChange: (v: numbe
       <button
         type="button"
         onClick={() => onChange(Math.max(1, value - 1))}
-        className="w-10 h-10 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors disabled:opacity-40"
+        className="w-11 h-11 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors disabled:opacity-40"
         aria-label="Decrease quantity"
         disabled={value <= 1}
       >
@@ -428,7 +436,7 @@ function QuantitySelector({value, onChange}: {value: number; onChange: (v: numbe
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-10 h-10 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors"
+        className="w-11 h-11 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-level-3)] transition-colors"
         aria-label="Increase quantity"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
@@ -475,7 +483,7 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
 
 export default function ProductPage() {
   const t = useTranslation();
-  const {product, relatedProducts, reviews} = useLoaderData<typeof loader>();
+  const {product, relatedProducts, reviews, reviewSummary} = useLoaderData<typeof loader>();
   // Real active Shopify discounts, fetched once in the root loader (see
   // app/root.tsx) rather than re-fetched per PDP. Streamed, not awaited --
   // the root loader never blocks on this optional Admin API call, so this
@@ -554,8 +562,9 @@ export default function ProductPage() {
   // for the full review list (formerly cdn.judge.me/widget_v3.js) has been
   // retired -- see fetchJudgemeProductReviews in ~/lib/judgeme for the
   // reviews list itself, fetched server-side instead.
+  const storeTrust = useStoreTrust();
   const judgemeBadgeHtml = product.metafields?.find((m) => m?.key === 'badge')?.value;
-  const judgemeRating = parseJudgemeBadge(judgemeBadgeHtml);
+  const judgemeRating = reviewSummary ?? parseJudgemeBadge(judgemeBadgeHtml);
 
   const productJsonLd = productSchema({
     id: product.id,
@@ -574,6 +583,8 @@ export default function ProductPage() {
     aggregateRating: judgemeRating
       ? {ratingValue: judgemeRating.rating, reviewCount: judgemeRating.count}
       : undefined,
+    returnDays: storeTrust.returnDays,
+    returnCountries: storeTrust.returnCountries,
   });
 
   const breadcrumbJsonLd = breadcrumbSchema([
@@ -789,7 +800,7 @@ export default function ProductPage() {
                           // normal labeled text pill below is always
                           // legible instead.
                           if (isColor && swatchStyle) {
-                            const swatchClass = `relative h-9 w-9 rounded-full border-2 transition-all duration-150 shrink-0 ${
+                            const swatchClass = `relative h-11 w-11 rounded-full border-2 transition-all duration-150 shrink-0 ${
                               isActive
                                 ? 'border-[var(--color-text-primary)] ring-2 ring-offset-2 ring-[var(--color-text-primary)]'
                                 : isAvailable
@@ -917,9 +928,7 @@ export default function ProductPage() {
                   variant={selectedVariant as ProductVariantFragment | null | undefined}
                   quantity={quantity}
                 />
-                <p className="text-center text-[0.7rem] text-[var(--color-text-tertiary)]">
-                  {t('cart.secureCheckout')} · SSL encrypted
-                </p>
+                <TrustSignals />
                 {!selectedVariant?.availableForSale && selectedVariant && (
                   <section id="restock-signup" className="rounded-md border border-[var(--color-border-medium)] bg-[var(--color-bg-level-2)] p-1">
                     <div className="px-3 pt-3">
@@ -994,7 +1003,6 @@ export default function ProductPage() {
             behind a third-party fetch with its own timeout. Placed above
             the Fabric Weight Guide per owner request -- social proof earns
             its spot before the educational GSM explainer. */}
-        {judgemeRating && (
           <>
             {/* Stable, invisible scroll target for the rating link above --
                 kept outside the Suspense boundary so it exists immediately,
@@ -1028,6 +1036,7 @@ export default function ProductPage() {
                 case worth blocking the stream for. */}
             <Suspense
               fallback={
+                judgemeRating && (
                 <section className="border-t border-[var(--color-border-muted)]" aria-hidden="true">
                   <div className="h-container py-16">
                     <p className="h-eyebrow mb-3">Reviews</p>
@@ -1042,11 +1051,14 @@ export default function ProductPage() {
                     </div>
                   </div>
                 </section>
+                )
               }
             >
               <Await resolve={reviews}>
-                {(resolvedReviews) =>
-                  resolvedReviews.length > 0 ? (
+                {(resolvedReviews) => {
+                  // NOTE: derived here too, so reviews that resolve after the loader's wait still render when the badge is missing.
+                  const listRating = judgemeRating ?? summarizeReviews(resolvedReviews);
+                  return resolvedReviews.length > 0 && listRating ? (
                     <section className="border-t border-[var(--color-border-muted)]">
                       <div className="h-container py-16">
                         <p className="h-eyebrow mb-3">Reviews</p>
@@ -1060,17 +1072,16 @@ export default function ProductPage() {
                           // previous product's expanded count into the next one.
                           key={product.id}
                           reviews={resolvedReviews}
-                          aggregateRating={judgemeRating.rating}
-                          aggregateCount={judgemeRating.count}
+                          aggregateRating={listRating.rating}
+                          aggregateCount={listRating.count}
                         />
                       </div>
                     </section>
-                  ) : null
-                }
+                  ) : null;
+                }}
               </Await>
             </Suspense>
           </>
-        )}
 
         {/* Fabric Weight Guide — always visible on the page (not tucked
             behind a collapsed accordion) since it's core buying-decision

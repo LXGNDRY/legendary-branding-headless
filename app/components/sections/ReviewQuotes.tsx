@@ -1,3 +1,4 @@
+import {Link} from 'react-router';
 import {useRevealChildren} from '~/hooks/useReveal';
 import type {JudgemeQuote} from '~/lib/judgeme';
 import {StarIcon} from '~/components/ui/StarRating';
@@ -57,6 +58,15 @@ export default function ReviewQuotes({
                 <p className="text-sm font-medium text-[var(--color-text-primary)]">
                   {quote.reviewerName}
                 </p>
+                {quote.productHandle && quote.productTitle && (
+                  <Link
+                    to={`/products/${quote.productHandle}`}
+                    prefetch="intent"
+                    className="mt-1 block text-xs text-[var(--color-text-tertiary)] underline-offset-4 hover:underline"
+                  >
+                    {quote.productTitle}
+                  </Link>
+                )}
               </div>
             </div>
           ))}

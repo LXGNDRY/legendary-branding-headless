@@ -39,11 +39,14 @@ function loadGA4(measurementId: string) {
   script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
   document.head.appendChild(script);
 
-  // Initialize dataLayer
-  (window as {dataLayer?: unknown[]}).dataLayer = (window as {dataLayer?: unknown[]}).dataLayer || [];
-  const gtag = (...args: unknown[]) => {
-    ((window as {dataLayer?: unknown[]}).dataLayer as unknown[]).push(args);
-  };
+  // NOTE: gtag.js only processes `arguments` objects in dataLayer; pushing a
+  // rest-param array (as this previously did) is silently ignored by Google.
+  const w = window as {dataLayer?: unknown[]};
+  w.dataLayer = w.dataLayer || [];
+  function pushToDataLayer() {
+    w.dataLayer!.push(arguments);
+  }
+  const gtag = pushToDataLayer as (...args: unknown[]) => void;
   window.gtag = gtag;
   gtag('js', new Date());
   gtag('config', measurementId, {

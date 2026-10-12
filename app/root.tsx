@@ -26,14 +26,19 @@ import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import DiscountsPopup from '~/components/ui/DiscountsPopup';
 import ChatWidget from '~/components/chat/ChatWidget';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
+import {STORE_TRUST_QUERY, toStoreTrust, withBudget} from '~/lib/trust';
 import Analytics from '~/components/seo/Analytics';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
 import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
+import {fetchAllPages} from '~/lib/pagination';
 import {
   MAIN_MENU_QUERY,
+  NAV_ALL_COLLECTIONS_QUERY,
   NAV_COLLECTIONS_QUERY,
+  mergeNavCollections,
   resolveMenuCollections,
+  type PublishedCollectionNode,
   type MenuItemNode,
   type NavCollectionItem,
 } from '~/lib/nav';
@@ -92,17 +97,20 @@ export const meta: MetaFunction = () => [
   {title: 'Legendary Branding | Premium Streetwear'},
   {
     name: 'description',
-    content: 'Legendary Branding — premium streetwear built to last. 190GSM+ premium-weight tees, made to order. Shop the collection.',
+    content: 'Legendary Branding — premium streetwear built to last. 220GSM+ premium-weight tees, made to order. Shop the collection.',
   },
   {property: 'og:type', content: 'website'},
   {property: 'og:site_name', content: 'Legendary Branding'},
   {property: 'og:url', content: 'https://www.legendary-branding.com'},
   {property: 'og:title', content: 'Legendary Branding | Premium Streetwear'},
-  {property: 'og:description', content: 'Premium streetwear built to last. 190GSM+ premium-weight tees, made to order. Shop the collection.'},
+  {property: 'og:description', content: 'Premium streetwear built to last. 220GSM+ premium-weight tees, made to order. Shop the collection.'},
   {name: 'twitter:card', content: 'summary_large_image'},
   {name: 'twitter:title', content: 'Legendary Branding | Premium Streetwear'},
   {name: 'twitter:description', content: 'Premium streetwear built to last.'},
 ];
+
+/** How long a page waits for the optional store trust lookup before rendering without it. */
+const STORE_TRUST_BUDGET_MS = 700;
 
 export async function loader({context, request}: LoaderFunctionArgs) {
   const {cart, customerAccount} = context;
@@ -162,7 +170,18 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       })
     : Promise.resolve([]);
 
-  const [cartData, localizationResult, shop, menuResult] = await Promise.all([
+  // Optional trust facts: started now but only waited on for a short budget,
+  // so a slow lookup on a cold cache can't delay every route's response.
+  // waitUntil lets it finish and fill the cache for the next request.
+  const storeTrustLookup = context.storefront.query(STORE_TRUST_QUERY, {
+    // NOTE: always the English source policy -- the return-window parser
+    // reads English text, and a translation must not hide it.
+    variables: {country: context.storefront.i18n.country, language: 'EN'},
+    cache: CacheLong(),
+  });
+  (context.waitUntil ?? (() => {}))(storeTrustLookup.then(() => undefined, () => undefined));
+
+  const [cartData, localizationResult, shop, menuResult, storeTrustResult] = await Promise.all([
     cart.get(),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
@@ -175,13 +194,15 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       storefront: context.storefront,
       publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
     }),
+    // NOTE: CacheShort, not CacheLong -- a collection the merchant adds or publishes should reach the header within minutes, not up to a day.
     context.storefront.query(MAIN_MENU_QUERY, {
       variables: {
         country: context.storefront.i18n.country,
         language: context.storefront.i18n.language,
       },
-      cache: CacheLong(),
+      cache: CacheShort(),
     }),
+    withBudget(storeTrustLookup, STORE_TRUST_BUDGET_MS),
   ]);
 
   const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
@@ -189,7 +210,21 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     .filter((item) => item.type === 'COLLECTION' && item.resourceId)
     .map((item) => item.resourceId!);
 
-  const navCollections: NavCollectionItem[] = collectionIds.length
+  // Optional: if this lookup fails the header falls back to the Main Menu alone.
+  const publishedCollectionsLookup = fetchAllPages<NonNullable<PublishedCollectionNode>>(async (after) => {
+    const result = await context.storefront.query(NAV_ALL_COLLECTIONS_QUERY, {
+      variables: {
+        country: context.storefront.i18n.country,
+        language: context.storefront.i18n.language,
+        first: 50,
+        after,
+      },
+      cache: CacheShort(),
+    });
+    return result.collections as {nodes: NonNullable<PublishedCollectionNode>[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
+  }).catch(() => [] as PublishedCollectionNode[]);
+
+  const menuCollections: NavCollectionItem[] = collectionIds.length
     ? resolveMenuCollections(
         menuItems,
         (
@@ -199,11 +234,12 @@ export async function loader({context, request}: LoaderFunctionArgs) {
               country: context.storefront.i18n.country,
               language: context.storefront.i18n.language,
             },
-            cache: CacheLong(),
+            cache: CacheShort(),
           })
         ).nodes,
       )
     : [];
+  const navCollections = mergeNavCollections(menuCollections, await publishedCollectionsLookup);
 
   return {
     cart: cartData as CartData,
@@ -216,6 +252,10 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     localization: localizationResult.localization as LocalizationData,
     navCollections,
     shop,
+    storeTrust: toStoreTrust(
+      storeTrustResult,
+      (localizationResult.localization as LocalizationData).availableCountries.map((c) => c.isoCode),
+    ),
     activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on
@@ -280,7 +320,7 @@ export default function App() {
 
   // Auto-open cart drawer when an add-to-cart action completes.
   // The submitted action lives inside the JSON value under
-  // CartForm.INPUT_NAME (see ProductCard.handleQuickAdd and CartForm's own
+  // CartForm.INPUT_NAME (see QuickAddModal.handleAdd and CartForm's own
   // submissions), not a plain "cartAction" field -- reading the wrong key
   // meant this never actually fired.
   useEffect(() => {

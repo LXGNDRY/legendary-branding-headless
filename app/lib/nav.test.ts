@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {resolveMenuCollections, type MenuItemNode, type CollectionNode} from './nav';
+import {mergeNavCollections, resolveMenuCollections, type MenuItemNode, type CollectionNode, type NavCollectionItem, type PublishedCollectionNode} from './nav';
 
 describe('resolveMenuCollections', () => {
   it('returns collections in the menu\'s own order, with handle/image resolved', () => {
@@ -54,5 +54,51 @@ describe('resolveMenuCollections', () => {
     const result = resolveMenuCollections(menuItems, collectionNodes);
     expect(result).toHaveLength(1);
     expect(result[0].handle).toBe('hoodies-jackets');
+  });
+});
+
+describe('mergeNavCollections', () => {
+  const menu: NavCollectionItem[] = [
+    {id: 'gid://menu/1', title: 'OUTERWEAR', handle: 'hoodies-jackets', url: '/collections/hoodies-jackets', image: null},
+    {id: 'gid://menu/2', title: 'SHIRTS & TOPS', handle: 'shirts-tops', url: '/collections/shirts-tops', image: null},
+  ];
+  const published = (handle: string, count = 1, title = handle.toUpperCase()): PublishedCollectionNode => ({
+    id: `gid://collection/${handle}`,
+    title,
+    handle,
+    image: null,
+    products: {nodes: Array.from({length: count}, (_, i) => ({id: `p${i}`}))},
+  });
+
+  it('keeps the menu first and in the merchant\'s order, then appends a published collection missing from the menu', () => {
+    const result = mergeNavCollections(menu, [published('halloween-26', 13, "HALLOWEEN '26"), published('shirts-tops'), published('hoodies-jackets')]);
+    expect(result.map((c) => c.handle)).toEqual(['hoodies-jackets', 'shirts-tops', 'halloween-26']);
+    expect(result[2]).toEqual({
+      id: 'gid://collection/halloween-26',
+      title: "HALLOWEEN '26",
+      handle: 'halloween-26',
+      url: '/collections/halloween-26',
+      image: null,
+    });
+  });
+
+  it('keeps the menu label for a collection that is in both', () => {
+    const result = mergeNavCollections(menu, [published('hoodies-jackets', 5, 'Hoodies & Jackets')]);
+    expect(result[0].title).toBe('OUTERWEAR');
+    expect(result).toHaveLength(2);
+  });
+
+  it('skips empty collections and null nodes', () => {
+    const result = mergeNavCollections(menu, [published('empty', 0), null, {...published('no-products'), products: null}]);
+    expect(result).toEqual(menu);
+  });
+
+  it('lists a collection once even if the API returns it twice', () => {
+    const result = mergeNavCollections([], [published('a'), published('a'), published('b')]);
+    expect(result.map((c) => c.handle)).toEqual(['a', 'b']);
+  });
+
+  it('returns the menu alone when the published-collections lookup came back empty', () => {
+    expect(mergeNavCollections(menu, [])).toEqual(menu);
   });
 });
