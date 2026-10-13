@@ -887,7 +887,7 @@ export default function ProductPage() {
                   when the product has no specific fit guidance of its own. */}
               {!product.metafields?.some((m) => m?.key === 'fit' && m.value) && (
                 <p className="text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                  Merch is unisex &amp; true to size. So, feel free to order your normal fit. We work closely with our vendors to ensure quality and premium textures.
+                  Legendary Branding apparel is true to size &amp; unisex. Ordering in your regular letter size will allow a clean oversized look, while sizing up will allow for a baggy look. We work closely with our manufacturers to ensure quality fit and premium textures.
                 </p>
               )}
 
