@@ -18,7 +18,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@graphql-codegen/cli": "7.4.5",
+    "@graphql-codegen/cli": "7.4.6",
     "@sentry/react": "11.2.0",
     "@shopify/cli": "4.8.3",
     "@shopify/hydrogen": "2026.4.7",
@@ -26,8 +26,8 @@
     "isbot": "4.4.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-router": "7.18.2",
-    "web-vitals": "6.2.2"
+    "react-router": "7.18.4",
+    "web-vitals": "6.2.3"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
