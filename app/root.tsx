@@ -28,6 +28,7 @@ import ChatWidget from '~/components/chat/ChatWidget';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
 import {STORE_TRUST_QUERY, toStoreTrust, withBudget} from '~/lib/trust';
 import Analytics from '~/components/seo/Analytics';
+import {analyticsEnvironment} from '~/lib/analytics-environment';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
 import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
@@ -181,6 +182,8 @@ export async function loader({context, request}: LoaderFunctionArgs) {
   });
   (context.waitUntil ?? (() => {}))(storeTrustLookup.then(() => undefined, () => undefined));
 
+  const shopAnalytics = analyticsEnvironment(request.url);
+
   const [cartData, localizationResult, shop, menuResult, storeTrustResult] = await Promise.all([
     cart.get(),
     context.storefront.query(LOCALIZATION_QUERY, {
@@ -190,10 +193,16 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       },
       cache: CacheLong(),
     }),
-    getShopAnalytics({
-      storefront: context.storefront,
-      publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
-    }),
+    // NOTE: null outside the live storefront. Hydrogen mounts every Shopify
+    // analytics component on `!!shop`, so a null shop is how a dev server or
+    // preview deploy stops writing page views, product views and cart events
+    // into the production store's reporting alongside real customers.
+    shopAnalytics.reportToShop
+      ? getShopAnalytics({
+          storefront: context.storefront,
+          publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
+        })
+      : Promise.resolve(null),
     // NOTE: CacheShort, not CacheLong -- a collection the merchant adds or publishes should reach the header within minutes, not up to a day.
     context.storefront.query(MAIN_MENU_QUERY, {
       variables: {
