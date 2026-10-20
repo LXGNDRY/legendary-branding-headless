@@ -25,6 +25,16 @@ describe('analyticsEnvironment', () => {
       }
     });
 
+    it('refuses Hydrogen\'s local HTTPS host', () => {
+      // `local.tryhydrogen.dev` looks like a public domain but resolves to the
+      // developer's own machine. vite.config.ts allows `.tryhydrogen.dev`, so
+      // it is in active use here - without this it reads as the live
+      // storefront and keeps leaking.
+      const env = analyticsEnvironment('https://local.tryhydrogen.dev:3000/products/goat-hoodie-440gsm');
+      expect(env.reportToShop).toBe(false);
+      expect(env.reason).toContain('local development host');
+    });
+
     it('refuses a production build served on loopback', () => {
       // `shopify hydrogen preview` runs a production bundle locally, so build
       // mode is not a safe signal - the host is.

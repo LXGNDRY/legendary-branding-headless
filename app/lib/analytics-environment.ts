@@ -20,9 +20,17 @@
 
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0']);
 
-/** Hosts that are a developer's machine rather than a customer's browser. */
+/**
+ * Hosts that are a developer's machine rather than a customer's browser.
+ *
+ * `.tryhydrogen.dev` is Hydrogen's local HTTPS host (`local.tryhydrogen.dev`),
+ * which resolves to the developer's own machine despite looking like a public
+ * domain. vite.config.ts already allows it, so it is in active use here and
+ * would otherwise be read as the live storefront.
+ */
 function isLocalHost(host: string): boolean {
   if (LOOPBACK.has(host) || host.endsWith('.localhost') || host.endsWith('.local')) return true;
+  if (host === 'tryhydrogen.dev' || host.endsWith('.tryhydrogen.dev')) return true;
   if (/^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host)) return true;
   return /^172\.(1[6-9]|2\d|3[01])\./.test(host);
 }
