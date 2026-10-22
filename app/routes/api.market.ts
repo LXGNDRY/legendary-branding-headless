@@ -9,7 +9,7 @@ import {
   type LocalizationData,
 } from '~/lib/market';
 import {requireSameOrigin} from '~/lib/security';
-import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {enforceRatePolicy} from '~/lib/rate-limit';
 import {captureError} from '~/lib/monitoring';
 
 export async function action({request, context}: ActionFunctionArgs) {
@@ -18,7 +18,7 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
   const originError = requireSameOrigin(request);
   if (originError) return originError;
-  const limited = rateLimitMiddleware(request, 'market', 10);
+  const limited = enforceRatePolicy(request, 'market');
   if (limited) return limited;
 
   let formData: FormData;

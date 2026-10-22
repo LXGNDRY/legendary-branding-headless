@@ -1,5 +1,5 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
-import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {enforceRatePolicy} from '~/lib/rate-limit';
 import {requireSameOrigin} from '~/lib/security';
 import {captureError} from '~/lib/monitoring';
 import {requestKlaviyoBackInStock} from '~/lib/klaviyo';
@@ -36,7 +36,7 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
   const originError = requireSameOrigin(request);
   if (originError) return originError;
-  const limited = rateLimitMiddleware(request, 'waitlist', 5);
+  const limited = enforceRatePolicy(request, 'waitlist');
   if (limited) return limited;
 
   let form: FormData;

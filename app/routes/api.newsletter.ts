@@ -1,5 +1,5 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
-import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {enforceRatePolicy} from '~/lib/rate-limit';
 import {requireSameOrigin} from '~/lib/security';
 import {captureError} from '~/lib/monitoring';
 import {subscribeToKlaviyoList} from '~/lib/klaviyo';
@@ -22,7 +22,7 @@ export async function action({request, context}: ActionFunctionArgs) {
   if (originError) return originError;
 
   // Rate limiting — 5 requests per minute per IP
-  const rateLimitResponse = rateLimitMiddleware(request, 'newsletter', 5);
+  const rateLimitResponse = enforceRatePolicy(request, 'newsletter');
   if (rateLimitResponse) return rateLimitResponse;
 
   const env = context.env as {

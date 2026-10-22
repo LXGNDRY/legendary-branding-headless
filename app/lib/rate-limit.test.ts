@@ -1,5 +1,14 @@
-import {describe, it, expect, vi} from 'vitest';
-import {checkRateLimit, getClientIP, rateLimitMiddleware} from './rate-limit';
+import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
+import {
+  MAX_TRACKED_KEYS,
+  RATE_POLICIES,
+  checkRateLimit,
+  enforceRatePolicy,
+  getClientIP,
+  rateLimitMiddleware,
+  resetRateLimits,
+  trackedKeyCount,
+} from './rate-limit';
 
 describe('checkRateLimit', () => {
   it('allows requests under the limit and decrements remaining', () => {
@@ -69,14 +78,23 @@ describe('getClientIP', () => {
     expect(getClientIP(request)).toBe('9.9.9.9');
   });
 
-  it('falls back to a truncated user-agent hash when no IP header is present', () => {
-    const request = requestWithHeaders({'user-agent': 'Mozilla/5.0 Test Browser'});
-    expect(getClientIP(request)).toBe('ua:Mozilla/5.0 Test Browser');
+  it('never keys on the user agent: a request with no identity shares one bucket', () => {
+    const a = requestWithHeaders({'user-agent': 'Mozilla/5.0 A'});
+    const b = requestWithHeaders({'user-agent': 'Mozilla/5.0 B'});
+    expect(getClientIP(a)).toBe('unidentified');
+    expect(getClientIP(b)).toBe('unidentified');
+    expect(getClientIP(new Request('https://example.com'))).toBe('unidentified');
   });
 
-  it('falls back to "unknown" when nothing is available', () => {
-    const request = new Request('https://example.com');
-    expect(getClientIP(request)).toBe('ua:unknown');
+  it('ignores client-controllable forwarding headers once the edge header is present', () => {
+    expect(getClientIP(requestWithHeaders({'cf-connecting-ip': '1.2.3.4', 'x-forwarded-for': '6.6.6.6'}))).toBe('1.2.3.4');
+    // an unusable edge value is not a license to trust a forged header
+    expect(getClientIP(requestWithHeaders({'cf-connecting-ip': '', 'x-forwarded-for': '6.6.6.6'}))).toBe('unidentified');
+  });
+
+  it('rejects oversized or malformed identities instead of minting a bucket for them', () => {
+    expect(getClientIP(requestWithHeaders({'x-forwarded-for': 'a'.repeat(200)}))).toBe('unidentified');
+    expect(getClientIP(requestWithHeaders({'x-forwarded-for': 'bad value'}))).toBe('unidentified');
   });
 });
 
@@ -97,5 +115,62 @@ describe('rateLimitMiddleware', () => {
     expect(result!.headers.get('Retry-After')).toBeTruthy();
     const body = await result!.json();
     expect(body).toEqual({error: 'Too many requests'});
+  });
+});
+
+describe('window expiry and bounded storage', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    resetRateLimits();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('keeps a long-window entry through other traffic and cleanup', () => {
+    // 1 request per hour: the old fixed 60 s sweep would have deleted this entry after a minute.
+    expect(checkRateLimit('hourly', 1, 3_600_000).limited).toBe(false);
+    for (let minute = 1; minute <= 30; minute++) {
+      vi.advanceTimersByTime(60_000);
+      for (let i = 0; i < 250; i++) checkRateLimit(`other-${minute}-${i}`, 5, 60_000);
+    }
+    expect(checkRateLimit('hourly', 1, 3_600_000).limited).toBe(true);
+    vi.advanceTimersByTime(31 * 60_000);
+    expect(checkRateLimit('hourly', 1, 3_600_000).limited).toBe(false);
+  });
+
+  it('expires short-window entries so storage does not grow with old identities', () => {
+    for (let i = 0; i < 400; i++) checkRateLimit(`old-${i}`, 5, 1_000);
+    vi.advanceTimersByTime(2_000);
+    for (let i = 0; i < 200; i++) checkRateLimit(`new-${i}`, 5, 1_000);
+    expect(trackedKeyCount()).toBeLessThanOrEqual(200);
+  });
+
+  it('never tracks more than the hard bound, even for a flood of live identities', () => {
+    for (let i = 0; i < MAX_TRACKED_KEYS + 1_500; i++) checkRateLimit(`flood-${i}`, 5, 3_600_000);
+    expect(trackedKeyCount()).toBeLessThanOrEqual(MAX_TRACKED_KEYS + 200);
+  });
+});
+
+describe('enforceRatePolicy', () => {
+  beforeEach(() => resetRateLimits());
+  const from = (ip: string) => new Request('https://example.com', {headers: {'cf-connecting-ip': ip}});
+
+  it('applies the named policy per client', () => {
+    for (let i = 0; i < RATE_POLICIES.chat.max; i++) expect(enforceRatePolicy(from('1.1.1.1'), 'chat')).toBeNull();
+    expect(enforceRatePolicy(from('1.1.1.1'), 'chat')?.status).toBe(429);
+    expect(enforceRatePolicy(from('2.2.2.2'), 'chat')).toBeNull();
+  });
+
+  it('applies a global policy across clients and reports the limit', async () => {
+    for (let i = 0; i < RATE_POLICIES['chat-global'].max; i++) enforceRatePolicy(from(`10.0.${i % 250}.${Math.floor(i / 250)}`), 'chat-global');
+    const limited = enforceRatePolicy(from('9.9.9.9'), 'chat-global');
+    expect(limited?.status).toBe(429);
+    expect(limited?.headers.get('X-RateLimit-Limit')).toBe(String(RATE_POLICIES['chat-global'].max));
+    expect(limited?.headers.get('Cache-Control')).toBe('no-store');
+  });
+
+  it('requires every listed policy to pass', () => {
+    const request = from('3.3.3.3');
+    for (let i = 0; i < RATE_POLICIES.newsletter.max; i++) enforceRatePolicy(request, 'newsletter');
+    expect(enforceRatePolicy(request, 'search', 'newsletter')?.status).toBe(429);
   });
 });

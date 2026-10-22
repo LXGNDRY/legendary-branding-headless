@@ -17,12 +17,14 @@ const trust = {shop: null};
 const cartData = {id: 'gid://shopify/Cart/1', totalQuantity: 2, lines: {edges: []}};
 
 type Overrides = {
+  url?: string;
+  env?: Record<string, string>;
   responses?: Record<string, unknown>;
   cart?: () => Promise<unknown>;
   isLoggedIn?: () => Promise<boolean>;
 };
 
-function run({responses = {}, cart = async () => cartData, isLoggedIn = async () => false}: Overrides = {}) {
+function run({responses = {}, cart = async () => cartData, isLoggedIn = async () => false, url = 'http://localhost/', env = {}}: Overrides = {}) {
   const mock = createMockStorefront({
     responses: {
       StorefrontLocalization: localization,
@@ -36,10 +38,10 @@ function run({responses = {}, cart = async () => cartData, isLoggedIn = async ()
   const context = mock.createContext({
     cart: {get: cart, getCartId: async () => 'gid://shopify/Cart/1'},
     customerAccount: {isLoggedIn},
-    env: {PUBLIC_STORE_DOMAIN: 'shop.test'},
+    env: {PUBLIC_STORE_DOMAIN: 'shop.test', ...env},
   });
   // @ts-expect-error - minimal Hydrogen app context
-  return loader({request: new Request('http://localhost/'), context, params: {}});
+  return loader({request: new Request(url), context, params: {}});
 }
 
 const fails = () => {
@@ -79,6 +81,13 @@ describe('root loader resilience', () => {
     const data = await run({cart: async () => fails(), responses: {MainMenu: fails, NavAllCollections: fails}});
     expect(data.cart).toBeNull();
     expect(data.navCollections).toEqual([]);
+  });
+
+  it('offers the chat widget only when its provider is configured', async () => {
+    const off = (await run()) as {chatAvailable: boolean};
+    const on = (await run({env: {PRIVATE_ANTHROPIC_API_KEY: 'key'}})) as {chatAvailable: boolean};
+    expect(off.chatAvailable).toBe(false);
+    expect(on.chatAvailable).toBe(true);
   });
 
   it('treats a failing auth lookup as signed out, never as another customer', async () => {
