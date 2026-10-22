@@ -64,7 +64,8 @@ export async function loader({params, context}: LoaderFunctionArgs) {
   // NOTE: /policies serves exactly the handles in POLICY_PAGES. Any other handle is a generic page that lives at /pages;
   // an existing link to one keeps working through a permanent redirect, and anything else is a real 404.
   if (!isPolicyHandle(handle)) {
-    if (page?.body) throw redirect(ROUTES.page(handle), 301);
+    // NOTE: existence, not body: a page built only from content blocks has an empty body but is a valid /pages route.
+    if (page) throw redirect(ROUTES.page(handle), 301);
     throw new Response('Policy page not found', {status: 404});
   }
 

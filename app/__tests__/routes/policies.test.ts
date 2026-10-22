@@ -65,6 +65,12 @@ describe('/policies/:handle content authority', () => {
     expect(response.headers.get('Location')).toBe('/pages/lookbook');
   });
 
+  it('redirects an existing generic page even when its body is empty (content-block pages)', async () => {
+    const response = await thrown(runPolicy('guide', {Policy: {page: {id: 'p', title: 'Guide', body: ''}, shop: noShop}}));
+    expect(response.status).toBe(301);
+    expect(response.headers.get('Location')).toBe('/pages/guide');
+  });
+
   it('404s a handle that is neither a policy nor a page', async () => {
     expect((await thrown(runPolicy('nonsense', {Policy: {page: null, shop: noShop}}))).status).toBe(404);
   });
