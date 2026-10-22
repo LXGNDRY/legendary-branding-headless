@@ -38,7 +38,8 @@ import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
-import {CacheLong} from '~/lib/cache';
+import {CacheFresh, CacheLong} from '~/lib/cache';
+import {fetchAllPages} from '~/lib/pagination';
 import {handleCartMutation} from '~/lib/cart-mutation';
 import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
@@ -101,6 +102,9 @@ const FABRIC_WEIGHT_TIERS = [
   {range: '420–460', nameKey: 'fabric.tier.maximumWeight.name', descriptionKey: 'fabric.tier.maximumWeight.description'},
 ] as const satisfies ReadonlyArray<{range: string; nameKey: TranslationKey; descriptionKey: TranslationKey}>;
 
+// 25 pages of 100 covers Shopify's 2,048-variant product limit.
+const MAX_VARIANT_PAGES = 25;
+
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
     id
@@ -114,12 +118,12 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
   }
 ` as const;
 
+// Editorial content only: safe to cache for an hour. Prices, availability,
+// inventory and the option definitions that drive the variant selector come
+// from PRODUCT_COMMERCE_QUERY below with a short cache.
 const PRODUCT_QUERY = `#graphql
-  ${PRODUCT_VARIANT_FRAGMENT}
-  ${PRODUCT_CARD_FRAGMENT}
   query Product(
     $handle: String!
-    $selectedOptions: [SelectedOptionInput!]!
     $country: CountryCode
     $language: LanguageCode
   ) @inContext(country: $country, language: $language) {
@@ -150,10 +154,31 @@ const PRODUCT_QUERY = `#graphql
           }
         }
       }
+      # NOTE: the gallery is intentionally capped at the first 10 images; a selected variant's own image is added separately.
       images(first: 10) {
         nodes { id url altText width height }
       }
-      options {
+    }
+  }
+` as const;
+
+// Price, availability and inventory: short cache, no stale-if-error. Variants are
+// read page by page (see fetchAllPages) so a product with more than 100
+// variants never silently loses selectable options.
+const PRODUCT_COMMERCE_QUERY = `#graphql
+  ${PRODUCT_VARIANT_FRAGMENT}
+  ${PRODUCT_CARD_FRAGMENT}
+  query ProductCommerce(
+    $handle: String!
+    $selectedOptions: [SelectedOptionInput!]!
+    $after: String
+    $withExtras: Boolean!
+    $country: CountryCode
+    $language: LanguageCode
+  ) @inContext(country: $country, language: $language) {
+    product(handle: $handle) {
+      id
+      options @include(if: $withExtras) {
         id
         name
         optionValues {
@@ -172,14 +197,15 @@ const PRODUCT_QUERY = `#graphql
         selectedOptions: $selectedOptions
         ignoreUnknownOptions: true
         caseInsensitiveMatch: true
-      ) {
+      ) @include(if: $withExtras) {
         ...ProductVariant
       }
-      variants(first: 100) {
+      variants(first: 100, after: $after) {
         nodes { ...ProductVariant }
+        pageInfo { hasNextPage endCursor }
       }
     }
-    relatedProducts: collection(handle: "all-products") {
+    relatedProducts: collection(handle: "all-products") @include(if: $withExtras) {
       products(first: 4, sortKey: BEST_SELLING) {
         nodes { ...ProductCard }
       }
@@ -220,12 +246,49 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   if (!handle) throw new Response('Not Found', {status: 404});
 
   const selectedOptions = getSelectedProductOptions(request);
-  const {product, relatedProducts} = await context.storefront.query(PRODUCT_QUERY, {
-    variables: {handle, selectedOptions, country: context.storefront.i18n.country, language: context.storefront.i18n.language},
-    cache: CacheLong(),
-  });
+  const market = {country: context.storefront.i18n.country, language: context.storefront.i18n.language};
 
-  if (!product) throw new Response('Product not found', {status: 404});
+  const [{product: content}, commerce] = await Promise.all([
+    context.storefront.query(PRODUCT_QUERY, {variables: {handle, ...market}, cache: CacheLong()}),
+    (async () => {
+      const extras: {
+        productId?: string;
+        options?: unknown;
+        selectedVariant?: ProductVariantFragment | null;
+        relatedProducts?: unknown;
+      } = {};
+      const variants = await fetchAllPages(async (after) => {
+        const result = await context.storefront.query(PRODUCT_COMMERCE_QUERY, {
+          variables: {handle, selectedOptions, after, withExtras: after === null, ...market},
+          cache: CacheFresh(),
+        });
+        if (after === null) {
+          extras.productId = result.product?.id;
+          extras.options = result.product?.options;
+          extras.selectedVariant = result.product?.selectedVariant as unknown as ProductVariantFragment | null | undefined;
+          extras.relatedProducts = result.relatedProducts;
+        }
+        return result.product?.variants;
+      }, MAX_VARIANT_PAGES);
+      return {variants, extras};
+    })(),
+  ]);
+
+  // NOTE: the editorial content can come from a long-lived cache entry. If the handle was deleted,
+  // unpublished or reassigned since, the fresh commerce product is missing or has a different id --
+  // never combine one product's cached content with another product's purchasable variants.
+  if (!content || !commerce.extras.productId || commerce.extras.productId !== content.id) {
+    throw new Response('Product not found', {status: 404});
+  }
+
+  const product = {
+    ...content,
+    options: commerce.extras.options ?? [],
+    selectedVariant: commerce.extras.selectedVariant ?? null,
+    variants: {nodes: commerce.variants},
+  };
+  const relatedProducts = commerce.extras.relatedProducts ?? null;
+
 
   // Real per-product reviews -- optional, server-only, and NOT awaited
   // here: this is a third-party fetch (up to a 5s timeout) for a
@@ -247,8 +310,8 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const reviewSummary = loadedReviews ? summarizeReviews(loadedReviews) : null;
 
   return {
-    product: product as ProductFull,
-    relatedProducts,
+    product: product as unknown as ProductFull,
+    relatedProducts: relatedProducts as {products?: {nodes?: unknown[]}} | null,
     reviews,
     reviewSummary,
   };

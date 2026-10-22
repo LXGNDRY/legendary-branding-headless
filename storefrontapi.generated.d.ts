@@ -1967,6 +1967,7 @@ export type ChatProductSearchQuery = {
 
 export type QuickAddProductQueryVariables = Exact<{
   handle: string;
+  after?: string | null | undefined;
   country?: StorefrontAPI.CountryCode | null | undefined;
   language?: StorefrontAPI.LanguageCode | null | undefined;
 }>;
@@ -1993,6 +1994,7 @@ export type QuickAddProductQuery = {
       }>;
     }>;
     variants: {
+      pageInfo: {hasNextPage: boolean; endCursor: string | null};
       nodes: Array<{
         id: string;
         availableForSale: boolean;
@@ -2453,9 +2455,6 @@ export type ProductVariantFragment = {
 
 export type ProductQueryVariables = Exact<{
   handle: string;
-  selectedOptions:
-    | Array<StorefrontAPI.SelectedOptionInput>
-    | StorefrontAPI.SelectedOptionInput;
   country?: StorefrontAPI.CountryCode | null | undefined;
   language?: StorefrontAPI.LanguageCode | null | undefined;
 }>;
@@ -2491,7 +2490,24 @@ export type ProductQuery = {
         height: number | null;
       }>;
     };
-    options: Array<{
+  } | null;
+};
+
+export type ProductCommerceQueryVariables = Exact<{
+  handle: string;
+  selectedOptions:
+    | Array<StorefrontAPI.SelectedOptionInput>
+    | StorefrontAPI.SelectedOptionInput;
+  after?: string | null | undefined;
+  withExtras: boolean;
+  country?: StorefrontAPI.CountryCode | null | undefined;
+  language?: StorefrontAPI.LanguageCode | null | undefined;
+}>;
+
+export type ProductCommerceQuery = {
+  product: {
+    id: string;
+    options?: Array<{
       id: string;
       name: string;
       optionValues: Array<{
@@ -2502,7 +2518,7 @@ export type ProductQuery = {
         } | null;
       }>;
     }>;
-    selectedVariant: {
+    selectedVariant?: {
       id: string;
       sku: string | null;
       availableForSale: boolean;
@@ -2539,9 +2555,10 @@ export type ProductQuery = {
           height: number | null;
         } | null;
       }>;
+      pageInfo: {hasNextPage: boolean; endCursor: string | null};
     };
   } | null;
-  relatedProducts: {
+  relatedProducts?: {
     products: {
       nodes: Array<{
         id: string;
@@ -2626,14 +2643,13 @@ export type SearchQuery = {
     products: Array<{
       cursor: string;
       node: {
+        productType: string;
         id: string;
         title: string;
         handle: string;
-        vendor: string;
-        productType: string;
         availableForSale: boolean;
+        vendor: string;
         tags: Array<string>;
-        description: string;
         featuredImage: {
           id: string | null;
           url: unknown;
@@ -2641,6 +2657,15 @@ export type SearchQuery = {
           width: number | null;
           height: number | null;
         } | null;
+        images: {
+          nodes: Array<{
+            id: string | null;
+            url: unknown;
+            altText: string | null;
+            width: number | null;
+            height: number | null;
+          }>;
+        };
         priceRange: {
           minVariantPrice: {
             amount: unknown;
@@ -2657,6 +2682,15 @@ export type SearchQuery = {
             currencyCode: StorefrontAPI.CurrencyCode;
           };
         };
+        selectedOrFirstAvailableVariant: {
+          id: string;
+          availableForSale: boolean;
+          price: {amount: unknown; currencyCode: StorefrontAPI.CurrencyCode};
+          compareAtPrice: {
+            amount: unknown;
+            currencyCode: StorefrontAPI.CurrencyCode;
+          } | null;
+        } | null;
         reviewBadge: {value: string} | null;
       };
     }>;
@@ -2714,7 +2748,7 @@ interface GeneratedQueryTypes {
     return: ChatProductSearchQuery;
     variables: ChatProductSearchQueryVariables;
   };
-  '#graphql\n  query QuickAddProduct($handle: String!, $country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      title\n      handle\n      featuredImage { url altText width height }\n      options {\n        name\n        optionValues {\n          name\n          swatch {\n            color\n            image { previewImage { url } }\n          }\n        }\n      }\n      variants(first: 100) {\n        nodes {\n          id\n          availableForSale\n          selectedOptions { name value }\n          price { amount currencyCode }\n          compareAtPrice { amount currencyCode }\n          image { url altText width height }\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  query QuickAddProduct($handle: String!, $after: String, $country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      title\n      handle\n      featuredImage { url altText width height }\n      options {\n        name\n        optionValues {\n          name\n          swatch {\n            color\n            image { previewImage { url } }\n          }\n        }\n      }\n      variants(first: 100, after: $after) {\n        pageInfo { hasNextPage endCursor }\n        nodes {\n          id\n          availableForSale\n          selectedOptions { name value }\n          price { amount currencyCode }\n          compareAtPrice { amount currencyCode }\n          image { url altText width height }\n        }\n      }\n    }\n  }\n': {
     return: QuickAddProductQuery;
     variables: QuickAddProductQueryVariables;
   };
@@ -2754,11 +2788,15 @@ interface GeneratedQueryTypes {
     return: PolicyQuery;
     variables: PolicyQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    id\n    sku\n    availableForSale\n    quantityAvailable\n    selectedOptions { name value }\n    price { amount currencyCode }\n    compareAtPrice { amount currencyCode }\n    image { url altText width height }\n  }\n\n  #graphql\n  fragment ProductCard on Product {\n    id\n    title\n    handle\n    availableForSale\n    vendor\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n    images(first: 2) {\n      nodes {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n      maxVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    compareAtPriceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    tags\n    # Used by the product card\'s "Quick Add" button to add a variant to the\n    # cart without navigating to the PDP. Falls back to the first available\n    # variant when no options are pre-selected — correct for the common case\n    # of single-variant products or a "just add the default" quick action.\n    selectedOrFirstAvailableVariant(\n      selectedOptions: []\n      ignoreUnknownOptions: true\n      caseInsensitiveMatch: true\n    ) {\n      id\n      availableForSale\n      price {\n        amount\n        currencyCode\n      }\n      compareAtPrice {\n        amount\n        currencyCode\n      }\n    }\n    # Judge.me\'s synced rating/review-count badge -- real data, not\n    # fabricated. Absent until a product has its first review; the card\n    # simply omits the star row in that case (see StarRating).\n    reviewBadge: metafield(namespace: "judgeme", key: "badge") {\n      value\n    }\n  }\n\n  query Product(\n    $handle: String!\n    $selectedOptions: [SelectedOptionInput!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      title\n      handle\n      descriptionHtml\n      tags\n      vendor\n      productType\n      metafields(identifiers: [\n        {namespace: "custom", key: "material"}\n        {namespace: "custom", key: "fit"}\n        {namespace: "custom", key: "care"}\n        {namespace: "custom", key: "size_chart"}\n        {namespace: "judgeme", key: "badge"}\n        {namespace: "judgeme", key: "widget"}\n        {namespace: "reviews", key: "rating"}\n        {namespace: "reviews", key: "rating_count"}\n      ]) {\n        key\n        value\n        type\n        reference {\n          ... on MediaImage {\n            image { url altText width height }\n          }\n        }\n      }\n      images(first: 10) {\n        nodes { id url altText width height }\n      }\n      options {\n        id\n        name\n        optionValues {\n          name\n          swatch {\n            color\n            image {\n              previewImage {\n                url\n              }\n            }\n          }\n        }\n      }\n      selectedVariant: variantBySelectedOptions(\n        selectedOptions: $selectedOptions\n        ignoreUnknownOptions: true\n        caseInsensitiveMatch: true\n      ) {\n        ...ProductVariant\n      }\n      variants(first: 100) {\n        nodes { ...ProductVariant }\n      }\n    }\n    relatedProducts: collection(handle: "all-products") {\n      products(first: 4, sortKey: BEST_SELLING) {\n        nodes { ...ProductCard }\n      }\n    }\n  }\n': {
+  '#graphql\n  query Product(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      title\n      handle\n      descriptionHtml\n      tags\n      vendor\n      productType\n      metafields(identifiers: [\n        {namespace: "custom", key: "material"}\n        {namespace: "custom", key: "fit"}\n        {namespace: "custom", key: "care"}\n        {namespace: "custom", key: "size_chart"}\n        {namespace: "judgeme", key: "badge"}\n        {namespace: "judgeme", key: "widget"}\n        {namespace: "reviews", key: "rating"}\n        {namespace: "reviews", key: "rating_count"}\n      ]) {\n        key\n        value\n        type\n        reference {\n          ... on MediaImage {\n            image { url altText width height }\n          }\n        }\n      }\n      # NOTE: the gallery is intentionally capped at the first 10 images; a selected variant\'s own image is added separately.\n      images(first: 10) {\n        nodes { id url altText width height }\n      }\n    }\n  }\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };
-  '#graphql\n  query Search(\n    $query: String!\n    $first: Int\n    $last: Int\n    $after: String\n    $before: String\n    $sortKey: SearchSortKeys\n    $reverse: Boolean\n    $availableV2: Boolean\n    $productType: String\n    $productVendor: String\n    $minPrice: Float\n    $maxPrice: Float\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    search(\n      query: $query\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      sortKey: $sortKey\n      reverse: $reverse\n      productFilters: [\n        {productVendor: $productVendor}\n        {productType: $productType}\n        {available: $availableV2}\n        {price: {min: $minPrice, max: $maxPrice}}\n      ]\n    ) {\n      totalCount\n      pageInfo {\n        hasNextPage\n        hasPreviousPage\n        startCursor\n        endCursor\n      }\n      products: edges {\n        cursor\n        node {\n          ... on Product {\n            id\n            title\n            handle\n            vendor\n            productType\n            availableForSale\n            tags\n            description\n            featuredImage {\n              id\n              url\n              altText\n              width\n              height\n            }\n            priceRange {\n              minVariantPrice {\n                amount\n                currencyCode\n              }\n              maxVariantPrice {\n                amount\n                currencyCode\n              }\n            }\n            compareAtPriceRange {\n              minVariantPrice {\n                amount\n                currencyCode\n              }\n            }\n            reviewBadge: metafield(namespace: "judgeme", key: "badge") {\n              value\n            }\n          }\n        }\n      }\n      productFilters {\n        id\n        label\n        type\n        values {\n          label\n          input\n          count\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    id\n    sku\n    availableForSale\n    quantityAvailable\n    selectedOptions { name value }\n    price { amount currencyCode }\n    compareAtPrice { amount currencyCode }\n    image { url altText width height }\n  }\n\n  #graphql\n  fragment ProductCard on Product {\n    id\n    title\n    handle\n    availableForSale\n    vendor\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n    images(first: 2) {\n      nodes {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n      maxVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    compareAtPriceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    tags\n    # Used by the product card\'s "Quick Add" button to add a variant to the\n    # cart without navigating to the PDP. Falls back to the first available\n    # variant when no options are pre-selected — correct for the common case\n    # of single-variant products or a "just add the default" quick action.\n    selectedOrFirstAvailableVariant(\n      selectedOptions: []\n      ignoreUnknownOptions: true\n      caseInsensitiveMatch: true\n    ) {\n      id\n      availableForSale\n      price {\n        amount\n        currencyCode\n      }\n      compareAtPrice {\n        amount\n        currencyCode\n      }\n    }\n    # Judge.me\'s synced rating/review-count badge -- real data, not\n    # fabricated. Absent until a product has its first review; the card\n    # simply omits the star row in that case (see StarRating).\n    reviewBadge: metafield(namespace: "judgeme", key: "badge") {\n      value\n    }\n  }\n\n  query ProductCommerce(\n    $handle: String!\n    $selectedOptions: [SelectedOptionInput!]!\n    $after: String\n    $withExtras: Boolean!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      options @include(if: $withExtras) {\n        id\n        name\n        optionValues {\n          name\n          swatch {\n            color\n            image {\n              previewImage {\n                url\n              }\n            }\n          }\n        }\n      }\n      selectedVariant: variantBySelectedOptions(\n        selectedOptions: $selectedOptions\n        ignoreUnknownOptions: true\n        caseInsensitiveMatch: true\n      ) @include(if: $withExtras) {\n        ...ProductVariant\n      }\n      variants(first: 100, after: $after) {\n        nodes { ...ProductVariant }\n        pageInfo { hasNextPage endCursor }\n      }\n    }\n    relatedProducts: collection(handle: "all-products") @include(if: $withExtras) {\n      products(first: 4, sortKey: BEST_SELLING) {\n        nodes { ...ProductCard }\n      }\n    }\n  }\n': {
+    return: ProductCommerceQuery;
+    variables: ProductCommerceQueryVariables;
+  };
+  '#graphql\n  #graphql\n  fragment ProductCard on Product {\n    id\n    title\n    handle\n    availableForSale\n    vendor\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n    images(first: 2) {\n      nodes {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n      maxVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    compareAtPriceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    tags\n    # Used by the product card\'s "Quick Add" button to add a variant to the\n    # cart without navigating to the PDP. Falls back to the first available\n    # variant when no options are pre-selected — correct for the common case\n    # of single-variant products or a "just add the default" quick action.\n    selectedOrFirstAvailableVariant(\n      selectedOptions: []\n      ignoreUnknownOptions: true\n      caseInsensitiveMatch: true\n    ) {\n      id\n      availableForSale\n      price {\n        amount\n        currencyCode\n      }\n      compareAtPrice {\n        amount\n        currencyCode\n      }\n    }\n    # Judge.me\'s synced rating/review-count badge -- real data, not\n    # fabricated. Absent until a product has its first review; the card\n    # simply omits the star row in that case (see StarRating).\n    reviewBadge: metafield(namespace: "judgeme", key: "badge") {\n      value\n    }\n  }\n\n  query Search(\n    $query: String!\n    $first: Int\n    $last: Int\n    $after: String\n    $before: String\n    $sortKey: SearchSortKeys\n    $reverse: Boolean\n    $availableV2: Boolean\n    $productType: String\n    $productVendor: String\n    $minPrice: Float\n    $maxPrice: Float\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    search(\n      query: $query\n      types: [PRODUCT]\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      sortKey: $sortKey\n      reverse: $reverse\n      productFilters: [\n        {productVendor: $productVendor}\n        {productType: $productType}\n        {available: $availableV2}\n        {price: {min: $minPrice, max: $maxPrice}}\n      ]\n    ) {\n      totalCount\n      pageInfo {\n        hasNextPage\n        hasPreviousPage\n        startCursor\n        endCursor\n      }\n      products: edges {\n        cursor\n        node {\n          ... on Product {\n            ...ProductCard\n            productType\n          }\n        }\n      }\n      productFilters {\n        id\n        label\n        type\n        values {\n          label\n          input\n          count\n        }\n      }\n    }\n  }\n': {
     return: SearchQuery;
     variables: SearchQueryVariables;
   };

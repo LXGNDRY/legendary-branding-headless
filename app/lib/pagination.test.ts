@@ -45,4 +45,14 @@ describe('fetchAllPages', () => {
     });
     expect(calls).toBe(20);
   });
+
+  it('honours a caller-supplied page bound', async () => {
+    let calls = 0;
+    const result = await fetchAllPages(async () => {
+      calls += 1;
+      return {nodes: [calls], pageInfo: {hasNextPage: true, endCursor: `c${calls}`}};
+    }, 3);
+    expect(calls).toBe(3);
+    expect(result).toEqual([1, 2, 3]);
+  });
 });

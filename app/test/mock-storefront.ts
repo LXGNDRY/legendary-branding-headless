@@ -17,7 +17,7 @@
 import {CacheShort} from '~/lib/cache';
 
 export interface MockStorefrontConfig {
-  /** Mock responses keyed by query operation name */
+  /** Mock responses keyed by query operation name (a function receives the request variables) */
   responses?: Record<string, unknown>;
   /** Allow unknown queries (return empty object) instead of throwing */
   allowUnknown?: boolean;
@@ -55,7 +55,11 @@ export function createMockStorefront(config: MockStorefrontConfig = {}) {
 
       // Check for a mock response by operation name
       if (operationName && config.responses?.[operationName]) {
-        return config.responses[operationName];
+        const response = config.responses[operationName];
+        // A function response can answer differently per request (e.g. by pagination cursor).
+        return typeof response === 'function'
+          ? (response as (variables: Record<string, unknown>) => unknown)(options?.variables ?? {})
+          : response;
       }
 
       if (config.allowUnknown) {

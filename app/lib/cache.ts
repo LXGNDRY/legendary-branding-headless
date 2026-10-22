@@ -43,6 +43,17 @@ export const CacheShort = () =>
   });
 
 /**
+ * Commerce-sensitive data: prices, availability and inventory.
+ * TTL: 30 seconds with a 30 second stale window and NO stale-if-error, so a
+ * Storefront outage can never keep serving an old price or "in stock" state.
+ */
+export const CacheFresh = () =>
+  H2CacheShort({
+    maxAge: 30,
+    staleWhileRevalidate: 30,
+  });
+
+/**
  * No caching — always fetch fresh.
  * Use for: cart, account, checkout, form submissions, personalized content.
  */

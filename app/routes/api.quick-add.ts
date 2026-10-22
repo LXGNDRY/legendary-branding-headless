@@ -1,9 +1,10 @@
 import type {LoaderFunctionArgs} from 'react-router';
-import {CacheShort} from '@shopify/hydrogen';
+import {CacheFresh} from '~/lib/cache';
+import {fetchAllPages} from '~/lib/pagination';
 import {rateLimitMiddleware} from '~/lib/rate-limit';
 
 const QUICK_ADD_PRODUCT_QUERY = `#graphql
-  query QuickAddProduct($handle: String!, $country: CountryCode, $language: LanguageCode)
+  query QuickAddProduct($handle: String!, $after: String, $country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
     product(handle: $handle) {
       id
@@ -20,7 +21,8 @@ const QUICK_ADD_PRODUCT_QUERY = `#graphql
           }
         }
       }
-      variants(first: 100) {
+      variants(first: 100, after: $after) {
+        pageInfo { hasNextPage endCursor }
         nodes {
           id
           availableForSale
@@ -48,14 +50,22 @@ export async function loader({request, context}: LoaderFunctionArgs) {
   if (!handle) return Response.json({product: null}, {status: 400, headers: {'Cache-Control': 'no-store'}});
 
   try {
-    const {product} = await context.storefront.query(QUICK_ADD_PRODUCT_QUERY, {
-      variables: {
-        handle,
-        country: context.storefront.i18n.country,
-        language: context.storefront.i18n.language,
-      },
-      cache: CacheShort(),
-    });
+    // NOTE: variants are read page by page so a product with more than 100 variants keeps every selectable option.
+    const first: {product?: object | null} = {};
+    const variants = await fetchAllPages(async (after) => {
+      const result = await context.storefront.query(QUICK_ADD_PRODUCT_QUERY, {
+        variables: {
+          handle,
+          after,
+          country: context.storefront.i18n.country,
+          language: context.storefront.i18n.language,
+        },
+        cache: CacheFresh(),
+      });
+      if (after === null) first.product = result.product;
+      return result.product?.variants;
+    }, 25);
+    const product = first.product ? {...first.product, variants: {nodes: variants}} : null;
     return Response.json(
       {product: product ?? null},
       {
