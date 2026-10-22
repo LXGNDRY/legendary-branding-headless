@@ -88,6 +88,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Check locale catalogs
+        run: npm run locales:check
+
   deploy:
     name: Deploy to Oxygen
     # Preview deploys automatically on every push to dev. Production deploys
