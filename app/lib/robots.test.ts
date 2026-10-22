@@ -6,6 +6,7 @@ import {
   AI_TRAINING_CRAWLERS,
   DISALLOWED_PATHS,
   buildRobotsTxt,
+  applyHostRobotsHeader,
   isIndexableHost,
 } from './robots';
 
@@ -104,8 +105,39 @@ describe('robots.txt route', () => {
     expect(await response.text()).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
   });
 
+  it('points the Sitemap line at the canonical origin on any host, ignoring the checkout domain variable', async () => {
+    for (const [url, domain] of [
+      ['https://www.legendary-branding.com/robots.txt', undefined],
+      ['https://www.legendary-branding.com/robots.txt', 'checkout.other-domain.com'],
+      ['https://localhost:3000/robots.txt', 'legendary-branding.com'],
+    ] as const) {
+      expect(await (await run(url, domain)).text()).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
+    }
+  });
+
   it('blocks an Oxygen deployment URL even when the domain variable is set', async () => {
     const response = await run('https://01abc.myshopify.dev/robots.txt', 'legendary-branding.com');
     expect(await response.text()).toBe('User-agent: *\nDisallow: /\n');
+  });
+});
+
+describe('applyHostRobotsHeader', () => {
+  const html = () => new Response('<html></html>', {status: 200});
+
+  it('marks every response on a preview or raw Oxygen host noindex, on top of its robots.txt', () => {
+    for (const url of ['https://legendary-abc.o2.myshopify.dev/', 'https://legendary-abc.o2.myshopify.dev/products/tee']) {
+      expect(applyHostRobotsHeader(html(), url).headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+    }
+  });
+
+  it('leaves the live host alone', () => {
+    expect(applyHostRobotsHeader(html(), 'https://www.legendary-branding.com/').headers.get('X-Robots-Tag')).toBeNull();
+  });
+
+  it('works on a response with immutable headers', () => {
+    const redirect = Response.redirect('https://x.test/', 302);
+    const result = applyHostRobotsHeader(redirect, 'https://legendary-abc.o2.myshopify.dev/a');
+    expect(result.status).toBe(302);
+    expect(result.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
   });
 });

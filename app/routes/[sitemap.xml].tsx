@@ -1,6 +1,7 @@
 import type {LoaderFunctionArgs} from 'react-router';
 import {CacheLong} from '~/lib/cache';
 import {urlEntry} from '~/lib/sitemap';
+import {POLICY_PAGES, ROUTES, SITE_ORIGIN, isPolicyHandle, type PolicyHandle} from '~/lib/site';
 
 const PRODUCTS_QUERY = `#graphql
   query SitemapProducts($first: Int!, $after: String) {
@@ -20,28 +21,23 @@ const PAGES_QUERY = `#graphql
 const ARTICLES_QUERY = `#graphql
   query SitemapArticles($blogHandle: String!, $first: Int!, $after: String) {
     blog(handle: $blogHandle) {
-      articles(first: $first, after: $after) { nodes { handle updatedAt: publishedAt } pageInfo { hasNextPage endCursor } }
+      articles(first: $first, after: $after) { nodes { handle } pageInfo { hasNextPage endCursor } }
     }
   }
 ` as const;
 
-// Handles served by app/routes/policies.$handle.tsx (reads shop.*Policy /
-// static copy, canonicalizes to /policies/<handle>). Several of these also
-// exist as generic Shopify Page objects with the same handle, which would
-// otherwise surface here as a second, self-canonicalizing /pages/<handle>
-// URL for the same content -- excluded below to avoid that duplicate.
-const POLICY_HANDLES = [
-  'refund-policy',
-  'terms-of-service',
-  'privacy-with-legendary-branding',
-  'shipping-policy',
-  'size-guide',
-  'about',
-  'contact',
-  'legendary_branding_faqs',
-] as const;
+const POLICIES_QUERY = `#graphql
+  query SitemapPolicies {
+    shop {
+      refundPolicy { id }
+      termsOfService { id }
+      shippingPolicy { id }
+      privacyPolicy { id }
+    }
+  }
+` as const;
 
-type Node = {handle: string; updatedAt: string};
+type Node = {handle: string; updatedAt?: string};
 type Connection = {nodes: Node[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
 
 async function paginate(queryPage: (after: string | null) => Promise<Connection | null | undefined>) {
@@ -57,25 +53,29 @@ async function paginate(queryPage: (after: string | null) => Promise<Connection 
   return nodes;
 }
 
-export async function loader({request, context}: LoaderFunctionArgs) {
-  // PUBLIC_CHECKOUT_DOMAIN is documented/configured as the bare apex
-  // (legendary-branding.com), but the live site is actually served from
-  // and canonicalizes to the www subdomain (the apex 301-redirects there
-  // -- see the canonical <link>/og:url fixes across the rest of the app).
-  // Prefixing www here keeps the sitemap's <loc> entries on the same host
-  // as those canonical tags instead of silently reverting to the
-  // redirecting apex host whenever this env var is set.
-  const domain = context.env.PUBLIC_CHECKOUT_DOMAIN?.trim().replace(/^www\./, '');
-  const origin = domain ? `https://www.${domain}` : new URL(request.url).origin;
+export async function loader({context}: LoaderFunctionArgs) {
+  // NOTE: always the canonical public origin (~/lib/site), the same one every canonical tag, og:url and JSON-LD uses.
+  const origin = SITE_ORIGIN;
   // NOTE: deliberately no @inContext/country/language -- the response is served from a shared public cache, so it must be identical for every market (the shop's default market and language).
   const variables = {first: 250};
 
-  const [products, collections, pages, articles] = await Promise.all([
+  const [products, collections, pages, articles, policies] = await Promise.all([
     paginate(async (after) => (await context.storefront.query(PRODUCTS_QUERY, {variables: {...variables, after}, cache: CacheLong()})).products as Connection),
     paginate(async (after) => (await context.storefront.query(COLLECTIONS_QUERY, {variables: {...variables, after}, cache: CacheLong()})).collections as Connection),
     paginate(async (after) => (await context.storefront.query(PAGES_QUERY, {variables: {...variables, after}, cache: CacheLong()})).pages as Connection),
     paginate(async (after) => (await context.storefront.query(ARTICLES_QUERY, {variables: {...variables, after, blogHandle: 'legendary_blogging'}, cache: CacheLong()})).blog?.articles as Connection | undefined),
+    context.storefront.query(POLICIES_QUERY, {cache: CacheLong()}).then((data) => data.shop as Record<string, {id?: string} | null> | null),
   ]);
+
+  // NOTE: a policy URL is listed only when it serves real content: its built-in store policy exists, or a Page of that
+  // handle does. Contact is always served (it renders its own block).
+  const pageHandles = new Set(pages.map((item) => item.handle));
+  const usable = (handle: PolicyHandle) => {
+    const entry = POLICY_PAGES[handle];
+    if (!entry.required) return true;
+    return Boolean(entry.native && policies?.[entry.native]?.id) || pageHandles.has(handle);
+  };
+  const policyHandles = (Object.keys(POLICY_PAGES) as PolicyHandle[]).filter(usable);
 
   const entries = [
     urlEntry(origin, '/'),
@@ -84,9 +84,11 @@ export async function loader({request, context}: LoaderFunctionArgs) {
     ...collections.map((item) => urlEntry(origin, `/collections/${item.handle}`, item.updatedAt)),
     // NOTE: no <lastmod> for products -- Shopify bumps Product.updatedAt on every inventory adjustment (each order), which is not a real content change.
     ...products.map((item) => urlEntry(origin, `/products/${item.handle}`)),
-    ...POLICY_HANDLES.map((handle) => urlEntry(origin, `/policies/${handle}`)),
-    ...pages.filter((item) => !(POLICY_HANDLES as readonly string[]).includes(item.handle)).map((item) => urlEntry(origin, `/pages/${item.handle}`, item.updatedAt)),
-    ...articles.map((item) => urlEntry(origin, `/journal/${item.handle}`, item.updatedAt)),
+    ...policyHandles.map((handle) => urlEntry(origin, ROUTES.policy(handle))),
+    // NOTE: pages with a policy handle redirect to /policies, so they are not listed twice.
+    ...pages.filter((item) => !isPolicyHandle(item.handle)).map((item) => urlEntry(origin, ROUTES.page(item.handle), item.updatedAt)),
+    // NOTE: no <lastmod> for articles: the Storefront API exposes only publishedAt, which is not a modified date.
+    ...articles.map((item) => urlEntry(origin, ROUTES.article(item.handle))),
   ];
 
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>`, {

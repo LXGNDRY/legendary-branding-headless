@@ -5,6 +5,7 @@ import {createAppLoadContext} from '~/lib/context';
 import {applySecurityHeaders, isAssetRequest} from '~/lib/security';
 import {withDefaultCacheControl} from '~/lib/cache';
 import {applyPrivateHeaders} from '~/lib/private-route';
+import {applyHostRobotsHeader} from '~/lib/robots';
 import {appendPendingSessionCookie, copySetCookies} from '~/lib/response-cookies';
 import {initSentryServer, captureServerError, drainServerReports} from '~/lib/sentry.server';
 import {setServerErrorReporter} from '~/lib/monitoring';
@@ -52,7 +53,10 @@ export default {
       // Apply security headers to all non-asset responses
       if (!isAssetRequest(request)) {
         // NOTE: private routes (account, cart) are uncacheable and unindexable on every response, errors included.
-        response = applyPrivateHeaders(withDefaultCacheControl(applySecurityHeaders(response, request)), request.url);
+        response = applyHostRobotsHeader(
+          applyPrivateHeaders(withDefaultCacheControl(applySecurityHeaders(response, request)), request.url),
+          request.url,
+        );
       }
 
       // Handle 404s via Shopify redirects (URL redirects from admin)
@@ -68,7 +72,7 @@ export default {
 
         // Re-apply security headers to the redirect response
         if (redirectResponse !== response && !isAssetRequest(request)) {
-          return applyPrivateHeaders(applySecurityHeaders(redirectResponse, request), request.url);
+          return applyHostRobotsHeader(applyPrivateHeaders(applySecurityHeaders(redirectResponse, request), request.url), request.url);
         }
 
         return redirectResponse;
@@ -97,7 +101,7 @@ export default {
         },
       });
 
-      return applyPrivateHeaders(applySecurityHeaders(response, request), request.url);
+      return applyHostRobotsHeader(applyPrivateHeaders(applySecurityHeaders(response, request), request.url), request.url);
     }
   },
 };

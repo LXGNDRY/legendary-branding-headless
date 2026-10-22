@@ -46,7 +46,7 @@ CI gate because the local audit environment could not access the Shopify schema.
 | Size guide modal focus trap | ✅ Fixed | `SizeGuideModal.tsx` already uses `useFocusTrap` (verified 2026-08-19) — doc previously understated this |
 | JSON-LD (Product/Article/Collection/Breadcrumb) | ✅ Consolidated | Shared generators in `SeoSchema.tsx` now used everywhere; breadcrumbs added site-wide |
 | Meta/canonical/og:image coverage | ✅ Completed | All routes upgraded per `docs/phase5-changelog.md` §5.2 |
-| robots.txt canonical domain | ✅ Fixed | Uses `PUBLIC_CHECKOUT_DOMAIN`, matches sitemap.xml |
+| robots.txt canonical domain | ✅ Fixed | Uses the canonical origin in `app/lib/site.ts`, matches sitemap.xml |
 | Favicon / PWA manifest | ✅ Full set | `public/favicon-{16,32}.png`, `apple-touch-icon.png`, `icon-{192,512}.png`, `site.webmanifest` |
 | Newsletter → Klaviyo | ✅ Wired | `app/routes/api.newsletter.ts`, shared `NewsletterForm.tsx`; **requires `PRIVATE_KLAVIYO_API_KEY` + `PUBLIC_KLAVIYO_LIST_ID` to be set in the real environment** — currently degrades to simulated success without them |
 | Market/currency context | ⚠️ Partial | Edge country resolution exists, but arbitrary `?currency=` input is persisted without allowlist validation or market compatibility checks |
