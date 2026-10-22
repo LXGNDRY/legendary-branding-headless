@@ -3,6 +3,7 @@ import * as build from 'virtual:react-router/server-build';
 import {createRequestHandler, storefrontRedirect} from '@shopify/hydrogen';
 import {createAppLoadContext} from '~/lib/context';
 import {applySecurityHeaders, isAssetRequest} from '~/lib/security';
+import {withDefaultCacheControl} from '~/lib/cache';
 import {appendPendingSessionCookie, copySetCookies} from '~/lib/response-cookies';
 import {initSentryServer, captureServerError} from '~/lib/sentry.server';
 
@@ -39,7 +40,7 @@ export default {
 
       // Apply security headers to all non-asset responses
       if (!isAssetRequest(request)) {
-        response = applySecurityHeaders(response, request);
+        response = withDefaultCacheControl(applySecurityHeaders(response, request));
       }
 
       // Handle 404s via Shopify redirects (URL redirects from admin)

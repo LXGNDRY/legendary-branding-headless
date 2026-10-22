@@ -374,7 +374,7 @@ Initial status for every recovery task is **Not started**; this document and its
 | R06 | Not started | — | — | See package/decision table |
 | R07 | Not started | — | — | See package/decision table |
 | R08 | Not started | — | — | See package/decision table |
-| R09 | Not started | — | — | See package/decision table |
+| R09 | In PR (code only) | claude/recovery-r09-cache | Predictive search and quick-add are `private` on success and `no-store` on every error; `withDefaultCacheControl` gives all other non-asset responses `private, max-age=0, must-revalidate` (errors `no-store`) unless a route sets its own. Deployed header/two-market check on the preview still owed | — |
 | R10 | Not started | — | — | See package/decision table |
 | R11 | Not started | — | — | See package/decision table |
 | R12 | Not started | — | — | See package/decision table |
