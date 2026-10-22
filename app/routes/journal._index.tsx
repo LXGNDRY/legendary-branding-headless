@@ -1,5 +1,7 @@
 import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
+import {useLanguage} from '~/lib/i18n';
+import {formatDate} from '~/lib/locale';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
@@ -71,16 +73,10 @@ export async function loader({context}: LoaderFunctionArgs) {
   return {articles: (blog?.articles?.nodes ?? []) as ArticleNode[]};
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
 
 export default function JournalIndex() {
   const {articles} = useLoaderData<typeof loader>();
+  const language = useLanguage();
   const [featured, ...rest] = articles;
 
   const breadcrumbJsonLd = breadcrumbSchema([
@@ -141,7 +137,7 @@ export default function JournalIndex() {
               </p>
             )}
             <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide mb-6">
-              {formatDate(featured.publishedAt)}
+              {formatDate(featured.publishedAt, language)}
               {featured.author?.name && ` · ${featured.author.name}`}
             </p>
             <Link
@@ -181,7 +177,7 @@ export default function JournalIndex() {
                 )}
               </Link>
               <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide mb-2">
-                {formatDate(article.publishedAt)}
+                {formatDate(article.publishedAt, language)}
               </p>
               <Link to={`/journal/${article.handle}`} prefetch="intent">
                 <h3 className="text-sm font-medium leading-snug group-hover:text-[var(--color-text-secondary)] transition-colors mb-2">

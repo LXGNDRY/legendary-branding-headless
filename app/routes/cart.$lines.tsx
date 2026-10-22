@@ -19,5 +19,5 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   }
 
   const headers = context.cart.setCartId(cart.id);
-  return redirect(withCheckoutLocale(cart.checkoutUrl), {status: 303, headers});
+  return redirect(withCheckoutLocale(cart.checkoutUrl, context.storefront.i18n.language), {status: 303, headers});
 }

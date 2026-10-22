@@ -9,8 +9,10 @@ import {
   useFetchers,
   useLocation,
   isRouteErrorResponse,
+  useRouteLoaderData,
   Await,
 } from 'react-router';
+import {languageTag} from '~/lib/locale';
 import {useState, useEffect, Suspense} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
@@ -31,7 +33,7 @@ import Analytics from '~/components/seo/Analytics';
 import {analyticsEnvironment} from '~/lib/analytics-environment';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
-import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
+import {LOCALIZATION_QUERY, staleMarketSelections, type LocalizationData} from '~/lib/market';
 import {fetchAllPages} from '~/lib/pagination';
 import {
   MAIN_MENU_QUERY,
@@ -214,6 +216,14 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     withBudget(storeTrustLookup, STORE_TRUST_BUDGET_MS),
   ]);
 
+  // A saved market or language Shopify no longer offers is dropped so it can't linger in the session.
+  for (const key of staleMarketSelections(
+    {country: context.session.get('country'), language: context.session.get('language')},
+    localizationResult.localization as LocalizationData,
+  )) {
+    context.session.unset(key);
+  }
+
   const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
   const collectionIds = menuItems
     .filter((item) => item.type === 'COLLECTION' && item.resourceId)
@@ -289,8 +299,10 @@ export async function loader({context, request}: LoaderFunctionArgs) {
 }
 
 export function Layout({children}: {children: React.ReactNode}) {
+  // NOTE: the root loader data is absent when the loader itself failed, so fall back to English.
+  const rootData = useRouteLoaderData<typeof loader>('root');
   return (
-    <html lang="en">
+    <html lang={languageTag(rootData?.localization?.language?.isoCode)}>
       <head>
         <meta charSet="utf-8" />
         {/* Hardcoded here rather than in the `meta` export below: React
