@@ -67,7 +67,10 @@ export async function action({request, context}: ActionFunctionArgs) {
   // Never simulate success. A storefront must not claim a subscription was
   // recorded when the provider is unavailable or misconfigured.
   if (!apiKey || !listId) {
-    captureError(new Error('Klaviyo newsletter is not configured'), {route: 'api.newsletter', failure: 'configuration'});
+    captureError(
+      new Error('Klaviyo newsletter is not configured'),
+      {route: 'api.newsletter', failure: 'configuration'},
+    );
     return Response.json(
       {error: 'Newsletter signup is temporarily unavailable.'},
       {status: 503},
