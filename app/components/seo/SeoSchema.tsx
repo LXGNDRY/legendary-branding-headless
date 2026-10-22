@@ -1,4 +1,5 @@
 import JsonLd from '~/components/ui/JsonLd';
+import {FALLBACK_LOGO_URL, ROUTES, SITE_ORIGIN, SOCIAL_PROFILES, SUPPORT_EMAIL, absoluteUrl, canonicalUrl} from '~/lib/site';
 import {useStoreTrust} from '~/components/ui/TrustSignals';
 
 /**
@@ -12,24 +13,21 @@ export function organizationSchema({logoUrl}: {logoUrl?: string | null} = {}) {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Legendary Branding',
-    url: 'https://www.legendary-branding.com',
+    url: SITE_ORIGIN,
     // The brand logo set in Shopify admin (Settings → Brand) when there is
     // one; the favicon is too small for Google's logo guidelines.
-    logo: logoUrl || 'https://www.legendary-branding.com/favicon.ico',
+    logo: logoUrl || FALLBACK_LOGO_URL,
     // Only the two profiles actually configured/live for the brand --
     // verified against the store's real social settings. Twitter and
     // YouTube URLs were previously fabricated placeholders that pointed
     // to accounts which don't exist; schema.org sameAs should only ever
     // list real, verifiable profile URLs.
-    sameAs: [
-      'https://www.instagram.com/legendary_branding/',
-      'https://www.tiktok.com/@legendarybranding',
-    ],
+    sameAs: SOCIAL_PROFILES.map((profile) => profile.href),
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      email: 'lb@legendary-branding.com',
-      url: 'https://www.legendary-branding.com/policies/contact',
+      email: SUPPORT_EMAIL,
+      url: absoluteUrl(ROUTES.policy('contact')),
       availableLanguage: ['English'],
     },
   };
@@ -40,10 +38,10 @@ export function websiteSchema() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Legendary Branding',
-    url: 'https://www.legendary-branding.com',
+    url: SITE_ORIGIN,
     potentialAction: {
       '@type': 'SearchAction',
-      target: 'https://www.legendary-branding.com/search?q={search_term_string}',
+      target: `${SITE_ORIGIN}${ROUTES.search}?q={search_term_string}`,
       'query-input': 'required name=search_term_string',
     },
   };
@@ -57,7 +55,7 @@ export function websiteSchema() {
  * requiring every call site to remember to do it.
  */
 function toAbsoluteUrl(path: string): string {
-  return path.startsWith('http') ? path : `https://www.legendary-branding.com${path}`;
+  return canonicalUrl(path);
 }
 
 export function breadcrumbSchema(items: Array<{name: string; url?: string}>) {
@@ -132,7 +130,7 @@ export function collectionPageSchema({
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: title,
-    url: `https://www.legendary-branding.com/collections/${handle}`,
+    url: absoluteUrl(ROUTES.collection(handle)),
     description: description || `${title} | Legendary Branding`,
     mainEntity: products?.length
       ? {
@@ -177,9 +175,9 @@ export function articleSchema({
     publisher: {
       '@type': 'Organization',
       name: 'Legendary Branding',
-      url: 'https://www.legendary-branding.com',
+      url: SITE_ORIGIN,
     },
-    mainEntityOfPage: `https://www.legendary-branding.com/journal/${handle}`,
+    mainEntityOfPage: absoluteUrl(ROUTES.article(handle)),
   };
 }
 
@@ -213,23 +211,24 @@ export function productSchema({
   aggregateRating?: {ratingValue: number; reviewCount: number};
   /** Return window from the store's refund policy (see ~/lib/trust); omitted when it states none. */
   returnDays?: number | null;
-  /** Markets the policy applies to; Google accepts up to 50 country codes. */
+  /** The active market's country; the policy states no regions, so only that market is claimed. Up to 50 codes are accepted. */
   returnCountries?: string[];
 }) {
-  const returnPolicy = returnDays
+  // NOTE: no regions means no claim: an unknown country is never defaulted to US.
+  const returnPolicy = returnDays && returnCountries.length
     ? {
         '@type': 'MerchantReturnPolicy',
-        applicableCountry: returnCountries.length ? returnCountries.slice(0, 50) : 'US',
+        applicableCountry: returnCountries.slice(0, 50),
         returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
         merchantReturnDays: returnDays,
         returnMethod: 'https://schema.org/ReturnByMail',
-        merchantReturnLink: 'https://www.legendary-branding.com/policies/refund-policy',
+        merchantReturnLink: absoluteUrl(ROUTES.policy('refund-policy')),
       }
     : null;
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    '@id': `https://www.legendary-branding.com/products/${handle}#product`,
+    '@id': `${absoluteUrl(ROUTES.product(handle))}#product`,
     name: title,
     image: images,
     description,
@@ -241,14 +240,14 @@ export function productSchema({
     brand: {'@type': 'Brand', name: vendor || 'Legendary Branding'},
     offers: variants.map((v) => ({
       '@type': 'Offer',
-      '@id': `https://www.legendary-branding.com/products/${handle}#offer-${v.id}`,
+      '@id': `${absoluteUrl(ROUTES.product(handle))}#offer-${v.id}`,
       ...(v.sku ? {sku: v.sku} : {}),
       price: v.price,
       priceCurrency: v.currencyCode,
       availability: v.available
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
-      url: `https://www.legendary-branding.com/products/${handle}`,
+      url: absoluteUrl(ROUTES.product(handle)),
       itemCondition: 'https://schema.org/NewCondition',
       seller: {'@type': 'Organization', name: 'Legendary Branding'},
       ...(returnPolicy ? {hasMerchantReturnPolicy: returnPolicy} : {}),

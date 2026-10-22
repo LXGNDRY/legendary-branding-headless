@@ -1,5 +1,6 @@
 import {Link} from 'react-router';
 import {OPEN_COOKIE_PREFERENCES_EVENT} from '~/lib/consent';
+import {SOCIAL_PROFILES} from '~/lib/site';
 import NewsletterForm from '~/components/ui/NewsletterForm';
 import MarketSelector from '~/components/ui/MarketSelector';
 import BrandLogo from '~/components/ui/BrandLogo';
@@ -42,10 +43,6 @@ const LEGAL_LINKS = [
 // this brand -- verified against the store's real social settings. X/Twitter
 // and YouTube links were previously fabricated placeholders pointing to
 // accounts that don't exist.
-const SOCIAL_LINKS = [
-  {label: 'Instagram', href: 'https://www.instagram.com/legendary_branding/'},
-  {label: 'TikTok', href: 'https://tiktok.com/@legendarybranding'},
-];
 
 function FooterColumn({
   heading,
@@ -150,7 +147,7 @@ export default function Footer({
               language={localization.language}
               languages={localization.availableLanguages}
             />
-            {SOCIAL_LINKS.map(({label, href}) => (
+            {SOCIAL_PROFILES.map(({label, href}) => (
               <a
                 key={label}
                 href={href}

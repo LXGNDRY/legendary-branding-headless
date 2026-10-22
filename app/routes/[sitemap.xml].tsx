@@ -1,6 +1,7 @@
 import type {LoaderFunctionArgs} from 'react-router';
 import {CacheLong} from '~/lib/cache';
 import {urlEntry} from '~/lib/sitemap';
+import {POLICY_PAGES, ROUTES, SITE_ORIGIN, isPolicyHandle, type PolicyHandle} from '~/lib/site';
 
 const PRODUCTS_QUERY = `#graphql
   query SitemapProducts($first: Int!, $after: String) {
@@ -20,28 +21,42 @@ const PAGES_QUERY = `#graphql
 const ARTICLES_QUERY = `#graphql
   query SitemapArticles($blogHandle: String!, $first: Int!, $after: String) {
     blog(handle: $blogHandle) {
-      articles(first: $first, after: $after) { nodes { handle updatedAt: publishedAt } pageInfo { hasNextPage endCursor } }
+      articles(first: $first, after: $after) { nodes { handle } pageInfo { hasNextPage endCursor } }
     }
   }
 ` as const;
 
-// Handles served by app/routes/policies.$handle.tsx (reads shop.*Policy /
-// static copy, canonicalizes to /policies/<handle>). Several of these also
-// exist as generic Shopify Page objects with the same handle, which would
-// otherwise surface here as a second, self-canonicalizing /pages/<handle>
-// URL for the same content -- excluded below to avoid that duplicate.
-const POLICY_HANDLES = [
-  'refund-policy',
-  'terms-of-service',
-  'privacy-with-legendary-branding',
-  'shipping-policy',
-  'size-guide',
-  'about',
-  'contact',
-  'legendary_branding_faqs',
-] as const;
+// NOTE: the same content the policy route checks (built-in policy body, or the Page of that handle's body), so the
+// sitemap can never list a URL that answers 503. Aliases because handles contain hyphens.
+const POLICIES_QUERY = `#graphql
+  query SitemapPolicies {
+    shop {
+      refundPolicy { body }
+      termsOfService { body }
+      shippingPolicy { body }
+      privacyPolicy { body }
+    }
+    refund: page(handle: "refund-policy") { body }
+    terms: page(handle: "terms-of-service") { body }
+    privacy: page(handle: "privacy-with-legendary-branding") { body }
+    shipping: page(handle: "shipping-policy") { body }
+    sizeGuide: page(handle: "size-guide") { body }
+    about: page(handle: "about") { body }
+    faq: page(handle: "legendary_branding_faqs") { body }
+  }
+` as const;
 
-type Node = {handle: string; updatedAt: string};
+const POLICY_PAGE_ALIASES: Record<string, string> = {
+  'refund-policy': 'refund',
+  'terms-of-service': 'terms',
+  'privacy-with-legendary-branding': 'privacy',
+  'shipping-policy': 'shipping',
+  'size-guide': 'sizeGuide',
+  about: 'about',
+  legendary_branding_faqs: 'faq',
+};
+
+type Node = {handle: string; updatedAt?: string};
 type Connection = {nodes: Node[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
 
 async function paginate(queryPage: (after: string | null) => Promise<Connection | null | undefined>) {
@@ -57,25 +72,31 @@ async function paginate(queryPage: (after: string | null) => Promise<Connection 
   return nodes;
 }
 
-export async function loader({request, context}: LoaderFunctionArgs) {
-  // PUBLIC_CHECKOUT_DOMAIN is documented/configured as the bare apex
-  // (legendary-branding.com), but the live site is actually served from
-  // and canonicalizes to the www subdomain (the apex 301-redirects there
-  // -- see the canonical <link>/og:url fixes across the rest of the app).
-  // Prefixing www here keeps the sitemap's <loc> entries on the same host
-  // as those canonical tags instead of silently reverting to the
-  // redirecting apex host whenever this env var is set.
-  const domain = context.env.PUBLIC_CHECKOUT_DOMAIN?.trim().replace(/^www\./, '');
-  const origin = domain ? `https://www.${domain}` : new URL(request.url).origin;
+export async function loader({context}: LoaderFunctionArgs) {
+  // NOTE: always the canonical public origin (~/lib/site), the same one every canonical tag, og:url and JSON-LD uses.
+  const origin = SITE_ORIGIN;
   // NOTE: deliberately no @inContext/country/language -- the response is served from a shared public cache, so it must be identical for every market (the shop's default market and language).
   const variables = {first: 250};
 
-  const [products, collections, pages, articles] = await Promise.all([
+  const [products, collections, pages, articles, policies] = await Promise.all([
     paginate(async (after) => (await context.storefront.query(PRODUCTS_QUERY, {variables: {...variables, after}, cache: CacheLong()})).products as Connection),
     paginate(async (after) => (await context.storefront.query(COLLECTIONS_QUERY, {variables: {...variables, after}, cache: CacheLong()})).collections as Connection),
     paginate(async (after) => (await context.storefront.query(PAGES_QUERY, {variables: {...variables, after}, cache: CacheLong()})).pages as Connection),
     paginate(async (after) => (await context.storefront.query(ARTICLES_QUERY, {variables: {...variables, after, blogHandle: 'legendary_blogging'}, cache: CacheLong()})).blog?.articles as Connection | undefined),
+    context.storefront.query(POLICIES_QUERY, {cache: CacheLong()}) as Promise<Record<string, unknown> & {shop?: Record<string, {body?: string | null} | null> | null}>,
   ]);
+
+  // NOTE: a policy URL is listed only when the route would serve content for it (a built-in policy body, or the body of
+  // the Page of that handle). Contact is always served (it renders its own block).
+  const usable = (handle: PolicyHandle) => {
+    const entry = POLICY_PAGES[handle];
+    if (!entry.required) return true;
+    const native = entry.native ? policies?.shop?.[entry.native]?.body : null;
+    const alias = POLICY_PAGE_ALIASES[handle];
+    const page = alias ? (policies?.[alias] as {body?: string | null} | null | undefined)?.body : null;
+    return Boolean(native) || Boolean(page);
+  };
+  const policyHandles = (Object.keys(POLICY_PAGES) as PolicyHandle[]).filter(usable);
 
   const entries = [
     urlEntry(origin, '/'),
@@ -84,9 +105,11 @@ export async function loader({request, context}: LoaderFunctionArgs) {
     ...collections.map((item) => urlEntry(origin, `/collections/${item.handle}`, item.updatedAt)),
     // NOTE: no <lastmod> for products -- Shopify bumps Product.updatedAt on every inventory adjustment (each order), which is not a real content change.
     ...products.map((item) => urlEntry(origin, `/products/${item.handle}`)),
-    ...POLICY_HANDLES.map((handle) => urlEntry(origin, `/policies/${handle}`)),
-    ...pages.filter((item) => !(POLICY_HANDLES as readonly string[]).includes(item.handle)).map((item) => urlEntry(origin, `/pages/${item.handle}`, item.updatedAt)),
-    ...articles.map((item) => urlEntry(origin, `/journal/${item.handle}`, item.updatedAt)),
+    ...policyHandles.map((handle) => urlEntry(origin, ROUTES.policy(handle))),
+    // NOTE: pages with a policy handle redirect to /policies, so they are not listed twice.
+    ...pages.filter((item) => !isPolicyHandle(item.handle)).map((item) => urlEntry(origin, ROUTES.page(item.handle), item.updatedAt)),
+    // NOTE: no <lastmod> for articles: the Storefront API exposes only publishedAt, which is not a modified date.
+    ...articles.map((item) => urlEntry(origin, ROUTES.article(item.handle))),
   ];
 
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>`, {

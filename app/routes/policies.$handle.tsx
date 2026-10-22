@@ -1,28 +1,10 @@
 import SafeHtml from '~/components/ui/SafeHtml';
-import {type LoaderFunctionArgs, type MetaFunction, useLoaderData, Link} from 'react-router';
+import {redirect, type LoaderFunctionArgs, type MetaFunction, useLoaderData, Link} from 'react-router';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema, faqPageSchema, parseFaqFromHtml} from '~/components/seo/SeoSchema';
-
-const PAGE_TITLES: Record<string, string> = {
-  'refund-policy': 'Refund & Return Policy',
-  'terms-of-service': 'Terms of Service',
-  'privacy-with-legendary-branding': 'Privacy Policy',
-  'shipping-policy': 'Shipping Policy',
-  'size-guide': 'Size Guide',
-  about: 'About Us',
-  contact: 'Contact',
-  legendary_branding_faqs: 'FAQ',
-};
-
-// Map policy handles to shop policy GraphQL field names
-const SHOP_POLICY_MAP: Record<string, string> = {
-  'refund-policy': 'refundPolicy',
-  'terms-of-service': 'termsOfService',
-  'shipping-policy': 'shippingPolicy',
-  'privacy-with-legendary-branding': 'privacyPolicy',
-};
+import {POLICY_PAGES, ROUTES, SUPPORT_EMAIL, canonicalUrl, isPolicyHandle} from '~/lib/site';
 
 const POLICY_QUERY = `#graphql
   query Policy(
@@ -55,7 +37,7 @@ type ShopPolicies = {
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   const title = `${data?.title ?? 'Policy'} | LEGENDARY BRANDING`;
   const description = data?.title ? `${data.title} | Legendary Branding` : 'Legendary Branding policies.';
-  const canonical = `https://www.legendary-branding.com/policies/${data?.handle ?? ''}`;
+  const canonical = canonicalUrl(ROUTES.policy(data?.handle ?? ''));
 
   return [
     {title},
@@ -69,11 +51,6 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
 
 export async function loader({params, context}: LoaderFunctionArgs) {
   const handle = params.handle ?? '';
-  const fallbackTitle =
-    PAGE_TITLES[handle] ??
-    handle
-      .replace(/[-_]/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
 
   const {page, shop} = await context.storefront.query(POLICY_QUERY, {
     variables: {
@@ -84,30 +61,26 @@ export async function loader({params, context}: LoaderFunctionArgs) {
     cache: CacheLong(),
   });
 
-  // Prefer custom page; fall back to shop built-in policies
-  let title = fallbackTitle;
-  let bodyHtml: string | null = null;
-
-  if (page?.body) {
-    title = page.title ?? fallbackTitle;
-    bodyHtml = page.body as string;
-  } else {
-    const policyField = SHOP_POLICY_MAP[handle] as keyof ShopPolicies | undefined;
-    const shopPolicies = shop as ShopPolicies;
-    const policy = policyField ? shopPolicies[policyField] : null;
-    if (policy) {
-      title = policy.title ?? fallbackTitle;
-      bodyHtml = policy.body;
-    }
+  // NOTE: /policies serves exactly the handles in POLICY_PAGES. Any other handle is a generic page that lives at /pages;
+  // an existing link to one keeps working through a permanent redirect, and anything else is a real 404.
+  if (!isPolicyHandle(handle)) {
+    // NOTE: existence, not body: a page built only from content blocks has an empty body but is a valid /pages route.
+    if (page) throw redirect(ROUTES.page(handle), 301);
+    throw new Response('Policy page not found', {status: 404});
   }
 
-  // A handle with no body and no entry in PAGE_TITLES is neither a real
-  // Shopify page/policy nor a known static route (like 'contact', which
-  // intentionally has no body -- it renders its own form block below) --
-  // a true 404, not the soft "Content for this page is not available"
-  // placeholder, which would otherwise return 200 for any garbage handle.
-  if (!bodyHtml && !(handle in PAGE_TITLES)) {
-    throw new Response('Policy page not found', {status: 404});
+  const entry = POLICY_PAGES[handle];
+  // NOTE: one rule for who owns the content. A built-in store policy (Settings > Policies), when it has a body, is
+  // the authority for its handle, so a stale Page with the same handle can never override legal text. Handles with
+  // no built-in policy (size guide, about, FAQ, contact) take their content from the Page of that handle.
+  const native = entry.native ? (shop as ShopPolicies | null | undefined)?.[entry.native] : null;
+  const title = native?.body ? (native.title ?? entry.title) : (page?.title ?? entry.title);
+  const bodyHtml = native?.body ? native.body : page?.body ? (page.body as string) : null;
+
+  // NOTE: a required page with no content is a configuration gap, not an empty page: say so with a 503 (temporary,
+  // keeps indexing) instead of a 200 that looks like success. Contact renders its own block, so it is exempt.
+  if (!bodyHtml && entry.required) {
+    throw new Response('This page is temporarily unavailable', {status: 503, headers: {'Retry-After': '300'}});
   }
 
   return {handle, title, bodyHtml};
@@ -169,10 +142,10 @@ export default function PolicyPage() {
               <p>
                 For order inquiries, email us at{' '}
                 <a
-                  href="mailto:lb@legendary-branding.com"
+                  href={`mailto:${SUPPORT_EMAIL}`}
                   className="underline underline-offset-2 hover:text-[var(--color-foreground)] transition-colors"
                 >
-                  lb@legendary-branding.com
+                  {SUPPORT_EMAIL}
                 </a>
                 .
               </p>

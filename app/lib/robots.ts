@@ -84,3 +84,26 @@ export function buildRobotsTxt({
     '',
   ].join('\n');
 }
+
+/**
+ * Hosts that must not be indexed (previews, the raw Oxygen URL) get `X-Robots-Tag: noindex, nofollow` on every
+ * response, on top of their block-everything robots.txt: a URL that is discovered by a link can still be indexed
+ * from robots.txt alone, whereas the header says not to.
+ */
+export function applyHostRobotsHeader(response: Response, requestUrl: string): Response {
+  let host: string;
+  try {
+    host = new URL(requestUrl).host;
+  } catch {
+    return response;
+  }
+  if (isIndexableHost(host)) return response;
+  try {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return response;
+  } catch {
+    const headers = new Headers(response.headers);
+    headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return new Response(response.body, {status: response.status, statusText: response.statusText, headers});
+  }
+}

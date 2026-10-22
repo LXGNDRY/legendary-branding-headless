@@ -8,6 +8,7 @@ import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {articleSchema, breadcrumbSchema} from '~/components/seo/SeoSchema';
+import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
 
 type ArticleData = {
   id: string;
@@ -54,8 +55,9 @@ const ARTICLE_QUERY = `#graphql
 export const meta: MetaFunction<typeof loader> = ({data, location}) => {
   const article = data?.article;
   const description = article?.excerpt ?? `${article?.title ?? 'Article'} | Legendary Branding Journal`;
-  const ogImage = article?.image?.url;
-  const canonical = `https://www.legendary-branding.com${location.pathname}`;
+  const ogImage = withImageTransform(article?.image?.url, {width: 1200, height: 630});
+  // NOTE: from the handle, not the URL path, so a trailing slash or different casing can't create a second canonical.
+  const canonical = canonicalUrl(ROUTES.article(article?.handle ?? location.pathname.replace(/^\/journal\//, '').replace(/\/+$/, '')));
   return [
     {title: `${article?.title ?? 'Article'} | The Journal | LEGENDARY BRANDING`},
     {name: 'description', content: description},
@@ -64,11 +66,11 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
     {property: 'og:title', content: article?.title ?? 'Article'},
     {property: 'og:description', content: description},
     {property: 'og:url', content: canonical},
-    ...(ogImage ? [{property: 'og:image', content: `${ogImage}&width=1200&height=630`}] : []),
+    ...(ogImage ? [{property: 'og:image', content: ogImage}] : []),
     {name: 'twitter:card', content: 'summary_large_image'},
     {name: 'twitter:title', content: article?.title ?? 'Article'},
     {name: 'twitter:description', content: description},
-    ...(ogImage ? [{name: 'twitter:image', content: `${ogImage}&width=1200&height=630`}] : []),
+    ...(ogImage ? [{name: 'twitter:image', content: ogImage}] : []),
   ];
 };
 

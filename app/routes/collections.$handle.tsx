@@ -18,6 +18,7 @@ import ProductCard, {
 import {CacheShort} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {collectionPageSchema, breadcrumbSchema} from '~/components/seo/SeoSchema';
+import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
 
 const COLLECTION_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
@@ -124,10 +125,8 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
   const collection = data?.collection;
   const title = `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
   const description = collection?.description ?? `Shop ${collection?.title ?? 'this collection'}.`;
-  const canonical = `https://www.legendary-branding.com/collections/${collection?.handle ?? 'all'}`;
-  const ogImage = collection?.image?.url
-    ? `${collection.image.url}&width=1200&height=630`
-    : undefined;
+  const canonical = canonicalUrl(ROUTES.collection(collection?.handle ?? 'all'));
+  const ogImage = withImageTransform(collection?.image?.url, {width: 1200, height: 630});
 
   return [
     {title},
