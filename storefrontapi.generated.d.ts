@@ -1965,6 +1965,35 @@ export type ChatProductSearchQuery = {
   };
 };
 
+export type ChatStoreFactsQueryVariables = Exact<{
+  country?: StorefrontAPI.CountryCode | null | undefined;
+  language?: StorefrontAPI.LanguageCode | null | undefined;
+}>;
+
+export type ChatStoreFactsQuery = {
+  collections: {nodes: Array<{title: string; handle: string}>};
+  cheapest: {
+    nodes: Array<{
+      priceRange: {
+        minVariantPrice: {
+          amount: unknown;
+          currencyCode: StorefrontAPI.CurrencyCode;
+        };
+      };
+    }>;
+  };
+  priciest: {
+    nodes: Array<{
+      priceRange: {
+        maxVariantPrice: {
+          amount: unknown;
+          currencyCode: StorefrontAPI.CurrencyCode;
+        };
+      };
+    }>;
+  };
+};
+
 export type QuickAddProductQueryVariables = Exact<{
   handle: string;
   after?: string | null | undefined;
@@ -2747,6 +2776,10 @@ interface GeneratedQueryTypes {
   '#graphql\n  query ChatProductSearch($query: String!, $country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    products(first: 5, query: $query) {\n      nodes {\n        title\n        handle\n        availableForSale\n        priceRange {\n          minVariantPrice { amount currencyCode }\n        }\n      }\n    }\n  }\n': {
     return: ChatProductSearchQuery;
     variables: ChatProductSearchQueryVariables;
+  };
+  '#graphql\n  query ChatStoreFacts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 20, sortKey: TITLE) {\n      nodes { title handle }\n    }\n    cheapest: products(first: 1, sortKey: PRICE) {\n      nodes { priceRange { minVariantPrice { amount currencyCode } } }\n    }\n    priciest: products(first: 1, sortKey: PRICE, reverse: true) {\n      nodes { priceRange { maxVariantPrice { amount currencyCode } } }\n    }\n  }\n': {
+    return: ChatStoreFactsQuery;
+    variables: ChatStoreFactsQueryVariables;
   };
   '#graphql\n  query QuickAddProduct($handle: String!, $after: String, $country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      title\n      handle\n      featuredImage { url altText width height }\n      options {\n        name\n        optionValues {\n          name\n          swatch {\n            color\n            image { previewImage { url } }\n          }\n        }\n      }\n      variants(first: 100, after: $after) {\n        pageInfo { hasNextPage endCursor }\n        nodes {\n          id\n          availableForSale\n          selectedOptions { name value }\n          price { amount currencyCode }\n          compareAtPrice { amount currencyCode }\n          image { url altText width height }\n        }\n      }\n    }\n  }\n': {
     return: QuickAddProductQuery;
