@@ -7,7 +7,7 @@ import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
 import {withCheckoutLocale} from '~/lib/cart';
-import {requireSameOrigin} from '~/lib/security';
+import {handleCartMutation} from '~/lib/cart-mutation';
 import TrustSignals from '~/components/ui/TrustSignals';
 
 export const meta: MetaFunction = () => [
@@ -15,47 +15,16 @@ export const meta: MetaFunction = () => [
 ];
 
 export async function action({request, context}: ActionFunctionArgs) {
-  const originError = requireSameOrigin(request);
-  if (originError) return originError;
-  const {cart} = context;
-  const formData = await request.formData();
-  const {action, inputs} = CartForm.getFormInput(formData);
-
-  let result;
-  switch (action) {
-    case CartForm.ACTIONS.LinesAdd:
-      result = await cart.addLines(
-        inputs.lines as Parameters<typeof cart.addLines>[0],
-      );
-      break;
-    case CartForm.ACTIONS.LinesUpdate:
-      result = await cart.updateLines(
-        inputs.lines as Parameters<typeof cart.updateLines>[0],
-      );
-      break;
-    case CartForm.ACTIONS.LinesRemove:
-      result = await cart.removeLines(
-        inputs.lineIds as Parameters<typeof cart.removeLines>[0],
-      );
-      break;
-    case CartForm.ACTIONS.DiscountCodesUpdate:
-      result = await cart.updateDiscountCodes(
-        (inputs.discountCodes as string[]).map((code) => code.trim()).filter(Boolean),
-      );
-      break;
-    default:
-      return new Response('Bad request', {status: 400});
-  }
-
-  const headers = cart.setCartId(result.cart.id);
-  return Response.json(
-    {
-      cart: result.cart,
-      errors: result.errors ?? [],
-      warnings: result.warnings ?? [],
-    },
-    {status: 200, headers},
-  );
+  return handleCartMutation({
+    request,
+    cart: context.cart,
+    allowed: [
+      CartForm.ACTIONS.LinesAdd,
+      CartForm.ACTIONS.LinesUpdate,
+      CartForm.ACTIONS.LinesRemove,
+      CartForm.ACTIONS.DiscountCodesUpdate,
+    ],
+  });
 }
 
 export async function loader({context}: LoaderFunctionArgs) {
