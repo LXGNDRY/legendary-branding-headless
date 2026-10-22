@@ -29,6 +29,22 @@ const ARTICLES_QUERY = `#graphql
   }
 ` as const;
 
+// Handles served by app/routes/policies.$handle.tsx (reads shop.*Policy /
+// static copy, canonicalizes to /policies/<handle>). Several of these also
+// exist as generic Shopify Page objects with the same handle, which would
+// otherwise surface here as a second, self-canonicalizing /pages/<handle>
+// URL for the same content -- excluded below to avoid that duplicate.
+const POLICY_HANDLES = [
+  'refund-policy',
+  'terms-of-service',
+  'privacy-with-legendary-branding',
+  'shipping-policy',
+  'size-guide',
+  'about',
+  'contact',
+  'legendary_branding_faqs',
+] as const;
+
 type Node = {handle: string; updatedAt: string};
 type Connection = {nodes: Node[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
 
@@ -71,7 +87,8 @@ export async function loader({request, context}: LoaderFunctionArgs) {
     ...collections.map((item) => urlEntry(origin, `/collections/${item.handle}`, item.updatedAt)),
     // NOTE: no <lastmod> for products -- Shopify bumps Product.updatedAt on every inventory adjustment (each order), which is not a real content change.
     ...products.map((item) => urlEntry(origin, `/products/${item.handle}`)),
-    ...pages.map((item) => urlEntry(origin, `/pages/${item.handle}`, item.updatedAt)),
+    ...POLICY_HANDLES.map((handle) => urlEntry(origin, `/policies/${handle}`)),
+    ...pages.filter((item) => !(POLICY_HANDLES as readonly string[]).includes(item.handle)).map((item) => urlEntry(origin, `/pages/${item.handle}`, item.updatedAt)),
     ...articles.map((item) => urlEntry(origin, `/journal/${item.handle}`, item.updatedAt)),
   ];
 
