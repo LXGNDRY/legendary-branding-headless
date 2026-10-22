@@ -25,7 +25,7 @@ function discountToAnnouncement(discount: ActiveDiscount): Announcement {
 }
 
 const DEFAULT_ITEMS: Announcement[] = [
-  {key: 'announcement.freeShipping', link: '/collections/all-products'},
+  {key: 'announcement.shipping', link: '/collections/all-products'},
   {key: 'announcement.heavyweight'},
   {key: 'announcement.newDrops', link: '/collections/all-products'},
   {key: 'announcement.worldwide'},

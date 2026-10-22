@@ -44,8 +44,9 @@ test.describe('Golden commerce journey', () => {
     // Dollar amounts/thresholds intentionally live only on the shipping
     // policy page (single source of truth, see products.$handle.tsx) --
     // the PDP accordion links out to it rather than duplicating the figures.
-    await expect(page.getByText(/Import duties are included in the displayed price/).first()).toBeVisible();
-    await expect(page.getByText(/Applicable taxes are paid by you and calculated at checkout/).first()).toBeVisible();
+    await expect(page.getByText(/Shipping, duties and taxes are calculated at checkout/).first()).toBeVisible();
+    // No unconditional shipping or duties guarantees until the owner approves structured facts.
+    await expect(page.getByText(/free (standard )?shipping on every order|duties (are )?included/i)).toHaveCount(0);
     await expect(page.getByRole('link', {name: 'shipping policy'})).toBeVisible();
   });
 
