@@ -175,13 +175,13 @@ Every PR needs owner approval (`.github/CODEOWNERS` wildcard, `docs/REPOSITORY_G
 
 | WI | Gap | Branch | PR | Status | Owner sign-off needed |
 |---|---|---|---|---|---|
-| WI-0 | all | n/a | n/a | Not started | No (read-only) |
+| WI-0 | all | n/a | n/a | In progress: CI baseline captured; coverage baseline pending | No (read-only) |
 | WI-1 | G1 | `claude/wi-1-codegen-types` | | Not started | Yes (workflow) |
-| WI-2 | G2 | `claude/wi-2-locale-gate` | | Not started | Yes (workflow) |
-| WI-2b | G9 | `claude/wi-2b-smoke-test` | | Not started | Yes (workflow) |
+| WI-2 | G2 | `claude/tps-locale-ci-gate` | [#360](https://github.com/LXGNDRY/legendary-branding-headless/pull/360) | Complete; locale check merged to `dev` | Yes (workflow) |
+| WI-2b | G9 | `claude/tps-postdeploy-smoke` | [#363](https://github.com/LXGNDRY/legendary-branding-headless/pull/363) | Merged to `dev`; expanded smoke run pending | Yes (workflow) |
 | WI-3 | G3 | `claude/wi-3-rate-limit` | | Not started | Yes (platform choice) |
-| WI-4 | G4 | `claude/wi-4-*` (several) | | Not started | Yes (CODEOWNERS) |
-| WI-5 | G6 | `claude/wi-5-klaviyo-client` | | Not started | Yes (CODEOWNERS) |
+| WI-4 | G4 | `claude/tps-newsletter-tests`, `claude/tps-waitlist-tests` | [#361](https://github.com/LXGNDRY/legendary-branding-headless/pull/361), [#362](https://github.com/LXGNDRY/legendary-branding-headless/pull/362) | In progress: newsletter and waitlist covered; remaining paths pending | Yes (CODEOWNERS) |
+| WI-5 | G6 | `claude/tps-klaviyo-client` | [#364](https://github.com/LXGNDRY/legendary-branding-headless/pull/364) | In progress | Yes (CODEOWNERS) |
 | WI-6 | G10 | `claude/wi-6-safe-html` | | Not started | Yes (CODEOWNERS) |
 | WI-7 | G5 | `claude/wi-7-pdp-split` | | Not started | Yes (CODEOWNERS) |
 | WI-8 | G7 | `claude/wi-8-docs` | | Not started | Yes (CLAUDE.md) |
