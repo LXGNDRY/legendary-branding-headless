@@ -9,7 +9,7 @@ Owner: `lb@legendary-branding.com`. Status tracker: the table in [Tracking](#tra
 - **Stop-the-line (jidoka).** If a gate is red, fix the gate or the cause. Never skip, disable, or quarantine a test.
 - **Verify before building.** Every WI starts with a "Verify first" step; findings that are not reproduced get closed as "not a gap" with evidence.
 - **Hard constraints from CLAUDE.md still apply.** No checkout/payment/DNS/admin/theme changes, no manual production deploy, no force-push, no secrets in the repo.
-- **Before every commit:** `npm run typecheck && npm run lint && npm run build` (plus `npm run test`).
+- **Before every commit:** `npm run build && npm run typecheck && npm run lint && npm run test` (build first: it generates `.react-router/types` that typecheck needs).
 - **Owner-gated files:** `.github/**`, `package.json`, `package-lock.json`, `server.ts`, `app/lib/security.ts`, `app/lib/session.ts` need owner review (CODEOWNERS).
 
 ## Gap register
@@ -17,7 +17,7 @@ Owner: `lb@legendary-branding.com`. Status tracker: the table in [Tracking](#tra
 | ID | Gap | Severity | Workstream | WI |
 |---|---|---|---|---|
 | G1 | Generated GraphQL type files are empty stubs; drift check passes trivially | High | WS1 Quality gates | WI-1 |
-| G2 | Non-English locales are nearly empty; `locales:check` not in CI | High | WS1 Quality gates | WI-2 |
+| G2 | `locales:check` passes today (all 8 catalogs have the same 56 keys, minified to one line) but is not enforced in CI, and the one-line JSON is unreviewable | Low | WS1 Quality gates | WI-2 |
 | G3 | Rate limiter is per-isolate memory (`app/lib/rate-limit.ts`), used by 7 API routes incl. paid `api.chat` | High | WS2 Revenue and cost protection | WI-3 |
 | G4 | 24 of 37 routes and 45 of 49 components have no unit test | Med-High | WS2 Revenue and cost protection | WI-4 |
 | G5 | `products.$handle.tsx` is 1,235 lines | Med | WS3 Complexity | WI-7 |
@@ -64,14 +64,13 @@ Dependencies: WI-7 requires WI-4 (PDP tests first). WI-5 requires WI-4 tests for
 - **Files:** `.graphqlrc.ts`, `storefrontapi.generated.d.ts`, `customeraccountapi.generated.d.ts`, `.github/workflows/oxygen-deployment-1000180490.yml` (owner review).
 - **Rollback:** revert the PR; stubs return, no runtime impact (types only).
 
-### WI-2 Locale completeness gate (G2)
+### WI-2 Locale gate in CI (G2)
+- **Verified in Phase 0 review:** `python3 scripts/locales.py --check` passes; every locale has the same 56 keys as `en.json`. No translation work is needed.
 - **Do:**
-  - Add `npm run locales:check` to the `quality` job.
-  - Decide per locale: complete it from an approved translation map (Hextom export via `scripts/locales.py`), or hide that locale from `MarketSelector` until complete.
+  - Add `npm run locales:check` to the `quality` job so a missing key or broken `{placeholder}` fails CI.
   - Reformat locale JSON to one key per line so diffs are reviewable.
-- **Acceptance:** CI fails on a missing key or broken `{placeholder}`; every locale shown in the selector passes the check.
-- **Owner decision:** which languages are customer-facing at launch.
-- **Rollback:** remove the CI step; restore selector list.
+- **Acceptance:** CI fails on a missing key or broken placeholder; locale diffs are line-by-line.
+- **Rollback:** remove the CI step.
 
 ### WI-2b Stronger post-deploy smoke test (G9)
 - **Do:** extend the smoke script with: a live PDP (pick a handle from the Storefront API at runtime, never hardcode), `/cart`, `/collections/all-products` content marker, and `POST /api/unstable/graphql.json` expecting 200 (consent/analytics proxy, per CLAUDE.md upgrade checklist).
@@ -149,7 +148,7 @@ Dependencies: WI-7 requires WI-4 (PDP tests first). WI-5 requires WI-4 tests for
 ## Definition of done (per WI)
 
 - [ ] Verified-first note in the PR (reproduced, or closed with evidence)
-- [ ] `npm run typecheck && npm run lint && npm run build && npm run test` green locally
+- [ ] `npm run build && npm run typecheck && npm run lint && npm run test` green locally
 - [ ] CI Quality Gate and full E2E matrix green
 - [ ] PR uses the repo template: vertical slice, problem, implementation, risk and rollback, verification
 - [ ] Tracker below updated
@@ -167,23 +166,24 @@ Dependencies: WI-7 requires WI-4 (PDP tests first). WI-5 requires WI-4 tests for
 |---|---|
 | Codegen needs live store secrets, so contributors without them cannot regenerate | Document the `.env` setup; CI is the source of truth |
 | New CI gates block unrelated PRs | Land gates only after the repo is green on them; announce in the PR |
-| Locale gate blocks a launch language | Hide the incomplete locale rather than weaken the gate |
 | PDP refactor regresses the highest-revenue page | Tests first (WI-4), pure-move commit, preview check on mobile and desktop |
 | Rate-limit option needs Cloudflare/Oxygen access | Fallback: provider spend cap plus in-memory layer |
 
 ## Tracking
 
+Every PR needs owner approval (`.github/CODEOWNERS` wildcard, `docs/REPOSITORY_GOVERNANCE.md`). The last column flags items that also need an owner *decision*, not just a review.
+
 | WI | Gap | Branch | PR | Status | Owner sign-off needed |
 |---|---|---|---|---|---|
-| WI-0 | all | n/a | n/a | Not started | No |
+| WI-0 | all | n/a | n/a | Not started | No (read-only) |
 | WI-1 | G1 | `claude/wi-1-codegen-types` | | Not started | Yes (workflow) |
-| WI-2 | G2 | `claude/wi-2-locale-gate` | | Not started | Yes (workflow, language list) |
+| WI-2 | G2 | `claude/wi-2-locale-gate` | | Not started | Yes (workflow) |
 | WI-2b | G9 | `claude/wi-2b-smoke-test` | | Not started | Yes (workflow) |
 | WI-3 | G3 | `claude/wi-3-rate-limit` | | Not started | Yes (platform choice) |
-| WI-4 | G4 | `claude/wi-4-*` (several) | | Not started | No |
-| WI-5 | G6 | `claude/wi-5-klaviyo-client` | | Not started | No |
-| WI-6 | G10 | `claude/wi-6-safe-html` | | Not started | No |
-| WI-7 | G5 | `claude/wi-7-pdp-split` | | Not started | No |
+| WI-4 | G4 | `claude/wi-4-*` (several) | | Not started | Yes (CODEOWNERS) |
+| WI-5 | G6 | `claude/wi-5-klaviyo-client` | | Not started | Yes (CODEOWNERS) |
+| WI-6 | G10 | `claude/wi-6-safe-html` | | Not started | Yes (CODEOWNERS) |
+| WI-7 | G5 | `claude/wi-7-pdp-split` | | Not started | Yes (CODEOWNERS) |
 | WI-8 | G7 | `claude/wi-8-docs` | | Not started | Yes (CLAUDE.md) |
 | WI-9 | G8 | `claude/wi-9-imagery` | | Blocked: assets | Yes (assets) |
 | WI-10 | G11 | `claude/wi-10-upgrade-gate` | | Not started | Yes (workflow) |
