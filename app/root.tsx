@@ -287,9 +287,11 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     // reads of PUBLIC_* client analytics vars are always undefined in the
     // deployed build regardless of Vite's envPrefix config.
     analyticsConfig: {
-      ga4Id: context.env.PUBLIC_GA4_MEASUREMENT_ID || undefined,
-      metaPixelId: context.env.PUBLIC_META_PIXEL_ID || undefined,
-      tiktokPixelId: context.env.PUBLIC_TIKTOK_PIXEL_ID || undefined,
+      // NOTE: GA4, Meta and TikTok only get their IDs on the live host, so previews and local servers never
+      // send events to production properties. Klaviyo's ID stays (it powers on-site forms, consent-gated).
+      ga4Id: shopAnalytics.reportToShop ? context.env.PUBLIC_GA4_MEASUREMENT_ID || undefined : undefined,
+      metaPixelId: shopAnalytics.reportToShop ? context.env.PUBLIC_META_PIXEL_ID || undefined : undefined,
+      tiktokPixelId: shopAnalytics.reportToShop ? context.env.PUBLIC_TIKTOK_PIXEL_ID || undefined : undefined,
       klaviyoCompanyId: context.env.PUBLIC_KLAVIYO_COMPANY_ID || undefined,
       sentryDsn: context.env.PUBLIC_SENTRY_DSN || undefined,
     },

@@ -17,12 +17,14 @@ const trust = {shop: null};
 const cartData = {id: 'gid://shopify/Cart/1', totalQuantity: 2, lines: {edges: []}};
 
 type Overrides = {
+  url?: string;
+  env?: Record<string, string>;
   responses?: Record<string, unknown>;
   cart?: () => Promise<unknown>;
   isLoggedIn?: () => Promise<boolean>;
 };
 
-function run({responses = {}, cart = async () => cartData, isLoggedIn = async () => false}: Overrides = {}) {
+function run({responses = {}, cart = async () => cartData, isLoggedIn = async () => false, url = 'http://localhost/', env = {}}: Overrides = {}) {
   const mock = createMockStorefront({
     responses: {
       StorefrontLocalization: localization,
@@ -36,10 +38,10 @@ function run({responses = {}, cart = async () => cartData, isLoggedIn = async ()
   const context = mock.createContext({
     cart: {get: cart, getCartId: async () => 'gid://shopify/Cart/1'},
     customerAccount: {isLoggedIn},
-    env: {PUBLIC_STORE_DOMAIN: 'shop.test'},
+    env: {PUBLIC_STORE_DOMAIN: 'shop.test', ...env},
   });
   // @ts-expect-error - minimal Hydrogen app context
-  return loader({request: new Request('http://localhost/'), context, params: {}});
+  return loader({request: new Request(url), context, params: {}});
 }
 
 const fails = () => {
@@ -79,6 +81,18 @@ describe('root loader resilience', () => {
     const data = await run({cart: async () => fails(), responses: {MainMenu: fails, NavAllCollections: fails}});
     expect(data.cart).toBeNull();
     expect(data.navCollections).toEqual([]);
+  });
+
+  it('only hands third-party pixel ids to the live host, never to previews or local servers', async () => {
+    const env = {PUBLIC_GA4_MEASUREMENT_ID: 'G-TEST123', PUBLIC_META_PIXEL_ID: '123', PUBLIC_TIKTOK_PIXEL_ID: 'TT1', PUBLIC_KLAVIYO_COMPANY_ID: 'AbC123'};
+    const live = (await run({url: 'https://www.legendary-branding.com/', env})) as {analyticsConfig: Record<string, string | undefined>};
+    expect(live.analyticsConfig).toMatchObject({ga4Id: 'G-TEST123', metaPixelId: '123', tiktokPixelId: 'TT1'});
+    for (const url of ['https://legendary-abc.o2.myshopify.dev/', 'http://localhost:3000/']) {
+      const data = (await run({url, env})) as {analyticsConfig: Record<string, string | undefined>};
+      expect(data.analyticsConfig.ga4Id).toBeUndefined();
+      expect(data.analyticsConfig.metaPixelId).toBeUndefined();
+      expect(data.analyticsConfig.tiktokPixelId).toBeUndefined();
+    }
   });
 
   it('treats a failing auth lookup as signed out, never as another customer', async () => {
