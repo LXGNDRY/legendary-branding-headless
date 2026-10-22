@@ -64,7 +64,7 @@ export async function loader({request, context}: LoaderFunctionArgs) {
       });
       if (after === null) first.product = result.product;
       return result.product?.variants;
-    });
+    }, 25);
     const product = first.product ? {...first.product, variants: {nodes: variants}} : null;
     return Response.json(
       {product: product ?? null},

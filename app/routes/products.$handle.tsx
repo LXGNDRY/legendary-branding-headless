@@ -102,6 +102,9 @@ const FABRIC_WEIGHT_TIERS = [
   {range: '420–460', nameKey: 'fabric.tier.maximumWeight.name', descriptionKey: 'fabric.tier.maximumWeight.description'},
 ] as const satisfies ReadonlyArray<{range: string; nameKey: TranslationKey; descriptionKey: TranslationKey}>;
 
+// 25 pages of 100 covers Shopify's 2,048-variant product limit.
+const MAX_VARIANT_PAGES = 25;
+
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
     id
@@ -115,8 +118,9 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
   }
 ` as const;
 
-// Editorial content only: safe to cache for an hour. Prices, availability and
-// inventory come from PRODUCT_COMMERCE_QUERY below with a short cache.
+// Editorial content only: safe to cache for an hour. Prices, availability,
+// inventory and the option definitions that drive the variant selector come
+// from PRODUCT_COMMERCE_QUERY below with a short cache.
 const PRODUCT_QUERY = `#graphql
   query Product(
     $handle: String!
@@ -154,21 +158,6 @@ const PRODUCT_QUERY = `#graphql
       images(first: 10) {
         nodes { id url altText width height }
       }
-      options {
-        id
-        name
-        optionValues {
-          name
-          swatch {
-            color
-            image {
-              previewImage {
-                url
-              }
-            }
-          }
-        }
-      }
     }
   }
 ` as const;
@@ -189,6 +178,21 @@ const PRODUCT_COMMERCE_QUERY = `#graphql
   ) @inContext(country: $country, language: $language) {
     product(handle: $handle) {
       id
+      options @include(if: $withExtras) {
+        id
+        name
+        optionValues {
+          name
+          swatch {
+            color
+            image {
+              previewImage {
+                url
+              }
+            }
+          }
+        }
+      }
       selectedVariant: variantBySelectedOptions(
         selectedOptions: $selectedOptions
         ignoreUnknownOptions: true
@@ -247,32 +251,44 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const [{product: content}, commerce] = await Promise.all([
     context.storefront.query(PRODUCT_QUERY, {variables: {handle, ...market}, cache: CacheLong()}),
     (async () => {
-      const extras: {selectedVariant?: ProductVariantFragment | null; relatedProducts?: unknown} = {};
+      const extras: {
+        productId?: string;
+        options?: unknown;
+        selectedVariant?: ProductVariantFragment | null;
+        relatedProducts?: unknown;
+      } = {};
       const variants = await fetchAllPages(async (after) => {
         const result = await context.storefront.query(PRODUCT_COMMERCE_QUERY, {
           variables: {handle, selectedOptions, after, withExtras: after === null, ...market},
           cache: CacheFresh(),
         });
         if (after === null) {
+          extras.productId = result.product?.id;
+          extras.options = result.product?.options;
           extras.selectedVariant = result.product?.selectedVariant as unknown as ProductVariantFragment | null | undefined;
           extras.relatedProducts = result.relatedProducts;
         }
         return result.product?.variants;
-      });
+      }, MAX_VARIANT_PAGES);
       return {variants, extras};
     })(),
   ]);
 
-  const product = content
-    ? {
-        ...content,
-        selectedVariant: commerce.extras.selectedVariant ?? null,
-        variants: {nodes: commerce.variants},
-      }
-    : null;
+  // NOTE: the editorial content can come from a long-lived cache entry. If the handle was deleted,
+  // unpublished or reassigned since, the fresh commerce product is missing or has a different id --
+  // never combine one product's cached content with another product's purchasable variants.
+  if (!content || !commerce.extras.productId || commerce.extras.productId !== content.id) {
+    throw new Response('Product not found', {status: 404});
+  }
+
+  const product = {
+    ...content,
+    options: commerce.extras.options ?? [],
+    selectedVariant: commerce.extras.selectedVariant ?? null,
+    variants: {nodes: commerce.variants},
+  };
   const relatedProducts = commerce.extras.relatedProducts ?? null;
 
-  if (!product) throw new Response('Product not found', {status: 404});
 
   // Real per-product reviews -- optional, server-only, and NOT awaited
   // here: this is a third-party fetch (up to a 5s timeout) for a

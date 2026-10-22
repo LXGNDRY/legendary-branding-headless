@@ -31,9 +31,10 @@ const content = {
   vendor: 'LB',
   productType: 'Tee',
   metafields: [],
-  options: [],
   images: {nodes: []},
 };
+
+const options = [{id: 'gid://shopify/ProductOption/1', name: 'Size', optionValues: [{name: 'S1', swatch: null}]}];
 
 function page(nodes: unknown[], endCursor: string | null) {
   return {nodes, pageInfo: {hasNextPage: endCursor !== null, endCursor}};
@@ -56,7 +57,7 @@ describe('products.$handle loader', () => {
     responses = {
       Product: {product: content},
       ProductCommerce: () => ({
-        product: {id: content.id, selectedVariant: variant(1), variants: page([variant(1)], null)},
+        product: {id: content.id, options, selectedVariant: variant(1), variants: page([variant(1)], null)},
         relatedProducts: {products: {nodes: []}},
       }),
     };
@@ -84,12 +85,44 @@ describe('products.$handle loader', () => {
     await expect(run('nope', responses)).rejects.toMatchObject({status: 404});
   });
 
+  it('returns a 404 when cached content exists but the live product was deleted or unpublished', async () => {
+    responses.ProductCommerce = () => ({product: null, relatedProducts: null});
+    await expect(run('gone', responses)).rejects.toMatchObject({status: 404});
+  });
+
+  it('never merges cached content with a different product after a handle was reassigned', async () => {
+    responses.ProductCommerce = () => ({
+      product: {id: 'gid://shopify/Product/999', options, selectedVariant: variant(1), variants: page([variant(1)], null)},
+      relatedProducts: {products: {nodes: []}},
+    });
+    await expect(run('reused', responses)).rejects.toMatchObject({status: 404});
+  });
+
+  it('takes option definitions from the fresh commerce query so a new option value is selectable immediately', async () => {
+    const {result, calls} = await run('test-product', responses);
+    expect(result.product.options).toEqual(options);
+    expect(calls.find((c) => c.operationName === 'Product')?.query).not.toContain('optionValues');
+  });
+
+  it('reads up to the 2,048-variant product limit (21 pages)', async () => {
+    const pageOf = (n: number) => Array.from({length: n === 20 ? 48 : 100}, (_, i) => variant(n * 100 + i + 1));
+    responses.ProductCommerce = (variables: Record<string, unknown>) => {
+      const index = variables.after === null ? 0 : Number(String(variables.after).replace('c', ''));
+      return {
+        product: {id: content.id, options, selectedVariant: variant(1), variants: page(pageOf(index), index === 20 ? null : `c${index + 1}`)},
+        relatedProducts: {products: {nodes: []}},
+      };
+    };
+    const {result} = await run('huge', responses);
+    expect(result.product.variants.nodes).toHaveLength(2048);
+  });
+
   it('reads every variant page so a product with more than 100 variants keeps its late variants', async () => {
     const first = Array.from({length: 100}, (_, i) => variant(i + 1));
     const second = Array.from({length: 50}, (_, i) => variant(i + 101));
     responses.ProductCommerce = (variables: Record<string, unknown>) =>
       variables.after === null
-        ? {product: {id: content.id, selectedVariant: variant(1), variants: page(first, 'cursor-1')}, relatedProducts: {products: {nodes: []}}}
+        ? {product: {id: content.id, options, selectedVariant: variant(1), variants: page(first, 'cursor-1')}, relatedProducts: {products: {nodes: []}}}
         : {product: {id: content.id, variants: page(second, null)}};
     const {result, calls} = await run('big', responses);
     expect(result.product.variants.nodes).toHaveLength(150);
