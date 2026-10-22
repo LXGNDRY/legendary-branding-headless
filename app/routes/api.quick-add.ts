@@ -45,7 +45,7 @@ export async function loader({request, context}: LoaderFunctionArgs) {
   if (rateLimitResponse) return rateLimitResponse;
 
   const handle = new URL(request.url).searchParams.get('handle')?.trim();
-  if (!handle) return Response.json({product: null}, {status: 400});
+  if (!handle) return Response.json({product: null}, {status: 400, headers: {'Cache-Control': 'no-store'}});
 
   try {
     const {product} = await context.storefront.query(QUICK_ADD_PRODUCT_QUERY, {
@@ -62,10 +62,10 @@ export async function loader({request, context}: LoaderFunctionArgs) {
         status: product ? 200 : 404,
         // NOTE: private -- the response varies by the session's market
         // (currency, translations), which the URL doesn't carry.
-        headers: {'Cache-Control': 'private, max-age=60'},
+        headers: {'Cache-Control': product ? 'private, max-age=60' : 'no-store'},
       },
     );
   } catch {
-    return Response.json({product: null}, {status: 500});
+    return Response.json({product: null}, {status: 500, headers: {'Cache-Control': 'no-store'}});
   }
 }
