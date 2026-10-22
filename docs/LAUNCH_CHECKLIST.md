@@ -1,5 +1,7 @@
 # Launch Checklist — Legendary Branding Headless Storefront
 
+> **Evidence note (2026-10-22):** the checkboxes below record work reported at the time. They are not current launch evidence — current status, owner-owed items and verification live in [HEADLESS_RECOVERY_PLAN.md](HEADLESS_RECOVERY_PLAN.md).
+
 Status legend: **✅ verified done** · **⚠️ implemented but unverified in the live environment** ·
 **❌ not done**.
 

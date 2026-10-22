@@ -2,25 +2,24 @@
 
 ## Current execution entry point
 
-Start with [Headless Storefront Recovery Plan](HEADLESS_RECOVERY_PLAN.md). It replaces the previous TPS plan as the implementation index and links the full findings, evidence limits and every-file register. Read `CLAUDE.md` for operating constraints and the owner's latest conversation instructions for scope/authorization.
+Start with [Headless Storefront Recovery Plan](HEADLESS_RECOVERY_PLAN.md) — the execution index with per-slice status (R01–R24), owner-owed items and evidence links. Full findings: [audits/2026-10-22/FINDINGS.md](audits/2026-10-22/FINDINGS.md); closure state per finding: [CLOSURE.md](audits/2026-10-22/CLOSURE.md); every-file register: [FILE_REVIEW.md](audits/2026-10-22/FILE_REVIEW.md). Read `CLAUDE.md` for operating constraints and the owner's latest conversation instructions for scope/authorization.
 
-## Current reference documents (reconciliation pending R24)
+## Active reference documents
 
-- [Architecture](ARCHITECTURE.md)
-- [Deployment](DEPLOYMENT.md)
-- [Repository governance](REPOSITORY_GOVERNANCE.md)
-- [Analytics](ANALYTICS.md)
-- [Production readiness](PRODUCTION_READINESS.md)
-- [Launch checklist](LAUNCH_CHECKLIST.md)
-- [Metafield definitions](metafield-definitions.md)
+| Document | Covers |
+|---|---|
+| [Architecture](ARCHITECTURE.md) | Code structure and data flow |
+| [Deployment](DEPLOYMENT.md) | CI/CD pipeline, release verification |
+| [Repository governance](REPOSITORY_GOVERNANCE.md) | Promotion path, ruleset contract, release provenance |
+| [Analytics](ANALYTICS.md) | Consent categories, per-channel event mapping |
+| [Accessibility](ACCESSIBILITY.md) | Overlay stack, axe checks, open manual checks |
+| [Chat protection](CHAT_PROTECTION.md) | Rate limits, grounding, spend-cap decision |
+| [Public URLs](PUBLIC_URLS.md) | Canonical origin, robots, sitemap, policy authority |
+| [Reviews](REVIEWS.md) | Judge.me attribution and aggregate rules |
+| [Sections](SECTIONS.md) | Active vs dormant section registry, reveal rules |
+| [Metafield definitions](metafield-definitions.md) | Storefront-readable metafield contract |
+| [Production readiness](PRODUCTION_READINESS.md), [Launch checklist](LAUNCH_CHECKLIST.md) | Point-in-time records (see their evidence notes) |
 
-These documents contain known dated or conflicting statements. Resolve them through the recovery plan rather than treating an old completion checkbox as current evidence.
+## Historical documents
 
-## Historical plans and audits
-
-- [Previous TPS remediation plan](TPS_REMEDIATION_PLAN.md)
-- [Previous live readiness plan](LIVE_READINESS_IMPLEMENTATION_PLAN.md)
-- [Previous full-site audit plan](full-site-audit-plan.md)
-- [Development baseline](DEV_BASELINE_AUDIT.md)
-
-All remaining phase/theme audits, reports and changelogs are inventoried in [the complete file register](audits/2026-10-22/FILE_REVIEW.md). R24 will label/archive superseded histories without deleting evidence.
+Superseded plans, audits, phase findings and changelogs carry a banner linking to the recovery plan and are kept unchanged for audit history: TPS remediation plan, live readiness plan, full-site audit plan, development baseline, E2E scale-up plan, post-launch roadmap, dark-theme transformation report, `audit-phase*-findings`, and the phase/mobile changelogs.

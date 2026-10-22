@@ -1,3 +1,5 @@
+> **Historical document.** Superseded by [HEADLESS_RECOVERY_PLAN.md](HEADLESS_RECOVERY_PLAN.md) (2026-10-22). Statements below describe the state at the time of writing and are not current evidence. Retained unchanged for audit history.
+
 # Mobile Optimization Pass — Changelog
 
 Seven vertical slices (numbered 5–11 in the original 11-slice plan; slices
