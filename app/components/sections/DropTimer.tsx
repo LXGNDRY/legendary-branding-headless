@@ -80,6 +80,13 @@ export default function DropTimer({
                 </p>
               )}
 
+              {/* Absolute date is server-rendered (UTC, deterministic) so the drop time is readable without JS */}
+              {validDate && (
+                <p className="text-sm text-[var(--color-text-secondary)] mt-2">
+                  <time dateTime={new Date(target).toISOString()}>{formatDropDate(target)}</time>
+                </p>
+              )}
+
               {/* Timer: hidden entirely when the drop date is missing/invalid */}
               {validDate && (
                 <div role="timer" aria-label={`Time until ${heading}`} className="flex gap-2 md:gap-4 items-start mt-4">
@@ -155,4 +162,12 @@ export function calculateTimeLeft(target: number, now: number = Date.now()): Tim
     minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
     seconds: Math.floor((diff % (1000 * 60)) / 1000),
   };
+}
+
+function formatDropDate(target: number) {
+  return `${new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+    timeZone: 'UTC',
+  }).format(target)} UTC`;
 }
