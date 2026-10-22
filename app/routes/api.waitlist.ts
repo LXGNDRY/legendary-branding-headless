@@ -1,6 +1,8 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
 import {rateLimitMiddleware} from '~/lib/rate-limit';
 import {requireSameOrigin} from '~/lib/security';
+import {captureError} from '~/lib/monitoring';
+import {subscribeToKlaviyoList} from '~/lib/klaviyo';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -35,62 +37,48 @@ export async function action({request, context}: ActionFunctionArgs) {
 
   const env = context.env as Env;
   if (!env.PRIVATE_KLAVIYO_API_KEY || !env.PUBLIC_KLAVIYO_WAITLIST_LIST_ID) {
-    console.error('[waitlist] Klaviyo waitlist is not configured');
+    captureError(
+      new Error('Klaviyo waitlist is not configured'),
+      {route: 'api.waitlist', failure: 'configuration'},
+    );
     return Response.json(
       {error: 'Back-in-stock signup is temporarily unavailable.'},
       {status: 503},
     );
   }
 
-  try {
-    const response = await fetch(
-      'https://a.klaviyo.com/api/profile-subscription-bulk-create-jobs/',
+  const result = await subscribeToKlaviyoList({
+    apiKey: env.PRIVATE_KLAVIYO_API_KEY,
+    listId: env.PUBLIC_KLAVIYO_WAITLIST_LIST_ID,
+    email,
+    source: 'product-back-in-stock',
+    properties: {
+      waitlist_product_id: productId,
+      waitlist_variant_id: variantId,
+      waitlist_product_title: productTitle,
+      waitlist_variant_title: variantTitle,
+      waitlist_country: context.storefront.i18n.country,
+    },
+  });
+  if (!result.ok) {
+    captureError(
+      result.kind === 'network'
+        ? result.error
+        : new Error(`Klaviyo returned HTTP ${result.status}`),
       {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/vnd.api+json',
-          revision: '2024-02-15',
-          Authorization: `Klaviyo-API-Key ${env.PRIVATE_KLAVIYO_API_KEY}`,
-        },
-        body: JSON.stringify({
-          data: {
-            type: 'profile-subscription-bulk-create-job',
-            attributes: {custom_source: 'product-back-in-stock'},
-            relationships: {
-              list: {
-                data: {type: 'list', id: env.PUBLIC_KLAVIYO_WAITLIST_LIST_ID},
-              },
-            },
-          },
-          included: [{
-            type: 'profile',
-            attributes: {
-              email,
-              properties: {
-                waitlist_product_id: productId,
-                waitlist_variant_id: variantId,
-                waitlist_product_title: productTitle,
-                waitlist_variant_title: variantTitle,
-                waitlist_country: context.storefront.i18n.country,
-              },
-              subscriptions: {
-                email: {marketing: {consent: 'SUBSCRIBED'}},
-              },
-            },
-          }],
-        }),
+        route: 'api.waitlist',
+        provider: 'klaviyo',
+        failure: result.kind,
+        ...(result.kind === 'http' ? {status: result.status} : {}),
       },
     );
-
-    if (!response.ok) {
-      console.error(`[waitlist] Klaviyo API error ${response.status}`);
-      return Response.json({error: 'Unable to save your request. Please try again.'}, {status: 502});
-    }
-    return Response.json({success: true, message: "You're on the list."});
-  } catch (error) {
-    console.error('[waitlist] Klaviyo network error', error);
-    return Response.json({error: 'Unable to save your request. Please try again.'}, {status: 502});
+    return Response.json(
+      {error: 'Unable to save your request. Please try again.'},
+      {status: 502},
+    );
   }
+
+  return Response.json({success: true, message: "You're on the list."});
 }
 
 export function loader(_args: LoaderFunctionArgs) {

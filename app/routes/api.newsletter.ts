@@ -1,6 +1,8 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
 import {rateLimitMiddleware} from '~/lib/rate-limit';
 import {requireSameOrigin} from '~/lib/security';
+import {captureError} from '~/lib/monitoring';
+import {subscribeToKlaviyoList} from '~/lib/klaviyo';
 
 /**
  * Newsletter subscribe API route.
@@ -65,77 +67,45 @@ export async function action({request, context}: ActionFunctionArgs) {
   // Never simulate success. A storefront must not claim a subscription was
   // recorded when the provider is unavailable or misconfigured.
   if (!apiKey || !listId) {
-    console.error('[newsletter] Klaviyo is not configured');
+    captureError(
+      new Error('Klaviyo newsletter is not configured'),
+      {route: 'api.newsletter', failure: 'configuration'},
+    );
     return Response.json(
       {error: 'Newsletter signup is temporarily unavailable.'},
       {status: 503},
     );
   }
 
-  try {
-    const klaviyoResponse = await fetch('https://a.klaviyo.com/api/profile-subscription-bulk-create-jobs/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/vnd.api+json',
-        revision: '2024-02-15',
-        Authorization: `Klaviyo-API-Key ${apiKey}`,
+  const result = await subscribeToKlaviyoList({
+    apiKey,
+    listId,
+    email,
+    source,
+  });
+  if (!result.ok) {
+    captureError(
+      result.kind === 'network'
+        ? result.error
+        : new Error(`Klaviyo returned HTTP ${result.status}`),
+      {
+        route: 'api.newsletter',
+        provider: 'klaviyo',
+        failure: result.kind,
+        ...(result.kind === 'http' ? {status: result.status} : {}),
       },
-      body: JSON.stringify({
-        data: {
-          type: 'profile-subscription-bulk-create-job',
-          attributes: {
-            custom_source: source,
-          },
-          relationships: {
-            list: {
-              data: {
-                type: 'list',
-                id: listId,
-              },
-            },
-          },
-        },
-        included: [
-          {
-            type: 'profile',
-            attributes: {
-              email,
-              subscriptions: {
-                email: {
-                  marketing: {
-                    consent: 'SUBSCRIBED',
-                  },
-                },
-              },
-            },
-          },
-        ],
-      }),
-    });
-
-    if (!klaviyoResponse.ok) {
-      const errorText = await klaviyoResponse.text();
-      console.error(
-        `[newsletter] Klaviyo API error ${klaviyoResponse.status}: ${errorText}`,
-      );
-      return Response.json(
-        {error: 'Something went wrong. Please try again later.'},
-        {status: 502},
-      );
-    }
-
-    return Response.json({
-      success: true,
-      subscribed: true,
-      message: "You're in. Watch your inbox.",
-    });
-  } catch (err) {
-    console.error('[newsletter] Network error calling Klaviyo:', err);
+    );
     return Response.json(
       {error: 'Something went wrong. Please try again later.'},
       {status: 502},
     );
   }
+
+  return Response.json({
+    success: true,
+    subscribed: true,
+    message: "You're in. Watch your inbox.",
+  });
 }
 
 export function loader(_args: LoaderFunctionArgs) {
