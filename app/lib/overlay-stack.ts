@@ -10,7 +10,7 @@
  *   live regions that must keep announcing.
  */
 
-export type OverlayHandle = {readonly container: HTMLElement};
+export type OverlayHandle = {readonly container: HTMLElement; readonly zIndex: number};
 
 const stack: OverlayHandle[] = [];
 // The elements this module made inert, so elements that were already inert are never touched.
@@ -41,10 +41,27 @@ function applyInert() {
   }
 }
 
-/** Puts an overlay on top of the stack. Returns the function that removes it. */
+/** The stacking level the overlay is drawn at: the z-index of its nearest positioned ancestor (itself included). */
+function stackingLevel(container: HTMLElement): number {
+  for (let node: HTMLElement | null = container; node && node !== document.documentElement; node = node.parentElement) {
+    const style = getComputedStyle(node);
+    const z = Number.parseInt(style.zIndex, 10);
+    if (Number.isFinite(z) && style.position !== 'static') return z;
+  }
+  return 0;
+}
+
+/**
+ * Puts an overlay in the stack and returns the function that removes it. The stack is ordered by what is drawn on
+ * top, not by who opened last: an overlay that opens beneath a higher one (the cart opening under the discounts
+ * popup after an add-to-cart finishes) does not take the keyboard or the inert page away from the visible one.
+ * Overlays at the same level are ordered by when they opened.
+ */
 export function registerOverlay(container: HTMLElement): {handle: OverlayHandle; release: () => void} {
-  const handle: OverlayHandle = {container};
-  stack.push(handle);
+  const handle: OverlayHandle = {container, zIndex: stackingLevel(container)};
+  let at = stack.length;
+  while (at > 0 && stack[at - 1].zIndex > handle.zIndex) at -= 1;
+  stack.splice(at, 0, handle);
   applyInert();
   return {
     handle,

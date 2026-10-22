@@ -5,11 +5,11 @@ import {afterEach, describe, expect, it, vi} from 'vitest';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {overlayDepth, resetOverlayStack} from '~/lib/overlay-stack';
 
-function Overlay({name, open, onClose, children}: {name: string; open: boolean; onClose: () => void; children?: React.ReactNode}) {
+function Overlay({name, open, onClose, z, children}: {name: string; open: boolean; onClose: () => void; z?: number; children?: React.ReactNode}) {
   const {containerRef} = useFocusTrap(open, onClose);
   if (!open) return null;
   return (
-    <div>
+    <div style={z === undefined ? undefined : {position: 'fixed', zIndex: z}}>
       <div data-testid={`${name}-scrim`} data-overlay-keep />
       <div ref={containerRef} role="dialog" aria-modal="true" aria-label={name}>
         <button type="button">{name} first</button>
@@ -20,7 +20,7 @@ function Overlay({name, open, onClose, children}: {name: string; open: boolean; 
   );
 }
 
-function Page({initialCart = false, initialPopup = false}: {initialCart?: boolean; initialPopup?: boolean}) {
+function Page({initialCart = false, initialPopup = false, cartZ, popupZ}: {initialCart?: boolean; initialPopup?: boolean; cartZ?: number; popupZ?: number}) {
   const [cart, setCart] = useState(initialCart);
   const [popup, setPopup] = useState(initialPopup);
   return (
@@ -32,8 +32,8 @@ function Page({initialCart = false, initialPopup = false}: {initialCart?: boolea
       <main>
         <a href="/x">page link</a>
       </main>
-      <Overlay name="cart" open={cart} onClose={() => setCart(false)} />
-      <Overlay name="popup" open={popup} onClose={() => setPopup(false)} />
+      <Overlay name="cart" open={cart} onClose={() => setCart(false)} z={cartZ} />
+      <Overlay name="popup" open={popup} onClose={() => setPopup(false)} z={popupZ} />
     </div>
   );
 }
@@ -91,6 +91,34 @@ describe('overlay stack', () => {
     await settle();
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(document.querySelector('main')!.hasAttribute('inert')).toBe(false);
+  });
+
+  it('keeps the visually highest overlay on top even when a lower one opens after it', async () => {
+    // popup is drawn at z 600, the cart at 500: the cart opening later must not take over
+    render(<Page initialPopup cartZ={500} popupZ={600} />);
+    await settle();
+    fireEvent.click(screen.getByText('open cart'));
+    await settle();
+    expect(overlayDepth()).toBe(2);
+    // the visible popup stays interactive; the cart beneath it is the inert one
+    expect(screen.getByRole('dialog', {name: 'popup'}).closest('[inert]')).toBeNull();
+    expect(screen.getByRole('dialog', {name: 'cart', hidden: true}).closest('[inert]')).not.toBeNull();
+
+    // Escape closes the popup (the visible one), not the cart
+    fireEvent.keyDown(document, {key: 'Escape'});
+    await settle();
+    expect(screen.queryByRole('dialog', {name: 'popup'})).toBeNull();
+    expect(screen.getByRole('dialog', {name: 'cart'})).toBeTruthy();
+    expect(screen.getByRole('dialog', {name: 'cart'}).closest('[inert]')).toBeNull();
+  });
+
+  it('orders overlays at the same level by when they opened', async () => {
+    render(<Page initialCart cartZ={500} popupZ={500} />);
+    await settle();
+    fireEvent.click(screen.getByText('open popup'));
+    await settle();
+    expect(screen.getByRole('dialog', {name: 'popup'}).closest('[inert]')).toBeNull();
+    expect(screen.getByRole('dialog', {name: 'cart', hidden: true}).closest('[inert]')).not.toBeNull();
   });
 
   it('returns focus to the control that opened the overlay', async () => {
