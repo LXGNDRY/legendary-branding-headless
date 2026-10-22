@@ -5,8 +5,18 @@
 
 const PRIVATE_PREFIXES = ['/account', '/cart'];
 
+/**
+ * React Router fetches page data from `<path>.data` (and `/_root.data` for a root-only revalidation). Those
+ * responses carry the same private data as the page: the root loader returns the cart and sign-in state.
+ */
+function normalize(pathname: string): string {
+  return pathname.endsWith('.data') ? pathname.slice(0, -'.data'.length) : pathname;
+}
+
 export function isPrivatePath(pathname: string): boolean {
-  return PRIVATE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  const path = normalize(pathname);
+  if (pathname.endsWith('.data') && path === '/_root') return true;
+  return PRIVATE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 }
 
 /** Route `meta` entry for private pages. Child routes replace the parent's meta, so each one includes it. */

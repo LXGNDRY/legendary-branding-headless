@@ -197,6 +197,20 @@ describe('addresses', () => {
     expect(second.nextCursor).toBeNull();
   });
 
+  it('shows the default address exactly once: first on page one, never again on a later page', async () => {
+    const pages: Record<string, unknown> = {
+      first: list([address(1), address(2)], 'c1', address(3)),
+      c1: list([address(3), address(4)], null, address(3)),
+    };
+    const account = makeAccount({query: vi.fn(async (_q: unknown, opts: {variables: {after: string | null}}) => pages[opts.variables.after ?? 'first'])});
+    const first = await run(addressesLoader, {request: get('/account/addresses'), context: ctx(account)});
+    const second = await run(addressesLoader, {request: get('/account/addresses?after=c1'), context: ctx(account)});
+    expect(first.defaultAddress.id).toContain('/3');
+    expect(first.addresses.map((a: {id: string}) => a.id.split('/').pop())).toEqual(['1', '2']);
+    expect(second.defaultAddress).toBeNull();
+    expect(second.addresses.map((a: {id: string}) => a.id.split('/').pop())).toEqual(['4']);
+  });
+
   it('creates with validated, authoritative codes', async () => {
     const account = makeAccount({mutate: vi.fn(async () => ({data: {customerAddressCreate: {customerAddress: {}, userErrors: []}}}))});
     const result = await run(addressesAction, {request: post('/account/addresses', base), context: ctx(account)});

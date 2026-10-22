@@ -4,7 +4,7 @@ import {test, expect} from '@playwright/test';
  * Private-route contract: account and cart responses are uncacheable and unindexable, including the error
  * and redirect responses an unconfigured environment produces (no Customer Account API credentials in CI).
  */
-const PRIVATE_PATHS = ['/account', '/account/orders', '/account/addresses', '/account/edit', '/account/login', '/cart'];
+const PRIVATE_PATHS = ['/account', '/account/orders', '/account/addresses', '/account/edit', '/account/login', '/cart', '/cart.data', '/account.data', '/_root.data'];
 
 for (const path of PRIVATE_PATHS) {
   test(`${path} is private, no-store and noindex on every response`, async ({request}) => {

@@ -8,6 +8,14 @@ describe('isPrivatePath', () => {
     }
   });
 
+  it('covers the React Router data requests for those pages and the root loader', () => {
+    for (const path of ['/cart.data', '/account.data', '/account/orders.data', '/account/addresses.data', '/_root.data']) {
+      expect(isPrivatePath(path)).toBe(true);
+    }
+    expect(isPrivatePath('/products/tee.data')).toBe(false);
+    expect(isPrivatePath('/accounting.data')).toBe(false);
+  });
+
   it('does not catch look-alike public paths', () => {
     for (const path of ['/', '/accounting', '/carts', '/products/cart', '/collections/account']) {
       expect(isPrivatePath(path)).toBe(false);

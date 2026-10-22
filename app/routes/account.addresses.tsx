@@ -182,10 +182,11 @@ export async function loader({request, context}: LoaderFunctionArgs) {
   }
 
   const {defaultAddress, addresses} = result.data.customer;
+  // NOTE: the default address is shown once, first, on page one; it is removed from the paginated nodes so no later page repeats it.
   return {
     failed: false as const,
-    defaultAddress: defaultAddress ?? null,
-    addresses: addresses?.nodes ?? [],
+    defaultAddress: after ? null : (defaultAddress ?? null),
+    addresses: (addresses?.nodes ?? []).filter((node) => node.id !== defaultAddress?.id),
     nextCursor: addresses?.pageInfo?.hasNextPage ? (addresses.pageInfo.endCursor ?? null) : null,
     isFirstPage: !after,
   };
@@ -518,11 +519,8 @@ function AddressCard({
 export default function AddressesPage() {
   const {failed, defaultAddress, addresses, nextCursor, isFirstPage} = useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
-  // The default address leads the first page even when it is not among the first ten.
-  const allAddresses =
-    isFirstPage && defaultAddress && !addresses.some((a) => a.id === defaultAddress.id)
-      ? [defaultAddress, ...addresses]
-      : addresses;
+  // The default address (page one only) leads the list.
+  const allAddresses = defaultAddress ? [defaultAddress, ...addresses] : addresses;
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
