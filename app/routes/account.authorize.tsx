@@ -1,8 +1,8 @@
 import {redirect, type LoaderFunctionArgs, type MetaFunction} from 'react-router';
+import {accountMeta} from '~/lib/account';
+import {captureError} from '~/lib/monitoring';
 
-export const meta: MetaFunction = () => [
-  {title: 'Authorizing | LEGENDARY BRANDING'},
-];
+export const meta: MetaFunction = () => accountMeta('Authorizing');
 
 /**
  * OAuth PKCE callback handler.
@@ -22,9 +22,10 @@ export async function loader({context}: LoaderFunctionArgs) {
     // authorize() validates the OAuth response, exchanges the auth code
     // for tokens, persists them in the session, and returns a redirect
     // Response to the post-login URL (default: /account)
-    return customerAccount.authorize();
+    // NOTE: awaited so a rejected exchange lands in the catch below instead of escaping as a 500.
+    return await customerAccount.authorize();
   } catch (error) {
-    console.error('Auth callback error:', error);
+    captureError(error, {route: 'account.authorize'});
     return redirect('/account/login?error=auth_failed');
   }
 }
