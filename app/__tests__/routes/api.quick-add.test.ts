@@ -8,7 +8,7 @@ function makeRequest(handle?: string) {
   requestNumber += 1;
   const url = new URL('http://localhost/api/quick-add');
   if (handle !== undefined) url.searchParams.set('handle', handle);
-  return new Request(url, {
+  return new Request(url.toString(), {
     headers: {'X-Forwarded-For': `198.51.100.${requestNumber}`},
   });
 }
