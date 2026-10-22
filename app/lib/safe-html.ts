@@ -19,6 +19,9 @@ const ALLOWED_TAGS = new Set([
 ]);
 
 const GLOBAL_ATTRS = new Set(['class', 'title', 'lang', 'dir']);
+// NOTE: kept IDs are namespaced so merchant HTML can't clobber window/document properties (e.g. id="location").
+const ID_PREFIX = 'content-';
+const SAFE_ID = /^[A-Za-z][\w:.-]{0,99}$/;
 const TAG_ATTRS: Record<string, Set<string>> = {
   a: new Set(['href', 'target', 'rel']),
   img: new Set(['src', 'alt', 'width', 'height', 'loading']),
@@ -50,10 +53,16 @@ function cleanAttributes(el: Element) {
   const kept: {name: string; value: string}[] = [];
   for (const attr of el.attrs) {
     const name = attr.name.toLowerCase();
+    if (name === 'id') {
+      if (SAFE_ID.test(attr.value)) kept.push({name, value: `${ID_PREFIX}${attr.value}`});
+      continue;
+    }
     if (!GLOBAL_ATTRS.has(name) && !allowedForTag?.has(name)) continue;
     if (tag === 'a' && name === 'href') {
       const url = safeUrl(attr.value, LINK_SCHEMES);
-      if (url) kept.push({name, value: url});
+      if (!url) continue;
+      const fragment = /^#([A-Za-z][\w:.-]{0,99})$/.exec(url);
+      kept.push({name, value: fragment ? `#${ID_PREFIX}${fragment[1]}` : url});
       continue;
     }
     if (tag === 'img' && name === 'src') {

@@ -53,9 +53,27 @@ describe('sanitizeHtml', () => {
   });
 
   it('keeps http(s), mailto, tel, relative and fragment links', () => {
-    for (const href of ['https://example.com/a', 'http://example.com', 'mailto:lb@legendary-branding.com', 'tel:+15555550100', '/policies/refund-policy', '#sizes', '?page=2']) {
+    for (const href of ['https://example.com/a', 'http://example.com', 'mailto:lb@legendary-branding.com', 'tel:+15555550100', '/policies/refund-policy', '?page=2']) {
       expect(sanitizeHtml(`<a href="${href}">x</a>`)).toBe(`<a href="${href}">x</a>`);
     }
+  });
+
+  it('keeps in-page jump links working by namespacing ids and fragment hrefs together', () => {
+    expect(sanitizeHtml('<p><a href="#sizes">Sizes</a></p><h2 id="sizes">Sizes</h2>')).toBe(
+      '<p><a href="#content-sizes">Sizes</a></p><h2 id="content-sizes">Sizes</h2>',
+    );
+  });
+
+  it('cannot clobber window or document properties through ids', () => {
+    const out = sanitizeHtml('<img id="location" src="https://a.test/x.jpg"><a id="cookie" name="body" href="#location">x</a>');
+    expect(out).not.toMatch(/\sid="(location|cookie|body)"/);
+    expect(out).toContain('id="content-location"');
+    expect(out).not.toMatch(/\sname=/);
+  });
+
+  it('drops ids that are not plain identifiers', () => {
+    expect(sanitizeHtml('<p id="x y" class="a">t</p>')).toBe('<p class="a">t</p>');
+    expect(sanitizeHtml('<p id="1abc">t</p>')).toBe('<p>t</p>');
   });
 
   it('adds rel to links that open a new tab and drops other targets', () => {
