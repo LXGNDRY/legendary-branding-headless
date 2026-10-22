@@ -1,5 +1,7 @@
+import SafeHtml from '~/components/ui/SafeHtml';
 import {Image} from '@shopify/hydrogen';
 import {Link} from 'react-router';
+import type {ContentBlock} from '~/lib/content-blocks';
 
 /**
  * Content block renderer — powered by Shopify page metafields.
@@ -15,18 +17,6 @@ import {Link} from 'react-router';
  *
  * Metafield type: json (JSON string).
  */
-
-interface ContentBlock {
-  type: 'rich_text' | 'image_text' | 'quote' | 'cta' | 'heading';
-  text?: string;
-  image?: string;
-  title?: string;
-  quote?: string;
-  attribution?: string;
-  button_text?: string;
-  button_link?: string;
-  position?: 'left' | 'right';
-}
 
 interface ContentBlocksProps {
   blocks: ContentBlock[];
@@ -55,14 +45,8 @@ export default function ContentBlocks({blocks}: ContentBlocksProps) {
 
           case 'rich_text':
             return (
-              <div
-                key={i}
-                className="max-w-3xl mx-auto prose prose-sm max-w-none text-[var(--color-text-primary)] [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-[var(--color-text-primary)] [&_h2]:text-2xl [&_h3]:text-xl [&_li]:my-0.5"
-                // eslint-disable-next-line react/no-danger
-                dangerouslySetInnerHTML={{
-                  __html: block.text || '',
-                }}
-              />
+              <SafeHtml
+                key={i} className="max-w-3xl mx-auto prose prose-sm max-w-none text-[var(--color-text-primary)] [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-[var(--color-text-primary)] [&_h2]:text-2xl [&_h3]:text-xl [&_li]:my-0.5" html={block.text || ''} />
             );
 
           case 'image_text':

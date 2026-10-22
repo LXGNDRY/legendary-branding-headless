@@ -371,7 +371,7 @@ Initial status for every recovery task is **Not started**; this document and its
 | R03 | In PR | claude/recovery-r01-r03-gates | `.graphqlrc.ts` uses `getSchema`; generated files are now 78 KB/21 KB; surfaced search-sort and URL-scalar type errors, fixed | See package/decision table |
 | R04 | Not started | — | — | See package/decision table |
 | R05 | Not started | — | — | See package/decision table |
-| R06 | Not started | — | — | See package/decision table |
+| R06 | In PR | claude/recovery-r06-html-safety | `serializeJsonLd`, parse5-based `sanitizeHtml` + `SafeHtml` (only raw sinks: SafeHtml, JsonLd), validated CMS content blocks; 47 new tests incl. 24 attack fixtures. Remaining from F46: body-size/method bounds on other actions, nonce CSP (follow-up) | See package/decision table |
 | R07 | Not started | — | — | See package/decision table |
 | R08 | Not started | — | — | See package/decision table |
 | R09 | Not started | — | — | See package/decision table |
