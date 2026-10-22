@@ -11,16 +11,22 @@ export default async function handleRequest(
   routerContext: EntryContext,
 ): Promise<Response> {
   let status = responseStatusCode;
+  let shellRendered = false;
 
   const body = await renderToReadableStream(
     <ServerRouter context={routerContext} url={request.url} />,
     {
       onError(error: unknown) {
-        captureServerError(error, {request, extra: {source: 'render'}});
         status = 500;
+        // NOTE: React Router's handleError already reports shell-render errors; only later streaming errors are ours.
+        if (shellRendered) {
+          captureServerError(error, {request, extra: {source: 'render'}});
+        }
       },
     },
   );
+
+  shellRendered = true;
 
   if (isbot(request.headers.get('user-agent') ?? '')) {
     await body.allReady;
