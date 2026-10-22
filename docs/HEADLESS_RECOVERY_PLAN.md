@@ -372,7 +372,7 @@ Initial status for every recovery task is **Not started**; this document and its
 | R04 | In PR | claude/recovery-r04-cart-safe | Shared `handleCartMutation`: input validation, null-cart and provider-throw handling, cart cookie only for a returned cart; 23 new tests | See package/decision table |
 | R05 | In PR | claude/recovery-r05-cookies | `server.ts` appends (not replaces) the session cookie and copies cookies through 404 redirects; `commit()` clears `isPending`; 8 new tests. Real-browser/OAuth cookie checks still owed (needs preview) | See package/decision table |
 | R06 | Not started | — | — | See package/decision table |
-| R07 | Not started | — | — | See package/decision table |
+| R07 | In PR (neutral copy only) | claude/recovery-r07-claims | Unconditional free-shipping and duties-included claims removed from announcement, marquee, stat strip, cart drawer, PDP, trust signals and all 8 locales; neutral "calculated at checkout" copy; discount popup discloses conditions; source-scan regression test. **Final claims still need owner decision** (see open decisions) | Owner: shipping/duties/processing/returns authority |
 | R08 | Not started | — | — | See package/decision table |
 | R09 | Not started | — | — | See package/decision table |
 | R10 | Not started | — | — | See package/decision table |
