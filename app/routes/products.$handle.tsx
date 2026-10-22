@@ -895,8 +895,8 @@ export default function ProductPage() {
                   </svg>
                   <div className="min-w-0 text-xs leading-relaxed text-[var(--color-text-secondary)]">
                     <p className="font-medium text-[var(--color-text-primary)]">{t('shipping.worldwideDelivery')}</p>
-                    <p>{t('shipping.standard')}</p>
-                    <p className="mt-0.5 text-[var(--color-text-tertiary)]">{t('shipping.duties')}</p>
+                    <p>{t('shipping.calculated')}</p>
+                    <p className="mt-0.5 text-[var(--color-text-tertiary)]">{t('shipping.dutiesTaxes')}</p>
                   </div>
                 </div>
               </section>
@@ -945,7 +945,7 @@ export default function ProductPage() {
                 )}
                 <Accordion label="Shipping & Returns">
                   <div className="space-y-3">
-                    <p>Free standard shipping on every order. Import duties are included in the displayed price. Applicable taxes are paid by you and calculated at checkout. For delivery timelines, see our <Link to="/policies/shipping-policy" className="underline underline-offset-2">shipping policy</Link>.</p>
+                    <p>Shipping, duties and taxes are calculated at checkout. For rates and delivery timelines, see our <Link to="/policies/shipping-policy" className="underline underline-offset-2">shipping policy</Link>.</p>
                     <p>For return eligibility, timing, and instructions, review our <Link to="/policies/refund-policy" className="underline underline-offset-2">return policy</Link>.</p>
                   </div>
                 </Accordion>

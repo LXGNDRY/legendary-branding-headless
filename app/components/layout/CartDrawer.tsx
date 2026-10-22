@@ -350,14 +350,13 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
           </button>
         </div>
 
-        {/* Free shipping notice -- every order ships free, so this is a flat
-            confirmation rather than a threshold progress tracker. */}
+        {/* NOTE: no shipping price or free-shipping promise here until the owner approves structured shipping facts; checkout is the authority. */}
         {lines.length > 0 && subtotal && (
           <div className="px-6 py-4 border-b border-[var(--color-border-muted)] shrink-0 bg-[var(--color-bg-level-0)]">
             <div className="flex items-center gap-2.5">
               <TruckIcon />
-              <span className="text-[11px] tracking-wide font-medium text-[var(--color-success)]">
-                Free shipping on every order
+              <span className="text-[11px] tracking-wide font-medium text-[var(--color-text-secondary)]">
+                Shipping and taxes calculated at checkout
               </span>
             </div>
           </div>

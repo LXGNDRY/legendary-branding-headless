@@ -22,7 +22,7 @@ function renderPopup() {
   );
 }
 
-const dialog = () => screen.queryByRole('dialog', {name: /what's live right now/i});
+const dialog = () => screen.queryByRole('dialog', {name: /offers available now/i});
 
 function klaviyoOpens() {
   act(() => {
@@ -46,6 +46,7 @@ describe('DiscountsPopup vs Klaviyo', () => {
     renderPopup();
     await act(async () => vi.advanceTimersByTime(5_000));
     expect(dialog()).not.toBeNull();
+    expect(screen.getByText(/eligibility and final savings are confirmed at checkout/i)).toBeTruthy();
   });
 
   it('waits out the Klaviyo grace window, then shows if Klaviyo stayed closed', async () => {

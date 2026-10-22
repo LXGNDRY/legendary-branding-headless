@@ -31,7 +31,7 @@ export default function TrustSignals({
   const t = useTranslation();
   const {returnDays, paymentMethods} = useStoreTrust();
   const items = [
-    t('trust.freeShipping'),
+    t('trust.worldwideShipping'),
     returnDays ? t('trust.returns', {days: returnDays}) : null,
     t('trust.secureCheckout'),
   ].filter((item): item is string => Boolean(item));
