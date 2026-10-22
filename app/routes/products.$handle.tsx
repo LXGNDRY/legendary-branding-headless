@@ -14,7 +14,6 @@ import type {ActiveDiscount} from '~/lib/discounts';
 import {useState, useEffect, useRef, Suspense} from 'react';
 import {
   CartForm,
-  Image,
   Money,
   VariantSelector,
   Analytics,

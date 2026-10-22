@@ -1,9 +1,10 @@
 import type {IGraphQLConfig} from 'graphql-config';
+import {getSchema} from '@shopify/hydrogen-codegen';
 
 export default {
   projects: {
     default: {
-      schema: 'node_modules/@shopify/hydrogen/dist/storefront.schema.json',
+      schema: getSchema('storefront'),
       documents: [
         'app/**/*.{ts,tsx}',
         '!app/graphql/**',
@@ -11,28 +12,14 @@ export default {
         '!app/routes/account.{ts,tsx}',
         '!app/routes/api.wishlist.ts',
       ],
-      extensions: {
-        codegen: {
-          generates: {
-            './storefrontapi.generated.d.ts': {
-              plugins: ['@shopify/hydrogen-codegen'],
-            },
-          },
-        },
-      },
     },
     customer: {
-      schema: 'node_modules/@shopify/hydrogen/dist/customer-account.schema.json',
-      documents: ['app/routes/account.*.{ts,tsx}', 'app/routes/account.{ts,tsx}', 'app/routes/api.wishlist.ts'],
-      extensions: {
-        codegen: {
-          generates: {
-            './customeraccountapi.generated.d.ts': {
-              plugins: ['@shopify/hydrogen-codegen'],
-            },
-          },
-        },
-      },
+      schema: getSchema('customer-account'),
+      documents: [
+        'app/routes/account.*.{ts,tsx}',
+        'app/routes/account.{ts,tsx}',
+        'app/routes/api.wishlist.ts',
+      ],
     },
   },
 } satisfies IGraphQLConfig;

@@ -1,4 +1,3 @@
-import {Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import Button from '~/components/ui/Button';
 import HeroPlaceholder from '~/components/ui/HeroPlaceholder';

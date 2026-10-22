@@ -121,9 +121,9 @@ export const STORE_TRUST_QUERY = `#graphql
 
 interface StoreTrustQueryResult {
   shop?: {
-    refundPolicy?: {body?: string | null; url?: string | null} | null;
+    refundPolicy?: {body?: string | null; url?: unknown} | null;
     paymentSettings?: {acceptedCardBrands?: string[] | null; supportedDigitalWallets?: string[] | null} | null;
-    brand?: {logo?: {image?: {url?: string | null} | null} | null} | null;
+    brand?: {logo?: {image?: {url?: unknown} | null} | null} | null;
   } | null;
 }
 
@@ -134,12 +134,12 @@ export function toStoreTrust(
   const shop = data?.shop;
   return {
     returnDays: parseReturnWindowDays(shop?.refundPolicy?.body),
-    refundPolicyUrl: shop?.refundPolicy?.url ?? null,
+    refundPolicyUrl: shop?.refundPolicy?.url ? String(shop.refundPolicy.url) : null,
     paymentMethods: paymentMethodLabels(
       shop?.paymentSettings?.acceptedCardBrands,
       shop?.paymentSettings?.supportedDigitalWallets,
     ),
-    logoUrl: shop?.brand?.logo?.image?.url ?? null,
+    logoUrl: shop?.brand?.logo?.image?.url ? String(shop.brand.logo.image.url) : null,
     returnCountries: [...countries],
   };
 }

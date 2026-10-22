@@ -8,7 +8,7 @@ import {
   Form,
 } from 'react-router';
 import {useState} from 'react';
-import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
+import type {CurrencyCode, SearchSortKeys} from '@shopify/hydrogen/storefront-api-types';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import ProductCard from '~/components/ui/ProductCard';
@@ -113,10 +113,6 @@ const SORT_OPTIONS = [
   {key: 'RELEVANCE', label: 'Relevance', reverse: false},
   {key: 'PRICE', label: 'Price: Low to High', reverse: false},
   {key: 'PRICE', label: 'Price: High to Low', reverse: true},
-  {key: 'TITLE', label: 'Alphabetical: A-Z', reverse: false},
-  {key: 'TITLE', label: 'Alphabetical: Z-A', reverse: true},
-  {key: 'CREATED_AT', label: 'Newest First', reverse: true},
-  {key: 'BEST_SELLING', label: 'Best Selling', reverse: false},
 ];
 
 interface SearchProduct {
@@ -171,7 +167,8 @@ export const meta: MetaFunction<typeof loader> = ({data}) => [
 export async function loader({request, context}: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const query = url.searchParams.get('q')?.trim() ?? '';
-  const sortKey = url.searchParams.get('sort') ?? 'RELEVANCE';
+  const requestedSort = url.searchParams.get('sort');
+  const sortKey: SearchSortKeys = requestedSort === 'PRICE' ? 'PRICE' : 'RELEVANCE';
   const reverse = url.searchParams.get('reverse') === 'true';
   const after = url.searchParams.get('after') ?? undefined;
   const before = url.searchParams.get('before') ?? undefined;

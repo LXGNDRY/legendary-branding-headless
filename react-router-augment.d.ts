@@ -1,4 +1,4 @@
-/// <reference path="./node_modules/@shopify/hydrogen/dist/react-router.d.ts" />
+import '@shopify/hydrogen/react-router-types';
 
 // Module augmentation — must be a module (has export {}) so declare module is an augmentation
 // not a replacement. Enables v8_middleware types for React Router 7.16+.

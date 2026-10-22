@@ -366,9 +366,9 @@ Initial status for every recovery task is **Not started**; this document and its
 | Slice | Status | Branch/PR | Verification evidence | Owner blocker |
 |---|---|---|---|---|
 | R00 | Not started | — | — | See package/decision table |
-| R01 | Not started | — | — | See package/decision table |
-| R02 | Not started | — | — | See package/decision table |
-| R03 | Not started | — | — | See package/decision table |
+| R01 | In PR | claude/recovery-r01-r03-gates | Node 22.22/npm 10.9 `npm ci --legacy-peer-deps` clean; Node 24 failure not reproduced here (no Node 24); `.nvmrc` added | See package/decision table |
+| R02 | In PR | claude/recovery-r01-r03-gates | oxlint replaces ESLint (typescript-eslint cannot run on TS 7.0); hooks/correctness errors gate; a11y + React-compiler rules are warnings until R20/R21; probe with conditional hook fails | See package/decision table |
+| R03 | In PR | claude/recovery-r01-r03-gates | `.graphqlrc.ts` uses `getSchema`; generated files are now 78 KB/21 KB; surfaced search-sort and URL-scalar type errors, fixed | See package/decision table |
 | R04 | Not started | — | — | See package/decision table |
 | R05 | Not started | — | — | See package/decision table |
 | R06 | Not started | — | — | See package/decision table |

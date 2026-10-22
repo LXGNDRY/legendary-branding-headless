@@ -436,12 +436,10 @@ function AddressCard({
   address,
   isDefault,
   onEdit,
-  onDelete,
 }: {
   address: AddressNode;
   isDefault: boolean;
   onEdit: () => void;
-  onDelete: () => void;
 }) {
   const deleteFetcher = useFetcher();
 
@@ -490,7 +488,6 @@ export default function AddressesPage() {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const editingAddress = allAddresses.find((a) => a.id === editingId);
 
   return (
     <Container className="py-16">
@@ -556,7 +553,6 @@ export default function AddressesPage() {
                   address={addr}
                   isDefault={isDefault}
                   onEdit={() => setEditingId(addr.id)}
-                  onDelete={() => {}}
                 />
               );
             })}

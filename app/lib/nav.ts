@@ -96,7 +96,8 @@ export type CollectionNode = {
   id: string;
   title: string;
   handle: string;
-  image?: NavCollectionItem['image'];
+  // NOTE: the generated Storefront types model the URL scalar as unknown.
+  image?: (Omit<NonNullable<NavCollectionItem['image']>, 'url'> & {url: unknown}) | null;
 } | null;
 
 /**
@@ -122,7 +123,7 @@ export function resolveMenuCollections(
       title: item.title,
       handle: collection.handle,
       url: `/collections/${collection.handle}`,
-      image: collection.image ?? null,
+      image: collection.image ? {...collection.image, url: String(collection.image.url)} : null,
     });
   }
   return resolved;

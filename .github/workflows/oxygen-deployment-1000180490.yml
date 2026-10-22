@@ -72,9 +72,11 @@ jobs:
 
       - name: Reject generated GraphQL drift
         run: |
+          test -n "$(git ls-files storefrontapi.generated.d.ts customer-accountapi.generated.d.ts)"
           git diff --exit-code -- \
             storefrontapi.generated.d.ts \
-            customeraccountapi.generated.d.ts
+            customer-accountapi.generated.d.ts
+          test "$(wc -c < storefrontapi.generated.d.ts)" -gt 1000
 
       - name: Build
         run: npm run build

@@ -234,7 +234,6 @@ export default function CollectionPage() {
   );
 
   const productCount = collection.products.nodes.length;
-  const priceFilter = collection.products.filters.find((f) => f.type === 'PRICE_RANGE');
   const typeFilter = collection.products.filters.find(
     (f) => f.id === 'productType' || f.label.toLowerCase().includes('type'),
   );
