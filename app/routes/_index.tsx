@@ -142,6 +142,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     .filter((p): p is NonNullable<typeof p> => p !== null)
     .slice(0, 4);
 
+  // NOTE: covers only the (up to four) products shown, weighted by review count; the section copy says so.
   const aggregateCount = ratedProducts.reduce((sum, p) => sum + p.reviewCount, 0);
   const aggregateRating =
     aggregateCount > 0

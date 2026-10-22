@@ -43,7 +43,7 @@ import {fetchAllPages} from '~/lib/pagination';
 import {handleCartMutation} from '~/lib/cart-mutation';
 import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
-import {parseJudgemeBadge, fetchJudgemeProductReviews, summarizeReviews} from '~/lib/judgeme';
+import {parseJudgemeBadge, fetchJudgemeProductReviews, resolveProductRating} from '~/lib/judgeme';
 import {withBudget} from '~/lib/trust';
 import ProductReviewList from '~/components/sections/ProductReviewList';
 import TrustSignals, {useStoreTrust} from '~/components/ui/TrustSignals';
@@ -308,9 +308,13 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
     productHandle: handle,
   });
 
-  // NOTE: a short wait so the stars, JSON-LD and review list come from the same reviews. The Judge.me badge metafield can be missing or stale; past the budget the page streams the list and falls back to the badge.
-  const loadedReviews = await withBudget(reviews, REVIEW_SUMMARY_BUDGET_MS);
-  const reviewSummary = loadedReviews ? summarizeReviews(loadedReviews) : null;
+  // NOTE: the provider's badge is the aggregate whenever it is valid, so the page never waits on the review list then.
+  // Only without a badge is there a short wait, so a rating derived from the full list can reach the stars and JSON-LD.
+  const badge = parseJudgemeBadge(
+    (product as unknown as ProductFull).metafields?.find((m) => m?.key === 'badge')?.value,
+  );
+  const loadedReviews = badge ? null : await withBudget(reviews, REVIEW_SUMMARY_BUDGET_MS);
+  const reviewSummary = resolveProductRating(badge, loadedReviews);
 
   return {
     product: product as unknown as ProductFull,
@@ -1105,8 +1109,8 @@ export default function ProductPage() {
               <Await resolve={reviews}>
                 {(resolvedReviews) => {
                   // NOTE: derived here too, so reviews that resolve after the loader's wait still render when the badge is missing.
-                  const listRating = judgemeRating ?? summarizeReviews(resolvedReviews);
-                  return resolvedReviews.length > 0 && listRating ? (
+                  const listRating = judgemeRating ?? resolveProductRating(null, resolvedReviews);
+                  return resolvedReviews.reviews.length > 0 ? (
                     <section className="border-t border-[var(--color-border-muted)]">
                       <div className="h-container py-16">
                         <p className="h-eyebrow mb-3">Reviews</p>
@@ -1119,9 +1123,10 @@ export default function ProductPage() {
                           // its "show more" pagination state instead of carrying a
                           // previous product's expanded count into the next one.
                           key={product.id}
-                          reviews={resolvedReviews}
-                          aggregateRating={listRating.rating}
-                          aggregateCount={listRating.count}
+                          reviews={resolvedReviews.reviews}
+                          aggregateRating={listRating?.rating}
+                          aggregateCount={listRating?.count}
+                          truncated={resolvedReviews.truncated}
                         />
                       </div>
                     </section>
