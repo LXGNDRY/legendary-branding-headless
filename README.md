@@ -150,3 +150,7 @@ Output: `storefrontapi.generated.d.ts` (gitignored, generated at build time).
 Branch naming: `claude/[feature-description]` or `feat/[feature-description]`  
 Commit format: `feat(m2): add collection PLP with Storefront API`  
 All PRs must pass typecheck, lint, and build checks.
+
+## Recovery execution plan
+
+For the current prioritized codebase audit and Claude execution instructions, start with [docs/HEADLESS_RECOVERY_PLAN.md](docs/HEADLESS_RECOVERY_PLAN.md). It includes the full findings, every-file inventory, verification limits, acceptance criteria and rollback requirements. [Documentation index](docs/README.md).

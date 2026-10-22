@@ -1,5 +1,7 @@
 # TPS Remediation Plan
 
+> **Historical execution plan — superseded 2026-10-22.** Use [Headless Storefront Recovery Plan](HEADLESS_RECOVERY_PLAN.md) and its pinned findings/evidence register. Completed PR history below is retained; this 11-gap list is not the full current backlog.
+
 Internal execution plan to close the 11 gaps found in the Toyota Production System (TPS) review of this repo.
 Owner: `lb@legendary-branding.com`. Status tracker: the table in [Tracking](#tracking).
 
