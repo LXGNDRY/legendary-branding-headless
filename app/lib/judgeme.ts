@@ -17,6 +17,19 @@ const JUDGEME_WIDGET_BASE = 'https://api.judge.me/reviews/reviews_for_widget';
 const JUDGEME_WIDGET_PAGE_SIZE = 30;
 
 /**
+ * Cloudflare edge-cache options for a Judge.me request. `cacheTtl` alone also caches error responses, so an
+ * outage would stay cached for the whole hour; keyed by status, only successes are kept.
+ * NOTE: whether the edge actually serves these from cache on Oxygen has not been measured (needs a deployed preview).
+ */
+function edgeCache(signalMs = 5000): RequestInit {
+  const init: RequestInit & {cf?: Record<string, unknown>} = {
+    signal: AbortSignal.timeout(signalMs),
+    cf: {cacheEverything: true, cacheTtlByStatus: {'200-299': 3600, '300-599': -1}},
+  };
+  return init;
+}
+
+/**
  * Judge.me's badge metafield embeds the product's real synced rating as
  * HTML attributes (e.g. data-average-rating='4.8' data-number-of-reviews='23').
  * Judge.me emits these with single quotes, so both quote styles are accepted.
@@ -27,19 +40,47 @@ export function parseJudgemeBadge(
   html: string | null | undefined,
 ): {rating: number; count: number} | null {
   if (!html) return null;
-  const rating = html.match(/data-average-rating=["']([\d.]+)["']/)?.[1];
+  const rating = html.match(/data-average-rating=["'](\d+(?:\.\d+)?)["']/)?.[1];
   const count = html.match(/data-number-of-reviews=["'](\d+)["']/)?.[1];
   if (!rating || !count) return null;
+  const parsedRating = parseFloat(rating);
   const parsedCount = parseInt(count, 10);
-  if (parsedCount <= 0) return null;
-  return {rating: parseFloat(rating), count: parsedCount};
+  // NOTE: a rating outside 0-5 or a zero/absurd count is malformed provider data; omit it rather than show it.
+  if (!isValidRating(parsedRating) || parsedCount <= 0 || parsedCount > MAX_REVIEW_COUNT) return null;
+  return {rating: parsedRating, count: parsedCount};
 }
 
-/** Average rating and count of a fetched review list, so the stars can be drawn from the same reviews the page lists. */
+const MAX_REVIEW_COUNT = 10_000_000;
+
+/** Judge.me ratings are 1-5 stars; anything else (0, negative, above 5, NaN) is not a rating. */
+export function isValidRating(rating: unknown): rating is number {
+  return typeof rating === 'number' && Number.isFinite(rating) && rating > 0 && rating <= 5;
+}
+
+/**
+ * Average rating and count of a fetched review list. This describes only the reviews in the list; the
+ * provider's own aggregate (the badge) covers every review, including star-only ones, and wins when present.
+ */
 export function summarizeReviews(reviews: readonly {rating: number}[]): {rating: number; count: number} | null {
-  if (reviews.length === 0) return null;
-  const total = reviews.reduce((sum, review) => sum + review.rating, 0);
-  return {rating: Number((total / reviews.length).toFixed(2)), count: reviews.length};
+  const valid = reviews.filter((review) => isValidRating(review.rating));
+  if (valid.length === 0) return null;
+  const total = valid.reduce((sum, review) => sum + review.rating, 0);
+  return {rating: Number((total / valid.length).toFixed(2)), count: valid.length};
+}
+
+/**
+ * The rating shown beside a product: the provider's aggregate (badge) whenever it is valid, because it covers
+ * every review including star-only ones. Only without it is one derived from the fetched list, and only when
+ * that list is complete: a truncated list would understate the count. Because the badge always wins, a fast
+ * and a slow render of the same data show the same numbers.
+ */
+export function resolveProductRating(
+  badge: {rating: number; count: number} | null,
+  list: JudgemeReviewList | null | undefined,
+): {rating: number; count: number} | null {
+  if (badge) return badge;
+  if (!list || list.truncated) return null;
+  return summarizeReviews(list.reviews);
 }
 
 export interface JudgemeQuote {
@@ -47,7 +88,7 @@ export interface JudgemeQuote {
   rating: number;
   title?: string;
   body: string;
-  /** First name + last-initial only -- never the customer's full name. */
+  /** Masked per toDisplayName: never invented, never a full name. */
   reviewerName: string;
   productHandle?: string;
   productTitle?: string;
@@ -80,45 +121,45 @@ interface JudgemeApiResponse {
   reviews?: JudgemeApiReview[];
 }
 
-/**
- * A pool of plausible first-name + last-initial display names, spanning
- * both domestic (US) and international naming conventions, used only as a
- * placeholder attribution when a real review has no usable name to mask
- * (see toDisplayName below) -- never attached to review text itself, which
- * always comes from a real Judge.me review.
- */
-const FALLBACK_REVIEWER_NAMES = [
-  'Jordan A.', 'Emma R.', 'Wei L.', 'Sofia M.', 'Liam K.', 'Priya N.',
-  'Diego H.', 'Aiko T.', 'Marcus B.', 'Fatima Z.', 'Noah C.', 'Yuki S.',
-  'Olivia P.', 'Kwame O.', 'Isabella G.', 'Hassan A.', 'Chloe W.', 'Mateo V.',
-  'Nadia R.', 'Ethan D.',
-] as const;
+/** Shown when a review has no usable name. Deliberately generic: it never stands in for a different person. */
+export const ANONYMOUS_REVIEWER = 'Anonymous';
 
-/**
- * Deterministically picks a fallback name for a given review ID -- stable
- * across requests/cache refills rather than re-randomizing on every fetch.
- */
-function fallbackReviewerName(reviewId: string | number): string {
-  const seed =
-    typeof reviewId === 'number'
-      ? reviewId
-      : [...reviewId].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 7);
-  return FALLBACK_REVIEWER_NAMES[seed % FALLBACK_REVIEWER_NAMES.length];
+const MAX_NAME_TOKEN_LENGTH = 30;
+// A name written without spaces in these scripts is usually the whole name (surname + given name).
+const UNSPACED_SCRIPTS = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+
+/** First user-perceived character (an emoji or accented letter stays whole), or '' for an empty string. */
+function firstGrapheme(text: string): string {
+  const Segmenter = (Intl as {Segmenter?: typeof Intl.Segmenter}).Segmenter;
+  if (Segmenter) {
+    for (const {segment} of new Segmenter(undefined, {granularity: 'grapheme'}).segment(text)) return segment;
+    return '';
+  }
+  return Array.from(text)[0] ?? '';
 }
 
 /**
- * "Jordan Alvarez" -> "Jordan A." -- never expose a customer's full name.
- * A single-token name (common for CJK names entered with no whitespace,
- * or just a first name) has no separate surname to mask, so it falls back
- * to a deterministic placeholder name rather than ever rendering the name
- * unmasked or showing a generic "Customer" for every such review.
+ * The attribution shown with a review. Policy (docs/REVIEWS.md):
+ * - Never invent an identity. No name, or something that is not a name (an email address, a link, only
+ *   punctuation), is shown as "Anonymous".
+ * - Two or more words: first word plus the initial of the last ("Jordan Alvarez" -> "Jordan A.").
+ * - One word in Chinese, Japanese or Korean script (usually the full name): its first character only
+ *   ("山田太郎" -> "山."), so a full name is never exposed.
+ * - One word otherwise: shown as written ("Madonna"), since it is already only a first name or a handle.
  */
-function toDisplayName(fullName: string | null | undefined, reviewId: string | number): string {
-  const trimmed = (fullName ?? '').trim();
-  if (!trimmed) return fallbackReviewerName(reviewId);
-  const parts = trimmed.split(/\s+/);
-  if (parts.length === 1) return fallbackReviewerName(reviewId);
-  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+export function toDisplayName(fullName: string | null | undefined): string {
+  const cleaned = (fullName ?? '').replace(/\p{Cc}/gu, ' ').trim();
+  if (!cleaned || /[@/\\]|https?:|www\./i.test(cleaned) || !/[\p{L}\p{N}]/u.test(cleaned)) return ANONYMOUS_REVIEWER;
+
+  const parts = cleaned.split(/\s+/).map((part) => part.slice(0, MAX_NAME_TOKEN_LENGTH * 4));
+  if (parts.length === 1) {
+    const [only] = parts;
+    if (UNSPACED_SCRIPTS.test(only)) return `${firstGrapheme(only)}.`;
+    return Array.from(only).slice(0, MAX_NAME_TOKEN_LENGTH).join('');
+  }
+  const first = Array.from(parts[0]).slice(0, MAX_NAME_TOKEN_LENGTH).join('');
+  const initial = firstGrapheme(parts[parts.length - 1]);
+  return initial && /[\p{L}\p{N}]/u.test(initial) ? `${first} ${initial}.` : first;
 }
 
 interface FetchJudgemeReviewsRawOptions {
@@ -153,12 +194,8 @@ async function fetchJudgemeReviewsRaw({
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
-      signal: AbortSignal.timeout(5000),
-      // Cloudflare Workers edge cache -- avoid hitting Judge.me on every
-      // request; an hour-stale review list is a non-issue for this content.
-      cf: {cacheTtl: 3600, cacheEverything: true},
-    } as RequestInit);
+    // Edge cache: an hour-stale review list is a non-issue; failures are never cached.
+    response = await fetch(url.toString(), edgeCache());
   } catch (error) {
     console.error('[judgeme] request failed', error);
     return [];
@@ -171,7 +208,8 @@ async function fetchJudgemeReviewsRaw({
 
   try {
     const data = (await response.json()) as JudgemeApiResponse;
-    return (data.reviews ?? []).filter((r) => !r.hidden && typeof r.rating === 'number');
+    if (!Array.isArray(data.reviews)) return [];
+    return data.reviews.filter((r) => r && !r.hidden && isValidRating(r.rating));
   } catch (error) {
     console.error('[judgeme] failed to parse response', error);
     return [];
@@ -259,7 +297,7 @@ export async function fetchJudgemeQuotes({
       rating: review.rating,
       title: review.title?.trim() || undefined,
       body,
-      reviewerName: toDisplayName(review.reviewer?.name, review.id),
+      reviewerName: toDisplayName(review.reviewer?.name),
       productHandle: review.product_handle ?? undefined,
       productTitle: review.product_title?.trim() || undefined,
     });
@@ -294,10 +332,7 @@ async function resolveJudgemeProductId({
   url.searchParams.set('external_id', externalId);
 
   try {
-    const response = await fetch(url.toString(), {
-      signal: AbortSignal.timeout(5000),
-      cf: {cacheTtl: 3600, cacheEverything: true},
-    } as RequestInit);
+    const response = await fetch(url.toString(), edgeCache());
     if (!response.ok) return null;
     const data = (await response.json()) as JudgemeProductLookupResponse;
     return typeof data.product?.id === 'number' ? data.product.id : null;
@@ -351,10 +386,7 @@ async function fetchJudgemeWidgetPage(
   url.searchParams.set('per_page', String(JUDGEME_WIDGET_PAGE_SIZE));
   url.searchParams.set('page', String(page));
   try {
-    const response = await fetch(url.toString(), {
-      signal: AbortSignal.timeout(5000),
-      cf: {cacheTtl: 3600, cacheEverything: true},
-    } as RequestInit);
+    const response = await fetch(url.toString(), edgeCache());
     if (!response.ok) {
       console.error(`[judgeme] widget API responded with ${response.status}`);
       return null;
@@ -366,28 +398,39 @@ async function fetchJudgemeWidgetPage(
   }
 }
 
-/** Every published review for a product from Judge.me's public widget endpoint; empty on any failure. */
-async function fetchJudgemeWidgetReviews(shopDomain: string, productId: string, maxPages: number): Promise<JudgemeReview[]> {
+/** A product's reviews plus whether the list is known to be incomplete (so callers can say so). */
+export interface JudgemeReviewList {
+  reviews: JudgemeReview[];
+  /** True when pages were skipped (page cap) or failed: the list is a subset of what Judge.me holds. */
+  truncated: boolean;
+}
+
+const EMPTY_LIST: JudgemeReviewList = {reviews: [], truncated: false};
+
+/** Published, written reviews for a product from Judge.me's public widget endpoint; empty on first-page failure. */
+async function fetchJudgemeWidgetReviews(shopDomain: string, productId: string, maxPages: number): Promise<JudgemeReviewList> {
   const first = await fetchJudgemeWidgetPage(shopDomain, productId, 1);
-  if (!first) return [];
-  const totalPages = Math.min(first.pagination?.total_pages ?? 1, maxPages);
+  if (!first || !Array.isArray(first.reviews)) return EMPTY_LIST;
+  const reportedPages = Number.isInteger(first.pagination?.total_pages) ? Math.max(first.pagination!.total_pages!, 1) : 1;
+  const totalPages = Math.min(reportedPages, maxPages);
   const rest = await Promise.all(
     Array.from({length: Math.max(totalPages - 1, 0)}, (_, i) => fetchJudgemeWidgetPage(shopDomain, productId, i + 2)),
   );
-  // NOTE: a missing page means a partial list, so treat it as a failed fetch and let the caller fall back.
-  if (rest.some((page) => page === null)) return [];
-  const raw = [first, ...rest].flatMap((page) => page?.reviews ?? []);
-  return [...new Map(raw.map((r) => [r.uuid, r])).values()]
+  // NOTE: a page that failed or was cut by the cap leaves a partial list; it is returned and marked truncated, never passed off as complete.
+  const truncated = reportedPages > maxPages || rest.some((page) => page === null || !Array.isArray(page.reviews));
+  const raw = [first, ...rest].flatMap((page) => (page && Array.isArray(page.reviews) ? page.reviews : []));
+  const reviews = [...new Map(raw.filter((r) => r && r.uuid).map((r) => [r.uuid, r])).values()]
     .map((r) => ({review: r, body: htmlToText(r.body_html ?? '')}))
-    .filter(({review, body}) => body.length > 0 && typeof review.rating === 'number')
+    .filter(({review, body}) => body.length > 0 && isValidRating(review.rating))
     .map(({review, body}) => ({
       id: review.uuid,
       rating: review.rating,
       title: review.title?.trim() || undefined,
       body,
-      reviewerName: toDisplayName(review.reviewer_name, review.uuid),
+      reviewerName: toDisplayName(review.reviewer_name),
       createdAt: review.created_at ?? undefined,
     }));
+  return {reviews, truncated};
 }
 
 interface FetchJudgemeProductReviewsOptions {
@@ -438,10 +481,10 @@ export async function fetchJudgemeProductReviews({
   productHandle,
   perPage = 100,
   maxPages = 5,
-}: FetchJudgemeProductReviewsOptions): Promise<JudgemeReview[]> {
-  const widgetReviews = await fetchJudgemeWidgetReviews(shopDomain, productId, maxPages);
-  if (widgetReviews.length > 0) return widgetReviews;
-  if (!apiToken) return [];
+}: FetchJudgemeProductReviewsOptions): Promise<JudgemeReviewList> {
+  const widget = await fetchJudgemeWidgetReviews(shopDomain, productId, maxPages);
+  if (widget.reviews.length > 0) return widget;
+  if (!apiToken) return EMPTY_LIST;
 
   // NOTE: deliberately unfiltered -- this list must match the Judge.me
   // star rating and review count shown site-wide, which include every
@@ -454,42 +497,30 @@ export async function fetchJudgemeProductReviews({
         rating: r.rating,
         title: r.title?.trim() || undefined,
         body: r.body!.trim(),
-        reviewerName: toDisplayName(r.reviewer?.name, r.id),
+        reviewerName: toDisplayName(r.reviewer?.name),
         createdAt: r.created_at ?? undefined,
       }));
+  // The private API does not report a page total, so a last fetched page that is full means there may be more.
+  const mayHaveMore = (pages: JudgemeApiReview[][]) => (pages.at(-1)?.length ?? 0) >= perPage;
 
   const internalId = await resolveJudgemeProductId({apiToken, shopDomain, externalId: productId});
   if (internalId) {
-    // Fetch subsequent pages too -- a product with more reviews than a
-    // single `perPage` would otherwise silently lose everything past the
-    // first page, even though the PDP presents this as the full list
-    // alongside the real aggregate count (Codex-caught on this PR).
     const idPages = await Promise.all(
       Array.from({length: maxPages}, (_, i) =>
-        fetchJudgemeReviewsRaw({
-          apiToken,
-          shopDomain,
-          perPage,
-          page: i + 1,
-          productId: String(internalId),
-        }),
+        fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage, page: i + 1, productId: String(internalId)}),
       ),
     );
     const raw = [...new Map(idPages.flat().map((r) => [r.id, r])).values()];
-    // Defensive: a resolved-but-wrong id would fall back to unfiltered
-    // results the same way a raw Shopify id does, so still check the
-    // handle before trusting the response.
+    // Defensive: a resolved-but-wrong id would fall back to unfiltered results the same way a raw Shopify id
+    // does, so still check the handle before trusting the response.
     const matched = raw.filter((r) => r.product_handle === productHandle);
-    if (matched.length > 0) return toReviews(matched);
+    if (matched.length > 0) return {reviews: toReviews(matched), truncated: mayHaveMore(idPages)};
   }
 
   const pages = await Promise.all(
-    Array.from({length: maxPages}, (_, i) =>
-      fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage, page: i + 1}),
-    ),
+    Array.from({length: maxPages}, (_, i) => fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage, page: i + 1})),
   );
-  // Dedup by id -- pagination could theoretically overlap if the shop's
-  // review set shifts between the parallel page requests.
+  // Dedup by id -- pagination could theoretically overlap if the shop's review set shifts between the parallel page requests.
   const deduped = [...new Map(pages.flat().map((r) => [r.id, r])).values()];
-  return toReviews(deduped.filter((r) => r.product_handle === productHandle));
+  return {reviews: toReviews(deduped.filter((r) => r.product_handle === productHandle)), truncated: mayHaveMore(pages)};
 }

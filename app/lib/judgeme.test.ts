@@ -1,5 +1,14 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {parseJudgemeBadge, fetchJudgemeQuotes, fetchJudgemeProductReviews, isTemplatedReview, summarizeReviews} from './judgeme';
+import {
+  ANONYMOUS_REVIEWER,
+  fetchJudgemeProductReviews,
+  fetchJudgemeQuotes,
+  isTemplatedReview,
+  parseJudgemeBadge,
+  resolveProductRating,
+  summarizeReviews,
+  toDisplayName,
+} from './judgeme';
 
 describe('parseJudgemeBadge', () => {
   it('returns null for null/undefined/empty input', () => {
@@ -24,6 +33,16 @@ describe('parseJudgemeBadge', () => {
 
   it('returns null when count attribute is missing', () => {
     expect(parseJudgemeBadge('<span data-average-rating="4.0"></span>')).toBeNull();
+  });
+
+  it('rejects out-of-range or malformed ratings and counts instead of showing them', () => {
+    const badge = (rating: string, count: string) => `<span data-average-rating="${rating}" data-number-of-reviews="${count}"></span>`;
+    expect(parseJudgemeBadge(badge('5.7', '10'))).toBeNull();
+    expect(parseJudgemeBadge(badge('0', '10'))).toBeNull();
+    expect(parseJudgemeBadge(badge('4.8.2', '10'))).toBeNull();
+    expect(parseJudgemeBadge(badge('-3', '10'))).toBeNull();
+    expect(parseJudgemeBadge(badge('4.5', '99999999999'))).toBeNull();
+    expect(parseJudgemeBadge(badge('5', '1'))).toEqual({rating: 5, count: 1});
   });
 
   it('returns null for a zero review count (no real reviews to show)', () => {
@@ -71,24 +90,46 @@ describe('fetchJudgemeQuotes', () => {
     expect(quotes[0].reviewerName).toBe('Jordan A.');
   });
 
-  it('falls back to a deterministic placeholder name for a single-token name', async () => {
+  it('shows a single-word name as written rather than swapping in a different person', async () => {
     const body = JSON.stringify({
       reviews: [
         {id: 7, rating: 5, body: 'Picked this up after seeing it online and it genuinely exceeded what I expected from the fit.', reviewer: {name: 'Madonna'}, hidden: false},
       ],
     });
     global.fetch = vi.fn().mockResolvedValue(new Response(body, {status: 200}));
-
     const quotes = await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com'});
+    expect(quotes[0].reviewerName).toBe('Madonna');
+  });
 
-    expect(quotes).toHaveLength(1);
-    expect(quotes[0].reviewerName).not.toBe('Madonna');
-    expect(quotes[0].reviewerName).toMatch(/^[A-Za-z]+ [A-Z]\.$/);
-
-    // Same review id always resolves to the same fallback name.
+  it('drops reviews whose rating is out of range or not a number', async () => {
+    const long = 'Long enough review text that would otherwise qualify for the homepage selection of quotes.';
+    const body = JSON.stringify({
+      reviews: [
+        {id: 1, rating: 9, body: long + ' one', product_handle: 'a'},
+        {id: 2, rating: 'five', body: long + ' two', product_handle: 'b'},
+        {id: 3, rating: 5, body: long + ' three', product_handle: 'c', reviewer: {name: 'Real Person'}},
+      ],
+    });
     global.fetch = vi.fn().mockResolvedValue(new Response(body, {status: 200}));
-    const quotesAgain = await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com'});
-    expect(quotesAgain[0].reviewerName).toBe(quotes[0].reviewerName);
+    const quotes = await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com'});
+    expect(quotes.map((q) => q.id)).toEqual([3]);
+  });
+
+  it('degrades to an empty list when the response has the wrong shape', async () => {
+    global.fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({reviews: 'nope'}), {status: 200}));
+    expect(await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com'})).toEqual([]);
+  });
+
+  it('never lets a failed response sit in the edge cache for the success TTL', async () => {
+    const init: RequestInit[] = [];
+    global.fetch = vi.fn(async (_url: unknown, options?: RequestInit) => {
+      init.push(options ?? {});
+      return new Response('', {status: 500});
+    }) as typeof fetch;
+    await fetchJudgemeQuotes({apiToken: 'x', shopDomain: 'test.myshopify.com'});
+    const cf = (init[0] as {cf?: {cacheTtlByStatus?: Record<string, number>; cacheTtl?: number}}).cf;
+    expect(cf?.cacheTtl).toBeUndefined();
+    expect(cf?.cacheTtlByStatus).toEqual({'200-299': 3600, '300-599': -1});
   });
 
   it('drops templated text reused across reviews, spam, and repeat products', async () => {
@@ -158,7 +199,8 @@ describe('templated reviews', () => {
       productHandle: 'tee',
     });
 
-    expect(result.map((r) => r.id)).toEqual([1, 2, 3, 4]);
+    expect(result.reviews.map((r) => r.id)).toEqual([1, 2, 3, 4]);
+    expect(result.truncated).toBe(false);
   });
 
   const widgetReview = (uuid: string, extra: Record<string, unknown> = {}) => ({
@@ -192,10 +234,11 @@ describe('templated reviews', () => {
       productHandle: 'wide-leg',
     });
 
-    expect(result).toHaveLength(6);
+    expect(result.reviews).toHaveLength(6);
+    expect(result.truncated).toBe(false);
     expect(urls.every((u) => u.includes('reviews_for_widget') && u.includes('product_id=8507670364313'))).toBe(true);
     expect(urls.some((u) => u.includes('api_token'))).toBe(false);
-    expect(result[0]).toMatchObject({
+    expect(result.reviews[0]).toMatchObject({
       rating: 5,
       title: 'Great',
       body: 'Heavy fabric & a great fit.',
@@ -223,38 +266,135 @@ describe('templated reviews', () => {
       productId: '1',
       productHandle: 'tee',
     });
-    expect(result.map((r) => r.id)).toEqual([9]);
+    expect(result.reviews.map((r) => r.id)).toEqual([9]);
   });
 
   it('returns an empty list when the widget endpoint fails and no token is set', async () => {
     global.fetch = vi.fn().mockResolvedValue(new Response('', {status: 500}));
     const result = await fetchJudgemeProductReviews({shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee'});
-    expect(result).toEqual([]);
+    expect(result).toEqual({reviews: [], truncated: false});
   });
 
-  it('falls back instead of returning a partial list when a later widget page fails', async () => {
+  it('returns what it has, marked truncated, when a later widget page fails', async () => {
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
-      if (url.includes('reviews_for_widget')) {
-        const page = Number(new URL(url).searchParams.get('page'));
-        if (page === 2) return new Response('', {status: 500});
-        return new Response(JSON.stringify({reviews: [widgetReview(`w${page}`)], pagination: {total_pages: 2}}), {status: 200});
-      }
-      if (url.includes('/products/')) return new Response(JSON.stringify({product: {id: 42}}), {status: 200});
-      const page = new URL(url).searchParams.get('page');
-      return new Response(
-        JSON.stringify({reviews: page === '1' ? [{id: 9, rating: 5, body: 'Private path review.', product_handle: 'tee'}] : []}),
-        {status: 200},
-      );
+      const page = Number(new URL(url).searchParams.get('page'));
+      if (page === 2) return new Response('', {status: 500});
+      return new Response(JSON.stringify({reviews: [widgetReview(`w${page}`)], pagination: {total_pages: 3}}), {status: 200});
     }) as typeof fetch;
 
-    const result = await fetchJudgemeProductReviews({
-      apiToken: 'x',
-      shopDomain: 'test.myshopify.com',
-      productId: '1',
-      productHandle: 'tee',
-    });
-    expect(result.map((r) => r.id)).toEqual([9]);
+    const result = await fetchJudgemeProductReviews({shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee'});
+    expect(result.reviews.map((r) => r.id)).toEqual(['w1', 'w3']);
+    expect(result.truncated).toBe(true);
+  });
+
+  it('marks the list truncated when the page cap cuts it, and stops at the cap', async () => {
+    const pagesAsked: number[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const page = Number(new URL(String(input)).searchParams.get('page'));
+      pagesAsked.push(page);
+      return new Response(JSON.stringify({reviews: [widgetReview(`p${page}`)], pagination: {total_pages: 40}}), {status: 200});
+    }) as typeof fetch;
+    const result = await fetchJudgemeProductReviews({shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee', maxPages: 3});
+    expect(pagesAsked.sort()).toEqual([1, 2, 3]);
+    expect(result.reviews).toHaveLength(3);
+    expect(result.truncated).toBe(true);
+  });
+
+  it('drops out-of-range ratings and empty bodies, tolerates a missing reviews array, and dedupes', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          reviews: [
+            widgetReview('ok'),
+            widgetReview('ok'),
+            widgetReview('high', {rating: 7}),
+            widgetReview('zero', {rating: 0}),
+            widgetReview('text', {rating: 'x'}),
+            widgetReview('empty', {body_html: ''}),
+          ],
+          pagination: {total_pages: 1},
+        }),
+        {status: 200},
+      ),
+    ) as typeof fetch;
+    const result = await fetchJudgemeProductReviews({shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee'});
+    expect(result.reviews.map((r) => r.id)).toEqual(['ok']);
+
+    global.fetch = vi.fn(async () => new Response(JSON.stringify({pagination: {total_pages: 1}}), {status: 200})) as typeof fetch;
+    expect(await fetchJudgemeProductReviews({shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee'})).toEqual({reviews: [], truncated: false});
+  });
+
+  it('never invents or swaps a reviewer name for a missing one', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({reviews: [widgetReview('a', {reviewer_name: null}), widgetReview('b', {reviewer_name: ''})], pagination: {total_pages: 1}}), {status: 200}),
+    ) as typeof fetch;
+    const result = await fetchJudgemeProductReviews({shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee'});
+    expect(result.reviews.map((r) => r.reviewerName)).toEqual([ANONYMOUS_REVIEWER, ANONYMOUS_REVIEWER]);
+  });
+});
+
+describe('toDisplayName', () => {
+  it('masks a multi-word name to first name plus last initial', () => {
+    expect(toDisplayName('Jordan Alvarez')).toBe('Jordan A.');
+    expect(toDisplayName('  Mary  Jane   Watson ')).toBe('Mary W.');
+    expect(toDisplayName('José Álvarez')).toBe('José Á.');
+    expect(toDisplayName('Zoë Müller-Smith')).toBe('Zoë M.');
+  });
+
+  it('keeps an initial that is more than one UTF-16 unit whole', () => {
+    expect(toDisplayName('Ana 𝒜lvarez')).toBe('Ana 𝒜.');
+    expect(toDisplayName('Ana e\u0301clair')).toBe('Ana e\u0301.');
+  });
+
+  it('shows one word as written, bounded, in alphabetic scripts', () => {
+    expect(toDisplayName('Madonna')).toBe('Madonna');
+    expect(toDisplayName('Σωκράτης')).toBe('Σωκράτης');
+    expect(toDisplayName('A'.repeat(100))).toHaveLength(30);
+  });
+
+  it('never exposes an unspaced CJK full name, only its first character', () => {
+    expect(toDisplayName('山田太郎')).toBe('山.');
+    expect(toDisplayName('김민수')).toBe('김.');
+    expect(toDisplayName('さくら')).toBe('さ.');
+  });
+
+  it('masks spaced CJK and right-to-left names the same way', () => {
+    expect(toDisplayName('山田 太郎')).toBe('山田 太.');
+    expect(toDisplayName('محمد الأحمد')).toBe('محمد ا.');
+  });
+
+  it('uses the neutral label, never a made-up person, for missing or non-name input', () => {
+    for (const input of [null, undefined, '', '   ', '\u0000\u0007', '...', '---', 'jane@example.com', 'https://x.test/me', 'www.shop.com', 'a/b']) {
+      expect(toDisplayName(input)).toBe(ANONYMOUS_REVIEWER);
+    }
+  });
+
+  it('is stable: the same input always gives the same output and never a known placeholder person', () => {
+    expect(toDisplayName('Madonna')).toBe(toDisplayName('Madonna'));
+    for (const placeholder of ['Jordan A.', 'Emma R.', 'Wei L.', 'Aiko T.']) {
+      expect(toDisplayName(null)).not.toBe(placeholder);
+    }
+  });
+});
+
+describe('resolveProductRating', () => {
+  const badge = {rating: 4.6, count: 120};
+  const list = (reviews: {rating: number}[], truncated = false) => ({reviews: reviews as never, truncated});
+
+  it('always prefers the provider aggregate, so fast and slow renders agree', () => {
+    expect(resolveProductRating(badge, null)).toEqual(badge);
+    expect(resolveProductRating(badge, list([{rating: 1}]))).toEqual(badge);
+  });
+
+  it('derives from a complete list only when there is no badge', () => {
+    expect(resolveProductRating(null, list([{rating: 5}, {rating: 4}]))).toEqual({rating: 4.5, count: 2});
+  });
+
+  it('never derives an aggregate from a truncated or empty list', () => {
+    expect(resolveProductRating(null, list([{rating: 5}], true))).toBeNull();
+    expect(resolveProductRating(null, list([]))).toBeNull();
+    expect(resolveProductRating(null, null)).toBeNull();
   });
 });
 
@@ -265,5 +405,10 @@ describe('summarizeReviews', () => {
 
   it('returns null when there are no reviews', () => {
     expect(summarizeReviews([])).toBeNull();
+  });
+
+  it('ignores out-of-range and non-numeric ratings', () => {
+    expect(summarizeReviews([{rating: 5}, {rating: 99}, {rating: 0}, {rating: Number.NaN}, {rating: 3}])).toEqual({rating: 4, count: 2});
+    expect(summarizeReviews([{rating: 9}])).toBeNull();
   });
 });
