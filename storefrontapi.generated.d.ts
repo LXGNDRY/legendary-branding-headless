@@ -2064,6 +2064,62 @@ export type PredictiveSearchQuery = {
   } | null;
 };
 
+export type WaitlistVariantQueryVariables = Exact<{
+  id: string | number;
+  country?: StorefrontAPI.CountryCode | null | undefined;
+  language?: StorefrontAPI.LanguageCode | null | undefined;
+}>;
+
+export type WaitlistVariantQuery = {
+  node:
+    | {
+        __typename:
+          | 'AppliedGiftCard'
+          | 'Article'
+          | 'Blog'
+          | 'Cart'
+          | 'CartLine'
+          | 'Collection'
+          | 'Comment'
+          | 'Company'
+          | 'CompanyContact'
+          | 'CompanyLocation'
+          | 'ComponentizableCartLine'
+          | 'ExternalVideo'
+          | 'GenericFile'
+          | 'Location'
+          | 'MailingAddress'
+          | 'Market'
+          | 'MediaImage'
+          | 'MediaPresentation'
+          | 'Menu'
+          | 'MenuItem';
+      }
+    | {
+        __typename:
+          | 'Metafield'
+          | 'Metaobject'
+          | 'Model3d'
+          | 'Order'
+          | 'Page'
+          | 'Product'
+          | 'ProductOption'
+          | 'ProductOptionValue'
+          | 'Shop'
+          | 'ShopPayInstallmentsFinancingPlan'
+          | 'ShopPayInstallmentsFinancingPlanTerm'
+          | 'ShopPayInstallmentsProductVariantPricing'
+          | 'ShopPolicy'
+          | 'TaxonomyCategory'
+          | 'UrlRedirect'
+          | 'Video';
+      }
+    | ({id: string; availableForSale: boolean; product: {id: string}} & {
+        __typename: 'ProductVariant';
+      })
+    | null;
+};
+
 export type CollectionQueryVariables = Exact<{
   handle: string;
   country?: StorefrontAPI.CountryCode | null | undefined;
@@ -2569,6 +2625,10 @@ interface GeneratedQueryTypes {
   '#graphql\n  query PredictiveSearch($query: String!, $limit: Int = 6, $country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    predictiveSearch(query: $query, limit: $limit, unavailableProducts: HIDE) {\n      products {\n        id\n        title\n        handle\n        vendor\n        featuredImage { url altText width height }\n        priceRange {\n          minVariantPrice {\n            amount\n            currencyCode\n          }\n        }\n        reviewBadge: metafield(namespace: "judgeme", key: "badge") {\n          value\n        }\n      }\n      collections {\n        id\n        title\n        handle\n        image { url altText width height }\n      }\n      queries {\n        text\n      }\n    }\n  }\n': {
     return: PredictiveSearchQuery;
     variables: PredictiveSearchQueryVariables;
+  };
+  '#graphql\n  query WaitlistVariant($id: ID!, $country: CountryCode, $language: LanguageCode)\n  @inContext(country: $country, language: $language) {\n    node(id: $id) {\n      __typename\n      ... on ProductVariant {\n        id\n        availableForSale\n        product {\n          id\n        }\n      }\n    }\n  }\n': {
+    return: WaitlistVariantQuery;
+    variables: WaitlistVariantQueryVariables;
   };
   '#graphql\n  #graphql\n  fragment ProductCard on Product {\n    id\n    title\n    handle\n    availableForSale\n    vendor\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n    images(first: 2) {\n      nodes {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n      maxVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    compareAtPriceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    tags\n    # Used by the product card\'s "Quick Add" button to add a variant to the\n    # cart without navigating to the PDP. Falls back to the first available\n    # variant when no options are pre-selected — correct for the common case\n    # of single-variant products or a "just add the default" quick action.\n    selectedOrFirstAvailableVariant(\n      selectedOptions: []\n      ignoreUnknownOptions: true\n      caseInsensitiveMatch: true\n    ) {\n      id\n      availableForSale\n      price {\n        amount\n        currencyCode\n      }\n      compareAtPrice {\n        amount\n        currencyCode\n      }\n    }\n    # Judge.me\'s synced rating/review-count badge -- real data, not\n    # fabricated. Absent until a product has its first review; the card\n    # simply omits the star row in that case (see StarRating).\n    reviewBadge: metafield(namespace: "judgeme", key: "badge") {\n      value\n    }\n  }\n\n  query Collection(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n    $sortKey: ProductCollectionSortKeys\n    $reverse: Boolean\n    $filters: [ProductFilter!]\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      title\n      description\n      handle\n      image {\n        url\n        altText\n        width\n        height\n      }\n      products(\n        first: $first\n        last: $last\n        before: $startCursor\n        after: $endCursor\n        sortKey: $sortKey\n        reverse: $reverse\n        filters: $filters\n      ) {\n        nodes {\n          ...ProductCard\n        }\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          startCursor\n          endCursor\n        }\n        filters {\n          id\n          label\n          type\n          values {\n            count\n            id\n            label\n            input\n          }\n        }\n      }\n    }\n  }\n': {
     return: CollectionQuery;
