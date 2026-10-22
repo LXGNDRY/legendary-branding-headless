@@ -1,7 +1,8 @@
 import {isbot} from 'isbot';
 import {renderToReadableStream} from 'react-dom/server';
 import {ServerRouter} from 'react-router';
-import type {EntryContext} from 'react-router';
+import type {EntryContext, HandleErrorFunction} from 'react-router';
+import {captureServerError} from '~/lib/sentry.server';
 
 export default async function handleRequest(
   request: Request,
@@ -10,16 +11,22 @@ export default async function handleRequest(
   routerContext: EntryContext,
 ): Promise<Response> {
   let status = responseStatusCode;
+  let shellRendered = false;
 
   const body = await renderToReadableStream(
     <ServerRouter context={routerContext} url={request.url} />,
     {
       onError(error: unknown) {
-        console.error(error);
         status = 500;
+        // NOTE: React Router's handleError already reports shell-render errors; only later streaming errors are ours.
+        if (shellRendered) {
+          captureServerError(error, {request, extra: {source: 'render'}});
+        }
       },
     },
   );
+
+  shellRendered = true;
 
   if (isbot(request.headers.get('user-agent') ?? '')) {
     await body.allReady;
@@ -39,3 +46,13 @@ export default async function handleRequest(
     status,
   });
 }
+
+/**
+ * Reports errors React Router handles itself (loader/action failures that
+ * become an error boundary instead of reaching server.ts's outer catch).
+ * A request the browser already abandoned is not an application error.
+ */
+export const handleError: HandleErrorFunction = (error, {request}) => {
+  if (request.signal.aborted) return;
+  captureServerError(error, {request, extra: {source: 'route'}});
+};

@@ -34,6 +34,7 @@ import {analyticsEnvironment} from '~/lib/analytics-environment';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
 import {LOCALIZATION_QUERY, staleMarketSelections, type LocalizationData} from '~/lib/market';
+import {optional} from '~/lib/optional';
 import {fetchAllPages} from '~/lib/pagination';
 import {
   MAIN_MENU_QUERY,
@@ -112,37 +113,22 @@ export const meta: MetaFunction = () => [
   {name: 'twitter:description', content: 'Premium streetwear built to last.'},
 ];
 
+/** Budget for optional root dependencies (cart, menu, analytics shop) before the page renders without them. */
+const OPTIONAL_BUDGET_MS = 3_000;
+/** Budget for the auth check before the visitor is treated as signed out. */
+const AUTH_BUDGET_MS = 3_000;
+
 /** How long a page waits for the optional store trust lookup before rendering without it. */
 const STORE_TRUST_BUDGET_MS = 700;
 
 export async function loader({context, request}: LoaderFunctionArgs) {
   const {cart, customerAccount} = context;
 
-  // Check if customer is logged in and associate cart with buyer identity
-  let isLoggedIn = false;
-
-  if (customerAccount) {
-    isLoggedIn = await customerAccount.isLoggedIn();
-
-    if (isLoggedIn) {
-      // Associate the cart with the logged-in customer's buyer identity
-      const accessToken = await customerAccount.getAccessToken();
-      if (accessToken) {
-        // Update cart buyer identity for logged-in customers
-        try {
-          const cartId = await cart.getCartId();
-          if (cartId) {
-            // Cart will be associated via the Storefront API buyer identity
-            // on subsequent queries — Hydrogen's cart helper handles this
-            // when customerAccount is configured
-          }
-        } catch {
-          // Cart association failure is non-critical — cart still works
-          // as guest until explicitly merged
-        }
-      }
-    }
-  }
+  // Auth lookup: if it fails or stalls the visitor is treated as signed out (never as
+  // someone else), and the failure is reported.
+  const isLoggedIn = customerAccount
+    ? await optional('customer-account', () => customerAccount.isLoggedIn(), {ms: AUTH_BUDGET_MS, fallback: false})
+    : false;
 
   // Opening a named Cache API instance is required to cache the Admin API
   // discount fetch (a POST request -- Cloudflare's Cache API only caches
@@ -186,8 +172,11 @@ export async function loader({context, request}: LoaderFunctionArgs) {
 
   const shopAnalytics = analyticsEnvironment(request.url);
 
+  // NOTE: localization is CRITICAL (it decides currency and language, so a wrong fallback would show wrong
+  // prices) and may fail the request. Cart, analytics shop, menu and trust are optional: each has a budget
+  // and a safe fallback so one slow or failing dependency can't take every page down.
   const [cartData, localizationResult, shop, menuResult, storeTrustResult] = await Promise.all([
-    cart.get(),
+    optional('cart', cart.get(), {ms: OPTIONAL_BUDGET_MS, fallback: null}),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
         country: context.storefront.i18n.country,
@@ -200,19 +189,27 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     // preview deploy stops writing page views, product views and cart events
     // into the production store's reporting alongside real customers.
     shopAnalytics.reportToShop
-      ? getShopAnalytics({
-          storefront: context.storefront,
-          publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
-        })
+      ? optional(
+          'shop-analytics',
+          getShopAnalytics({
+            storefront: context.storefront,
+            publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
+          }),
+          {ms: OPTIONAL_BUDGET_MS, fallback: null},
+        )
       : Promise.resolve(null),
     // NOTE: CacheShort, not CacheLong -- a collection the merchant adds or publishes should reach the header within minutes, not up to a day.
-    context.storefront.query(MAIN_MENU_QUERY, {
-      variables: {
-        country: context.storefront.i18n.country,
-        language: context.storefront.i18n.language,
-      },
-      cache: CacheShort(),
-    }),
+    optional(
+      'main-menu',
+      context.storefront.query(MAIN_MENU_QUERY, {
+        variables: {
+          country: context.storefront.i18n.country,
+          language: context.storefront.i18n.language,
+        },
+        cache: CacheShort(),
+      }),
+      {ms: OPTIONAL_BUDGET_MS, fallback: null},
+    ),
     withBudget(storeTrustLookup, STORE_TRUST_BUDGET_MS),
   ]);
 
@@ -224,13 +221,15 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     context.session.unset(key);
   }
 
-  const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
+  const menuItems = (menuResult?.menu?.items ?? []) as MenuItemNode[];
   const collectionIds = menuItems
     .filter((item) => item.type === 'COLLECTION' && item.resourceId)
     .map((item) => item.resourceId!);
 
   // Optional: if this lookup fails the header falls back to the Main Menu alone.
-  const publishedCollectionsLookup = fetchAllPages<NonNullable<PublishedCollectionNode>>(async (after) => {
+  const publishedCollectionsLookup = optional(
+    'nav-published-collections',
+    fetchAllPages<NonNullable<PublishedCollectionNode>>(async (after) => {
     const result = await context.storefront.query(NAV_ALL_COLLECTIONS_QUERY, {
       variables: {
         country: context.storefront.i18n.country,
@@ -241,20 +240,26 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       cache: CacheShort(),
     });
     return result.collections as {nodes: NonNullable<PublishedCollectionNode>[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
-  }).catch(() => [] as PublishedCollectionNode[]);
+  }),
+    {ms: OPTIONAL_BUDGET_MS, fallback: [] as PublishedCollectionNode[]},
+  );
 
   const menuCollections: NavCollectionItem[] = collectionIds.length
     ? resolveMenuCollections(
         menuItems,
         (
-          await context.storefront.query(NAV_COLLECTIONS_QUERY, {
-            variables: {
-              ids: collectionIds,
-              country: context.storefront.i18n.country,
-              language: context.storefront.i18n.language,
-            },
-            cache: CacheShort(),
-          })
+          await optional(
+            'nav-menu-collections',
+            context.storefront.query(NAV_COLLECTIONS_QUERY, {
+              variables: {
+                ids: collectionIds,
+                country: context.storefront.i18n.country,
+                language: context.storefront.i18n.language,
+              },
+              cache: CacheShort(),
+            }),
+            {ms: OPTIONAL_BUDGET_MS, fallback: {nodes: []}},
+          )
         ).nodes,
       )
     : [];
