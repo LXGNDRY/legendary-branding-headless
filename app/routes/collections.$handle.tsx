@@ -421,10 +421,9 @@ export default function CollectionPage() {
               {({nodes, PreviousLink, NextLink, isLoading}) => (
                 <>
                   <div className="flex justify-center mb-8">
-                    <PreviousLink>
-                      <button className="h-btn-outline text-[0.7rem] px-5 py-2.5">
-                        {isLoading ? 'Loading…' : 'Load previous'}
-                      </button>
+                    {/* NOTE: the link carries the button styling itself; a button inside a link is two interactive controls. */}
+                    <PreviousLink className="h-btn-outline text-[0.7rem] px-5 py-2.5">
+                      {isLoading ? 'Loading…' : 'Load previous'}
                     </PreviousLink>
                   </div>
 
@@ -451,11 +450,7 @@ export default function CollectionPage() {
                   )}
 
                   <div className="flex justify-center mt-12">
-                    <NextLink>
-                      <button className="h-btn-outline">
-                        {isLoading ? 'Loading…' : 'Load more'}
-                      </button>
-                    </NextLink>
+                    <NextLink className="h-btn-outline">{isLoading ? 'Loading…' : 'Load more'}</NextLink>
                   </div>
                 </>
               )}
@@ -467,7 +462,7 @@ export default function CollectionPage() {
       {/* Mobile filter drawer */}
       {filterOpen && (
         <div className="fixed inset-0 z-[500] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
-          <div className="absolute inset-0 bg-[var(--color-foreground)]/40" onClick={() => setFilterOpen(false)} />
+          <button type="button" tabIndex={-1} aria-label="Close filters" className="absolute inset-0 bg-[var(--color-foreground)]/40" data-overlay-keep onClick={() => setFilterOpen(false)} />
           <div ref={filterDrawerRef} className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col pb-[env(safe-area-inset-bottom)]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border-subtle)]">
               <p className="h-eyebrow text-[var(--color-foreground)]">Filters</p>

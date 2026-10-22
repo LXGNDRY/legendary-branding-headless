@@ -129,9 +129,10 @@ export default function QuickAddModal({
   return createPortal(
     <div
       className="fixed inset-0 z-[1000] flex items-end justify-center sm:items-center sm:p-4"
+      role="presentation"
       onClick={(e) => e.stopPropagation()}
     >
-      <button type="button" className="absolute inset-0 bg-black/60" onClick={onClose} aria-label="Close" tabIndex={-1} />
+      <button type="button" data-overlay-keep className="absolute inset-0 bg-black/60" onClick={onClose} aria-label="Close" tabIndex={-1} />
       <div
         ref={containerRef}
         role="dialog"

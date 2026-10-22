@@ -10,6 +10,7 @@ import {withCheckoutLocale} from '~/lib/cart';
 import {handleCartMutation} from '~/lib/cart-mutation';
 import {useLanguage} from '~/lib/i18n';
 import TrustSignals from '~/components/ui/TrustSignals';
+import {focusOnMount} from '~/lib/focus';
 
 export const meta: MetaFunction = () => [
   {title: 'Cart | LEGENDARY BRANDING'},
@@ -74,9 +75,11 @@ function CartLineRow({line}: {line: CartLineData}) {
 
   return (
     <div className="flex gap-5 py-6 border-b border-[var(--color-border-subtle)]">
-      {/* Image */}
+      {/* Image — duplicates the title link beside it, so it is hidden from keyboard and assistive tech */}
       <Link
         to={`/products/${product.handle}`}
+        aria-hidden="true"
+        tabIndex={-1}
         className="shrink-0 w-24 h-28 overflow-hidden rounded-lg bg-[var(--color-surface)] block"
       >
         {image ? (
@@ -242,7 +245,7 @@ function CartDiscountSection({
             placeholder="Discount code"
             aria-label="Discount code"
             className="flex-1 min-w-0 text-sm border border-[var(--color-border-subtle)] bg-[var(--color-canvas)] px-3 py-2 text-[var(--color-foreground)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-foreground)]"
-            autoFocus
+            ref={focusOnMount}
           />
           <div className="flex gap-2 shrink-0">
             <button
@@ -426,8 +429,9 @@ export default function CartPage() {
             </div>
 
             {cart?.checkoutUrl ? (
-              <div
-                onClick={(e: React.MouseEvent) => {
+              <Button
+                as="a"
+                onClick={(e) => {
                   if (checkingOut) return;
                   publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart});
                   // A modifier/middle-click opens checkout in a new tab and
@@ -436,19 +440,14 @@ export default function CartPage() {
                   const opensNewTab = e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
                   if (!opensNewTab) setCheckingOut(true);
                 }}
-                className={checkingOut ? 'pointer-events-none' : undefined}
+                href={withCheckoutLocale(cart.checkoutUrl, language)}
+                variant="dark"
+                className="w-full justify-center"
+                loading={checkingOut}
+                testId="cart-checkout"
               >
-                <Button
-                  as="a"
-                  href={withCheckoutLocale(cart.checkoutUrl, language)}
-                  variant="dark"
-                  className="w-full justify-center"
-                  loading={checkingOut}
-                  testId="cart-checkout"
-                >
-                  {checkingOut ? 'Redirecting…' : 'Proceed to Checkout'}
-                </Button>
-              </div>
+                {checkingOut ? 'Redirecting…' : 'Proceed to Checkout'}
+              </Button>
             ) : (
               <Button
                 variant="dark"

@@ -162,13 +162,13 @@ export default function AccountEditPage() {
         </div>
 
         {actionData?.success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-sm text-green-800 rounded">
+          <div role="status" className="mb-6 p-4 bg-green-50 border border-green-200 text-sm text-green-800 rounded">
             Your details have been updated.
           </div>
         )}
 
         {actionData?.errors && actionData.errors.length > 0 && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-sm text-red-800 rounded">
+          <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 text-sm text-red-800 rounded">
             {actionData.errors.map((err, i) => (
               <p key={i}>{err}</p>
             ))}
@@ -186,6 +186,9 @@ export default function AccountEditPage() {
             <input
               id="firstName"
               name="firstName"
+              // NOTE: valid WHATWG token; oxlint's autocomplete-valid list omits it.
+              // oxlint-disable-next-line jsx-a11y/autocomplete-valid
+              autoComplete="given-name"
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
@@ -204,6 +207,9 @@ export default function AccountEditPage() {
             <input
               id="lastName"
               name="lastName"
+              // NOTE: valid WHATWG token; oxlint's autocomplete-valid list omits it.
+              // oxlint-disable-next-line jsx-a11y/autocomplete-valid
+              autoComplete="family-name"
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
@@ -235,11 +241,7 @@ export default function AccountEditPage() {
             <Button type="submit" variant="primary">
               Save Changes
             </Button>
-            <Link to="/account">
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </Link>
+            <Button as="link" to="/account" variant="outline">Cancel</Button>
           </div>
         </form>
       </div>

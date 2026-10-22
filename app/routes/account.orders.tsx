@@ -147,9 +147,7 @@ export default function OrdersPage() {
             <p className="text-[var(--color-text-secondary)] mb-8">
               Your order history will appear here.
             </p>
-            <Link to="/">
-              <Button variant="primary">Start Shopping</Button>
-            </Link>
+            <Button as="link" to="/" variant="primary">Start Shopping</Button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -167,9 +165,9 @@ export default function OrdersPage() {
                       <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                         {formatDate(order.processedAt, language)}
                       </p>
-                      <h3 className="text-xl font-normal">
+                      <h2 className="text-xl font-normal">
                         Order #{order.number}
-                      </h3>
+                      </h2>
                     </div>
                     <div className="mt-4 md:mt-0 text-right">
                       <p className="text-sm text-[var(--color-text-secondary)] mb-1">
