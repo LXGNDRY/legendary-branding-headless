@@ -4,6 +4,7 @@ import {
   isAvailableLanguage,
   normalizeCountryCode,
   normalizeLanguageCode,
+  staleMarketSelections,
   type MarketCountry,
   type MarketLanguage,
 } from './market';
@@ -55,5 +56,24 @@ describe('market language validation', () => {
   it('accepts only languages Shopify reports as available', () => {
     expect(isAvailableLanguage('ES', languages)).toBe(true);
     expect(isAvailableLanguage('FR', languages)).toBe(false);
+  });
+});
+
+describe('staleMarketSelections', () => {
+  const localization = {
+    availableCountries: [{isoCode: 'US'}, {isoCode: 'ES'}] as never,
+    availableLanguages: [{isoCode: 'EN'}, {isoCode: 'ES'}] as never,
+  };
+
+  it('keeps supported selections and ignores an unset session', () => {
+    expect(staleMarketSelections({country: 'ES', language: 'ES'}, localization)).toEqual([]);
+    expect(staleMarketSelections({}, localization)).toEqual([]);
+    expect(staleMarketSelections({country: null, language: undefined}, localization)).toEqual([]);
+  });
+
+  it('flags a removed market, a removed language and malformed values', () => {
+    expect(staleMarketSelections({country: 'GB', language: 'FR'}, localization)).toEqual(['country', 'language']);
+    expect(staleMarketSelections({country: 'ZZ', language: 'not-a-code'}, localization)).toEqual(['country', 'language']);
+    expect(staleMarketSelections({country: 5, language: {}}, localization)).toEqual(['country', 'language']);
   });
 });

@@ -8,6 +8,7 @@ import Button from '~/components/ui/Button';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
 import {withCheckoutLocale} from '~/lib/cart';
 import {handleCartMutation} from '~/lib/cart-mutation';
+import {useLanguage} from '~/lib/i18n';
 import TrustSignals from '~/components/ui/TrustSignals';
 
 export const meta: MetaFunction = () => [
@@ -309,6 +310,7 @@ function CartDiscountSection({
 
 export default function CartPage() {
   const {cart} = useLoaderData<typeof loader>();
+  const language = useLanguage();
   const {publish} = useAnalytics();
   const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
@@ -438,7 +440,7 @@ export default function CartPage() {
               >
                 <Button
                   as="a"
-                  href={withCheckoutLocale(cart.checkoutUrl)}
+                  href={withCheckoutLocale(cart.checkoutUrl, language)}
                   variant="dark"
                   className="w-full justify-center"
                   loading={checkingOut}

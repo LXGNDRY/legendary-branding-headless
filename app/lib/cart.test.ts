@@ -59,3 +59,20 @@ describe('Cart total calculation', () => {
     expect(total).toBe(0);
   });
 });
+
+describe('withCheckoutLocale', () => {
+  it('pins checkout to the selected language instead of always English', async () => {
+    const {withCheckoutLocale} = await import('./cart');
+    const url = 'https://shop.example/checkouts/c/abc?key=1';
+    expect(new URL(withCheckoutLocale(url, 'FR')).searchParams.get('locale')).toBe('fr');
+    expect(new URL(withCheckoutLocale(url, 'PT_BR')).searchParams.get('locale')).toBe('pt-BR');
+    expect(new URL(withCheckoutLocale(url, 'DE')).searchParams.get('locale')).toBe('de');
+    expect(new URL(withCheckoutLocale(url)).searchParams.get('locale')).toBe('en');
+    expect(new URL(withCheckoutLocale(url, 'FR')).searchParams.get('key')).toBe('1');
+  });
+
+  it('returns a malformed URL unchanged', async () => {
+    const {withCheckoutLocale} = await import('./cart');
+    expect(withCheckoutLocale('not a url', 'FR')).toBe('not a url');
+  });
+});
