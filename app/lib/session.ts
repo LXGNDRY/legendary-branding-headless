@@ -89,6 +89,7 @@ export class AppSession implements HydrogenSession {
   }
 
   async commit() {
+    this.isPending = false;
     return this.#sessionStorage.commitSession(this.#session);
   }
 

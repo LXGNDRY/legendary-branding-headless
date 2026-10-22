@@ -366,11 +366,11 @@ Initial status for every recovery task is **Not started**; this document and its
 | Slice | Status | Branch/PR | Verification evidence | Owner blocker |
 |---|---|---|---|---|
 | R00 | Not started | — | — | See package/decision table |
-| R01 | In PR | claude/recovery-r01-r03-gates | Node 22.22/npm 10.9 `npm ci --legacy-peer-deps` clean; Node 24 failure not reproduced here (no Node 24); `.nvmrc` added | See package/decision table |
-| R02 | In PR | claude/recovery-r01-r03-gates | oxlint replaces ESLint (typescript-eslint cannot run on TS 7.0); hooks/correctness errors gate; a11y + React-compiler rules are warnings until R20/R21; probe with conditional hook fails | See package/decision table |
-| R03 | In PR | claude/recovery-r01-r03-gates | `.graphqlrc.ts` uses `getSchema`; generated files are now 78 KB/21 KB; surfaced search-sort and URL-scalar type errors, fixed | See package/decision table |
-| R04 | Not started | — | — | See package/decision table |
-| R05 | Not started | — | — | See package/decision table |
+| R01 | Merged to dev (#368) | claude/recovery-r01-r03-gates | Node 22.22/npm 10.9 `npm ci --legacy-peer-deps` clean; Node 24 failure not reproduced here (no Node 24); `.nvmrc` added | See package/decision table |
+| R02 | Merged to dev (#368) | claude/recovery-r01-r03-gates | oxlint replaces ESLint (typescript-eslint cannot run on TS 7.0); hooks/correctness errors gate; a11y + React-compiler rules are warnings until R20/R21; probe with conditional hook fails | See package/decision table |
+| R03 | Merged to dev (#368) | claude/recovery-r01-r03-gates | `.graphqlrc.ts` uses `getSchema`; generated files are now 78 KB/21 KB; surfaced search-sort and URL-scalar type errors, fixed | See package/decision table |
+| R04 | Merged to dev (#369); preview check owed | claude/recovery-r04-cart-safe | Shared `handleCartMutation`: input validation, null-cart and provider-throw handling, cart cookie only for a returned cart; 23 new tests | See package/decision table |
+| R05 | Merged to dev (#369); preview check owed | claude/recovery-r05-cookies | `server.ts` appends (not replaces) the session cookie and copies cookies through 404 redirects; `commit()` clears `isPending`; 8 new tests. Real-browser/OAuth cookie checks still owed (needs preview) | See package/decision table |
 | R06 | In PR | claude/recovery-r06-html-safety | `serializeJsonLd`, parse5-based `sanitizeHtml` + `SafeHtml` (only raw sinks: SafeHtml, JsonLd), validated CMS content blocks; 47 new tests incl. 24 attack fixtures. Remaining from F46: body-size/method bounds on other actions, nonce CSP (follow-up) | See package/decision table |
 | R07 | Not started | — | — | See package/decision table |
 | R08 | Not started | — | — | See package/decision table |
