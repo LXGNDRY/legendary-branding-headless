@@ -24,6 +24,13 @@ type LookbookImage = {
   spanRows?: number;
 };
 
+// NOTE: static class map — Tailwind can't see dynamically built `lg:col-span-${n}` names.
+const LG_COL_SPAN: Record<number, string> = {
+  1: 'lg:col-span-1', 2: 'lg:col-span-2', 3: 'lg:col-span-3', 4: 'lg:col-span-4',
+  5: 'lg:col-span-5', 6: 'lg:col-span-6', 7: 'lg:col-span-7', 8: 'lg:col-span-8',
+  9: 'lg:col-span-9', 10: 'lg:col-span-10', 11: 'lg:col-span-11', 12: 'lg:col-span-12',
+};
+
 interface LookbookProps {
   eyebrow?: string;
   heading: string;
@@ -77,7 +84,7 @@ export default function Lookbook({
             const spanRows = item.spanRows ?? 2;
             const colClass =
               gridStyle === 'editorial'
-                ? `col-span-12 sm:col-span-6 lg:col-span-${spanCols}`
+                ? `col-span-12 sm:col-span-6 ${LG_COL_SPAN[spanCols] ?? 'lg:col-span-4'}`
                 : '';
             const rowStyle =
               gridStyle === 'editorial'
@@ -113,14 +120,15 @@ export default function Lookbook({
                     <Link
                       to={`/products/${item.product.handle}`}
                       className="group relative block"
+                      aria-label={`Shop ${item.product.title}`}
                     >
                       {/* Hotspot dot */}
-                      <div className="w-10 h-10 rounded-full bg-[var(--color-accent)] flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-110 z-10 shadow-lg">
-                        <span className="text-white text-base font-light leading-none">+</span>
+                      <div className="w-11 h-11 rounded-full bg-[var(--color-accent)] flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-110 group-focus-visible:ring-2 group-focus-visible:ring-offset-2 z-10 shadow-lg">
+                        <span aria-hidden="true" className="text-white text-base font-light leading-none">+</span>
                       </div>
 
                       {/* Product popup card */}
-                      <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-2 w-64 bg-[var(--color-bg-level-1)] p-4 opacity-0 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto flex gap-4 shadow-lg border border-[var(--color-border-medium)]">
+                      <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-2 w-64 bg-[var(--color-bg-level-1)] p-4 opacity-0 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-visible:opacity-100 group-focus-visible:translate-y-0 group-active:opacity-100 group-active:translate-y-0 flex gap-4 shadow-lg border border-[var(--color-border-medium)]">
                         {item.product.image && (
                           <Image
                             data={item.product.image}

@@ -181,8 +181,8 @@ export default function OrdersPage() {
                       <span
                         className={`inline-block text-[10px] font-semibold tracking-widest uppercase px-3 py-1 ${
                           fulfillmentStatus === 'FULFILLED'
-                            ? 'bg-[var(--color-bg-level-3)] text-white'
-                            : 'bg-[var(--color-surface)] text-black'
+                            ? 'bg-[var(--color-bg-level-3)] text-[var(--color-text-primary)]'
+                            : 'border border-[var(--color-border-strong)] text-[var(--color-text-primary)]'
                         }`}
                       >
                         {fulfillmentStatus}

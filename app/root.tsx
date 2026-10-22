@@ -473,15 +473,15 @@ export function ErrorBoundary({error}: {error: unknown}) {
   const is404 = isRouteErrorResponse(error) && error.status === 404;
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-8 bg-[#FAF9F6]">
+    <div className="min-h-dvh flex items-center justify-center p-8 bg-[var(--color-background)]">
       <div className="max-w-xl text-center">
         <p className="h-eyebrow mb-6">
           {is404 ? '404 — Not Found' : 'Something went wrong'}
         </p>
-        <h1 className="font-serif text-[clamp(3.5rem,8vw,7rem)] leading-[0.95] mb-8 text-[#1A1A1A]">
+        <h1 className="font-serif text-[clamp(3.5rem,8vw,7rem)] leading-[0.95] mb-8 text-[var(--color-foreground)]">
           {is404 ? 'Lost.' : 'Oops.'}
         </h1>
-        <p className="text-[#6B6B6B] text-lg mb-12">
+        <p className="text-[var(--color-text-secondary)] text-lg mb-12">
           {is404
             ? 'The page you\'re looking for doesn\'t exist or has been moved.'
             : 'An unexpected error occurred. Please try again in a few moments.'}
@@ -492,7 +492,7 @@ export function ErrorBoundary({error}: {error: unknown}) {
           </a>
           <a
             href="/collections/all-products"
-            className="px-6 py-3 border border-[#1A1A1A] text-sm tracking-wide uppercase hover:bg-[#1A1A1A] hover:text-white transition-colors"
+            className="px-6 py-3 border border-[var(--color-border-strong)] text-sm tracking-wide uppercase hover:bg-[var(--color-text-primary)] hover:text-[var(--color-text-inverse)] transition-colors"
           >
             Shop All
           </a>
