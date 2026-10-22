@@ -70,3 +70,18 @@ export function noCacheHeaders() {
     'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
   };
 }
+
+/**
+ * Safety net for responses the app did not give an explicit Cache-Control.
+ * Documents and data responses depend on the session (market, cart, account),
+ * so they must not enter a shared cache; failures are never cached at all.
+ * Explicit headers set by a route (e.g. sitemap, robots) are left untouched.
+ */
+export function withDefaultCacheControl(response: Response): Response {
+  if (response.headers.has('Cache-Control')) return response;
+  response.headers.set(
+    'Cache-Control',
+    response.status >= 400 ? 'no-store' : 'private, max-age=0, must-revalidate',
+  );
+  return response;
+}
