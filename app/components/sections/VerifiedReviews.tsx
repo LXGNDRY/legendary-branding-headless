@@ -23,8 +23,10 @@ interface VerifiedReviewsProps {
 
 /**
  * Real, aggregated Judge.me review data -- no invented quotes or customer
- * names. Renders nothing if there isn't yet enough synced review data to
- * show, rather than fabricating social proof.
+ * names. The figures describe only the products shown (weighted by each
+ * product's review count), and the copy says so. Renders nothing if there
+ * isn't yet enough synced review data to show, rather than fabricating
+ * social proof.
  */
 export default function VerifiedReviews({
   eyebrow = 'Customer Reviews',
@@ -49,8 +51,10 @@ export default function VerifiedReviews({
               <StarIcon key={i} filled={i < Math.round(aggregateRating)} size={16} />
             ))}
           </div>
+          {/* NOTE: this is the weighted average of the products shown, not a storewide figure. */}
           <p className="text-sm text-[var(--color-text-secondary)] mt-3">
-            {aggregateRating.toFixed(1)} out of 5 &middot; from {formatNumber(aggregateCount, language)}{' '}
+            {aggregateRating.toFixed(1)} out of 5 &middot; average of the {products.length}{' '}
+            {products.length === 1 ? 'product' : 'products'} below, from {formatNumber(aggregateCount, language)}{' '}
             {aggregateCount === 1 ? 'review' : 'reviews'}
           </p>
         </div>

@@ -5,7 +5,7 @@
  * paginated variants) separately and merges them.
  */
 
-import {describe, it, expect, beforeEach} from 'vitest';
+import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest';
 import {loader} from '~/routes/products.$handle';
 import {CacheFresh, CacheLong} from '~/lib/cache';
 import {createMockStorefront} from '~/test/mock-storefront';
@@ -141,5 +141,40 @@ describe('products.$handle loader', () => {
     expect(fresh.staleWhileRevalidate ?? 0).toBeLessThanOrEqual(60);
     expect(fresh.staleIfError).toBeUndefined();
     expect(long.maxAge).toBeGreaterThanOrEqual(3600);
+  });
+
+  describe('review aggregate', () => {
+    let fetchSpy: ReturnType<typeof vi.spyOn>;
+    const badge = (rating: string, count: string) => ({
+      namespace: 'judgeme',
+      key: 'badge',
+      value: `<div data-average-rating='${rating}' data-number-of-reviews='${count}'></div>`,
+    });
+
+    beforeEach(() => {
+      // a review fetch that never settles: the page must not wait on it when the badge is available
+      fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>(() => {}));
+    });
+    afterEach(() => fetchSpy.mockRestore());
+
+    it('uses the provider badge as the aggregate and does not wait on the review list', async () => {
+      responses.Product = {product: {...content, metafields: [badge('4.6', '120')]}};
+      const started = Date.now();
+      const {result} = await run('test-product', responses);
+      expect(Date.now() - started).toBeLessThan(1000);
+      expect(result.reviewSummary).toEqual({rating: 4.6, count: 120});
+    });
+
+    it('ignores a badge with an out-of-range rating', async () => {
+      responses.Product = {product: {...content, metafields: [badge('9.9', '120')]}};
+      vi.useFakeTimers();
+      try {
+        const pending = run('test-product', responses);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect((await pending).result.reviewSummary).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });

@@ -7,6 +7,8 @@ interface ProductReviewListProps {
   reviews: JudgemeReview[];
   aggregateRating?: number;
   aggregateCount?: number;
+  /** The list is known to be a subset of what Judge.me holds (page cap or a failed page). */
+  truncated?: boolean;
 }
 
 const PAGE_SIZE = 6;
@@ -26,6 +28,7 @@ export default function ProductReviewList({
   reviews,
   aggregateRating,
   aggregateCount,
+  truncated = false,
 }: ProductReviewListProps) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   if (!reviews.length) return null;
@@ -49,6 +52,9 @@ export default function ProductReviewList({
           <p className="text-sm text-[var(--color-text-secondary)]">
             {aggregateRating.toFixed(2)} out of 5 · Based on {aggregateCount}{' '}
             {aggregateCount === 1 ? 'review' : 'reviews'}
+            {/* NOTE: the average covers every rating; the list shows written reviews (and may be capped), so say which. */}
+            {(truncated || reviews.length < aggregateCount) &&
+              ` · Showing ${reviews.length} written ${reviews.length === 1 ? 'review' : 'reviews'}`}
           </p>
         </div>
       ) : null}
