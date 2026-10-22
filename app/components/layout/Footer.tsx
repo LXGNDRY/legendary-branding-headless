@@ -1,4 +1,5 @@
 import {Link} from 'react-router';
+import {OPEN_COOKIE_PREFERENCES_EVENT} from '~/lib/consent';
 import NewsletterForm from '~/components/ui/NewsletterForm';
 import MarketSelector from '~/components/ui/MarketSelector';
 import BrandLogo from '~/components/ui/BrandLogo';
@@ -136,6 +137,13 @@ export default function Footer({
           </p>
 
           <div className="flex items-center gap-6 flex-wrap">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event(OPEN_COOKIE_PREFERENCES_EVENT))}
+              className="text-xs tracking-wide underline underline-offset-4 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              Cookie preferences
+            </button>
             <MarketSelector
               current={localization.country}
               countries={localization.availableCountries}

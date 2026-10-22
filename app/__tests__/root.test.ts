@@ -90,6 +90,18 @@ describe('root loader resilience', () => {
     expect(on.chatAvailable).toBe(true);
   });
 
+  it('only hands third-party pixel ids to the live host, never to previews or local servers', async () => {
+    const env = {PUBLIC_GA4_MEASUREMENT_ID: 'G-TEST123', PUBLIC_META_PIXEL_ID: '123', PUBLIC_TIKTOK_PIXEL_ID: 'TT1', PUBLIC_KLAVIYO_COMPANY_ID: 'AbC123'};
+    const live = (await run({url: 'https://www.legendary-branding.com/', env})) as {analyticsConfig: Record<string, string | undefined>};
+    expect(live.analyticsConfig).toMatchObject({ga4Id: 'G-TEST123', metaPixelId: '123', tiktokPixelId: 'TT1'});
+    for (const url of ['https://legendary-abc.o2.myshopify.dev/', 'http://localhost:3000/']) {
+      const data = (await run({url, env})) as {analyticsConfig: Record<string, string | undefined>};
+      expect(data.analyticsConfig.ga4Id).toBeUndefined();
+      expect(data.analyticsConfig.metaPixelId).toBeUndefined();
+      expect(data.analyticsConfig.tiktokPixelId).toBeUndefined();
+    }
+  });
+
   it('treats a failing auth lookup as signed out, never as another customer', async () => {
     const data = await run({isLoggedIn: async () => fails()});
     expect(data.isLoggedIn).toBe(false);
