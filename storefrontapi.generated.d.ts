@@ -1722,8 +1722,6 @@ export type StoreTrustQuery = {
 };
 
 export type SitemapProductsQueryVariables = Exact<{
-  country?: StorefrontAPI.CountryCode | null | undefined;
-  language?: StorefrontAPI.LanguageCode | null | undefined;
   first: number;
   after?: string | null | undefined;
 }>;
@@ -1736,8 +1734,6 @@ export type SitemapProductsQuery = {
 };
 
 export type SitemapCollectionsQueryVariables = Exact<{
-  country?: StorefrontAPI.CountryCode | null | undefined;
-  language?: StorefrontAPI.LanguageCode | null | undefined;
   first: number;
   after?: string | null | undefined;
 }>;
@@ -1750,8 +1746,6 @@ export type SitemapCollectionsQuery = {
 };
 
 export type SitemapPagesQueryVariables = Exact<{
-  country?: StorefrontAPI.CountryCode | null | undefined;
-  language?: StorefrontAPI.LanguageCode | null | undefined;
   first: number;
   after?: string | null | undefined;
 }>;
@@ -1765,8 +1759,6 @@ export type SitemapPagesQuery = {
 
 export type SitemapArticlesQueryVariables = Exact<{
   blogHandle: string;
-  country?: StorefrontAPI.CountryCode | null | undefined;
-  language?: StorefrontAPI.LanguageCode | null | undefined;
   first: number;
   after?: string | null | undefined;
 }>;
@@ -2594,19 +2586,19 @@ interface GeneratedQueryTypes {
     return: StoreTrustQuery;
     variables: StoreTrustQueryVariables;
   };
-  '#graphql\n  query SitemapProducts($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)\n    @inContext(country: $country, language: $language) {\n    products(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }\n  }\n': {
+  '#graphql\n  query SitemapProducts($first: Int!, $after: String) {\n    products(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }\n  }\n': {
     return: SitemapProductsQuery;
     variables: SitemapProductsQueryVariables;
   };
-  '#graphql\n  query SitemapCollections($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)\n    @inContext(country: $country, language: $language) {\n    collections(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }\n  }\n': {
+  '#graphql\n  query SitemapCollections($first: Int!, $after: String) {\n    collections(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }\n  }\n': {
     return: SitemapCollectionsQuery;
     variables: SitemapCollectionsQueryVariables;
   };
-  '#graphql\n  query SitemapPages($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)\n    @inContext(country: $country, language: $language) {\n    pages(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }\n  }\n': {
+  '#graphql\n  query SitemapPages($first: Int!, $after: String) {\n    pages(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }\n  }\n': {
     return: SitemapPagesQuery;
     variables: SitemapPagesQueryVariables;
   };
-  '#graphql\n  query SitemapArticles($blogHandle: String!, $country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)\n    @inContext(country: $country, language: $language) {\n    blog(handle: $blogHandle) {\n      articles(first: $first, after: $after) { nodes { handle updatedAt: publishedAt } pageInfo { hasNextPage endCursor } }\n    }\n  }\n': {
+  '#graphql\n  query SitemapArticles($blogHandle: String!, $first: Int!, $after: String) {\n    blog(handle: $blogHandle) {\n      articles(first: $first, after: $after) { nodes { handle updatedAt: publishedAt } pageInfo { hasNextPage endCursor } }\n    }\n  }\n': {
     return: SitemapArticlesQuery;
     variables: SitemapArticlesQueryVariables;
   };
