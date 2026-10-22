@@ -3,6 +3,7 @@ import * as build from 'virtual:react-router/server-build';
 import {createRequestHandler, storefrontRedirect} from '@shopify/hydrogen';
 import {createAppLoadContext} from '~/lib/context';
 import {applySecurityHeaders, isAssetRequest} from '~/lib/security';
+import {appendPendingSessionCookie, copySetCookies} from '~/lib/response-cookies';
 import {initSentryServer, captureServerError} from '~/lib/sentry.server';
 
 // Mode is determined by import.meta.env.PROD (set by Vite/Rollup at build time).
@@ -34,12 +35,7 @@ export default {
       let response = await handleRequest(request);
 
       // Commit session cookie if modified
-      if (appContext.session.isPending) {
-        response.headers.set(
-          'Set-Cookie',
-          await appContext.session.commit(),
-        );
-      }
+      await appendPendingSessionCookie(response, appContext.session);
 
       // Apply security headers to all non-asset responses
       if (!isAssetRequest(request)) {
@@ -53,6 +49,9 @@ export default {
           response,
           storefront: appContext.storefront,
         });
+
+        // Keep the session/cart cookies set on the original response
+        copySetCookies(response, redirectResponse);
 
         // Re-apply security headers to the redirect response
         if (redirectResponse !== response && !isAssetRequest(request)) {

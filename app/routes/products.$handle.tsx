@@ -38,7 +38,7 @@ import ProductCard, {
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
 import {CacheLong} from '~/lib/cache';
-import {requireSameOrigin} from '~/lib/security';
+import {handleCartMutation} from '~/lib/cart-mutation';
 import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge, fetchJudgemeProductReviews, summarizeReviews} from '~/lib/judgeme';
@@ -211,21 +211,7 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
 };
 
 export async function action({request, context}: ActionFunctionArgs) {
-  const originError = requireSameOrigin(request);
-  if (originError) return originError;
-  const {cart} = context;
-  const formData = await request.formData();
-  const {action: cartAction, inputs} = CartForm.getFormInput(formData);
-
-  if (cartAction === CartForm.ACTIONS.LinesAdd) {
-    const result = await cart.addLines(
-      inputs.lines as Parameters<typeof cart.addLines>[0],
-    );
-    const headers = cart.setCartId(result.cart.id);
-    return new Response(null, {status: 200, headers});
-  }
-
-  return new Response('Bad request', {status: 400});
+  return handleCartMutation({request, cart: context.cart, allowed: [CartForm.ACTIONS.LinesAdd]});
 }
 
 export async function loader({params, request, context}: LoaderFunctionArgs) {

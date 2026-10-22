@@ -32,3 +32,16 @@ describe('Session security contract', () => {
     expect(exports).not.toContain('secret');
   });
 });
+
+describe('AppSession pending/commit lifecycle', () => {
+  it('clears isPending after commit so the cookie is not committed twice', async () => {
+    const {AppSession} = await import('./session');
+    const session = await AppSession.init(new Request('https://shop.test/'), ['test-secret']);
+    expect(session.isPending).toBe(false);
+    session.set('country', 'US');
+    expect(session.isPending).toBe(true);
+    const cookie = await session.commit();
+    expect(cookie).toContain('HttpOnly');
+    expect(session.isPending).toBe(false);
+  });
+});
