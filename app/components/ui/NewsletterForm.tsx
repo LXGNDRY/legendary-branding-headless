@@ -64,7 +64,7 @@ export default function NewsletterForm({
     <div className={className}>
       {isSuccess ? (
         <p className="text-sm text-[var(--color-success)] font-medium">
-          {fetcher.data?.message || "You're in. Watch your inbox."}
+          {fetcher.data?.message || 'Thanks! Check your inbox.'}
         </p>
       ) : (
         <fetcher.Form method="POST" action="/api/newsletter" className={formWrapperClass}>

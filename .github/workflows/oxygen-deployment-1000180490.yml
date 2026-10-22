@@ -150,7 +150,6 @@ jobs:
           PUBLIC_GA4_MEASUREMENT_ID: ${{ secrets.PUBLIC_GA4_MEASUREMENT_ID }}
           PRIVATE_KLAVIYO_API_KEY: ${{ secrets.PRIVATE_KLAVIYO_API_KEY }}
           PUBLIC_KLAVIYO_LIST_ID: ${{ secrets.PUBLIC_KLAVIYO_LIST_ID }}
-          PUBLIC_KLAVIYO_WAITLIST_LIST_ID: ${{ secrets.PUBLIC_KLAVIYO_WAITLIST_LIST_ID }}
 
       - name: Build and Publish to Oxygen
         id: deploy

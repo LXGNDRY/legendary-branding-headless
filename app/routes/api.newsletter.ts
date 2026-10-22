@@ -104,7 +104,7 @@ export async function action({request, context}: ActionFunctionArgs) {
   return Response.json({
     success: true,
     subscribed: true,
-    message: "You're in. Watch your inbox.",
+    message: 'Thanks! Check your inbox. If we send a confirmation email, confirm it to finish signing up.',
   });
 }
 

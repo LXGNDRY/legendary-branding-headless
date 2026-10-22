@@ -366,14 +366,14 @@ Initial status for every recovery task is **Not started**; this document and its
 | Slice | Status | Branch/PR | Verification evidence | Owner blocker |
 |---|---|---|---|---|
 | R00 | Not started | — | — | See package/decision table |
-| R01 | In PR | claude/recovery-r01-r03-gates | Node 22.22/npm 10.9 `npm ci --legacy-peer-deps` clean; Node 24 failure not reproduced here (no Node 24); `.nvmrc` added | See package/decision table |
-| R02 | In PR | claude/recovery-r01-r03-gates | oxlint replaces ESLint (typescript-eslint cannot run on TS 7.0); hooks/correctness errors gate; a11y + React-compiler rules are warnings until R20/R21; probe with conditional hook fails | See package/decision table |
-| R03 | In PR | claude/recovery-r01-r03-gates | `.graphqlrc.ts` uses `getSchema`; generated files are now 78 KB/21 KB; surfaced search-sort and URL-scalar type errors, fixed | See package/decision table |
-| R04 | In PR | claude/recovery-r04-cart-safe | Shared `handleCartMutation`: input validation, null-cart and provider-throw handling, cart cookie only for a returned cart; 23 new tests | See package/decision table |
-| R05 | In PR | claude/recovery-r05-cookies | `server.ts` appends (not replaces) the session cookie and copies cookies through 404 redirects; `commit()` clears `isPending`; 8 new tests. Real-browser/OAuth cookie checks still owed (needs preview) | See package/decision table |
-| R06 | Not started | — | — | See package/decision table |
+| R01 | Merged to dev (#368) | claude/recovery-r01-r03-gates | Node 22.22/npm 10.9 `npm ci --legacy-peer-deps` clean; Node 24 failure not reproduced here (no Node 24); `.nvmrc` added | See package/decision table |
+| R02 | Merged to dev (#368) | claude/recovery-r01-r03-gates | oxlint replaces ESLint (typescript-eslint cannot run on TS 7.0); hooks/correctness errors gate; a11y + React-compiler rules are warnings until R20/R21; probe with conditional hook fails | See package/decision table |
+| R03 | Merged to dev (#368) | claude/recovery-r01-r03-gates | `.graphqlrc.ts` uses `getSchema`; generated files are now 78 KB/21 KB; surfaced search-sort and URL-scalar type errors, fixed | See package/decision table |
+| R04 | Merged to dev (#369); preview check owed | claude/recovery-r04-cart-safe | Shared `handleCartMutation`: input validation, null-cart and provider-throw handling, cart cookie only for a returned cart; 23 new tests | See package/decision table |
+| R05 | Merged to dev (#369); preview check owed | claude/recovery-r05-cookies | `server.ts` appends (not replaces) the session cookie and copies cookies through 404 redirects; `commit()` clears `isPending`; 8 new tests. Real-browser/OAuth cookie checks still owed (needs preview) | See package/decision table |
+| R06 | Merged to dev (#370); visual comparison owed | claude/recovery-r06-html-safety | `serializeJsonLd`, parse5-based `sanitizeHtml` + `SafeHtml` (only raw sinks: SafeHtml, JsonLd), validated CMS content blocks; 47 new tests incl. 24 attack fixtures. Remaining from F46: body-size/method bounds on other actions, nonce CSP (follow-up) | See package/decision table |
 | R07 | In PR (neutral copy only) | claude/recovery-r07-claims | Unconditional free-shipping and duties-included claims removed from announcement, marquee, stat strip, cart drawer, PDP, trust signals and all 8 locales; neutral "calculated at checkout" copy; discount popup discloses conditions; source-scan regression test. **Final claims still need owner decision** (see open decisions) | Owner: shipping/duties/processing/returns authority |
-| R08 | Not started | — | — | See package/decision table |
+| R08 | Merged to dev (#372); live acceptance owed | claude/recovery-r08-leads | Subscribe payload fixed to the documented 2024-02-15 shape (profiles at `data.attributes.profiles.data`); restock now uses Klaviyo's per-variant back-in-stock endpoint with server-side variant/product/sold-out validation and no marketing opt-in; 202 treated as accepted not confirmed. **Live acceptance with a controlled address and the account's Back in Stock flow still owed** | Owner: test address, Klaviyo catalog sync + Back in Stock flow |
 | R09 | Not started | — | — | See package/decision table |
 | R10 | Not started | — | — | See package/decision table |
 | R11 | Not started | — | — | See package/decision table |

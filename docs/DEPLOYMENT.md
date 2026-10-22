@@ -99,7 +99,7 @@ Read directly from the workflow file's `secrets.*` references:
 Their presence in the real GitHub repository settings and matching Oxygen runtime environment
 remains an owner-controlled launch check.
 
-`PRIVATE_KLAVIYO_API_KEY`, `PUBLIC_KLAVIYO_LIST_ID`, `PUBLIC_KLAVIYO_WAITLIST_LIST_ID`,
+`PRIVATE_KLAVIYO_API_KEY`, `PUBLIC_KLAVIYO_LIST_ID`,
 `PUBLIC_CHECKOUT_DOMAIN`, and `PUBLIC_GA4_MEASUREMENT_ID` are **not** part of the
 production-validation contract, per explicit owner request — none of these features are live yet.
 The app already degrades gracefully without each of them (a clear no-op/503 for the Klaviyo
