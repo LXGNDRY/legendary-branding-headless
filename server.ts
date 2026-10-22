@@ -6,6 +6,10 @@ import {applySecurityHeaders, isAssetRequest} from '~/lib/security';
 import {withDefaultCacheControl} from '~/lib/cache';
 import {appendPendingSessionCookie, copySetCookies} from '~/lib/response-cookies';
 import {initSentryServer, captureServerError, drainServerReports} from '~/lib/sentry.server';
+import {setServerErrorReporter} from '~/lib/monitoring';
+
+// Route captureError() calls made inside loaders and actions through the redacting server reporter.
+setServerErrorReporter((error, context) => captureServerError(error, {extra: context}));
 
 // Mode is determined by import.meta.env.PROD (set by Vite/Rollup at build time).
 // On Oxygen production, PROD is always true. On local dev, it's false.

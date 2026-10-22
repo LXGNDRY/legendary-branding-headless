@@ -16,7 +16,6 @@
 
 import {useEffect} from 'react';
 import {onLCP, onFCP, onCLS, onINP} from 'web-vitals';
-import {captureServerError} from '~/lib/sentry.server';
 
 type SentryModule = typeof import('@sentry/react');
 
@@ -89,6 +88,14 @@ export async function initSentry(dsn: string | undefined) {
   }
 }
 
+type ServerReporter = (error: unknown, context?: Record<string, unknown>) => void;
+let serverReporter: ServerReporter | null = null;
+
+/** Called once by the server entry to route `captureError` on the server through the redacting reporter. */
+export function setServerErrorReporter(reporter: ServerReporter | null) {
+  serverReporter = reporter;
+}
+
 /**
  * Capture an error — sends to Sentry on the client, or console in dev.
  */
@@ -100,8 +107,10 @@ export function captureError(error: unknown, context?: Record<string, unknown>) 
     return;
   }
   // NOTE: on the server this is the one error pipeline (redaction, release/environment, bounded delivery).
+  // It is registered by server.ts: *.server modules can't be imported from code the client bundle also uses.
   if (typeof window === 'undefined') {
-    captureServerError(error, {extra: context});
+    if (serverReporter) serverReporter(error, context);
+    else console.error('[monitoring]', context ?? '', error);
     return;
   }
   // Still logged to console immediately (so nothing is silent even if
