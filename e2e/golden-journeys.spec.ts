@@ -117,7 +117,10 @@ test.describe('Journey 5: Customer login (unconfigured environment)', () => {
     // rather than a real login form.
     const response = await goto(page, '/account/login');
     expect(response?.status()).toBeGreaterThanOrEqual(400);
-    await expect(page.getByRole('heading', {name: /oops|error/i})).toBeVisible();
+    // The account section's own error page (safe copy, no details) or the root branded error page.
+    await expect(
+      page.getByRole('heading', {name: /couldn.t load your account|temporarily unavailable|oops|error/i}),
+    ).toBeVisible();
   });
 });
 
