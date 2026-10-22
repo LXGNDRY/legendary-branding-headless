@@ -15,8 +15,9 @@ const MANIFEST = {
   description: 'Premium editorial streetwear — crafted with intention, built to last.',
   start_url: '/',
   display: 'standalone',
-  background_color: '#FAF9F6',
-  theme_color: '#1A1A1A',
+  // NOTE: matches the dark Onyx canvas and the <meta name="theme-color"> in root.tsx.
+  background_color: '#0A0A0A',
+  theme_color: '#0A0A0A',
   icons: [
     {src: '/icon-192.png', sizes: '192x192', type: 'image/png'},
     {src: '/icon-512.png', sizes: '512x512', type: 'image/png'},

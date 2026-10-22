@@ -33,16 +33,21 @@ export default function DropTimer({
   backgroundImage,
   productImage,
 }: DropTimerProps) {
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(dropDate));
+  // NOTE: null until mounted so server and first client render match (no Date.now() during hydration).
+  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+  const target = Date.parse(dropDate);
+  const validDate = Number.isFinite(target);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeLeft(calculateTimeLeft(dropDate));
-    }, 1000);
+    if (!validDate) return;
+    const tick = () => setTimeLeft(calculateTimeLeft(target));
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [dropDate]);
+  }, [target, validDate]);
 
-  function pad(n: number) {
+  function pad(n: number | undefined) {
+    if (n === undefined) return '--';
     return n < 10 ? `0${n}` : `${n}`;
   }
 
@@ -75,16 +80,25 @@ export default function DropTimer({
                 </p>
               )}
 
-              {/* Timer */}
-              <div className="flex gap-2 md:gap-4 items-start mt-4">
-                <TimerUnit value={pad(timeLeft.days)} label="Days" />
-                <TimerSep />
-                <TimerUnit value={pad(timeLeft.hours)} label="Hours" />
-                <TimerSep />
-                <TimerUnit value={pad(timeLeft.minutes)} label="Min" />
-                <TimerSep />
-                <TimerUnit value={pad(timeLeft.seconds)} label="Sec" />
-              </div>
+              {/* Absolute date is server-rendered (UTC, deterministic) so the drop time is readable without JS */}
+              {validDate && (
+                <p className="text-sm text-[var(--color-text-secondary)] mt-2">
+                  <time dateTime={new Date(target).toISOString()}>{formatDropDate(target)}</time>
+                </p>
+              )}
+
+              {/* Timer: hidden entirely when the drop date is missing/invalid */}
+              {validDate && (
+                <div role="timer" aria-label={`Time until ${heading}`} className="flex gap-2 md:gap-4 items-start mt-4">
+                  <TimerUnit value={pad(timeLeft?.days)} label="Days" />
+                  <TimerSep />
+                  <TimerUnit value={pad(timeLeft?.hours)} label="Hours" />
+                  <TimerSep />
+                  <TimerUnit value={pad(timeLeft?.minutes)} label="Min" />
+                  <TimerSep />
+                  <TimerUnit value={pad(timeLeft?.seconds)} label="Sec" />
+                </div>
+              )}
 
               {buttonLabel && buttonLink && (
                 <div className="mt-4">
@@ -135,9 +149,11 @@ function TimerSep() {
   );
 }
 
-function calculateTimeLeft(dropDate: string) {
-  const diff = new Date(dropDate).getTime() - Date.now();
-  if (diff <= 0) {
+type TimeLeft = {days: number; hours: number; minutes: number; seconds: number};
+
+export function calculateTimeLeft(target: number, now: number = Date.now()): TimeLeft {
+  const diff = target - now;
+  if (!Number.isFinite(diff) || diff <= 0) {
     return {days: 0, hours: 0, minutes: 0, seconds: 0};
   }
   return {
@@ -146,4 +162,12 @@ function calculateTimeLeft(dropDate: string) {
     minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
     seconds: Math.floor((diff % (1000 * 60)) / 1000),
   };
+}
+
+function formatDropDate(target: number) {
+  return `${new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+    timeZone: 'UTC',
+  }).format(target)} UTC`;
 }

@@ -549,28 +549,16 @@
 
   /* ── Reveal animations ────────────────────────────────────────────────── */
 
+  /* Content is visible by default; useReveal hides below-fold elements only
+     (data-reveal="pending") once JS, IntersectionObserver and motion are available. */
   .h-reveal {
+    transition: opacity var(--duration-reveal) var(--ease-expo),
+                transform var(--duration-reveal) var(--ease-expo);
+  }
+
+  .h-reveal[data-reveal='pending'] {
     opacity: 0;
     transform: translateY(16px);
-    transition: opacity var(--duration-reveal) var(--ease-expo),
-                transform var(--duration-reveal) var(--ease-expo);
-  }
-
-  .h-reveal.is-visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .h-reveal-img {
-    opacity: 0;
-    transform: scale(0.98);
-    transition: opacity var(--duration-reveal) var(--ease-expo),
-                transform var(--duration-reveal) var(--ease-expo);
-  }
-
-  .h-reveal-img.is-visible {
-    opacity: 1;
-    transform: scale(1);
   }
 
   /* Staggered child reveals */
@@ -750,8 +738,7 @@
     scroll-behavior: auto !important;
   }
 
-  .h-reveal,
-  .h-reveal-img {
+  .h-reveal {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
