@@ -1,0 +1,52 @@
+import {describe, expect, it} from 'vitest';
+import {applyPrivateHeaders, isPrivatePath, PRIVATE_ROBOTS_META} from '~/lib/private-route';
+
+describe('isPrivatePath', () => {
+  it('covers the account and cart trees', () => {
+    for (const path of ['/account', '/account/orders', '/account/addresses', '/cart', '/cart/c/abc']) {
+      expect(isPrivatePath(path)).toBe(true);
+    }
+  });
+
+  it('does not catch look-alike public paths', () => {
+    for (const path of ['/', '/accounting', '/carts', '/products/cart', '/collections/account']) {
+      expect(isPrivatePath(path)).toBe(false);
+    }
+  });
+});
+
+describe('applyPrivateHeaders', () => {
+  const respond = (status: number, init?: HeadersInit) => new Response('x', {status, headers: init});
+
+  it('makes every private response uncacheable and unindexable, errors and redirects included', () => {
+    for (const status of [200, 302, 404, 500, 503]) {
+      const result = applyPrivateHeaders(respond(status, {'Cache-Control': 'public, max-age=3600'}), 'https://shop.test/account/orders');
+      expect(result.status).toBe(status);
+      expect(result.headers.get('Cache-Control')).toBe('private, no-store');
+      expect(result.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+    }
+  });
+
+  it('leaves public responses alone', () => {
+    const result = applyPrivateHeaders(respond(200, {'Cache-Control': 'public, max-age=60'}), 'https://shop.test/collections/all');
+    expect(result.headers.get('Cache-Control')).toBe('public, max-age=60');
+    expect(result.headers.get('X-Robots-Tag')).toBeNull();
+  });
+
+  it('works on a response whose headers are immutable', () => {
+    const immutable = Response.redirect('https://shop.test/account/login', 302);
+    const result = applyPrivateHeaders(immutable, 'https://shop.test/account');
+    expect(result.status).toBe(302);
+    expect(result.headers.get('Location')).toBe('https://shop.test/account/login');
+    expect(result.headers.get('Cache-Control')).toBe('private, no-store');
+  });
+
+  it('ignores an unparseable URL', () => {
+    const response = respond(200);
+    expect(applyPrivateHeaders(response, 'not a url')).toBe(response);
+  });
+
+  it('exposes the matching robots meta entry', () => {
+    expect(PRIVATE_ROBOTS_META).toEqual({name: 'robots', content: 'noindex, nofollow'});
+  });
+});

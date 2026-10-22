@@ -1,9 +1,7 @@
 import {redirect, type LoaderFunctionArgs, type MetaFunction} from 'react-router';
+import {accountMeta} from '~/lib/account';
 
-export const meta: MetaFunction = () => [
-  {title: 'Register | LEGENDARY BRANDING'},
-  {name: 'description', content: 'Create your Legendary Branding account.'},
-];
+export const meta: MetaFunction = () => accountMeta('Register', 'Create your Legendary Branding account.');
 
 /**
  * Register loader — starts the OAuth PKCE register flow.

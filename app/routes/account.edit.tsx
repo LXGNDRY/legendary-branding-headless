@@ -11,12 +11,12 @@ import {requireSameOrigin} from '~/lib/security';
 import {useState} from 'react';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
+import {accountMeta, loadAccount, mutationErrors} from '~/lib/account';
 
-export const meta: MetaFunction = () => [
-  {title: 'Edit Account | LEGENDARY BRANDING'},
-  {name: 'description', content: 'Update your account details.'},
-  {tagName: 'link', rel: 'canonical', href: 'https://www.legendary-branding.com/account/edit'},
-];
+// NOTE: private page: no canonical (that would advertise customer content as a public URL); noindex comes from accountMeta.
+export const meta: MetaFunction = () => accountMeta('Edit Account', 'Update your account details.');
+
+const MAX_NAME_LENGTH = 100;
 
 const CUSTOMER_QUERY = `#graphql
   query Customer {
@@ -49,11 +49,11 @@ const CUSTOMER_UPDATE_MUTATION = `#graphql
 ` as const;
 
 interface CustomerData {
-  firstName: string;
-  lastName: string;
-  emailAddress: {
-    emailAddress: string;
-  };
+  firstName?: string | null;
+  lastName?: string | null;
+  emailAddress?: {
+    emailAddress?: string | null;
+  } | null;
 }
 
 interface ActionData {
@@ -73,9 +73,9 @@ export async function loader({context}: LoaderFunctionArgs) {
     return redirect('/account/login');
   }
 
-  const result = await customerAccount.query(CUSTOMER_QUERY);
+  const result = await loadAccount<{customer?: CustomerData | null}>('account.edit', () => customerAccount.query(CUSTOMER_QUERY));
 
-  return {customer: result.data.customer as CustomerData};
+  return {customer: result.ok ? (result.data.customer ?? null) : null};
 }
 
 export async function action({request, context}: ActionFunctionArgs) {
@@ -93,36 +93,35 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
 
   const formData = await request.formData();
-  const firstName = String(formData.get('firstName') || '').trim();
-  const lastName = String(formData.get('lastName') || '').trim();
+  // NOTE: control characters are stripped; accents, CJK and other scripts are kept as typed.
+  const clean = (key: string) => String(formData.get(key) || '').replace(/\p{Cc}/gu, ' ').trim();
+  const firstName = clean('firstName');
+  const lastName = clean('lastName');
 
   const errors: string[] = [];
   if (!firstName) errors.push('First name is required.');
   if (!lastName) errors.push('Last name is required.');
+  if (firstName.length > MAX_NAME_LENGTH || lastName.length > MAX_NAME_LENGTH) errors.push('Names can be up to 100 characters.');
 
   if (errors.length > 0) {
     return {success: false, errors};
   }
 
-  const result = await customerAccount.mutate(CUSTOMER_UPDATE_MUTATION, {
-    variables: {
-      input: {firstName, lastName},
-    },
-  });
-
-  const data = result.data as {
-    customerUpdate: {
-      customer: CustomerData | null;
-      userErrors: Array<{field: string[]; message: string}>;
-    };
-  };
-
-  if (data.customerUpdate.userErrors?.length > 0) {
-    return {
-      success: false,
-      errors: data.customerUpdate.userErrors.map((e) => e.message),
-    };
+  let result: Awaited<ReturnType<typeof customerAccount.mutate>> | undefined;
+  try {
+    result = await customerAccount.mutate(CUSTOMER_UPDATE_MUTATION, {
+      variables: {
+        input: {firstName, lastName},
+      },
+    });
+  } catch (error) {
+    if (error instanceof Response) throw error;
   }
+
+  const payload = (result?.data as {customerUpdate?: {userErrors?: Array<{message?: string | null}>} | null} | undefined)
+    ?.customerUpdate;
+  const failure = mutationErrors('account.edit', result, payload);
+  if (failure) return {success: false, errors: failure};
 
   return {success: true, errors: []};
 }
@@ -130,8 +129,23 @@ export async function action({request, context}: ActionFunctionArgs) {
 export default function AccountEditPage() {
   const {customer} = useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
-  const [firstName, setFirstName] = useState(customer.firstName);
-  const [lastName, setLastName] = useState(customer.lastName);
+  const [firstName, setFirstName] = useState(customer?.firstName ?? '');
+  const [lastName, setLastName] = useState(customer?.lastName ?? '');
+
+  if (!customer) {
+    return (
+      <Container className="py-24">
+        <div className="max-w-xl mx-auto text-center" role="alert">
+          <div className="h-eyebrow mb-3">ACCOUNT DETAILS</div>
+          <h1 className="text-3xl font-normal mb-4">We couldn&apos;t load your details</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-8">Please try again in a moment.</p>
+          <Link to="/account/edit" className="text-xs font-semibold tracking-widest uppercase underline underline-offset-4">
+            Try again
+          </Link>
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container className="py-16">
@@ -208,7 +222,7 @@ export default function AccountEditPage() {
             <input
               id="email"
               type="email"
-              value={customer.emailAddress.emailAddress}
+              value={customer.emailAddress?.emailAddress ?? ''}
               disabled
               className="w-full px-4 py-3 border border-[var(--color-border-muted)] text-sm bg-[var(--color-bg-level-1)] text-[var(--color-text-secondary)] cursor-not-allowed"
             />

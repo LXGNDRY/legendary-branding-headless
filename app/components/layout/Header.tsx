@@ -1,4 +1,5 @@
 import {Link, useLocation} from 'react-router';
+import LogoutForm from '~/components/ui/LogoutForm';
 import {useState, useEffect, useRef} from 'react';
 import {useWishlist} from '~/components/ui/Wishlist';
 import SearchTypeahead from '~/components/ui/SearchTypeahead';
@@ -359,12 +360,10 @@ function MobileMenu({
             {t('nav.search')}
           </Link>
           {isLoggedIn && (
-            <a
-              href="/account/logout"
-              className="h-eyebrow block text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-            >
-              Sign Out
-            </a>
+            <LogoutForm
+              label="Sign Out"
+              className="h-eyebrow block text-left text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            />
           )}
         </div>
 

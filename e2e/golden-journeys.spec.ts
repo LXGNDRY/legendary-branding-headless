@@ -101,8 +101,11 @@ test.describe('Journey 4: Mobile — Menu → Collection → Product', () => {
   });
 });
 
-test.describe('Journey 5: Customer login', () => {
-  test('login page loads', async ({page}) => {
+test.describe('Journey 5: Customer login (unconfigured environment)', () => {
+  // NOTE: this asserts the EXPECTED failure when Customer Account API credentials are absent. It is not proof that
+  // login works; the successful OAuth/profile/address journeys need an approved synthetic account (see R17 in
+  // docs/HEADLESS_RECOVERY_PLAN.md) and are not run in CI.
+  test('login is unavailable, with a branded error, when credentials are not configured', async ({page}) => {
     // Customer Account API credentials (PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID
     // etc.) aren't available in CI/this local preview build — without them
     // the loader throws "[h2:error:customerAccount] You do not have the

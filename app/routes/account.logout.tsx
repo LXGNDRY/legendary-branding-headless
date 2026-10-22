@@ -1,22 +1,25 @@
-import {redirect, type LoaderFunctionArgs, type MetaFunction} from 'react-router';
+import {redirect, type ActionFunctionArgs, type MetaFunction} from 'react-router';
+import {accountMeta} from '~/lib/account';
+import {requireSameOrigin} from '~/lib/security';
 
-export const meta: MetaFunction = () => [
-  {title: 'Logout | LEGENDARY BRANDING'},
-];
+export const meta: MetaFunction = () => accountMeta('Logout');
 
 /**
- * Logout loader — clears customer session and redirects to home.
+ * Signing out is a state change, so only a same-origin POST does it. A GET (a link, an image tag, a
+ * prefetch on another site) just goes back to the account page and leaves the session alone.
  */
-export async function loader({context}: LoaderFunctionArgs) {
+export function loader() {
+  return redirect('/account');
+}
+
+export async function action({request, context}: ActionFunctionArgs) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
   const {customerAccount} = context;
+  if (!customerAccount) return redirect('/');
 
-  if (customerAccount) {
-    return customerAccount.logout({
-      postLogoutRedirectUri: '/',
-    });
-  }
-
-  return redirect('/');
+  return customerAccount.logout({postLogoutRedirectUri: '/'});
 }
 
 export default function Logout() {
