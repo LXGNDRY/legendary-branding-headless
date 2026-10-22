@@ -1766,10 +1766,28 @@ export type SitemapArticlesQueryVariables = Exact<{
 export type SitemapArticlesQuery = {
   blog: {
     articles: {
-      nodes: Array<{handle: string; updatedAt: unknown}>;
+      nodes: Array<{handle: string}>;
       pageInfo: {hasNextPage: boolean; endCursor: string | null};
     };
   } | null;
+};
+
+export type SitemapPoliciesQueryVariables = Exact<{[key: string]: never}>;
+
+export type SitemapPoliciesQuery = {
+  shop: {
+    refundPolicy: {body: string} | null;
+    termsOfService: {body: string} | null;
+    shippingPolicy: {body: string} | null;
+    privacyPolicy: {body: string} | null;
+  };
+  refund: {body: unknown} | null;
+  terms: {body: unknown} | null;
+  privacy: {body: unknown} | null;
+  shipping: {body: unknown} | null;
+  sizeGuide: {body: unknown} | null;
+  about: {body: unknown} | null;
+  faq: {body: unknown} | null;
 };
 
 export type HomepageQueryVariables = Exact<{
@@ -2765,9 +2783,13 @@ interface GeneratedQueryTypes {
     return: SitemapPagesQuery;
     variables: SitemapPagesQueryVariables;
   };
-  '#graphql\n  query SitemapArticles($blogHandle: String!, $first: Int!, $after: String) {\n    blog(handle: $blogHandle) {\n      articles(first: $first, after: $after) { nodes { handle updatedAt: publishedAt } pageInfo { hasNextPage endCursor } }\n    }\n  }\n': {
+  '#graphql\n  query SitemapArticles($blogHandle: String!, $first: Int!, $after: String) {\n    blog(handle: $blogHandle) {\n      articles(first: $first, after: $after) { nodes { handle } pageInfo { hasNextPage endCursor } }\n    }\n  }\n': {
     return: SitemapArticlesQuery;
     variables: SitemapArticlesQueryVariables;
+  };
+  '#graphql\n  query SitemapPolicies {\n    shop {\n      refundPolicy { body }\n      termsOfService { body }\n      shippingPolicy { body }\n      privacyPolicy { body }\n    }\n    refund: page(handle: "refund-policy") { body }\n    terms: page(handle: "terms-of-service") { body }\n    privacy: page(handle: "privacy-with-legendary-branding") { body }\n    shipping: page(handle: "shipping-policy") { body }\n    sizeGuide: page(handle: "size-guide") { body }\n    about: page(handle: "about") { body }\n    faq: page(handle: "legendary_branding_faqs") { body }\n  }\n': {
+    return: SitemapPoliciesQuery;
+    variables: SitemapPoliciesQueryVariables;
   };
   '#graphql\n  #graphql\n  fragment ProductCard on Product {\n    id\n    title\n    handle\n    availableForSale\n    vendor\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n    images(first: 2) {\n      nodes {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n      maxVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    compareAtPriceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    tags\n    # Used by the product card\'s "Quick Add" button to add a variant to the\n    # cart without navigating to the PDP. Falls back to the first available\n    # variant when no options are pre-selected — correct for the common case\n    # of single-variant products or a "just add the default" quick action.\n    selectedOrFirstAvailableVariant(\n      selectedOptions: []\n      ignoreUnknownOptions: true\n      caseInsensitiveMatch: true\n    ) {\n      id\n      availableForSale\n      price {\n        amount\n        currencyCode\n      }\n      compareAtPrice {\n        amount\n        currencyCode\n      }\n    }\n    # Judge.me\'s synced rating/review-count badge -- real data, not\n    # fabricated. Absent until a product has its first review; the card\n    # simply omits the star row in that case (see StarRating).\n    reviewBadge: metafield(namespace: "judgeme", key: "badge") {\n      value\n    }\n  }\n\n  query Homepage($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    newDrops: collection(handle: "all-products") {\n      products(first: 8, sortKey: CREATED, reverse: true) {\n        nodes {\n          ...ProductCard\n        }\n      }\n    }\n    recentlyAdded: collection(handle: "all-products") {\n      products(first: 20, sortKey: CREATED, reverse: true) {\n        nodes {\n          ...ProductCard\n        }\n      }\n    }\n    marqueLegendaire: collection(handle: "marque-legendaire-luxury-streetwear") {\n      title\n      products(first: 4, sortKey: BEST_SELLING) {\n        nodes {\n          ...ProductCard\n        }\n      }\n    }\n  }\n': {
     return: HomepageQuery;

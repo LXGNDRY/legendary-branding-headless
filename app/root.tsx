@@ -48,6 +48,7 @@ import {
   type NavCollectionItem,
 } from '~/lib/nav';
 import {Analytics as HydrogenAnalytics, getShopAnalytics, CartForm, createWithCache} from '@shopify/hydrogen';
+import {SITE_ORIGIN} from '~/lib/site';
 
 export const links: LinksFunction = () => [
   // The raw Shopify Files upload (Timeless_Style_-_Artboard_22_4.png) is a
@@ -106,7 +107,7 @@ export const meta: MetaFunction = () => [
   },
   {property: 'og:type', content: 'website'},
   {property: 'og:site_name', content: 'Legendary Branding'},
-  {property: 'og:url', content: 'https://www.legendary-branding.com'},
+  {property: 'og:url', content: SITE_ORIGIN},
   {property: 'og:title', content: 'Legendary Branding | Premium Streetwear'},
   {property: 'og:description', content: 'Premium streetwear built to last. 220GSM+ premium-weight tees, made to order. Shop the collection.'},
   {name: 'twitter:card', content: 'summary_large_image'},
@@ -277,10 +278,9 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     localization: localizationResult.localization as LocalizationData,
     navCollections,
     shop,
-    storeTrust: toStoreTrust(
-      storeTrustResult,
-      (localizationResult.localization as LocalizationData).availableCountries.map((c) => c.isoCode),
-    ),
+    // NOTE: the return policy text states no regions, so product schema claims it only for the active market (the one
+    // whose prices and offers the page shows), never for every market the store sells to.
+    storeTrust: toStoreTrust(storeTrustResult, [context.storefront.i18n.country]),
     activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on

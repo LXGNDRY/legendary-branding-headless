@@ -7,6 +7,7 @@ import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema} from '~/components/seo/SeoSchema';
+import {ROUTES, canonicalUrl} from '~/lib/site';
 
 type ArticleNode = {
   id: string;
@@ -53,10 +54,10 @@ export const meta: MetaFunction = () => [
     name: 'description',
     content: 'Culture, craft, and community from Legendary Branding.',
   },
-  {tagName: 'link', rel: 'canonical', href: 'https://www.legendary-branding.com/journal'},
+  {tagName: 'link', rel: 'canonical', href: canonicalUrl(ROUTES.journal)},
   {property: 'og:title', content: 'Journal | LEGENDARY BRANDING'},
   {property: 'og:description', content: 'Culture, craft, and community from Legendary Branding.'},
-  {property: 'og:url', content: 'https://www.legendary-branding.com/journal'},
+  {property: 'og:url', content: canonicalUrl(ROUTES.journal)},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
