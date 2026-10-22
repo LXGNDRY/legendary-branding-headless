@@ -23,9 +23,9 @@ export default function WaitlistForm({
   if (fetcher.data?.success) {
     return (
       <div className="p-4 bg-[var(--color-surface)] rounded-sm border border-[var(--color-border-medium)]">
-        <p className="text-xs font-medium mb-1">You&apos;re on the list</p>
+        <p className="text-xs font-medium mb-1">Restock request received</p>
         <p className="text-xs text-[var(--color-text-secondary)]">
-          We&apos;ll email you when this item is back in stock.
+          You&apos;ll only be emailed about this item.
         </p>
       </div>
     );
@@ -39,8 +39,6 @@ export default function WaitlistForm({
       <fetcher.Form method="post" action="/api/waitlist" className="flex gap-2">
         <input type="hidden" name="productId" value={productId} />
         <input type="hidden" name="variantId" value={variantId} />
-        <input type="hidden" name="productTitle" value={productTitle} />
-        <input type="hidden" name="variantTitle" value={variantTitle ?? ''} />
         <label htmlFor="waitlist-email" className="sr-only">
           Email address
         </label>

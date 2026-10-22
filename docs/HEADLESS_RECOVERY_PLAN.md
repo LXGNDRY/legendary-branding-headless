@@ -373,7 +373,7 @@ Initial status for every recovery task is **Not started**; this document and its
 | R05 | In PR | claude/recovery-r05-cookies | `server.ts` appends (not replaces) the session cookie and copies cookies through 404 redirects; `commit()` clears `isPending`; 8 new tests. Real-browser/OAuth cookie checks still owed (needs preview) | See package/decision table |
 | R06 | Not started | — | — | See package/decision table |
 | R07 | Not started | — | — | See package/decision table |
-| R08 | Not started | — | — | See package/decision table |
+| R08 | In PR (code only) | claude/recovery-r08-leads | Subscribe payload fixed to the documented 2024-02-15 shape (profiles at `data.attributes.profiles.data`); restock now uses Klaviyo's per-variant back-in-stock endpoint with server-side variant/product/sold-out validation and no marketing opt-in; 202 treated as accepted not confirmed. **Live acceptance with a controlled address and the account's Back in Stock flow still owed** | Owner: test address, Klaviyo catalog sync + Back in Stock flow |
 | R09 | Not started | — | — | See package/decision table |
 | R10 | Not started | — | — | See package/decision table |
 | R11 | Not started | — | — | See package/decision table |
