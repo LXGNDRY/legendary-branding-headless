@@ -17,6 +17,7 @@ on:
 permissions:
   contents: read
   deployments: write
+  actions: read
 
 concurrency:
   group: ${{ github.ref }}-deployment
@@ -179,6 +180,8 @@ jobs:
           echo "AUTH_BYPASS_TOKEN=$AUTH_BYPASS_TOKEN" >> "$GITHUB_ENV"
         env:
           SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000180490 }}
+          # NOTE: baked into the worker at build time so /api/release can prove which commit is serving.
+          VITE_RELEASE_SHA: ${{ github.sha }}
 
       - name: Post-deploy smoke test
         run: |
@@ -258,7 +261,7 @@ jobs:
             -H "oxygen-auth-bypass-token: $AUTH_BYPASS_TOKEN" \
             --data '{"query":"{ shop { name } }"}' \
             "$DEPLOY_URL/api/unstable/graphql.json") || GRAPHQL_STATUS="000"
-          if [ "$GRAPHQL_STATUS" != "200" ] || ! jq -e '.data != null or .errors != null' "$GRAPHQL_OUT" >/dev/null 2>&1; then
+          if [ "$GRAPHQL_STATUS" != "200" ] || ! jq -e '.errors == null and (.data.shop.name | type == "string" and length > 0)' "$GRAPHQL_OUT" >/dev/null 2>&1; then
             echo "Storefront GraphQL proxy: FAIL (HTTP $GRAPHQL_STATUS)"
             FAILURES=$((FAILURES + 1))
           else
@@ -273,6 +276,55 @@ jobs:
           fi
 
           echo "All smoke tests passed ($TOTAL/$TOTAL routes verified)"
+
+      - name: Verify deployed commit and runtime environment contract
+        run: |
+          RELEASE_OUT="$(mktemp)"
+          STATUS=$(curl -sS -o "$RELEASE_OUT" -w "%{http_code}" --max-time 30 \
+            -H "oxygen-auth-bypass-token: $AUTH_BYPASS_TOKEN" \
+            "$DEPLOY_URL/api/release") || STATUS="000"
+          echo "Release endpoint: HTTP $STATUS"
+          jq -c . "$RELEASE_OUT" || true
+          if [ "$STATUS" != "200" ] || ! jq -e --arg sha "$GITHUB_SHA" '.ok == true and .missing == 0 and .sha == $sha' "$RELEASE_OUT" >/dev/null; then
+            echo "::error::Deployed worker is not the reviewed commit ($GITHUB_SHA) or its runtime environment is incomplete"
+            exit 1
+          fi
+
+      - name: Record release evidence
+        if: always()
+        run: |
+          mkdir -p release-evidence
+          jq -n \
+            --arg sha "$GITHUB_SHA" --arg ref "$GITHUB_REF_NAME" --arg run "$GITHUB_RUN_ID" \
+            --arg attempt "$GITHUB_RUN_ATTEMPT" --arg url "${DEPLOY_URL:-}" \
+            --arg lock "$(sha256sum package-lock.json | cut -d' ' -f1)" \
+            --arg outcome "${{ job.status }}" \
+            '{sha:$sha, ref:$ref, run:$run, attempt:$attempt, deployUrl:$url, lockfileSha256:$lock, outcome:$outcome}' \
+            | tee release-evidence/release.json
+          {
+            echo "### Release evidence"
+            echo '```json'
+            cat release-evidence/release.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-evidence-${{ github.sha }}
+          path: release-evidence/release.json
+          if-no-files-found: ignore
+
+      - name: Identify last healthy deploy
+        if: failure()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # NOTE: recovery is a normal PR/CI revert to this SHA — never a manual deploy or force-push.
+          LAST=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/oxygen-deployment-1000180490.yml/runs?branch=$GITHUB_REF_NAME&event=push&status=success&per_page=1" --jq '.workflow_runs[0] | "\(.head_sha) (run \(.id))"' 2>/dev/null || true)
+          echo "::error::Deploy verification failed. Last healthy deploy on $GITHUB_REF_NAME: ${LAST:-unknown}"
 
   e2e:
     name: E2E Tests (${{ matrix.project }})
