@@ -15,7 +15,8 @@ test.describe('Storefront API same-origin proxy', () => {
     const body = (await response.json()) as {data?: {shop?: {name?: unknown}}; errors?: unknown};
     // NOTE: a 200 with GraphQL errors is a broken proxy/token, so require real shop data and no errors.
     expect(body.errors).toBeUndefined();
-    expect(typeof body.data?.shop?.name).toBe('string');
-    expect((body.data?.shop?.name as string).length).toBeGreaterThan(0);
+    const shopName = body.data?.shop?.name;
+    expect(typeof shopName).toBe('string');
+    expect(String(shopName).length).toBeGreaterThan(0);
   });
 });
