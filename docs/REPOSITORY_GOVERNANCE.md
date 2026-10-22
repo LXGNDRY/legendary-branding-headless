@@ -55,3 +55,29 @@ The connected GitHub integration can create branches, commits, pull requests,
 reviews and merges, but does not expose repository ruleset or branch-protection
 administration. The rules above must be enabled in GitHub settings and then
 verified by attempting a blocked direct push and an unapproved PR merge.
+
+## Ruleset contract files (R23)
+
+Importable definitions live in `.github/rulesets/dev.json` and `.github/rulesets/main.json` with the exact
+check names the workflow emits today. Applying them is an owner/admin action (Settings → Rules → Rulesets →
+Import); agents never change repository settings and never weaken a rule to merge remediation.
+
+Decisions the owner must make before importing:
+- **Review requirement:** `require_code_owner_review` + one approval means no PR (including agent PRs) merges without
+  an owner approval. Drop it on `dev` only if agent merges on green CI are meant to continue.
+- **Bypass list:** empty by design (no administrator bypass). Add the owner only for audited emergency recovery.
+- **Up-to-date branch:** strict status checks force a branch update before each merge, which serializes PRs.
+
+After import, read the rulesets back and confirm: (1) check names match the PR's check list exactly, (2) a direct push
+to `dev`/`main` and a merge with a failing check are both rejected in a safe test, (3) the `claude/* → dev → main`
+topology still works.
+
+## Release provenance (R23)
+
+- The deploy job builds with `VITE_RELEASE_SHA=${{ github.sha }}`; the same SHA passed `quality` and `e2e`.
+- After deploy, `GET /api/release` on the deployed URL must return `ok:true`, `missing:0` and exactly that SHA,
+  or the job fails (it reports presence/count only — never variable names or values).
+- Every deploy uploads `release-evidence-<sha>` (SHA, run, lockfile hash, deploy URL, outcome).
+- A failed verification prints the last healthy deploy SHA. Recovery is a normal revert PR through CI.
+- Still owed: the Oxygen CLI builds its own bundle, so the tested artifact and the deployed artifact are the same
+  *commit and lockfile* but not the same bytes; adopting a prebuilt-artifact deploy path needs a supported CLI flow.
