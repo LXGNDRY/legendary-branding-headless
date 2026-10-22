@@ -1,3 +1,7 @@
+import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
+import {cleanSearchText, parsePriceRange} from '~/lib/search-params';
+import {resetPagination} from '~/lib/pagination-params';
 import {
   type LoaderFunctionArgs,
   type MetaFunction,
@@ -14,6 +18,7 @@ import ProductCard, {
 import {CacheShort} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {collectionPageSchema, breadcrumbSchema} from '~/components/seo/SeoSchema';
+import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
 
 const COLLECTION_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
@@ -120,10 +125,8 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
   const collection = data?.collection;
   const title = `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
   const description = collection?.description ?? `Shop ${collection?.title ?? 'this collection'}.`;
-  const canonical = `https://www.legendary-branding.com/collections/${collection?.handle ?? 'all'}`;
-  const ogImage = collection?.image?.url
-    ? `${collection.image.url}&width=1200&height=630`
-    : undefined;
+  const canonical = canonicalUrl(ROUTES.collection(collection?.handle ?? 'all'));
+  const ogImage = withImageTransform(collection?.image?.url, {width: 1200, height: 630});
 
   return [
     {title},
@@ -139,19 +142,18 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
 
 function buildFilters(searchParams: URLSearchParams): Array<Record<string, unknown>> {
   const filters: Array<Record<string, unknown>> = [];
-  const priceMin = searchParams.get('price_min');
-  const priceMax = searchParams.get('price_max');
-  if (priceMin || priceMax) {
-    const priceFilter: Record<string, number> = {};
-    if (priceMin) priceFilter.min = parseFloat(priceMin);
-    if (priceMax) priceFilter.max = parseFloat(priceMax);
-    if (Object.keys(priceFilter).length > 0) filters.push({price: priceFilter});
+  const {minPrice, maxPrice} = parsePriceRange(searchParams.get('price_min'), searchParams.get('price_max'));
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    filters.push({price: {...(minPrice !== undefined && {min: minPrice}), ...(maxPrice !== undefined && {max: maxPrice})}});
   }
   if (searchParams.get('in_stock') === '1') filters.push({available: true});
-  const productType = searchParams.get('type');
+  const productType = cleanSearchText(searchParams.get('type'));
   if (productType) filters.push({productType});
-  searchParams.getAll('tag').forEach((tag) => filters.push({tag}));
-  const vendor = searchParams.get('vendor');
+  searchParams.getAll('tag').slice(0, 10).forEach((raw) => {
+    const tag = cleanSearchText(raw);
+    if (tag) filters.push({tag});
+  });
+  const vendor = cleanSearchText(searchParams.get('vendor'));
   if (vendor) filters.push({vendor});
   return filters;
 }
@@ -205,12 +207,14 @@ export default function CollectionPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [filterOpen, setFilterOpen] = useState(false);
+  const {containerRef: filterDrawerRef} = useFocusTrap(filterOpen, () => setFilterOpen(false));
+  useBodyScrollLock(filterOpen);
 
   function handleSort(value: string) {
     const params = new URLSearchParams(searchParams);
     if (value === 'featured') params.delete('sort');
     else params.set('sort', value);
-    params.delete('cursor');
+    resetPagination(params);
     navigate(`?${params.toString()}`, {replace: true});
   }
 
@@ -218,14 +222,14 @@ export default function CollectionPage() {
     const params = new URLSearchParams(searchParams);
     if (value === null || value === '') params.delete(key);
     else params.set(key, value);
-    params.delete('cursor');
+    resetPagination(params);
     setSearchParams(params, {replace: true});
   }
 
   function clearAllFilters() {
     const params = new URLSearchParams(searchParams);
     ['price_min', 'price_max', 'in_stock', 'type', 'tag', 'vendor'].forEach((k) => params.delete(k));
-    params.delete('cursor');
+    resetPagination(params);
     setSearchParams(params, {replace: true});
   }
 
@@ -234,7 +238,6 @@ export default function CollectionPage() {
   );
 
   const productCount = collection.products.nodes.length;
-  const priceFilter = collection.products.filters.find((f) => f.type === 'PRICE_RANGE');
   const typeFilter = collection.products.filters.find(
     (f) => f.id === 'productType' || f.label.toLowerCase().includes('type'),
   );
@@ -338,7 +341,7 @@ export default function CollectionPage() {
                                 const p = new URLSearchParams(searchParams);
                                 if (isActive) p.delete('type');
                                 else p.set('type', v.label);
-                                p.delete('cursor');
+                                resetPagination(p);
                                 setSearchParams(p, {replace: true});
                               }}
                               className="w-4 h-4 accent-[var(--color-foreground)]"
@@ -418,10 +421,9 @@ export default function CollectionPage() {
               {({nodes, PreviousLink, NextLink, isLoading}) => (
                 <>
                   <div className="flex justify-center mb-8">
-                    <PreviousLink>
-                      <button className="h-btn-outline text-[0.7rem] px-5 py-2.5">
-                        {isLoading ? 'Loading…' : 'Load previous'}
-                      </button>
+                    {/* NOTE: the link carries the button styling itself; a button inside a link is two interactive controls. */}
+                    <PreviousLink className="h-btn-outline text-[0.7rem] px-5 py-2.5">
+                      {isLoading ? 'Loading…' : 'Load previous'}
                     </PreviousLink>
                   </div>
 
@@ -448,11 +450,7 @@ export default function CollectionPage() {
                   )}
 
                   <div className="flex justify-center mt-12">
-                    <NextLink>
-                      <button className="h-btn-outline">
-                        {isLoading ? 'Loading…' : 'Load more'}
-                      </button>
-                    </NextLink>
+                    <NextLink className="h-btn-outline">{isLoading ? 'Loading…' : 'Load more'}</NextLink>
                   </div>
                 </>
               )}
@@ -463,9 +461,9 @@ export default function CollectionPage() {
 
       {/* Mobile filter drawer */}
       {filterOpen && (
-        <div className="fixed inset-0 z-[500] lg:hidden">
-          <div className="absolute inset-0 bg-[var(--color-foreground)]/40" onClick={() => setFilterOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed inset-0 z-[500] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+          <button type="button" tabIndex={-1} aria-label="Close filters" className="absolute inset-0 bg-[var(--color-foreground)]/40" data-overlay-keep onClick={() => setFilterOpen(false)} />
+          <div ref={filterDrawerRef} className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col pb-[env(safe-area-inset-bottom)]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border-subtle)]">
               <p className="h-eyebrow text-[var(--color-foreground)]">Filters</p>
               <button onClick={() => setFilterOpen(false)} aria-label="Close filters" className="min-h-11 min-w-11 inline-flex items-center justify-center text-[var(--color-foreground)]">
@@ -501,7 +499,7 @@ export default function CollectionPage() {
                                 const p = new URLSearchParams(searchParams);
                                 if (isActive) p.delete('type');
                                 else p.set('type', v.label);
-                                p.delete('cursor');
+                                resetPagination(p);
                                 setSearchParams(p, {replace: true});
                               }}
                               className="w-4 h-4 accent-[var(--color-foreground)]"

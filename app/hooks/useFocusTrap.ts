@@ -1,5 +1,6 @@
 import {useEffect, useRef, useCallback} from 'react';
 import type {RefObject} from 'react';
+import {isTopmostOverlay, registerOverlay, type OverlayHandle} from '~/lib/overlay-stack';
 
 /**
  * useFocusTrap — traps keyboard focus within a container element.
@@ -9,6 +10,9 @@ import type {RefObject} from 'react';
  *
  * Used for modals, mobile menus, and other overlays where focus
  * should not escape into the background content.
+ *
+ * Traps are coordinated through ~/lib/overlay-stack: only the topmost one handles Tab and Escape, and the rest of
+ * the page is inert while it is open. Closing it returns focus to whatever opened it.
  */
 export function useFocusTrap(
   active: boolean,
@@ -16,6 +20,13 @@ export function useFocusTrap(
 ): {containerRef: RefObject<HTMLDivElement | null>} {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const overlayRef = useRef<OverlayHandle | null>(null);
+  // NOTE: callers usually pass an inline callback, whose identity changes every render. Reading it through a
+  // ref keeps the trap's effect (which saves and restores focus) from restarting on every re-render.
+  const onEscapeRef = useRef(onEscape);
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  }, [onEscape]);
 
   const FOCUSABLE_SELECTOR = [
     'a[href]',
@@ -37,11 +48,13 @@ export function useFocusTrap(
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!active || !containerRef.current) return;
+      // Only the topmost overlay answers the keyboard.
+      if (!isTopmostOverlay(overlayRef.current)) return;
 
       // Escape
       if (e.key === 'Escape') {
         e.preventDefault();
-        onEscape?.();
+        onEscapeRef.current?.();
         return;
       }
 
@@ -69,7 +82,7 @@ export function useFocusTrap(
         }
       }
     },
-    [active, onEscape, getFocusableElements],
+    [active, getFocusableElements],
   );
 
   useEffect(() => {
@@ -78,8 +91,11 @@ export function useFocusTrap(
     // Save previously focused element to restore later
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
 
+    const registration = containerRef.current ? registerOverlay(containerRef.current) : null;
+    overlayRef.current = registration?.handle ?? null;
+
     // Focus the first focusable element
-    setTimeout(() => {
+    const focusTimer = setTimeout(() => {
       const focusable = getFocusableElements();
       if (focusable.length > 0) {
         focusable[0].focus();
@@ -89,9 +105,14 @@ export function useFocusTrap(
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      clearTimeout(focusTimer);
       document.removeEventListener('keydown', handleKeyDown);
-      // Restore focus
-      previouslyFocusedRef.current?.focus?.();
+      registration?.release();
+      overlayRef.current = null;
+      // Restore focus to the opener, but only if it is still in the page (it may have been removed, or sit inside
+      // an overlay that is itself still closed).
+      const opener = previouslyFocusedRef.current;
+      if (opener && opener.isConnected) opener.focus?.();
     };
   }, [active, handleKeyDown, getFocusableElements]);
 

@@ -8,14 +8,16 @@ import {
   Form,
 } from 'react-router';
 import {useState} from 'react';
-import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
-import ProductCard from '~/components/ui/ProductCard';
+import ProductCard, {PRODUCT_CARD_FRAGMENT, type ProductCardFragment} from '~/components/ui/ProductCard';
+import {cleanSearchQuery, cleanSearchText, parsePriceRange, parseSearchSort} from '~/lib/search-params';
 import {CacheShort} from '~/lib/cache';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {focusOnMount} from '~/lib/focus';
 
 const SEARCH_QUERY = `#graphql
+  ${PRODUCT_CARD_FRAGMENT}
   query Search(
     $query: String!
     $first: Int
@@ -34,6 +36,7 @@ const SEARCH_QUERY = `#graphql
   ) @inContext(country: $country, language: $language) {
     search(
       query: $query
+      types: [PRODUCT]
       first: $first
       last: $last
       after: $after
@@ -58,40 +61,8 @@ const SEARCH_QUERY = `#graphql
         cursor
         node {
           ... on Product {
-            id
-            title
-            handle
-            vendor
+            ...ProductCard
             productType
-            availableForSale
-            tags
-            description
-            featuredImage {
-              id
-              url
-              altText
-              width
-              height
-            }
-            priceRange {
-              minVariantPrice {
-                amount
-                currencyCode
-              }
-              maxVariantPrice {
-                amount
-                currencyCode
-              }
-            }
-            compareAtPriceRange {
-              minVariantPrice {
-                amount
-                currencyCode
-              }
-            }
-            reviewBadge: metafield(namespace: "judgeme", key: "badge") {
-              value
-            }
           }
         }
       }
@@ -113,35 +84,9 @@ const SORT_OPTIONS = [
   {key: 'RELEVANCE', label: 'Relevance', reverse: false},
   {key: 'PRICE', label: 'Price: Low to High', reverse: false},
   {key: 'PRICE', label: 'Price: High to Low', reverse: true},
-  {key: 'TITLE', label: 'Alphabetical: A-Z', reverse: false},
-  {key: 'TITLE', label: 'Alphabetical: Z-A', reverse: true},
-  {key: 'CREATED_AT', label: 'Newest First', reverse: true},
-  {key: 'BEST_SELLING', label: 'Best Selling', reverse: false},
 ];
 
-interface SearchProduct {
-  id: string;
-  title: string;
-  handle: string;
-  vendor: string;
-  productType: string;
-  availableForSale: boolean;
-  tags: string[];
-  featuredImage: {
-    url: string;
-    altText: string | null;
-    width: number | null;
-    height: number | null;
-  } | null;
-  priceRange: {
-    minVariantPrice: {amount: string; currencyCode: CurrencyCode};
-    maxVariantPrice: {amount: string; currencyCode: CurrencyCode};
-  };
-  compareAtPriceRange: {
-    minVariantPrice: {amount: string; currencyCode: CurrencyCode};
-  };
-  reviewBadge: {value: string} | null;
-}
+type SearchProduct = ProductCardFragment & {productType?: string};
 
 interface SearchResult {
   totalCount: number;
@@ -170,16 +115,15 @@ export const meta: MetaFunction<typeof loader> = ({data}) => [
 
 export async function loader({request, context}: LoaderFunctionArgs) {
   const url = new URL(request.url);
-  const query = url.searchParams.get('q')?.trim() ?? '';
-  const sortKey = url.searchParams.get('sort') ?? 'RELEVANCE';
+  const query = cleanSearchQuery(url.searchParams.get('q'));
+  const sortKey = parseSearchSort(url.searchParams.get('sort'));
   const reverse = url.searchParams.get('reverse') === 'true';
-  const after = url.searchParams.get('after') ?? undefined;
-  const before = url.searchParams.get('before') ?? undefined;
-  const minPrice = url.searchParams.get('min_price') ?? undefined;
-  const maxPrice = url.searchParams.get('max_price') ?? undefined;
+  const after = cleanSearchText(url.searchParams.get('after'), 300);
+  const before = cleanSearchText(url.searchParams.get('before'), 300);
+  const {minPrice, maxPrice} = parsePriceRange(url.searchParams.get('min_price'), url.searchParams.get('max_price'));
   const inStock = url.searchParams.get('in_stock') === '1';
-  const productType = url.searchParams.get('type') ?? undefined;
-  const vendor = url.searchParams.get('vendor') ?? undefined;
+  const productType = cleanSearchText(url.searchParams.get('type'));
+  const vendor = cleanSearchText(url.searchParams.get('vendor'));
 
   if (!query) {
     return {
@@ -202,8 +146,8 @@ export async function loader({request, context}: LoaderFunctionArgs) {
       availableV2: inStock || undefined,
       productType,
       productVendor: vendor,
-      minPrice: minPrice ? parseFloat(minPrice) : undefined,
-      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+      minPrice,
+      maxPrice,
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
     },
@@ -259,7 +203,7 @@ export default function SearchPage() {
               name="q"
               placeholder="Search products, collections, and more..."
               className="w-full bg-transparent border-b border-[var(--color-border-medium)] py-3 text-lg text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-text-tertiary)]"
-              autoFocus
+              ref={focusOnMount}
             />
           </Form>
         </div>
@@ -563,7 +507,7 @@ export default function SearchPage() {
       {/* Mobile filter drawer */}
       {filterOpen && (
         <div className="fixed inset-0 z-[500] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
-          <div className="absolute inset-0 bg-[var(--color-foreground)]/40" onClick={() => setFilterOpen(false)} />
+          <button type="button" tabIndex={-1} aria-label="Close filters" className="absolute inset-0 bg-[var(--color-foreground)]/40" data-overlay-keep onClick={() => setFilterOpen(false)} />
           <div
             ref={filterDrawerRef}
             className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col pb-[env(safe-area-inset-bottom)]"

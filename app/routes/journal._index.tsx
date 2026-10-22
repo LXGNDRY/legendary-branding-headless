@@ -1,10 +1,13 @@
 import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
+import {useLanguage} from '~/lib/i18n';
+import {formatDate} from '~/lib/locale';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema} from '~/components/seo/SeoSchema';
+import {ROUTES, canonicalUrl} from '~/lib/site';
 
 type ArticleNode = {
   id: string;
@@ -51,10 +54,10 @@ export const meta: MetaFunction = () => [
     name: 'description',
     content: 'Culture, craft, and community from Legendary Branding.',
   },
-  {tagName: 'link', rel: 'canonical', href: 'https://www.legendary-branding.com/journal'},
+  {tagName: 'link', rel: 'canonical', href: canonicalUrl(ROUTES.journal)},
   {property: 'og:title', content: 'Journal | LEGENDARY BRANDING'},
   {property: 'og:description', content: 'Culture, craft, and community from Legendary Branding.'},
-  {property: 'og:url', content: 'https://www.legendary-branding.com/journal'},
+  {property: 'og:url', content: canonicalUrl(ROUTES.journal)},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -71,16 +74,10 @@ export async function loader({context}: LoaderFunctionArgs) {
   return {articles: (blog?.articles?.nodes ?? []) as ArticleNode[]};
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
 
 export default function JournalIndex() {
   const {articles} = useLoaderData<typeof loader>();
+  const language = useLanguage();
   const [featured, ...rest] = articles;
 
   const breadcrumbJsonLd = breadcrumbSchema([
@@ -141,7 +138,7 @@ export default function JournalIndex() {
               </p>
             )}
             <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide mb-6">
-              {formatDate(featured.publishedAt)}
+              {formatDate(featured.publishedAt, language)}
               {featured.author?.name && ` · ${featured.author.name}`}
             </p>
             <Link
@@ -181,7 +178,7 @@ export default function JournalIndex() {
                 )}
               </Link>
               <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide mb-2">
-                {formatDate(article.publishedAt)}
+                {formatDate(article.publishedAt, language)}
               </p>
               <Link to={`/journal/${article.handle}`} prefetch="intent">
                 <h3 className="text-sm font-medium leading-snug group-hover:text-[var(--color-text-secondary)] transition-colors mb-2">

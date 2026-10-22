@@ -1,10 +1,14 @@
+import SafeHtml from '~/components/ui/SafeHtml';
 import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
+import {useLanguage} from '~/lib/i18n';
+import {formatDate} from '~/lib/locale';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {articleSchema, breadcrumbSchema} from '~/components/seo/SeoSchema';
+import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
 
 type ArticleData = {
   id: string;
@@ -51,8 +55,9 @@ const ARTICLE_QUERY = `#graphql
 export const meta: MetaFunction<typeof loader> = ({data, location}) => {
   const article = data?.article;
   const description = article?.excerpt ?? `${article?.title ?? 'Article'} | Legendary Branding Journal`;
-  const ogImage = article?.image?.url;
-  const canonical = `https://www.legendary-branding.com${location.pathname}`;
+  const ogImage = withImageTransform(article?.image?.url, {width: 1200, height: 630});
+  // NOTE: from the handle, not the URL path, so a trailing slash or different casing can't create a second canonical.
+  const canonical = canonicalUrl(ROUTES.article(article?.handle ?? location.pathname.replace(/^\/journal\//, '').replace(/\/+$/, '')));
   return [
     {title: `${article?.title ?? 'Article'} | The Journal | LEGENDARY BRANDING`},
     {name: 'description', content: description},
@@ -61,11 +66,11 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
     {property: 'og:title', content: article?.title ?? 'Article'},
     {property: 'og:description', content: description},
     {property: 'og:url', content: canonical},
-    ...(ogImage ? [{property: 'og:image', content: `${ogImage}&width=1200&height=630`}] : []),
+    ...(ogImage ? [{property: 'og:image', content: ogImage}] : []),
     {name: 'twitter:card', content: 'summary_large_image'},
     {name: 'twitter:title', content: article?.title ?? 'Article'},
     {name: 'twitter:description', content: description},
-    ...(ogImage ? [{name: 'twitter:image', content: `${ogImage}&width=1200&height=630`}] : []),
+    ...(ogImage ? [{name: 'twitter:image', content: ogImage}] : []),
   ];
 };
 
@@ -89,16 +94,10 @@ export async function loader({params, context}: LoaderFunctionArgs) {
   return {article: article as ArticleData};
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
 
 export default function ArticlePage() {
   const {article} = useLoaderData<typeof loader>();
+  const language = useLanguage();
 
   const articleJsonLd = articleSchema({
     title: article.title,
@@ -152,7 +151,7 @@ export default function ArticlePage() {
           </h1>
 
           <div className="flex items-center gap-4 text-[11px] text-[var(--color-text-tertiary)] tracking-wide">
-            <span>{formatDate(article.publishedAt)}</span>
+            <span>{formatDate(article.publishedAt, language)}</span>
             {article.author?.name && (
               <>
                 <span>·</span>
@@ -169,8 +168,7 @@ export default function ArticlePage() {
         </header>
 
         {/* Article body */}
-        <div
-          className="max-w-2xl mx-auto prose prose-sm lg:prose-base max-w-none
+        <SafeHtml className="max-w-2xl mx-auto prose prose-sm lg:prose-base max-w-none
             [&_p]:text-[var(--color-foreground)] [&_p]:leading-relaxed [&_p]:mb-5
             [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-4
             [&_h3]:text-lg [&_h3]:font-bold [&_h3]:tracking-tight [&_h3]:mt-8 [&_h3]:mb-3
@@ -179,10 +177,7 @@ export default function ArticlePage() {
             [&_strong]:font-semibold [&_strong]:text-[var(--color-foreground)]
             [&_a]:underline [&_a]:underline-offset-2 [&_a]:text-[var(--color-foreground)] [&_a]:hover:text-[var(--color-text-secondary)]
             [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--color-foreground)] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-[var(--color-text-secondary)]
-            [&_img]:w-full [&_img]:my-8"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{__html: article.contentHtml}}
-        />
+            [&_img]:w-full [&_img]:my-8" html={article.contentHtml} />
 
         {/* Tags */}
         {article.tags.length > 0 && (

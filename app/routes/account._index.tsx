@@ -7,11 +7,10 @@ import {
 } from 'react-router';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
+import {accountMeta, loadAccount} from '~/lib/account';
+import LogoutForm from '~/components/ui/LogoutForm';
 
-export const meta: MetaFunction = () => [
-  {title: 'My Account | LEGENDARY BRANDING'},
-  {name: 'description', content: 'Your Legendary Branding account dashboard.'},
-];
+export const meta: MetaFunction = () => accountMeta('My Account', 'Your Legendary Branding account dashboard.');
 
 const CUSTOMER_QUERY = `#graphql
   query Customer {
@@ -26,11 +25,11 @@ const CUSTOMER_QUERY = `#graphql
 ` as const;
 
 interface CustomerData {
-  firstName: string;
-  lastName: string;
-  emailAddress: {
-    emailAddress: string;
-  };
+  firstName?: string | null;
+  lastName?: string | null;
+  emailAddress?: {
+    emailAddress?: string | null;
+  } | null;
 }
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -45,13 +44,28 @@ export async function loader({context}: LoaderFunctionArgs) {
     return redirect('/account/login');
   }
 
-  const result = await customerAccount.query(CUSTOMER_QUERY);
+  const result = await loadAccount<{customer?: CustomerData | null}>('account', () => customerAccount.query(CUSTOMER_QUERY));
 
-  return {customer: result.data.customer as CustomerData};
+  return {customer: result.ok ? (result.data.customer ?? null) : null};
 }
 
 export default function AccountPage() {
   const {customer} = useLoaderData<typeof loader>();
+
+  if (!customer) {
+    return (
+      <Container className="py-24">
+        <div className="max-w-xl mx-auto text-center" role="alert">
+          <div className="h-eyebrow mb-3">MY ACCOUNT</div>
+          <h1 className="text-3xl font-normal mb-4">We couldn&apos;t load your details</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-8">Please try again in a moment.</p>
+          <Link to="/account" className="text-xs font-semibold tracking-widest uppercase underline underline-offset-4">
+            Try again
+          </Link>
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container className="py-16">
@@ -60,7 +74,7 @@ export default function AccountPage() {
         <div className="mb-12">
           <div className="h-eyebrow mb-3">MY ACCOUNT</div>
           <h1 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-normal mb-3 text-[var(--color-text-primary)] leading-tight">
-            Hey, {customer.firstName}
+            {customer.firstName ? `Hey, ${customer.firstName}` : 'Hey there'}
           </h1>
           <p className="text-[var(--color-text-secondary)] text-sm">
             Welcome back to your account dashboard.
@@ -71,29 +85,21 @@ export default function AccountPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
           <div className="border border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] rounded-lg p-8">
             <div className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">ORDERS</div>
-            <h3 className="font-serif text-2xl font-normal mb-2 text-[var(--color-text-primary)]">View History</h3>
+            <h2 className="font-serif text-2xl font-normal mb-2 text-[var(--color-text-primary)]">View History</h2>
             <p className="text-sm text-[var(--color-text-secondary)] mb-6">See all your past orders.</p>
-            <Link to="/account/orders">
-              <Button variant="outline" size="sm">
-                View Orders
-              </Button>
-            </Link>
+            <Button as="link" to="/account/orders" variant="outline" size="sm">View Orders</Button>
           </div>
 
           <div className="border border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] rounded-lg p-8">
             <div className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">DETAILS</div>
-            <h3 className="font-serif text-2xl font-normal mb-2 text-[var(--color-text-primary)]">Account Details</h3>
+            <h2 className="font-serif text-2xl font-normal mb-2 text-[var(--color-text-primary)]">Account Details</h2>
             <p className="text-sm text-[var(--color-text-secondary)] mb-1">
-              {customer.firstName} {customer.lastName}
+              {[customer.firstName, customer.lastName].filter(Boolean).join(' ')}
             </p>
             <p className="text-sm text-[var(--color-text-secondary)] mb-6">
-              {customer.emailAddress.emailAddress}
+              {customer.emailAddress?.emailAddress}
             </p>
-            <Link to="/account/edit">
-              <Button variant="outline" size="sm">
-                Edit Details
-              </Button>
-            </Link>
+            <Button as="link" to="/account/edit" variant="outline" size="sm">Edit Details</Button>
           </div>
         </div>
 
@@ -119,12 +125,10 @@ export default function AccountPage() {
             >
               Account
             </Link>
-            <a
-              href="/account/logout"
+            <LogoutForm
+              label="Logout"
               className="text-sm font-semibold tracking-[0.08em] uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
-            >
-              Logout
-            </a>
+            />
           </div>
         </div>
       </div>

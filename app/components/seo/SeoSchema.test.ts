@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {faqPageSchema, parseFaqFromHtml, breadcrumbSchema, collectionPageSchema} from './SeoSchema';
+import {faqPageSchema, parseFaqFromHtml, breadcrumbSchema, collectionPageSchema, organizationSchema, productSchema} from './SeoSchema';
 
 describe('parseFaqFromHtml', () => {
   it('extracts question/answer pairs from <details><summary> markup', () => {
@@ -82,5 +82,36 @@ describe('collectionPageSchema', () => {
     expect(schema.mainEntity).toMatchObject({
       itemListElement: [{url: 'https://www.legendary-branding.com/products/hoodie'}],
     });
+  });
+});
+
+describe('organization and product schema facts', () => {
+  it('uses a logo asset that exists when the store has none, never favicon.ico', () => {
+    expect(organizationSchema().logo).toBe('https://www.legendary-branding.com/icon-512.png');
+    expect(organizationSchema({logoUrl: 'https://cdn.shopify.com/logo.png'}).logo).toBe('https://cdn.shopify.com/logo.png');
+  });
+
+  const product = (extra: Record<string, unknown>) =>
+    productSchema({
+      id: 'gid://shopify/Product/1',
+      title: 'Tee',
+      handle: 'tee',
+      description: 'd',
+      images: [],
+      variants: [{id: 'v1', price: '49.00', currencyCode: 'USD', available: true}],
+      ...extra,
+    } as never);
+
+  it('claims the return policy only for the countries it is given, and never defaults to US', () => {
+    const withCountry = product({returnDays: 30, returnCountries: ['DE']}) as {offers: Array<{hasMerchantReturnPolicy?: {applicableCountry: unknown}}>};
+    expect(withCountry.offers[0].hasMerchantReturnPolicy?.applicableCountry).toEqual(['DE']);
+    const none = product({returnDays: 30, returnCountries: []}) as {offers: Array<{hasMerchantReturnPolicy?: unknown}>};
+    expect(none.offers[0].hasMerchantReturnPolicy).toBeUndefined();
+  });
+
+  it('builds offer ids and urls from the product route on the live origin', () => {
+    const schema = product({}) as {'@id': string; offers: Array<{url: string; '@id': string}>};
+    expect(schema['@id']).toBe('https://www.legendary-branding.com/products/tee#product');
+    expect(schema.offers[0].url).toBe('https://www.legendary-branding.com/products/tee');
   });
 });

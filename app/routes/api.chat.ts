@@ -1,63 +1,39 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
-import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {enforceRatePolicy} from '~/lib/rate-limit';
+import {CacheLong} from '~/lib/cache';
+import {optional} from '~/lib/optional';
+import {
+  CHAT_CONTEXT_BUDGET_MS,
+  CHAT_DEADLINE_MS,
+  CHAT_MAX_BODY_BYTES,
+  CHAT_MAX_OUTPUT_TOKENS,
+  CHAT_MODEL,
+  chatReadiness,
+} from '~/lib/chat-policy';
+import {
+  buildSystemPrompt,
+  extractSearchKeywords,
+  sanitizeHistory,
+  sanitizeMessage,
+  type StoreFacts,
+} from '~/lib/chat-grounding';
 import {requireSameOrigin} from '~/lib/security';
 
 /**
  * AI chat widget API route — POST /api/chat  { message: string, history?: ChatTurn[] }
  *
  * Storefront Q&A / product-finder only: grounds every reply in a live
- * Storefront API product search plus a fixed set of real store facts (see
- * SYSTEM_PROMPT below). It never touches orders, customer data, or checkout,
+ * Storefront API product search plus live store facts (collections, price range) read per request
+ * (see chat-grounding.ts). It never touches orders, customer data, or checkout,
  * and is not told anything it could use to fabricate those.
  *
  * Server-only — keeps the Anthropic API key out of the client bundle.
  * Degrades to a clean 503 (not a crash or a simulated reply) when
  * PRIVATE_ANTHROPIC_API_KEY is unset.
  *
- * Rate limit: 15 requests per minute per IP (LLM calls cost money per call).
+ * Protection: named per-client and per-isolate limits (see rate-limit.ts; local layer only), a request body
+ * cap, one total deadline, and a provider-readiness check. Shared spend control: docs/CHAT_PROTECTION.md.
  */
-
-interface ChatTurn {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-// Forwarding a full sentence straight into Shopify's products(query:) search
-// treats every word as a literal search term, so filler words in a normal
-// question ("Do you have any hoodies?") often prevent a match that a plain
-// keyword search ("hoodies") would find. Stripped down to the words most
-// likely to be product-relevant before it ever reaches the Storefront API.
-const SEARCH_STOPWORDS = new Set([
-  'a', 'an', 'the', 'is', 'are', 'am', 'was', 'were', 'be', 'been', 'being',
-  'do', 'does', 'did', 'have', 'has', 'had', 'i', 'you', 'he', 'she', 'it',
-  'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me',
-  'him', 'us', 'them', 'this', 'that', 'these', 'those', 'to', 'of', 'in',
-  'on', 'at', 'for', 'with', 'about', 'any', 'some', 'and', 'or', 'but',
-  'can', 'could', 'would', 'should', 'will', 'want', 'looking', 'need',
-  'like', 'please', 'hi', 'hello', 'hey', 'thanks', 'thank', 'got', 'get',
-  'show', 'find', 'there', 'what', 'where', 'when', 'how', 'if',
-]);
-
-function extractSearchKeywords(message: string): string {
-  const words = message
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((word) => word.length > 1 && !SEARCH_STOPWORDS.has(word));
-
-  // Dedupe while preserving order, cap at a handful of terms so the query
-  // stays focused on the most product-relevant words in a longer message.
-  const keywords = [...new Set(words)].slice(0, 6);
-
-  // If everything got filtered out (e.g. a message that's all stopwords),
-  // fall back to the raw message rather than sending an empty query.
-  return keywords.length > 0 ? keywords.join(' ') : message;
-}
-
-const MAX_MESSAGE_LENGTH = 500;
-const MAX_HISTORY_TURNS = 6;
-const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
-const ANTHROPIC_TIMEOUT_MS = 15_000;
 
 const PRODUCT_SEARCH_QUERY = `#graphql
   query ChatProductSearch($query: String!, $country: CountryCode, $language: LanguageCode)
@@ -75,18 +51,49 @@ const PRODUCT_SEARCH_QUERY = `#graphql
   }
 ` as const;
 
-const SYSTEM_PROMPT = `You are the storefront assistant for Legendary Branding, a premium streetwear brand (legendary-branding.com).
+// Collections and the price range are read live so a catalog or price change never needs a prompt edit.
+const STORE_FACTS_QUERY = `#graphql
+  query ChatStoreFacts($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    collections(first: 20, sortKey: TITLE) {
+      nodes { title handle }
+    }
+    cheapest: products(first: 1, sortKey: PRICE) {
+      nodes { priceRange { minVariantPrice { amount currencyCode } } }
+    }
+    priciest: products(first: 1, sortKey: PRICE, reverse: true) {
+      nodes { priceRange { maxVariantPrice { amount currencyCode } } }
+    }
+  }
+` as const;
 
-Scope -- stay strictly within this:
-- Help visitors find products, understand sizing/materials, and answer policy/FAQ questions.
-- Use ONLY the "Relevant products" data given to you below for anything about specific items, prices, or availability. If nothing relevant was found, say so and suggest browsing the collection instead of guessing.
-- Never invent prices, stock levels, discounts, or product details not given to you.
-- You have NO access to order status, order history, payment methods, or any customer account data. If asked about an existing order, say you can't look that up and point them to legendary-branding.com/policies/contact or their order confirmation email.
-- Never discuss or promise changes to checkout, payments, taxes, or shipping costs beyond what is in the policy pages.
-- Collections available: Accessories & More, Hoodies & Jackets, Shirts & Tops, All Products, Sets, Marque Legendaire (luxury), Legendary Select.
-- Price range storewide: $55-$120 USD.
-- Policy pages exist at /policies/refund-policy, /policies/terms-of-service, /policies/privacy-with-legendary-branding, /policies/shipping-policy, /policies/size-guide, /policies/about, /policies/contact, /policies/legendary_branding_faqs -- point users there for anything policy-specific you're not fully sure of.
-- Keep replies short (2-4 sentences), plain text (no markdown), friendly but concise. When recommending a product, mention its name and that it can be found by searching for it on the site.`;
+type Money = {amount: string; currencyCode: string};
+
+function factsFrom(data: {
+  collections?: {nodes?: Array<{title: string; handle: string}>} | null;
+  cheapest?: {nodes?: Array<{priceRange?: {minVariantPrice?: Money}}>} | null;
+  priciest?: {nodes?: Array<{priceRange?: {maxVariantPrice?: Money}}>} | null;
+}): StoreFacts {
+  const min = data.cheapest?.nodes?.[0]?.priceRange?.minVariantPrice;
+  const max = data.priciest?.nodes?.[0]?.priceRange?.maxVariantPrice;
+  return {
+    collections: data.collections?.nodes ?? [],
+    ...(min && max ? {priceRange: {min, max}} : {}),
+  };
+}
+
+const GENERIC_FAILURE = 'Something went wrong. Please try again.';
+
+/** Logs the provider failure without its body: it can echo request content. */
+async function providerErrorType(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as {error?: {type?: unknown}};
+    const type = body.error?.type;
+    return typeof type === 'string' && /^[a-z_]{1,64}$/.test(type) ? type : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
 
 export async function action({request, context}: ActionFunctionArgs) {
   if (request.method !== 'POST') {
@@ -95,14 +102,31 @@ export async function action({request, context}: ActionFunctionArgs) {
   const originError = requireSameOrigin(request);
   if (originError) return originError;
 
-  const rateLimitResponse = rateLimitMiddleware(request, 'chat', 15);
+  // Never simulate a reply. A chat widget must not pretend to work when the provider is unavailable.
+  const readiness = chatReadiness(context.env);
+  if (!readiness.available) {
+    console.error('[chat] unavailable:', readiness.reason);
+    return Response.json({error: 'Chat is temporarily unavailable.'}, {status: 503});
+  }
+  const apiKey = context.env.PRIVATE_ANTHROPIC_API_KEY as string;
+
+  const rateLimitResponse = enforceRatePolicy(request, 'chat', 'chat-hourly', 'chat-global');
   if (rateLimitResponse) return rateLimitResponse;
 
   let message = '';
-  let history: ChatTurn[] = [];
+  let history: ReturnType<typeof sanitizeHistory> = [];
 
   try {
-    const body = (await request.json()) as {message?: unknown; history?: unknown};
+    const declared = Number(request.headers.get('content-length'));
+    if (Number.isFinite(declared) && declared > CHAT_MAX_BODY_BYTES) {
+      return Response.json({error: 'Message is too long.'}, {status: 413});
+    }
+    // NOTE: content-length is optional (chunked bodies), so the size is checked on the bytes actually read.
+    const raw = await request.text();
+    if (new TextEncoder().encode(raw).byteLength > CHAT_MAX_BODY_BYTES) {
+      return Response.json({error: 'Message is too long.'}, {status: 413});
+    }
+    const body = JSON.parse(raw) as {message?: unknown; history?: unknown};
     message = sanitizeMessage(body.message);
     history = sanitizeHistory(body.history);
   } catch {
@@ -110,57 +134,46 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
 
   if (!message) {
-    return Response.json(
-      {error: 'Please enter a message.'},
-      {status: 400},
-    );
+    return Response.json({error: 'Please enter a message.'}, {status: 400});
   }
 
-  const apiKey = context.env.PRIVATE_ANTHROPIC_API_KEY;
-
-  // Never simulate a reply. A chat widget must not pretend to work when the
-  // provider is unavailable or misconfigured.
-  if (!apiKey) {
-    console.error('[chat] PRIVATE_ANTHROPIC_API_KEY is not configured');
-    return Response.json(
-      {error: 'Chat is temporarily unavailable.'},
-      {status: 503},
-    );
-  }
-
-  let productContext = 'No matching products found.';
-  try {
-    const data = await context.storefront.query(PRODUCT_SEARCH_QUERY, {
-      variables: {
-        query: extractSearchKeywords(message),
-        country: context.storefront.i18n.country,
-        language: context.storefront.i18n.language,
-      },
-    });
-    const nodes = (data.products?.nodes ?? []) as Array<{
-      title: string;
-      handle: string;
-      availableForSale: boolean;
-      priceRange: {minVariantPrice: {amount: string; currencyCode: string}};
-    }>;
-    if (nodes.length > 0) {
-      productContext = nodes
-        .map(
-          (p) =>
-            `- ${p.title} (/products/${p.handle}) -- ${p.priceRange.minVariantPrice.amount} ${p.priceRange.minVariantPrice.currencyCode}, ${p.availableForSale ? 'in stock' : 'currently sold out'}`,
-        )
-        .join('\n');
-    }
-  } catch (error) {
-    console.error('[chat] Product search error:', error);
-    // Fall through with the "no matching products" default -- a search
-    // failure shouldn't block the assistant from answering general questions.
-  }
-
+  // One deadline covers the store lookups and the provider call.
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
+  const deadline = setTimeout(() => controller.abort(), CHAT_DEADLINE_MS);
 
   try {
+    const variables = {country: context.storefront.i18n.country, language: context.storefront.i18n.language};
+    const [productContext, facts] = await Promise.all([
+      optional(
+        'chat.products',
+        async () => {
+          const data = await context.storefront.query(PRODUCT_SEARCH_QUERY, {
+            variables: {query: extractSearchKeywords(message), ...variables},
+          });
+          const nodes = (data.products?.nodes ?? []) as Array<{
+            title: string;
+            handle: string;
+            availableForSale: boolean;
+            priceRange: {minVariantPrice: Money};
+          }>;
+          return nodes.length > 0
+            ? nodes
+                .map(
+                  (p) =>
+                    `- ${p.title} (/products/${p.handle}) -- ${p.priceRange.minVariantPrice.amount} ${p.priceRange.minVariantPrice.currencyCode}, ${p.availableForSale ? 'in stock' : 'currently sold out'}`,
+                )
+                .join('\n')
+            : 'No matching products found.';
+        },
+        {ms: CHAT_CONTEXT_BUDGET_MS, fallback: 'No matching products found.'},
+      ),
+      optional(
+        'chat.facts',
+        async () => factsFrom(await context.storefront.query(STORE_FACTS_QUERY, {variables, cache: CacheLong()})),
+        {ms: CHAT_CONTEXT_BUDGET_MS, fallback: null as StoreFacts | null},
+      ),
+    ]);
+
     const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -169,81 +182,37 @@ export async function action({request, context}: ActionFunctionArgs) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
-        max_tokens: 300,
-        system: `${SYSTEM_PROMPT}\n\nRelevant products for this message:\n${productContext}`,
-        messages: [
-          ...history.map((turn) => ({role: turn.role, content: turn.content})),
-          {role: 'user', content: message},
-        ],
+        model: CHAT_MODEL,
+        max_tokens: CHAT_MAX_OUTPUT_TOKENS,
+        system: buildSystemPrompt(facts, productContext),
+        messages: [...history, {role: 'user', content: message}],
       }),
       signal: controller.signal,
     });
 
     if (!anthropicResponse.ok) {
-      const errorText = await anthropicResponse.text();
-      console.error(`[chat] Anthropic API error ${anthropicResponse.status}: ${errorText}`);
-      return Response.json(
-        {error: 'Something went wrong. Please try again.'},
-        {status: 502},
-      );
+      console.error(`[chat] provider error status=${anthropicResponse.status} type=${await providerErrorType(anthropicResponse)}`);
+      return Response.json({error: GENERIC_FAILURE}, {status: 502});
     }
 
-    const result = (await anthropicResponse.json()) as {
-      content?: Array<{type: string; text?: string}>;
-    };
+    const result = (await anthropicResponse.json()) as {content?: Array<{type: string; text?: string}>};
     const reply = result.content?.find((block) => block.type === 'text')?.text?.trim();
 
     if (!reply) {
-      console.error('[chat] Anthropic response had no text content');
-      return Response.json(
-        {error: 'Something went wrong. Please try again.'},
-        {status: 502},
-      );
+      console.error('[chat] provider response had no text content');
+      return Response.json({error: GENERIC_FAILURE}, {status: 502});
     }
 
     return Response.json({reply});
   } catch (err) {
     const isAbort = err instanceof Error && err.name === 'AbortError';
-    console.error(isAbort ? '[chat] Anthropic request timed out' : '[chat] Network error calling Anthropic:', isAbort ? '' : err);
-    return Response.json(
-      {error: 'Something went wrong. Please try again.'},
-      {status: 502},
-    );
+    console.error(isAbort ? '[chat] request exceeded its deadline' : `[chat] request failed: ${err instanceof Error ? err.name : 'unknown'}`);
+    return Response.json({error: GENERIC_FAILURE}, {status: isAbort ? 504 : 502});
   } finally {
-    clearTimeout(timeout);
+    clearTimeout(deadline);
   }
 }
 
 export function loader(_args: LoaderFunctionArgs) {
   return Response.json({error: 'Method not allowed'}, {status: 405});
-}
-
-// --- helpers ---
-
-function sanitizeMessage(input: unknown): string {
-  if (typeof input !== 'string') return '';
-  return input
-    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
-    .trim()
-    .slice(0, MAX_MESSAGE_LENGTH);
-}
-
-function sanitizeHistory(input: unknown): ChatTurn[] {
-  if (!Array.isArray(input)) return [];
-  const turns: ChatTurn[] = [];
-  for (const entry of input) {
-    if (
-      entry &&
-      typeof entry === 'object' &&
-      (entry.role === 'user' || entry.role === 'assistant') &&
-      typeof entry.content === 'string'
-    ) {
-      turns.push({
-        role: entry.role,
-        content: sanitizeMessage(entry.content),
-      });
-    }
-  }
-  return turns.slice(-MAX_HISTORY_TURNS).filter((turn) => turn.content.length > 0);
 }

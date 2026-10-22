@@ -7,55 +7,26 @@ import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';
 import {withCheckoutLocale} from '~/lib/cart';
-import {requireSameOrigin} from '~/lib/security';
+import {handleCartMutation} from '~/lib/cart-mutation';
+import {useLanguage} from '~/lib/i18n';
 import TrustSignals from '~/components/ui/TrustSignals';
+import {focusOnMount} from '~/lib/focus';
 
 export const meta: MetaFunction = () => [
   {title: 'Cart | LEGENDARY BRANDING'},
 ];
 
 export async function action({request, context}: ActionFunctionArgs) {
-  const originError = requireSameOrigin(request);
-  if (originError) return originError;
-  const {cart} = context;
-  const formData = await request.formData();
-  const {action, inputs} = CartForm.getFormInput(formData);
-
-  let result;
-  switch (action) {
-    case CartForm.ACTIONS.LinesAdd:
-      result = await cart.addLines(
-        inputs.lines as Parameters<typeof cart.addLines>[0],
-      );
-      break;
-    case CartForm.ACTIONS.LinesUpdate:
-      result = await cart.updateLines(
-        inputs.lines as Parameters<typeof cart.updateLines>[0],
-      );
-      break;
-    case CartForm.ACTIONS.LinesRemove:
-      result = await cart.removeLines(
-        inputs.lineIds as Parameters<typeof cart.removeLines>[0],
-      );
-      break;
-    case CartForm.ACTIONS.DiscountCodesUpdate:
-      result = await cart.updateDiscountCodes(
-        (inputs.discountCodes as string[]).map((code) => code.trim()).filter(Boolean),
-      );
-      break;
-    default:
-      return new Response('Bad request', {status: 400});
-  }
-
-  const headers = cart.setCartId(result.cart.id);
-  return Response.json(
-    {
-      cart: result.cart,
-      errors: result.errors ?? [],
-      warnings: result.warnings ?? [],
-    },
-    {status: 200, headers},
-  );
+  return handleCartMutation({
+    request,
+    cart: context.cart,
+    allowed: [
+      CartForm.ACTIONS.LinesAdd,
+      CartForm.ACTIONS.LinesUpdate,
+      CartForm.ACTIONS.LinesRemove,
+      CartForm.ACTIONS.DiscountCodesUpdate,
+    ],
+  });
 }
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -104,9 +75,11 @@ function CartLineRow({line}: {line: CartLineData}) {
 
   return (
     <div className="flex gap-5 py-6 border-b border-[var(--color-border-subtle)]">
-      {/* Image */}
+      {/* Image — duplicates the title link beside it, so it is hidden from keyboard and assistive tech */}
       <Link
         to={`/products/${product.handle}`}
+        aria-hidden="true"
+        tabIndex={-1}
         className="shrink-0 w-24 h-28 overflow-hidden rounded-lg bg-[var(--color-surface)] block"
       >
         {image ? (
@@ -272,7 +245,7 @@ function CartDiscountSection({
             placeholder="Discount code"
             aria-label="Discount code"
             className="flex-1 min-w-0 text-sm border border-[var(--color-border-subtle)] bg-[var(--color-canvas)] px-3 py-2 text-[var(--color-foreground)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-foreground)]"
-            autoFocus
+            ref={focusOnMount}
           />
           <div className="flex gap-2 shrink-0">
             <button
@@ -340,6 +313,7 @@ function CartDiscountSection({
 
 export default function CartPage() {
   const {cart} = useLoaderData<typeof loader>();
+  const language = useLanguage();
   const {publish} = useAnalytics();
   const lines = cart?.lines?.edges?.map(({node}) => node) ?? [];
   const isEmpty = lines.length === 0;
@@ -455,8 +429,9 @@ export default function CartPage() {
             </div>
 
             {cart?.checkoutUrl ? (
-              <div
-                onClick={(e: React.MouseEvent) => {
+              <Button
+                as="a"
+                onClick={(e) => {
                   if (checkingOut) return;
                   publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart});
                   // A modifier/middle-click opens checkout in a new tab and
@@ -465,19 +440,14 @@ export default function CartPage() {
                   const opensNewTab = e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
                   if (!opensNewTab) setCheckingOut(true);
                 }}
-                className={checkingOut ? 'pointer-events-none' : undefined}
+                href={withCheckoutLocale(cart.checkoutUrl, language)}
+                variant="dark"
+                className="w-full justify-center"
+                loading={checkingOut}
+                testId="cart-checkout"
               >
-                <Button
-                  as="a"
-                  href={withCheckoutLocale(cart.checkoutUrl)}
-                  variant="dark"
-                  className="w-full justify-center"
-                  loading={checkingOut}
-                  testId="cart-checkout"
-                >
-                  {checkingOut ? 'Redirecting…' : 'Proceed to Checkout'}
-                </Button>
-              </div>
+                {checkingOut ? 'Redirecting…' : 'Proceed to Checkout'}
+              </Button>
             ) : (
               <Button
                 variant="dark"

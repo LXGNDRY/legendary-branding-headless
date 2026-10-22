@@ -3,7 +3,18 @@ import * as build from 'virtual:react-router/server-build';
 import {createRequestHandler, storefrontRedirect} from '@shopify/hydrogen';
 import {createAppLoadContext} from '~/lib/context';
 import {applySecurityHeaders, isAssetRequest} from '~/lib/security';
-import {initSentryServer, captureServerError} from '~/lib/sentry.server';
+import {withDefaultCacheControl} from '~/lib/cache';
+import {applyPrivateHeaders} from '~/lib/private-route';
+import {applyHostRobotsHeader} from '~/lib/robots';
+import {appendPendingSessionCookie, copySetCookies} from '~/lib/response-cookies';
+import {initSentryServer, captureServerError, drainServerReports} from '~/lib/sentry.server';
+import {setServerErrorReporter} from '~/lib/monitoring';
+
+// Route captureError() calls made inside loaders and actions through the redacting server reporter.
+// NOTE: no AsyncLocalStorage on Oxygen, so the reporter uses the isolate's latest request for URL and live/preview
+// environment. An isolate serves one deployment, so this only mislabels if it serves live and preview hosts at once.
+let latestRequest: Request | undefined;
+setServerErrorReporter((error, context) => captureServerError(error, {request: latestRequest, extra: context}));
 
 // Mode is determined by import.meta.env.PROD (set by Vite/Rollup at build time).
 // On Oxygen production, PROD is always true. On local dev, it's false.
@@ -17,6 +28,7 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
+    latestRequest = request;
     try {
       // Sentry — init early so errors during context setup are captured
       initSentryServer(env);
@@ -32,18 +44,19 @@ export default {
       });
 
       let response = await handleRequest(request);
+      // Reports raised inside route handlers finish delivering after the response is sent.
+      ctx.waitUntil(drainServerReports());
 
       // Commit session cookie if modified
-      if (appContext.session.isPending) {
-        response.headers.set(
-          'Set-Cookie',
-          await appContext.session.commit(),
-        );
-      }
+      await appendPendingSessionCookie(response, appContext.session);
 
       // Apply security headers to all non-asset responses
       if (!isAssetRequest(request)) {
-        response = applySecurityHeaders(response, request);
+        // NOTE: private routes (account, cart) are uncacheable and unindexable on every response, errors included.
+        response = applyHostRobotsHeader(
+          applyPrivateHeaders(withDefaultCacheControl(applySecurityHeaders(response, request)), request.url),
+          request.url,
+        );
       }
 
       // Handle 404s via Shopify redirects (URL redirects from admin)
@@ -54,9 +67,12 @@ export default {
           storefront: appContext.storefront,
         });
 
+        // Keep the session/cart cookies set on the original response
+        copySetCookies(response, redirectResponse);
+
         // Re-apply security headers to the redirect response
         if (redirectResponse !== response && !isAssetRequest(request)) {
-          return applySecurityHeaders(redirectResponse, request);
+          return applyHostRobotsHeader(applyPrivateHeaders(applySecurityHeaders(redirectResponse, request), request.url), request.url);
         }
 
         return redirectResponse;
@@ -69,6 +85,7 @@ export default {
 
       // Report to Sentry
       captureServerError(error, {request, waitUntil: ctx.waitUntil.bind(ctx)});
+      ctx.waitUntil(drainServerReports());
 
       // In development, include the error message for debugging
       const isDev = !import.meta.env.PROD;
@@ -84,7 +101,7 @@ export default {
         },
       });
 
-      return applySecurityHeaders(response, request);
+      return applyHostRobotsHeader(applyPrivateHeaders(applySecurityHeaders(response, request), request.url), request.url);
     }
   },
 };

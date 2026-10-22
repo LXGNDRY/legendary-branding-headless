@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {CacheLong, CacheShort, CacheNone} from './cache';
+import {CacheLong, CacheShort, CacheNone, withDefaultCacheControl} from './cache';
 
 describe('Cache utilities', () => {
   describe('CacheLong', () => {
@@ -38,5 +38,26 @@ describe('Cache utilities', () => {
       const result = CacheNone();
       expect(result.mode).toBe('no-store');
     });
+  });
+});
+
+describe('withDefaultCacheControl', () => {
+  it('keeps documents out of shared caches by default', () => {
+    expect(withDefaultCacheControl(new Response('ok')).headers.get('Cache-Control')).toBe(
+      'private, max-age=0, must-revalidate',
+    );
+  });
+
+  it('never caches error responses', () => {
+    for (const status of [400, 404, 500, 503]) {
+      expect(withDefaultCacheControl(new Response('x', {status})).headers.get('Cache-Control')).toBe('no-store');
+    }
+  });
+
+  it('leaves an explicit Cache-Control untouched', () => {
+    const res = new Response('ok', {headers: {'Cache-Control': 'public, max-age=3600'}});
+    expect(withDefaultCacheControl(res).headers.get('Cache-Control')).toBe('public, max-age=3600');
+    const err = new Response('x', {status: 500, headers: {'Cache-Control': 'no-store, no-cache'}});
+    expect(withDefaultCacheControl(err).headers.get('Cache-Control')).toBe('no-store, no-cache');
   });
 });

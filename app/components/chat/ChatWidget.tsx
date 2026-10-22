@@ -75,6 +75,11 @@ export default function ChatWidget() {
         }),
       });
 
+      if (response.status === 429) {
+        setError('You are sending messages too quickly. Please wait a moment and try again.');
+        return;
+      }
+
       const data = (await response.json()) as ChatApiResponse;
 
       if (!response.ok || !data.reply) {

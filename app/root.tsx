@@ -9,8 +9,10 @@ import {
   useFetchers,
   useLocation,
   isRouteErrorResponse,
+  useRouteLoaderData,
   Await,
 } from 'react-router';
+import {languageTag} from '~/lib/locale';
 import {useState, useEffect, Suspense} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
@@ -25,13 +27,15 @@ import CartDrawer from '~/components/layout/CartDrawer';
 import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import DiscountsPopup from '~/components/ui/DiscountsPopup';
 import ChatWidget from '~/components/chat/ChatWidget';
+import {chatReadiness} from '~/lib/chat-policy';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
 import {STORE_TRUST_QUERY, toStoreTrust, withBudget} from '~/lib/trust';
 import Analytics from '~/components/seo/Analytics';
 import {analyticsEnvironment} from '~/lib/analytics-environment';
 import type {CartData} from '~/lib/cart';
 import {CacheLong} from '~/lib/cache';
-import {LOCALIZATION_QUERY, type LocalizationData} from '~/lib/market';
+import {LOCALIZATION_QUERY, staleMarketSelections, type LocalizationData} from '~/lib/market';
+import {optional} from '~/lib/optional';
 import {fetchAllPages} from '~/lib/pagination';
 import {
   MAIN_MENU_QUERY,
@@ -44,6 +48,7 @@ import {
   type NavCollectionItem,
 } from '~/lib/nav';
 import {Analytics as HydrogenAnalytics, getShopAnalytics, CartForm, createWithCache} from '@shopify/hydrogen';
+import {SITE_ORIGIN} from '~/lib/site';
 
 export const links: LinksFunction = () => [
   // The raw Shopify Files upload (Timeless_Style_-_Artboard_22_4.png) is a
@@ -102,7 +107,7 @@ export const meta: MetaFunction = () => [
   },
   {property: 'og:type', content: 'website'},
   {property: 'og:site_name', content: 'Legendary Branding'},
-  {property: 'og:url', content: 'https://www.legendary-branding.com'},
+  {property: 'og:url', content: SITE_ORIGIN},
   {property: 'og:title', content: 'Legendary Branding | Premium Streetwear'},
   {property: 'og:description', content: 'Premium streetwear built to last. 220GSM+ premium-weight tees, made to order. Shop the collection.'},
   {name: 'twitter:card', content: 'summary_large_image'},
@@ -110,37 +115,22 @@ export const meta: MetaFunction = () => [
   {name: 'twitter:description', content: 'Premium streetwear built to last.'},
 ];
 
+/** Budget for optional root dependencies (cart, menu, analytics shop) before the page renders without them. */
+const OPTIONAL_BUDGET_MS = 3_000;
+/** Budget for the auth check before the visitor is treated as signed out. */
+const AUTH_BUDGET_MS = 3_000;
+
 /** How long a page waits for the optional store trust lookup before rendering without it. */
 const STORE_TRUST_BUDGET_MS = 700;
 
 export async function loader({context, request}: LoaderFunctionArgs) {
   const {cart, customerAccount} = context;
 
-  // Check if customer is logged in and associate cart with buyer identity
-  let isLoggedIn = false;
-
-  if (customerAccount) {
-    isLoggedIn = await customerAccount.isLoggedIn();
-
-    if (isLoggedIn) {
-      // Associate the cart with the logged-in customer's buyer identity
-      const accessToken = await customerAccount.getAccessToken();
-      if (accessToken) {
-        // Update cart buyer identity for logged-in customers
-        try {
-          const cartId = await cart.getCartId();
-          if (cartId) {
-            // Cart will be associated via the Storefront API buyer identity
-            // on subsequent queries — Hydrogen's cart helper handles this
-            // when customerAccount is configured
-          }
-        } catch {
-          // Cart association failure is non-critical — cart still works
-          // as guest until explicitly merged
-        }
-      }
-    }
-  }
+  // Auth lookup: if it fails or stalls the visitor is treated as signed out (never as
+  // someone else), and the failure is reported.
+  const isLoggedIn = customerAccount
+    ? await optional('customer-account', () => customerAccount.isLoggedIn(), {ms: AUTH_BUDGET_MS, fallback: false})
+    : false;
 
   // Opening a named Cache API instance is required to cache the Admin API
   // discount fetch (a POST request -- Cloudflare's Cache API only caches
@@ -184,8 +174,11 @@ export async function loader({context, request}: LoaderFunctionArgs) {
 
   const shopAnalytics = analyticsEnvironment(request.url);
 
+  // NOTE: localization is CRITICAL (it decides currency and language, so a wrong fallback would show wrong
+  // prices) and may fail the request. Cart, analytics shop, menu and trust are optional: each has a budget
+  // and a safe fallback so one slow or failing dependency can't take every page down.
   const [cartData, localizationResult, shop, menuResult, storeTrustResult] = await Promise.all([
-    cart.get(),
+    optional('cart', cart.get(), {ms: OPTIONAL_BUDGET_MS, fallback: null}),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
         country: context.storefront.i18n.country,
@@ -198,29 +191,47 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     // preview deploy stops writing page views, product views and cart events
     // into the production store's reporting alongside real customers.
     shopAnalytics.reportToShop
-      ? getShopAnalytics({
-          storefront: context.storefront,
-          publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
-        })
+      ? optional(
+          'shop-analytics',
+          getShopAnalytics({
+            storefront: context.storefront,
+            publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
+          }),
+          {ms: OPTIONAL_BUDGET_MS, fallback: null},
+        )
       : Promise.resolve(null),
     // NOTE: CacheShort, not CacheLong -- a collection the merchant adds or publishes should reach the header within minutes, not up to a day.
-    context.storefront.query(MAIN_MENU_QUERY, {
-      variables: {
-        country: context.storefront.i18n.country,
-        language: context.storefront.i18n.language,
-      },
-      cache: CacheShort(),
-    }),
+    optional(
+      'main-menu',
+      context.storefront.query(MAIN_MENU_QUERY, {
+        variables: {
+          country: context.storefront.i18n.country,
+          language: context.storefront.i18n.language,
+        },
+        cache: CacheShort(),
+      }),
+      {ms: OPTIONAL_BUDGET_MS, fallback: null},
+    ),
     withBudget(storeTrustLookup, STORE_TRUST_BUDGET_MS),
   ]);
 
-  const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
+  // A saved market or language Shopify no longer offers is dropped so it can't linger in the session.
+  for (const key of staleMarketSelections(
+    {country: context.session.get('country'), language: context.session.get('language')},
+    localizationResult.localization as LocalizationData,
+  )) {
+    context.session.unset(key);
+  }
+
+  const menuItems = (menuResult?.menu?.items ?? []) as MenuItemNode[];
   const collectionIds = menuItems
     .filter((item) => item.type === 'COLLECTION' && item.resourceId)
     .map((item) => item.resourceId!);
 
   // Optional: if this lookup fails the header falls back to the Main Menu alone.
-  const publishedCollectionsLookup = fetchAllPages<NonNullable<PublishedCollectionNode>>(async (after) => {
+  const publishedCollectionsLookup = optional(
+    'nav-published-collections',
+    fetchAllPages<NonNullable<PublishedCollectionNode>>(async (after) => {
     const result = await context.storefront.query(NAV_ALL_COLLECTIONS_QUERY, {
       variables: {
         country: context.storefront.i18n.country,
@@ -231,20 +242,26 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       cache: CacheShort(),
     });
     return result.collections as {nodes: NonNullable<PublishedCollectionNode>[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
-  }).catch(() => [] as PublishedCollectionNode[]);
+  }),
+    {ms: OPTIONAL_BUDGET_MS, fallback: [] as PublishedCollectionNode[]},
+  );
 
   const menuCollections: NavCollectionItem[] = collectionIds.length
     ? resolveMenuCollections(
         menuItems,
         (
-          await context.storefront.query(NAV_COLLECTIONS_QUERY, {
-            variables: {
-              ids: collectionIds,
-              country: context.storefront.i18n.country,
-              language: context.storefront.i18n.language,
-            },
-            cache: CacheShort(),
-          })
+          await optional(
+            'nav-menu-collections',
+            context.storefront.query(NAV_COLLECTIONS_QUERY, {
+              variables: {
+                ids: collectionIds,
+                country: context.storefront.i18n.country,
+                language: context.storefront.i18n.language,
+              },
+              cache: CacheShort(),
+            }),
+            {ms: OPTIONAL_BUDGET_MS, fallback: {nodes: []}},
+          )
         ).nodes,
       )
     : [];
@@ -261,20 +278,23 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     localization: localizationResult.localization as LocalizationData,
     navCollections,
     shop,
-    storeTrust: toStoreTrust(
-      storeTrustResult,
-      (localizationResult.localization as LocalizationData).availableCountries.map((c) => c.isoCode),
-    ),
+    // NOTE: the return policy text states no regions, so product schema claims it only for the active market (the one
+    // whose prices and offers the page shows), never for every market the store sells to.
+    storeTrust: toStoreTrust(storeTrustResult, [context.storefront.i18n.country]),
     activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on
     // Oxygen, not values baked in at Vite build time, so import.meta.env
     // reads of PUBLIC_* client analytics vars are always undefined in the
     // deployed build regardless of Vite's envPrefix config.
+    // NOTE: the widget is only offered when its provider is configured; a visible-but-dead chat is worse than none.
+    chatAvailable: chatReadiness(context.env).available,
     analyticsConfig: {
-      ga4Id: context.env.PUBLIC_GA4_MEASUREMENT_ID || undefined,
-      metaPixelId: context.env.PUBLIC_META_PIXEL_ID || undefined,
-      tiktokPixelId: context.env.PUBLIC_TIKTOK_PIXEL_ID || undefined,
+      // NOTE: GA4, Meta and TikTok only get their IDs on the live host, so previews and local servers never
+      // send events to production properties. Klaviyo's ID stays (it powers on-site forms, consent-gated).
+      ga4Id: shopAnalytics.reportToShop ? context.env.PUBLIC_GA4_MEASUREMENT_ID || undefined : undefined,
+      metaPixelId: shopAnalytics.reportToShop ? context.env.PUBLIC_META_PIXEL_ID || undefined : undefined,
+      tiktokPixelId: shopAnalytics.reportToShop ? context.env.PUBLIC_TIKTOK_PIXEL_ID || undefined : undefined,
       klaviyoCompanyId: context.env.PUBLIC_KLAVIYO_COMPANY_ID || undefined,
       sentryDsn: context.env.PUBLIC_SENTRY_DSN || undefined,
     },
@@ -289,8 +309,10 @@ export async function loader({context, request}: LoaderFunctionArgs) {
 }
 
 export function Layout({children}: {children: React.ReactNode}) {
+  // NOTE: the root loader data is absent when the loader itself failed, so fall back to English.
+  const rootData = useRouteLoaderData<typeof loader>('root');
   return (
-    <html lang="en">
+    <html lang={languageTag(rootData?.localization?.language?.isoCode)}>
       <head>
         <meta charSet="utf-8" />
         {/* Hardcoded here rather than in the `meta` export below: React
@@ -316,7 +338,7 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, consent, activeDiscounts} = useLoaderData<typeof loader>();
+  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, chatAvailable, consent, activeDiscounts} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
   const location = useLocation();
@@ -425,7 +447,7 @@ export default function App() {
         onClose={() => setCartOpen(false)}
       />
 
-      <ChatWidget />
+      {chatAvailable && <ChatWidget />}
       </div>
     </WishlistProvider>
     </LocaleProvider>

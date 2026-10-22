@@ -72,9 +72,11 @@ jobs:
 
       - name: Reject generated GraphQL drift
         run: |
+          test -n "$(git ls-files storefrontapi.generated.d.ts customer-accountapi.generated.d.ts)"
           git diff --exit-code -- \
             storefrontapi.generated.d.ts \
-            customeraccountapi.generated.d.ts
+            customer-accountapi.generated.d.ts
+          test "$(wc -c < storefrontapi.generated.d.ts)" -gt 1000
 
       - name: Build
         run: npm run build
@@ -87,6 +89,9 @@ jobs:
 
       - name: Test
         run: npm run test
+
+      - name: Check locale catalogs
+        run: npm run locales:check
 
   deploy:
     name: Deploy to Oxygen
@@ -145,7 +150,6 @@ jobs:
           PUBLIC_GA4_MEASUREMENT_ID: ${{ secrets.PUBLIC_GA4_MEASUREMENT_ID }}
           PRIVATE_KLAVIYO_API_KEY: ${{ secrets.PRIVATE_KLAVIYO_API_KEY }}
           PUBLIC_KLAVIYO_LIST_ID: ${{ secrets.PUBLIC_KLAVIYO_LIST_ID }}
-          PUBLIC_KLAVIYO_WAITLIST_LIST_ID: ${{ secrets.PUBLIC_KLAVIYO_WAITLIST_LIST_ID }}
 
       - name: Build and Publish to Oxygen
         id: deploy
@@ -212,9 +216,47 @@ jobs:
 
           check_route "/" "Homepage"
           check_route "/collections/all-products" "All products"
+          check_route "/cart" "Cart"
           check_route "/policies/about" "About policy"
           check_route "/sitemap.xml" "Sitemap"
           check_route "/robots.txt" "Robots"
+
+          # Discover a real PDP handle from the storefront at runtime so this
+          # smoke test remains valid when catalog products change.
+          PRODUCT_OUT="$(mktemp)"
+          PRODUCT_RESULT=$(curl --fail-with-body -s -o "$PRODUCT_OUT" -w "%{http_code}" -L --max-time 30 \
+            -H "User-Agent: $BROWSER_UA" \
+            -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
+            -H "oxygen-auth-bypass-token: $AUTH_BYPASS_TOKEN" \
+            "$DEPLOY_URL/collections/all-products") || PRODUCT_RESULT="000"
+          PRODUCT_PATH=$(grep -oE 'href="/products/[^"]+"' "$PRODUCT_OUT" | head -n 1 | cut -d '"' -f 2 || true)
+          if echo "$PRODUCT_RESULT" | grep -q "^2" && [ -n "$PRODUCT_PATH" ]; then
+            check_route "$PRODUCT_PATH" "Product detail"
+          else
+            echo "Product detail: FAIL (could not discover a product path from all-products)"
+            FAILURES=$((FAILURES + 1))
+            TOTAL=$((TOTAL + 1))
+          fi
+          rm -f "$PRODUCT_OUT"
+
+          # Exercise the same-origin Shopify proxy used by Hydrogen consent and
+          # analytics, not only storefront page routes.
+          GRAPHQL_OUT="$(mktemp)"
+          TOTAL=$((TOTAL + 1))
+          GRAPHQL_STATUS=$(curl -sS -o "$GRAPHQL_OUT" -w "%{http_code}" -L --max-time 30 \
+            -X POST \
+            -H "User-Agent: $BROWSER_UA" \
+            -H "Content-Type: application/json" \
+            -H "oxygen-auth-bypass-token: $AUTH_BYPASS_TOKEN" \
+            --data '{"query":"{ shop { name } }"}' \
+            "$DEPLOY_URL/api/unstable/graphql.json") || GRAPHQL_STATUS="000"
+          if [ "$GRAPHQL_STATUS" != "200" ] || ! jq -e '.data != null or .errors != null' "$GRAPHQL_OUT" >/dev/null 2>&1; then
+            echo "Storefront GraphQL proxy: FAIL (HTTP $GRAPHQL_STATUS)"
+            FAILURES=$((FAILURES + 1))
+          else
+            echo "Storefront GraphQL proxy: HTTP $GRAPHQL_STATUS"
+          fi
+          rm -f "$GRAPHQL_OUT"
 
           echo ""
           if [ "$FAILURES" -gt 0 ]; then

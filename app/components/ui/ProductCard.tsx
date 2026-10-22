@@ -129,8 +129,8 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
  * variants, those two minima need not describe the same variant, which
  * can pair an unrelated price with an unrelated compareAtPrice and report
  * a sale (or a percentage) that doesn't correspond to any real variant.
- * Falls back to the range fields only when variant-level data isn't
- * fetched (e.g. the degraded search/wishlist card shapes).
+ * When no variant-level price was fetched there is no sale claim at all
+ * (never the range minima).
  */
 function salePricePair(product: ProductCardFragment): {price: number; compareAt: number} | null {
   const variant = product.selectedOrFirstAvailableVariant;
@@ -141,12 +141,10 @@ function salePricePair(product: ProductCardFragment): {price: number; compareAt:
     };
   }
   if (!variant?.price) {
-    // No variant-level price data was fetched at all -- fall back to the
-    // (possibly mismatched) range minima rather than reporting no sale.
-    return {
-      price: Number(product.priceRange?.minVariantPrice?.amount),
-      compareAt: Number(product.compareAtPriceRange?.minVariantPrice?.amount),
-    };
+    // No coherent variant price pair is available. priceRange/compareAtPriceRange
+    // minima can describe two different variants, so pairing them could assert a
+    // sale that matches no real variant -- make no sale claim instead.
+    return null;
   }
   // Variant-level price was fetched but this specific variant has no
   // compareAtPrice -- it is genuinely not on sale, regardless of what the
@@ -382,18 +380,7 @@ export default function ProductCard({
           <WishlistButton
             size="sm"
             className="bg-[var(--color-bg-level-1)]/90 backdrop-blur-sm rounded-full p-1.5 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] border border-[var(--color-border-muted)]"
-            product={{
-              id: product.id,
-              handle: product.handle,
-              title: product.title,
-              price: displayPrice.amount,
-              compareAtPrice: onSale
-                ? displayCompareAt.amount
-                : undefined,
-              image: product.featuredImage?.url,
-              rating: reviewRating?.rating,
-              reviewCount: reviewRating?.count,
-            }}
+            product={{id: product.id, handle: product.handle}}
           />
         </div>
 

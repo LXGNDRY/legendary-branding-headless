@@ -2,19 +2,13 @@ import {useEffect, useState} from 'react';
 import {Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import StarRating from '~/components/ui/StarRating';
-
-const COOKIE_NAME = 'recently_viewed';
-const MAX_PRODUCTS = 8;
-
-interface RecentProduct {
-  id: string;
-  handle: string;
-  title: string;
-  image?: string;
-  /** Rating snapshot at the time this product was viewed. */
-  rating?: number;
-  reviewCount?: number;
-}
+import {
+  RECENT_COOKIE_NAME,
+  MAX_RECENT_PRODUCTS,
+  readRecentProducts,
+  serializeRecentProducts,
+  type RecentProduct,
+} from '~/lib/recently-viewed';
 
 interface RecentlyViewedProps {
   currentProductId: string;
@@ -42,24 +36,13 @@ export default function RecentlyViewed({
   const [products, setProducts] = useState<RecentProduct[]>([]);
 
   useEffect(() => {
-    const getCookie = (name: string) => {
-      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-      return match ? decodeURIComponent(match[2]) : '';
-    };
-
     const setCookie = (name: string, value: string, days = 30) => {
       const expires = new Date(Date.now() + days * 864e5).toUTCString();
       document.cookie =
         name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
     };
 
-    // Parse existing
-    let viewed: RecentProduct[] = [];
-    try {
-      viewed = JSON.parse(getCookie(COOKIE_NAME) || '[]');
-    } catch {
-      viewed = [];
-    }
+    let viewed = readRecentProducts(document.cookie);
 
     // Add current product to the front
     viewed = [
@@ -72,10 +55,10 @@ export default function RecentlyViewed({
         reviewCount: currentProductReviewCount,
       },
       ...viewed.filter((p) => p.id !== currentProductId),
-    ].slice(0, MAX_PRODUCTS);
+    ].slice(0, MAX_RECENT_PRODUCTS);
 
     // Save updated
-    setCookie(COOKIE_NAME, JSON.stringify(viewed));
+    setCookie(RECENT_COOKIE_NAME, serializeRecentProducts(viewed));
 
     // Show previously viewed (exclude current)
     setProducts(viewed.slice(1, 5));

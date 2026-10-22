@@ -1,3 +1,4 @@
+import SafeHtml from '~/components/ui/SafeHtml';
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -14,7 +15,6 @@ import type {ActiveDiscount} from '~/lib/discounts';
 import {useState, useEffect, useRef, Suspense} from 'react';
 import {
   CartForm,
-  Image,
   Money,
   VariantSelector,
   Analytics,
@@ -38,15 +38,17 @@ import ProductCard, {
   PRODUCT_CARD_FRAGMENT,
   type ProductCardFragment,
 } from '~/components/ui/ProductCard';
-import {CacheLong} from '~/lib/cache';
-import {requireSameOrigin} from '~/lib/security';
+import {CacheFresh, CacheLong} from '~/lib/cache';
+import {fetchAllPages} from '~/lib/pagination';
+import {handleCartMutation} from '~/lib/cart-mutation';
 import {captureError} from '~/lib/monitoring';
 import StarRating from '~/components/ui/StarRating';
-import {parseJudgemeBadge, fetchJudgemeProductReviews, summarizeReviews} from '~/lib/judgeme';
+import {parseJudgemeBadge, fetchJudgemeProductReviews, resolveProductRating} from '~/lib/judgeme';
 import {withBudget} from '~/lib/trust';
 import ProductReviewList from '~/components/sections/ProductReviewList';
 import TrustSignals, {useStoreTrust} from '~/components/ui/TrustSignals';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
+import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -101,6 +103,9 @@ const FABRIC_WEIGHT_TIERS = [
   {range: '420–460', nameKey: 'fabric.tier.maximumWeight.name', descriptionKey: 'fabric.tier.maximumWeight.description'},
 ] as const satisfies ReadonlyArray<{range: string; nameKey: TranslationKey; descriptionKey: TranslationKey}>;
 
+// 25 pages of 100 covers Shopify's 2,048-variant product limit.
+const MAX_VARIANT_PAGES = 25;
+
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
     id
@@ -114,12 +119,12 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
   }
 ` as const;
 
+// Editorial content only: safe to cache for an hour. Prices, availability,
+// inventory and the option definitions that drive the variant selector come
+// from PRODUCT_COMMERCE_QUERY below with a short cache.
 const PRODUCT_QUERY = `#graphql
-  ${PRODUCT_VARIANT_FRAGMENT}
-  ${PRODUCT_CARD_FRAGMENT}
   query Product(
     $handle: String!
-    $selectedOptions: [SelectedOptionInput!]!
     $country: CountryCode
     $language: LanguageCode
   ) @inContext(country: $country, language: $language) {
@@ -150,10 +155,31 @@ const PRODUCT_QUERY = `#graphql
           }
         }
       }
+      # NOTE: the gallery is intentionally capped at the first 10 images; a selected variant's own image is added separately.
       images(first: 10) {
         nodes { id url altText width height }
       }
-      options {
+    }
+  }
+` as const;
+
+// Price, availability and inventory: short cache, no stale-if-error. Variants are
+// read page by page (see fetchAllPages) so a product with more than 100
+// variants never silently loses selectable options.
+const PRODUCT_COMMERCE_QUERY = `#graphql
+  ${PRODUCT_VARIANT_FRAGMENT}
+  ${PRODUCT_CARD_FRAGMENT}
+  query ProductCommerce(
+    $handle: String!
+    $selectedOptions: [SelectedOptionInput!]!
+    $after: String
+    $withExtras: Boolean!
+    $country: CountryCode
+    $language: LanguageCode
+  ) @inContext(country: $country, language: $language) {
+    product(handle: $handle) {
+      id
+      options @include(if: $withExtras) {
         id
         name
         optionValues {
@@ -172,14 +198,15 @@ const PRODUCT_QUERY = `#graphql
         selectedOptions: $selectedOptions
         ignoreUnknownOptions: true
         caseInsensitiveMatch: true
-      ) {
+      ) @include(if: $withExtras) {
         ...ProductVariant
       }
-      variants(first: 100) {
+      variants(first: 100, after: $after) {
         nodes { ...ProductVariant }
+        pageInfo { hasNextPage endCursor }
       }
     }
-    relatedProducts: collection(handle: "all-products") {
+    relatedProducts: collection(handle: "all-products") @include(if: $withExtras) {
       products(first: 4, sortKey: BEST_SELLING) {
         nodes { ...ProductCard }
       }
@@ -193,8 +220,10 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
     ? product.descriptionHtml.replace(/<[^>]+>/g, '').slice(0, 155)
     : `Shop ${product?.title ?? 'this product'} at Legendary Branding.`;
   const ogImage = product?.images?.nodes?.[0]?.url ?? '';
+  const ogSquare = withImageTransform(ogImage, {width: 1200, height: 1200});
+  const ogWide = withImageTransform(ogImage, {width: 1200, height: 630});
   // NOTE: from the handle, not the URL path, so a trailing slash or different casing can't create a second canonical.
-  const canonical = `https://www.legendary-branding.com/products/${product?.handle ?? location.pathname.replace(/^\/products\//, '').replace(/\/+$/, '')}`;
+  const canonical = canonicalUrl(ROUTES.product(product?.handle ?? location.pathname.replace(/^\/products\//, '').replace(/\/+$/, '')));
   return [
     {title: `${product?.title ?? 'Product'} | LEGENDARY BRANDING`},
     {name: 'description', content: description},
@@ -202,31 +231,17 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
     {property: 'og:type', content: 'product'},
     {property: 'og:title', content: `${product?.title ?? 'Product'} | LEGENDARY BRANDING`},
     {property: 'og:description', content: description},
-    ...(ogImage ? [{property: 'og:image', content: `${ogImage}&width=1200&height=1200`}] : []),
+    ...(ogSquare ? [{property: 'og:image', content: ogSquare}] : []),
     {property: 'og:url', content: canonical},
     {name: 'twitter:card', content: 'summary_large_image'},
     {name: 'twitter:title', content: product?.title ?? 'Product'},
     {name: 'twitter:description', content: description},
-    ...(ogImage ? [{name: 'twitter:image', content: `${ogImage}&width=1200&height=630`}] : []),
+    ...(ogWide ? [{name: 'twitter:image', content: ogWide}] : []),
   ];
 };
 
 export async function action({request, context}: ActionFunctionArgs) {
-  const originError = requireSameOrigin(request);
-  if (originError) return originError;
-  const {cart} = context;
-  const formData = await request.formData();
-  const {action: cartAction, inputs} = CartForm.getFormInput(formData);
-
-  if (cartAction === CartForm.ACTIONS.LinesAdd) {
-    const result = await cart.addLines(
-      inputs.lines as Parameters<typeof cart.addLines>[0],
-    );
-    const headers = cart.setCartId(result.cart.id);
-    return new Response(null, {status: 200, headers});
-  }
-
-  return new Response('Bad request', {status: 400});
+  return handleCartMutation({request, cart: context.cart, allowed: [CartForm.ACTIONS.LinesAdd]});
 }
 
 export async function loader({params, request, context}: LoaderFunctionArgs) {
@@ -234,12 +249,49 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   if (!handle) throw new Response('Not Found', {status: 404});
 
   const selectedOptions = getSelectedProductOptions(request);
-  const {product, relatedProducts} = await context.storefront.query(PRODUCT_QUERY, {
-    variables: {handle, selectedOptions, country: context.storefront.i18n.country, language: context.storefront.i18n.language},
-    cache: CacheLong(),
-  });
+  const market = {country: context.storefront.i18n.country, language: context.storefront.i18n.language};
 
-  if (!product) throw new Response('Product not found', {status: 404});
+  const [{product: content}, commerce] = await Promise.all([
+    context.storefront.query(PRODUCT_QUERY, {variables: {handle, ...market}, cache: CacheLong()}),
+    (async () => {
+      const extras: {
+        productId?: string;
+        options?: unknown;
+        selectedVariant?: ProductVariantFragment | null;
+        relatedProducts?: unknown;
+      } = {};
+      const variants = await fetchAllPages(async (after) => {
+        const result = await context.storefront.query(PRODUCT_COMMERCE_QUERY, {
+          variables: {handle, selectedOptions, after, withExtras: after === null, ...market},
+          cache: CacheFresh(),
+        });
+        if (after === null) {
+          extras.productId = result.product?.id;
+          extras.options = result.product?.options;
+          extras.selectedVariant = result.product?.selectedVariant as unknown as ProductVariantFragment | null | undefined;
+          extras.relatedProducts = result.relatedProducts;
+        }
+        return result.product?.variants;
+      }, MAX_VARIANT_PAGES);
+      return {variants, extras};
+    })(),
+  ]);
+
+  // NOTE: the editorial content can come from a long-lived cache entry. If the handle was deleted,
+  // unpublished or reassigned since, the fresh commerce product is missing or has a different id --
+  // never combine one product's cached content with another product's purchasable variants.
+  if (!content || !commerce.extras.productId || commerce.extras.productId !== content.id) {
+    throw new Response('Product not found', {status: 404});
+  }
+
+  const product = {
+    ...content,
+    options: commerce.extras.options ?? [],
+    selectedVariant: commerce.extras.selectedVariant ?? null,
+    variants: {nodes: commerce.variants},
+  };
+  const relatedProducts = commerce.extras.relatedProducts ?? null;
+
 
   // Real per-product reviews -- optional, server-only, and NOT awaited
   // here: this is a third-party fetch (up to a 5s timeout) for a
@@ -256,13 +308,17 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
     productHandle: handle,
   });
 
-  // NOTE: a short wait so the stars, JSON-LD and review list come from the same reviews. The Judge.me badge metafield can be missing or stale; past the budget the page streams the list and falls back to the badge.
-  const loadedReviews = await withBudget(reviews, REVIEW_SUMMARY_BUDGET_MS);
-  const reviewSummary = loadedReviews ? summarizeReviews(loadedReviews) : null;
+  // NOTE: the provider's badge is the aggregate whenever it is valid, so the page never waits on the review list then.
+  // Only without a badge is there a short wait, so a rating derived from the full list can reach the stars and JSON-LD.
+  const badge = parseJudgemeBadge(
+    (product as unknown as ProductFull).metafields?.find((m) => m?.key === 'badge')?.value,
+  );
+  const loadedReviews = badge ? null : await withBudget(reviews, REVIEW_SUMMARY_BUDGET_MS);
+  const reviewSummary = resolveProductRating(badge, loadedReviews);
 
   return {
-    product: product as ProductFull,
-    relatedProducts,
+    product: product as unknown as ProductFull,
+    relatedProducts: relatedProducts as {products?: {nodes?: unknown[]}} | null,
     reviews,
     reviewSummary,
   };
@@ -909,8 +965,8 @@ export default function ProductPage() {
                   </svg>
                   <div className="min-w-0 text-xs leading-relaxed text-[var(--color-text-secondary)]">
                     <p className="font-medium text-[var(--color-text-primary)]">{t('shipping.worldwideDelivery')}</p>
-                    <p>{t('shipping.standard')}</p>
-                    <p className="mt-0.5 text-[var(--color-text-tertiary)]">{t('shipping.duties')}</p>
+                    <p>{t('shipping.calculated')}</p>
+                    <p className="mt-0.5 text-[var(--color-text-tertiary)]">{t('shipping.dutiesTaxes')}</p>
                   </div>
                 </div>
               </section>
@@ -954,15 +1010,12 @@ export default function ProductPage() {
               <div className="border-t border-[var(--color-border-muted)] pt-4">
                 {product.descriptionHtml && (
                   <Accordion label="Description">
-                    <div
-                      className="prose prose-sm max-w-none [&_p]:text-[var(--color-text-secondary)] [&_ul]:text-[var(--color-text-secondary)]"
-                      dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
-                    />
+                    <SafeHtml className="prose prose-sm max-w-none [&_p]:text-[var(--color-text-secondary)] [&_ul]:text-[var(--color-text-secondary)]" html={product.descriptionHtml} />
                   </Accordion>
                 )}
                 <Accordion label="Shipping & Returns">
                   <div className="space-y-3">
-                    <p>Free standard shipping on every order. Import duties are included in the displayed price. Applicable taxes are paid by you and calculated at checkout. For delivery timelines, see our <Link to="/policies/shipping-policy" className="underline underline-offset-2">shipping policy</Link>.</p>
+                    <p>Shipping, duties and taxes are calculated at checkout. For rates and delivery timelines, see our <Link to="/policies/shipping-policy" className="underline underline-offset-2">shipping policy</Link>.</p>
                     <p>For return eligibility, timing, and instructions, review our <Link to="/policies/refund-policy" className="underline underline-offset-2">return policy</Link>.</p>
                   </div>
                 </Accordion>
@@ -1056,8 +1109,8 @@ export default function ProductPage() {
               <Await resolve={reviews}>
                 {(resolvedReviews) => {
                   // NOTE: derived here too, so reviews that resolve after the loader's wait still render when the badge is missing.
-                  const listRating = judgemeRating ?? summarizeReviews(resolvedReviews);
-                  return resolvedReviews.length > 0 && listRating ? (
+                  const listRating = judgemeRating ?? resolveProductRating(null, resolvedReviews);
+                  return resolvedReviews.reviews.length > 0 ? (
                     <section className="border-t border-[var(--color-border-muted)]">
                       <div className="h-container py-16">
                         <p className="h-eyebrow mb-3">Reviews</p>
@@ -1070,9 +1123,10 @@ export default function ProductPage() {
                           // its "show more" pagination state instead of carrying a
                           // previous product's expanded count into the next one.
                           key={product.id}
-                          reviews={resolvedReviews}
-                          aggregateRating={listRating.rating}
-                          aggregateCount={listRating.count}
+                          reviews={resolvedReviews.reviews}
+                          aggregateRating={listRating?.rating}
+                          aggregateCount={listRating?.count}
+                          truncated={resolvedReviews.truncated}
                         />
                       </div>
                     </section>

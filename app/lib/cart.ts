@@ -1,4 +1,5 @@
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
+import {checkoutLocale} from '~/lib/locale';
 
 export type CartMoney = {amount: string; currencyCode: CurrencyCode};
 
@@ -46,22 +47,16 @@ export type CartLineData = {
 };
 
 /**
- * Pins the checkout to the English locale explicitly.
+ * Pins checkout to the shopper's selected storefront language.
  *
- * Shopify's Cart API returns `checkoutUrl` with no locale segment or query
- * param at all -- the shop has 6 published locales (en/de/es/fr/id/pt-BR)
- * on one "Worldwide" market, so an unpinned checkout falls back to
- * Shopify's own locale auto-detection from the visitor's browser
- * `Accept-Language` header. That can silently switch checkout into a
- * comma-decimal locale (French/German/Spanish/Portuguese all use `,` for
- * the decimal separator) even though the storefront itself is English-only
- * (this app hardcodes `language: 'EN'` everywhere) and the currency is
- * always USD -- producing a jarring "$120,00" on an otherwise English page.
+ * Shopify's Cart API returns `checkoutUrl` with no locale, so checkout would
+ * otherwise guess from the browser's Accept-Language header and can disagree
+ * with the language (and decimal separators) the shopper chose on the site.
  */
-export function withCheckoutLocale(checkoutUrl: string): string {
+export function withCheckoutLocale(checkoutUrl: string, language?: string | null): string {
   try {
     const url = new URL(checkoutUrl);
-    url.searchParams.set('locale', 'en');
+    url.searchParams.set('locale', checkoutLocale(language));
     return url.toString();
   } catch {
     // Malformed URL (shouldn't happen for a real Shopify checkoutUrl) --

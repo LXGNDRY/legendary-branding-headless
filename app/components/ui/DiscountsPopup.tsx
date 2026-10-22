@@ -154,6 +154,7 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
       <div
         className="absolute inset-0 bg-black/60"
         aria-hidden="true"
+        data-overlay-keep
         onClick={() => setOpen(false)}
       />
       <div
@@ -172,9 +173,9 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
           <CloseIcon />
         </button>
 
-        <p className="h-eyebrow mb-2 text-[var(--color-accent)]">Limited-Time Offers</p>
+        <p className="h-eyebrow mb-2 text-[var(--color-accent)]">Current Offers</p>
         <h2 id="discounts-popup-heading" className="mb-4 font-serif text-2xl text-[var(--color-text-primary)]">
-          Here&apos;s what&apos;s live right now
+          Offers available now
         </h2>
 
         <ul className="mb-6 space-y-3">
@@ -193,6 +194,10 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
             </li>
           ))}
         </ul>
+
+        <p className="mb-6 text-xs text-[var(--color-text-tertiary)]">
+          Offers may have conditions such as minimum spend, products or markets. Eligibility and final savings are confirmed at checkout.
+        </p>
 
         <Link
           to="/collections/all-products"

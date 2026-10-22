@@ -47,7 +47,7 @@ passing local `typecheck`/`lint`/`build`/`test` run — not by assumption.
 - [x] ✅ JSON-LD (Product/Article/Collection/Breadcrumb) consolidated into shared generators in
       `SeoSchema.tsx`, used site-wide including breadcrumbs.
 - [x] ✅ Meta/canonical/`og:image` coverage completed across all routes.
-- [x] ✅ `robots.txt` uses the canonical `PUBLIC_CHECKOUT_DOMAIN`, matching `sitemap.xml`.
+- [x] ✅ `robots.txt` and `sitemap.xml` both use the canonical public origin from `app/lib/site.ts` (not `PUBLIC_CHECKOUT_DOMAIN`).
 - [x] ✅ Favicon / PWA manifest — full icon set and `site.webmanifest` present.
 
 ## Commerce & Content Integrations

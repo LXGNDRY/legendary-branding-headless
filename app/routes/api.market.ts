@@ -9,7 +9,8 @@ import {
   type LocalizationData,
 } from '~/lib/market';
 import {requireSameOrigin} from '~/lib/security';
-import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {enforceRatePolicy} from '~/lib/rate-limit';
+import {captureError} from '~/lib/monitoring';
 
 export async function action({request, context}: ActionFunctionArgs) {
   if (request.method !== 'POST') {
@@ -17,10 +18,15 @@ export async function action({request, context}: ActionFunctionArgs) {
   }
   const originError = requireSameOrigin(request);
   if (originError) return originError;
-  const limited = rateLimitMiddleware(request, 'market', 10);
+  const limited = enforceRatePolicy(request, 'market');
   if (limited) return limited;
 
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return Response.json({error: 'Invalid request'}, {status: 400});
+  }
   const country = normalizeCountryCode(formData.get('country'));
   const language = normalizeLanguageCode(formData.get('language'));
   if (!country) {
@@ -45,25 +51,44 @@ export async function action({request, context}: ActionFunctionArgs) {
     return Response.json({error: 'Language is not available for this storefront'}, {status: 400});
   }
 
-  context.session.set('country', country);
-  context.session.set('language', language);
-
+  // Update the cart's buyer identity FIRST. If Shopify rejects it, the shopper
+  // keeps their previous market (session and cart stay consistent) and sees an
+  // error instead of a half-applied switch.
+  const headers = new Headers();
   let cart = null;
   const cartId = await context.cart.getCartId();
   if (cartId) {
-    const updated = await context.cart.updateBuyerIdentity({
-      countryCode: country as CountryCode,
-    });
-    cart = updated.cart;
+    try {
+      const updated = await context.cart.updateBuyerIdentity({countryCode: country as CountryCode});
+      if (!updated?.cart) {
+        // NOTE: the saved cart ID no longer resolves (expired or deleted). Drop the unusable
+        // cookie and apply the selection; otherwise the shopper could never change market.
+        headers.append('Set-Cookie', 'cart=; Path=/; Max-Age=0; SameSite=Lax');
+      } else if (updated.errors?.length) {
+        throw new Error('Cart buyer identity update was rejected');
+      } else {
+        cart = updated.cart;
+        // The cart ID can rotate when the market changes; persist whatever Shopify returned.
+        for (const cookie of context.cart.setCartId(updated.cart.id).getSetCookie()) {
+          headers.append('Set-Cookie', cookie);
+        }
+      }
+    } catch (error) {
+      captureError(error, {route: 'api.market', failure: 'buyer-identity'});
+      return Response.json(
+        {error: 'We could not switch your cart to that country. Your previous selection was kept.'},
+        {status: 409},
+      );
+    }
   }
+
+  context.session.set('country', country);
+  context.session.set('language', language);
 
   // The selected market must survive navigation. Without committing this
   // cookie, the next server render falls back to edge detection and can show
   // a different Markets price/currency than the one the customer selected.
-  const headers = new Headers();
-  if (context.session.isPending) {
-    headers.set('Set-Cookie', await context.session.commit());
-  }
+  headers.append('Set-Cookie', await context.session.commit());
 
   return Response.json({success: true, country, language, cart}, {headers});
 }

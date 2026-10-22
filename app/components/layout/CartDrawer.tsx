@@ -1,4 +1,4 @@
-import {useEffect, useState, useRef} from 'react';
+import {useEffect, useState} from 'react';
 import {Link, useFetcher} from 'react-router';
 import Button from '~/components/ui/Button';
 import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
@@ -7,7 +7,7 @@ import {withCheckoutLocale} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
-import {useTranslation} from '~/lib/i18n';
+import {useLanguage, useTranslation} from '~/lib/i18n';
 import TrustSignals from '~/components/ui/TrustSignals';
 
 function CloseIcon() {
@@ -79,9 +79,11 @@ function CartLineItem({line}: {line: CartLineData}) {
 
   return (
     <div className="flex gap-4 py-5 border-b border-[var(--color-border-muted)]">
-      {/* Image */}
+      {/* Image — the product title beside it is the same link, so this one is hidden from keyboard and assistive tech instead of announcing an unnamed duplicate */}
       <Link
         to={`/products/${product.handle}`}
+        aria-hidden="true"
+        tabIndex={-1}
         className="shrink-0 w-20 h-24 overflow-hidden rounded-md bg-[var(--color-bg-level-2)] block"
       >
         {image ? (
@@ -192,6 +194,7 @@ interface CartDrawerProps {
 
 export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   const t = useTranslation();
+  const language = useLanguage();
   const {publish} = useAnalytics();
   const currentCart = cart;
   const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
@@ -308,6 +311,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         aria-hidden="true"
+        data-overlay-keep
         onClick={onClose}
       />
 
@@ -349,14 +353,13 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
           </button>
         </div>
 
-        {/* Free shipping notice -- every order ships free, so this is a flat
-            confirmation rather than a threshold progress tracker. */}
+        {/* NOTE: no shipping price or free-shipping promise here until the owner approves structured shipping facts; checkout is the authority. */}
         {lines.length > 0 && subtotal && (
           <div className="px-6 py-4 border-b border-[var(--color-border-muted)] shrink-0 bg-[var(--color-bg-level-0)]">
             <div className="flex items-center gap-2.5">
               <TruckIcon />
-              <span className="text-[11px] tracking-wide font-medium text-[var(--color-success)]">
-                Free shipping on every order
+              <span className="text-[11px] tracking-wide font-medium text-[var(--color-text-secondary)]">
+                Shipping and taxes calculated at checkout
               </span>
             </div>
           </div>
@@ -477,8 +480,9 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
 
             {/* Checkout */}
             {currentCart.checkoutUrl ? (
-              <div
-                onClick={(e: React.MouseEvent) => {
+              <Button
+                as="a"
+                onClick={(e) => {
                   if (checkingOut) return;
                   publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart: currentCart});
                   // A modifier/middle-click opens checkout in a new tab and
@@ -487,20 +491,15 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                   const opensNewTab = e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
                   if (!opensNewTab) setCheckingOut(true);
                 }}
-                className={checkingOut ? 'pointer-events-none' : undefined}
+                href={withCheckoutLocale(currentCart.checkoutUrl, language)}
+                variant="primary"
+                className="w-full justify-center"
+                size="md"
+                loading={checkingOut}
+                testId="drawer-checkout"
               >
-                <Button
-                  as="a"
-                  href={withCheckoutLocale(currentCart.checkoutUrl)}
-                  variant="primary"
-                  className="w-full justify-center"
-                  size="md"
-                  loading={checkingOut}
-                  testId="drawer-checkout"
-                >
-                  {checkingOut ? t('status.updating') : t('cart.checkout')}
-                </Button>
-              </div>
+                {checkingOut ? t('status.updating') : t('cart.checkout')}
+              </Button>
             ) : (
               <Button
                 variant="primary"

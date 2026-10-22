@@ -68,7 +68,7 @@ describe('QuickAddModal', () => {
   });
 
   it("keeps the customer's choices when the product data reloads", async () => {
-    const {cartAction, loader} = renderModal();
+    const {cartAction} = renderModal();
     await screen.findByTestId('quick-add-submit');
 
     fireEvent.click(screen.getByRole('button', {name: 'Color: Black'}));

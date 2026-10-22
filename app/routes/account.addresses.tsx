@@ -10,18 +10,25 @@ import {
 } from 'react-router';
 import {requireSameOrigin} from '~/lib/security';
 import {getCountryOptions} from '~/lib/market';
-import {useState} from 'react';
+import {useId, useMemo, useState} from 'react';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
+import {
+  ACCOUNT_PAGE_SIZE,
+  ADDRESS_ZONES,
+  accountMeta,
+  isAddressId,
+  loadAccount,
+  mutationErrors,
+  parseAddressForm,
+  parseAfterCursor,
+} from '~/lib/account';
 
-export const meta: MetaFunction = () => [
-  {title: 'Addresses | LEGENDARY BRANDING'},
-  {name: 'description', content: 'Manage your shipping addresses.'},
-  {tagName: 'link', rel: 'canonical', href: 'https://www.legendary-branding.com/account/addresses'},
-];
+// NOTE: private page: no canonical (that would advertise customer content as a public URL); noindex comes from accountMeta.
+export const meta: MetaFunction = () => accountMeta('Addresses', 'Manage your shipping addresses.');
 
 const ADDRESSES_QUERY = `#graphql
-  query Addresses {
+  query Addresses($first: Int!, $after: String) {
     customer {
       id
       defaultAddress {
@@ -35,9 +42,15 @@ const ADDRESSES_QUERY = `#graphql
         province
         zip
         country
+        territoryCode
+        zoneCode
         phoneNumber
       }
-      addresses(first: 10) {
+      addresses(first: $first, after: $after) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
         nodes {
           id
           firstName
@@ -49,6 +62,8 @@ const ADDRESSES_QUERY = `#graphql
           province
           zip
           country
+          territoryCode
+          zoneCode
           phoneNumber
         }
       }
@@ -70,6 +85,8 @@ const ADDRESS_CREATE_MUTATION = `#graphql
         province
         zip
         country
+        territoryCode
+        zoneCode
         phoneNumber
       }
       userErrors {
@@ -94,6 +111,8 @@ const ADDRESS_UPDATE_MUTATION = `#graphql
         province
         zip
         country
+        territoryCode
+        zoneCode
         phoneNumber
       }
       userErrors {
@@ -124,9 +143,11 @@ interface AddressNode {
   address1: string;
   address2?: string | null;
   city: string;
-  province: string;
+  province?: string | null;
   zip: string;
-  country: string;
+  country?: string | null;
+  territoryCode?: string | null;
+  zoneCode?: string | null;
   phoneNumber?: string | null;
 }
 
@@ -136,7 +157,7 @@ interface ActionData {
   action?: string;
 }
 
-export async function loader({context}: LoaderFunctionArgs) {
+export async function loader({request, context}: LoaderFunctionArgs) {
   const {customerAccount} = context;
 
   if (!customerAccount) {
@@ -148,13 +169,30 @@ export async function loader({context}: LoaderFunctionArgs) {
     return redirect('/account/login');
   }
 
-  const result = await customerAccount.query(ADDRESSES_QUERY);
+  const after = parseAfterCursor(new URL(request.url));
+  const result = await loadAccount<{
+    customer?: {
+      defaultAddress?: AddressNode | null;
+      addresses?: {nodes?: AddressNode[] | null; pageInfo?: {hasNextPage: boolean; endCursor?: string | null} | null} | null;
+    } | null;
+  }>('account.addresses', () => customerAccount.query(ADDRESSES_QUERY, {variables: {first: ACCOUNT_PAGE_SIZE, after}}));
 
+  if (!result.ok || !result.data.customer) {
+    return {failed: true as const, defaultAddress: null, addresses: [] as AddressNode[], nextCursor: null, isFirstPage: !after};
+  }
+
+  const {defaultAddress, addresses} = result.data.customer;
+  // NOTE: the default address is shown once, first, on page one; it is removed from the paginated nodes so no later page repeats it.
   return {
-    defaultAddress: result.data.customer.defaultAddress as AddressNode | null,
-    addresses: result.data.customer.addresses.nodes as AddressNode[],
+    failed: false as const,
+    defaultAddress: after ? null : (defaultAddress ?? null),
+    addresses: (addresses?.nodes ?? []).filter((node) => node.id !== defaultAddress?.id),
+    nextCursor: addresses?.pageInfo?.hasNextPage ? (addresses.pageInfo.endCursor ?? null) : null,
+    isFirstPage: !after,
   };
 }
+
+type Mutated = Awaited<ReturnType<NonNullable<ActionFunctionArgs['context']['customerAccount']>['mutate']>>;
 
 export async function action({request, context}: ActionFunctionArgs) {
   const originError = requireSameOrigin(request);
@@ -173,86 +211,45 @@ export async function action({request, context}: ActionFunctionArgs) {
   const formData = await request.formData();
   const intent = String(formData.get('intent') || '');
 
-  // The country <select> submits an ISO 3166-1 alpha-2 code directly (see
-  // getCountryOptions() in ~/lib/market) -- previously this derived a
-  // territoryCode by guessing from the first two letters of a free-typed
-  // country name, which was wrong for most non-US countries (e.g.
-  // "Germany" -> "GE" Georgia, "Indonesia" -> "IN" India).
-  const territoryCode = String(formData.get('country') || '').trim().toUpperCase();
-
-  const addressInput = {
-    firstName: String(formData.get('firstName') || '').trim(),
-    lastName: String(formData.get('lastName') || '').trim(),
-    address1: String(formData.get('address1') || '').trim(),
-    address2: String(formData.get('address2') || '').trim() || null,
-    city: String(formData.get('city') || '').trim(),
-    zoneCode: String(formData.get('province') || '').trim(),
-    zip: String(formData.get('zip') || '').trim(),
-    territoryCode,
-    phoneNumber: String(formData.get('phoneNumber') || '').trim() || null,
-    company: String(formData.get('company') || '').trim() || null,
+  // NOTE: a thrown API failure becomes a message; only a redirect Response (expired session) passes through.
+  const run = async (query: string, variables: Record<string, unknown>): Promise<Mutated | undefined> => {
+    try {
+      return await customerAccount.mutate(query, {variables});
+    } catch (error) {
+      if (error instanceof Response) throw error;
+      return undefined;
+    }
   };
 
-  if (intent === 'create') {
-    const result = await customerAccount.mutate(ADDRESS_CREATE_MUTATION, {
-      variables: {address: addressInput},
-    });
-    const data = result.data as {
-      customerAddressCreate: {
-        customerAddress: AddressNode | null;
-        userErrors: Array<{field: string[]; message: string}>;
-      };
-    };
-    if (data.customerAddressCreate.userErrors?.length > 0) {
-      return {
-        success: false,
-        errors: data.customerAddressCreate.userErrors.map((e) => e.message),
-        action: 'create',
-      };
-    }
-    return {success: true, action: 'create'};
-  }
+  if (intent === 'create' || intent === 'update') {
+    const parsed = parseAddressForm(formData);
+    if (!parsed.ok) return {success: false, errors: parsed.errors, action: intent};
 
-  if (intent === 'update') {
-    const addressId = String(formData.get('id') || '');
-    const result = await customerAccount.mutate(ADDRESS_UPDATE_MUTATION, {
-      variables: {addressId, address: addressInput},
-    });
-    const data = result.data as {
-      customerAddressUpdate: {
-        customerAddress: AddressNode | null;
-        userErrors: Array<{field: string[]; message: string}>;
-      };
-    };
-    if (data.customerAddressUpdate.userErrors?.length > 0) {
-      return {
-        success: false,
-        errors: data.customerAddressUpdate.userErrors.map((e) => e.message),
-        action: 'update',
-      };
+    if (intent === 'create') {
+      const result = await run(ADDRESS_CREATE_MUTATION, {address: parsed.input});
+      const payload = (result?.data as {customerAddressCreate?: {userErrors?: Array<{message?: string | null}>} | null} | undefined)
+        ?.customerAddressCreate;
+      const failure = mutationErrors('account.addresses.create', result, payload);
+      return failure ? {success: false, errors: failure, action: 'create'} : {success: true, action: 'create'};
     }
-    return {success: true, action: 'update'};
+
+    const addressId = String(formData.get('id') || '');
+    if (!isAddressId(addressId)) return {success: false, errors: ['That address could not be found.'], action: 'update'};
+    const result = await run(ADDRESS_UPDATE_MUTATION, {addressId, address: parsed.input});
+    const payload = (result?.data as {customerAddressUpdate?: {userErrors?: Array<{message?: string | null}>} | null} | undefined)
+      ?.customerAddressUpdate;
+    const failure = mutationErrors('account.addresses.update', result, payload);
+    return failure ? {success: false, errors: failure, action: 'update'} : {success: true, action: 'update'};
   }
 
   if (intent === 'delete') {
     const addressId = String(formData.get('id') || '');
-    const result = await customerAccount.mutate(ADDRESS_DELETE_MUTATION, {
-      variables: {addressId},
-    });
-    const data = result.data as {
-      customerAddressDelete: {
-        deletedAddressId: string | null;
-        userErrors: Array<{field: string[]; message: string}>;
-      };
-    };
-    if (data.customerAddressDelete.userErrors?.length > 0) {
-      return {
-        success: false,
-        errors: data.customerAddressDelete.userErrors.map((e) => e.message),
-        action: 'delete',
-      };
-    }
-    return {success: true, action: 'delete'};
+    if (!isAddressId(addressId)) return {success: false, errors: ['That address could not be found.'], action: 'delete'};
+    const result = await run(ADDRESS_DELETE_MUTATION, {addressId});
+    const payload = (result?.data as {customerAddressDelete?: {userErrors?: Array<{message?: string | null}>} | null} | undefined)
+      ?.customerAddressDelete;
+    const failure = mutationErrors('account.addresses.delete', result, payload);
+    return failure ? {success: false, errors: failure, action: 'delete'} : {success: true, action: 'delete'};
   }
 
   return {success: false, errors: ['Unknown action.']};
@@ -264,8 +261,8 @@ function formatAddress(addr: AddressNode) {
   if (addr.company) lines.push(addr.company);
   lines.push(addr.address1);
   if (addr.address2) lines.push(addr.address2);
-  lines.push(`${addr.city}, ${addr.province} ${addr.zip}`);
-  lines.push(addr.country);
+  lines.push([addr.city, addr.province].filter(Boolean).join(', ') + ` ${addr.zip}`);
+  if (addr.country) lines.push(addr.country);
   return lines;
 }
 
@@ -280,6 +277,19 @@ function AddressForm({
   intent: 'create' | 'update';
   submitLabel: string;
 }) {
+  const formId = useId();
+  // NOTE: the saved ISO code is authoritative; the old display-name reversal silently defaulted to US.
+  const savedCountry = (address?.territoryCode ?? '').toUpperCase();
+  const [countryCode, setCountryCode] = useState(savedCountry || 'US');
+  const countryOptions = useMemo(() => {
+    const options = getCountryOptions();
+    // A saved address in a country outside the selectable list keeps its country instead of being replaced.
+    return !savedCountry || options.some((c) => c.code === savedCountry)
+      ? options
+      : [{code: savedCountry as (typeof options)[number]['code'], name: address?.country || savedCountry}, ...options];
+  }, [savedCountry, address?.country]);
+  const zones = ADDRESS_ZONES[countryCode];
+
   return (
     <form method="POST" className="space-y-4 bg-[var(--color-surface)] p-6 rounded-lg">
       <input type="hidden" name="intent" value={intent} />
@@ -287,22 +297,26 @@ function AddressForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+          <label htmlFor={`${formId}-firstName`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             First Name
           </label>
           <input
-            name="firstName"
+            // NOTE: valid WHATWG token; oxlint's autocomplete-valid list omits it.
+            // oxlint-disable-next-line jsx-a11y/autocomplete-valid
+            id={`${formId}-firstName`} name="firstName" autoComplete="given-name"
             defaultValue={address?.firstName || ''}
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+          <label htmlFor={`${formId}-lastName`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             Last Name
           </label>
           <input
-            name="lastName"
+            // NOTE: valid WHATWG token; oxlint's autocomplete-valid list omits it.
+            // oxlint-disable-next-line jsx-a11y/autocomplete-valid
+            id={`${formId}-lastName`} name="lastName" autoComplete="family-name"
             defaultValue={address?.lastName || ''}
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
@@ -311,22 +325,22 @@ function AddressForm({
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+        <label htmlFor={`${formId}-company`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Company (optional)
         </label>
         <input
-          name="company"
+          id={`${formId}-company`} name="company" autoComplete="organization"
           defaultValue={address?.company || ''}
           className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+        <label htmlFor={`${formId}-address1`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Address
         </label>
         <input
-          name="address1"
+          id={`${formId}-address1`} name="address1" autoComplete="address-line1"
           defaultValue={address?.address1 || ''}
           required
           className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
@@ -334,11 +348,11 @@ function AddressForm({
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+        <label htmlFor={`${formId}-address2`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Apartment, suite, etc. (optional)
         </label>
         <input
-          name="address2"
+          id={`${formId}-address2`} name="address2" autoComplete="address-line2"
           defaultValue={address?.address2 || ''}
           className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
         />
@@ -346,56 +360,81 @@ function AddressForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+          <label htmlFor={`${formId}-city`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             City
           </label>
           <input
-            name="city"
+            id={`${formId}-city`} name="city" autoComplete="address-level2"
             defaultValue={address?.city || ''}
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
-            State / Province
+          <label
+            htmlFor={`${formId}-province`}
+            className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2"
+          >
+            {zones ? 'State / Province' : 'Region code (optional)'}
           </label>
-          <input
-            name="province"
-            defaultValue={address?.province || ''}
-            required
-            className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
-          />
+          {zones ? (
+            <select
+              id={`${formId}-province`}
+              name="province" autoComplete="address-level1"
+              key={countryCode}
+              defaultValue={countryCode === savedCountry ? (address?.zoneCode ?? '') : ''}
+              required
+              className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
+            >
+              <option value="">Select…</option>
+              {zones.map((zone) => (
+                <option key={zone.code} value={zone.code}>
+                  {zone.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              id={`${formId}-province`}
+              name="province" autoComplete="address-level1"
+              key={countryCode}
+              defaultValue={countryCode === savedCountry ? (address?.zoneCode ?? '') : ''}
+              maxLength={3}
+              autoCapitalize="characters"
+              className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
+            />
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+          <label htmlFor={`${formId}-zip`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             ZIP / Postal Code
           </label>
           <input
-            name="zip"
+            id={`${formId}-zip`} name="zip" autoComplete="postal-code"
             defaultValue={address?.zip || ''}
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+          <label
+            htmlFor={`${formId}-country`}
+            className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2"
+          >
             Country
           </label>
           <select
-            name="country"
-            defaultValue={
-              getCountryOptions().find(
-                (c) => c.name.toLowerCase() === (address?.country || '').toLowerCase(),
-              )?.code || 'US'
-            }
+            id={`${formId}-country`}
+            name="country" autoComplete="country"
+            value={countryCode}
+            onChange={(event) => setCountryCode(event.target.value)}
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           >
-            {getCountryOptions().map((c) => (
+            {countryOptions.map((c) => (
               <option key={c.code} value={c.code}>
                 {c.name}
               </option>
@@ -405,11 +444,11 @@ function AddressForm({
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+        <label htmlFor={`${formId}-phoneNumber`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Phone (optional)
         </label>
         <input
-          name="phoneNumber"
+          id={`${formId}-phoneNumber`} name="phoneNumber" autoComplete="tel"
           defaultValue={address?.phoneNumber || ''}
           type="tel"
           className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
@@ -436,12 +475,10 @@ function AddressCard({
   address,
   isDefault,
   onEdit,
-  onDelete,
 }: {
   address: AddressNode;
   isDefault: boolean;
   onEdit: () => void;
-  onDelete: () => void;
 }) {
   const deleteFetcher = useFetcher();
 
@@ -484,13 +521,13 @@ function AddressCard({
 }
 
 export default function AddressesPage() {
-  const {defaultAddress, addresses} = useLoaderData<typeof loader>();
+  const {failed, defaultAddress, addresses, nextCursor, isFirstPage} = useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
-  const allAddresses = addresses.length > 0 ? addresses : (defaultAddress ? [defaultAddress] : []);
+  // The default address (page one only) leads the list.
+  const allAddresses = defaultAddress ? [defaultAddress, ...addresses] : addresses;
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const editingAddress = allAddresses.find((a) => a.id === editingId);
 
   return (
     <Container className="py-16">
@@ -507,7 +544,7 @@ export default function AddressesPage() {
         </div>
 
         {actionData?.success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-sm text-green-800 rounded">
+          <div role="status" className="mb-6 p-4 bg-green-50 border border-green-200 text-sm text-green-800 rounded">
             {actionData.action === 'create' && 'Address added successfully.'}
             {actionData.action === 'update' && 'Address updated successfully.'}
             {actionData.action === 'delete' && 'Address deleted.'}
@@ -515,14 +552,22 @@ export default function AddressesPage() {
         )}
 
         {actionData?.errors && actionData.errors.length > 0 && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-sm text-red-800 rounded">
+          <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 text-sm text-red-800 rounded">
             {actionData.errors.map((err, i) => (
               <p key={i}>{err}</p>
             ))}
           </div>
         )}
 
-        {allAddresses.length === 0 && !showAddForm ? (
+        {failed ? (
+          <div className="text-center py-20 border border-[var(--color-border-medium)]" role="alert">
+            <p className="h-eyebrow mb-4 text-[var(--color-text-tertiary)]">COULDN&apos;T LOAD ADDRESSES</p>
+            <p className="text-[var(--color-text-secondary)] mb-8">Please try again in a moment.</p>
+            <Link to="/account/addresses" className="text-xs font-semibold tracking-widest uppercase underline underline-offset-4">
+              Try again
+            </Link>
+          </div>
+        ) : allAddresses.length === 0 && !showAddForm ? (
           <div className="text-center py-20 border border-[var(--color-border-medium)] bg-[var(--color-background)]">
             <p className="h-eyebrow mb-4 text-[var(--color-text-tertiary)]">NO ADDRESSES</p>
             <p className="text-[var(--color-text-secondary)] mb-8">
@@ -556,7 +601,6 @@ export default function AddressesPage() {
                   address={addr}
                   isDefault={isDefault}
                   onEdit={() => setEditingId(addr.id)}
-                  onDelete={() => {}}
                 />
               );
             })}
@@ -581,6 +625,23 @@ export default function AddressesPage() {
               </div>
             )}
           </div>
+        )}
+
+        {!failed && (nextCursor || !isFirstPage) && (
+          <nav aria-label="Address pages" className="mt-4 flex items-center justify-between text-xs font-semibold tracking-widest uppercase">
+            {isFirstPage ? (
+              <span />
+            ) : (
+              <Link to="/account/addresses" className="underline underline-offset-4">
+                ← First addresses
+              </Link>
+            )}
+            {nextCursor && (
+              <Link to={`/account/addresses?after=${encodeURIComponent(nextCursor)}`} className="underline underline-offset-4">
+                More addresses →
+              </Link>
+            )}
+          </nav>
         )}
       </div>
     </Container>

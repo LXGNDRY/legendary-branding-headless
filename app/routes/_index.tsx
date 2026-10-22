@@ -25,6 +25,7 @@ import {
   resolveMenuCollections,
   type MenuItemNode,
 } from '~/lib/nav';
+import {ROUTES, canonicalUrl} from '~/lib/site';
 
 const HOMEPAGE_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
@@ -60,11 +61,11 @@ export const meta: MetaFunction = () => {
   return [
     {title: 'LEGENDARY BRANDING | Premium Editorial Streetwear'},
     {name: 'description', content: description},
-    {tagName: 'link', rel: 'canonical', href: 'https://www.legendary-branding.com/'},
+    {tagName: 'link', rel: 'canonical', href: canonicalUrl(ROUTES.home)},
     {property: 'og:type', content: 'website'},
     {property: 'og:title', content: 'LEGENDARY BRANDING'},
     {property: 'og:description', content: description},
-    {property: 'og:url', content: 'https://www.legendary-branding.com/'},
+    {property: 'og:url', content: canonicalUrl(ROUTES.home)},
     {name: 'twitter:card', content: 'summary_large_image'},
     {name: 'twitter:title', content: 'LEGENDARY BRANDING'},
     {name: 'twitter:description', content: description},
@@ -141,6 +142,7 @@ export async function loader({context}: LoaderFunctionArgs) {
     .filter((p): p is NonNullable<typeof p> => p !== null)
     .slice(0, 4);
 
+  // NOTE: covers only the (up to four) products shown, weighted by review count; the section copy says so.
   const aggregateCount = ratedProducts.reduce((sum, p) => sum + p.reviewCount, 0);
   const aggregateRating =
     aggregateCount > 0
@@ -180,7 +182,7 @@ export async function loader({context}: LoaderFunctionArgs) {
 const MARQUEE_ITEMS = [
   '220GSM+ PREMIUM-WEIGHT TEES',
   'MADE TO ORDER',
-  'FREE SHIPPING ON EVERY ORDER',
+  'SHIPPING CALCULATED AT CHECKOUT',
   'WORLDWIDE SHIPPING',
   'AUTHENTICITY GUARANTEED',
   'NEW DROPS EVERY FRIDAY',

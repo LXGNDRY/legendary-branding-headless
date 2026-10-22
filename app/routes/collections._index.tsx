@@ -7,6 +7,7 @@ import {CacheShort} from '~/lib/cache';
 import {fetchAllPages} from '~/lib/pagination';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema} from '~/components/seo/SeoSchema';
+import {ROUTES, canonicalUrl} from '~/lib/site';
 
 type CollectionNode = {
   id: string;
@@ -54,10 +55,10 @@ const COLLECTIONS_QUERY = `#graphql
 export const meta: MetaFunction = () => [
   {title: 'Collections | LEGENDARY BRANDING'},
   {name: 'description', content: 'Shop all Legendary Branding collections.'},
-  {tagName: 'link', rel: 'canonical', href: 'https://www.legendary-branding.com/collections'},
+  {tagName: 'link', rel: 'canonical', href: canonicalUrl(ROUTES.collections)},
   {property: 'og:title', content: 'Collections | LEGENDARY BRANDING'},
   {property: 'og:description', content: 'Shop all Legendary Branding collections.'},
-  {property: 'og:url', content: 'https://www.legendary-branding.com/collections'},
+  {property: 'og:url', content: canonicalUrl(ROUTES.collections)},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {

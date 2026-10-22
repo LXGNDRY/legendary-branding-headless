@@ -1,5 +1,5 @@
 import type {LoaderFunctionArgs} from 'react-router';
-import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {enforceRatePolicy} from '~/lib/rate-limit';
 
 const PREDICTIVE_SEARCH_QUERY = `#graphql
   query PredictiveSearch($query: String!, $limit: Int = 6, $country: CountryCode, $language: LanguageCode)
@@ -44,7 +44,7 @@ const empty = {products: [], collections: [], queries: []};
  */
 export async function loader({request, context}: LoaderFunctionArgs) {
   // Rate limiting — 60 requests per minute per IP
-  const rateLimitResponse = rateLimitMiddleware(request, 'search', 60);
+  const rateLimitResponse = enforceRatePolicy(request, 'search');
   if (rateLimitResponse) return rateLimitResponse;
 
   const url = new URL(request.url);
@@ -86,7 +86,10 @@ function jsonResponse(data: unknown, status = 200) {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=60, stale-while-revalidate=900',
+      // NOTE: private -- results carry the session's market (currency, language)
+      // but the URL doesn't, so a shared cache would serve one shopper's market
+      // to another. Errors are never cached at all.
+      'Cache-Control': status === 200 ? 'private, max-age=60' : 'no-store',
     },
   });
 }

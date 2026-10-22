@@ -11,10 +11,11 @@ interface ReviewQuotesProps {
 
 /**
  * Real Judge.me review quotes -- fetched server-side via the Judge.me API
- * (see app/lib/judgeme.ts). Reviewer names are truncated to first name +
- * last initial before they ever reach this component. Renders nothing if
- * there are no real quotes to show, rather than falling back to invented
- * copy.
+ * (see app/lib/judgeme.ts). They are a curated selection (5-star, written at
+ * length, not templated, one per product), and the section says so. Reviewer
+ * names are masked, or "Anonymous", before they reach this component; none
+ * is ever invented (docs/REVIEWS.md). Renders nothing if there are no real
+ * quotes to show, rather than falling back to invented copy.
  */
 export default function ReviewQuotes({
   eyebrow = 'Customer Reviews',
@@ -32,6 +33,7 @@ export default function ReviewQuotes({
           <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-text-primary)]">
             {heading}
           </h2>
+          <p className="mt-3 text-sm text-[var(--color-text-secondary)]">A selection of our 5-star reviews</p>
         </div>
 
         <div ref={ref} className="grid grid-cols-1 md:grid-cols-3 gap-6 h-stagger">

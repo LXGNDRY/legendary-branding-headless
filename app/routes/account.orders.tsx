@@ -1,3 +1,5 @@
+import {useLanguage} from '~/lib/i18n';
+import {formatDate, formatMoney} from '~/lib/locale';
 import {
   redirect,
   type LoaderFunctionArgs,
@@ -8,11 +10,9 @@ import {
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
+import {ACCOUNT_PAGE_SIZE, accountMeta, loadAccount, parseAfterCursor} from '~/lib/account';
 
-export const meta: MetaFunction = () => [
-  {title: 'Orders | LEGENDARY BRANDING'},
-  {name: 'description', content: 'Your order history.'},
-];
+export const meta: MetaFunction = () => accountMeta('Orders', 'Your order history.');
 
 const ORDERS_QUERY = `#graphql
   query Orders($first: Int!, $after: String) {
@@ -86,7 +86,7 @@ interface OrderNode {
   };
 }
 
-export async function loader({context}: LoaderFunctionArgs) {
+export async function loader({request, context}: LoaderFunctionArgs) {
   const {customerAccount} = context;
 
   if (!customerAccount) {
@@ -98,31 +98,26 @@ export async function loader({context}: LoaderFunctionArgs) {
     return redirect('/account/login');
   }
 
-  const result = await customerAccount.query(ORDERS_QUERY, {
-    variables: {first: 10},
-  });
+  const after = parseAfterCursor(new URL(request.url));
+  const result = await loadAccount<{
+    customer?: {orders?: {nodes?: OrderNode[] | null; pageInfo?: {hasNextPage: boolean; endCursor?: string | null} | null} | null} | null;
+  }>('account.orders', () => customerAccount.query(ORDERS_QUERY, {variables: {first: ACCOUNT_PAGE_SIZE, after}}));
 
-  return {orders: result.data.customer.orders};
+  if (!result.ok || !result.data.customer?.orders) return {failed: true as const, orders: [] as OrderNode[], nextCursor: null, isFirstPage: !after};
+
+  const {nodes, pageInfo} = result.data.customer.orders;
+  return {
+    failed: false as const,
+    orders: nodes ?? [],
+    nextCursor: pageInfo?.hasNextPage ? (pageInfo.endCursor ?? null) : null,
+    isFirstPage: !after,
+  };
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-function formatMoney(amount: string, currency: string) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(parseFloat(amount));
-}
 
 export default function OrdersPage() {
-  const {orders} = useLoaderData<typeof loader>();
-  const orderList = orders.nodes as OrderNode[];
+  const {orders: orderList, failed, nextCursor, isFirstPage} = useLoaderData<typeof loader>();
+  const language = useLanguage();
 
   return (
     <Container className="py-16">
@@ -138,21 +133,27 @@ export default function OrdersPage() {
           <h1 className="text-4xl md:text-5xl font-normal">Orders</h1>
         </div>
 
-        {orderList.length === 0 ? (
+        {failed ? (
+          <div className="text-center py-20 border border-[var(--color-border-muted)]" role="alert">
+            <p className="h-eyebrow mb-4 text-[var(--color-text-tertiary)]">COULDN&apos;T LOAD ORDERS</p>
+            <p className="text-[var(--color-text-secondary)] mb-8">Please try again in a moment.</p>
+            <Link to="/account/orders" className="text-xs font-semibold tracking-widest uppercase underline underline-offset-4">
+              Try again
+            </Link>
+          </div>
+        ) : orderList.length === 0 ? (
           <div className="text-center py-20 border border-[var(--color-border-muted)]">
             <p className="h-eyebrow mb-4 text-[var(--color-text-tertiary)]">NO ORDERS YET</p>
             <p className="text-[var(--color-text-secondary)] mb-8">
               Your order history will appear here.
             </p>
-            <Link to="/">
-              <Button variant="primary">Start Shopping</Button>
-            </Link>
+            <Button as="link" to="/" variant="primary">Start Shopping</Button>
           </div>
         ) : (
           <div className="space-y-6">
             {orderList.map((order) => {
               const fulfillmentStatus =
-                order.fulfillments.nodes[0]?.status ?? 'UNFULFILLED';
+                order.fulfillments?.nodes?.[0]?.status ?? 'UNFULFILLED';
 
               return (
                 <div
@@ -162,11 +163,11 @@ export default function OrdersPage() {
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                     <div>
                       <p className="text-sm text-[var(--color-text-secondary)] mb-1">
-                        {formatDate(order.processedAt)}
+                        {formatDate(order.processedAt, language)}
                       </p>
-                      <h3 className="text-xl font-normal">
+                      <h2 className="text-xl font-normal">
                         Order #{order.number}
-                      </h3>
+                      </h2>
                     </div>
                     <div className="mt-4 md:mt-0 text-right">
                       <p className="text-sm text-[var(--color-text-secondary)] mb-1">
@@ -174,6 +175,7 @@ export default function OrdersPage() {
                         {formatMoney(
                           order.totalPrice.amount,
                           order.totalPrice.currencyCode,
+                          language,
                         )}
                       </p>
                       <span
@@ -190,7 +192,7 @@ export default function OrdersPage() {
 
                   {/* Order items */}
                   <div className="flex gap-4 flex-wrap mb-6">
-                    {order.lineItems.nodes.map((item, i) => (
+                    {(order.lineItems?.nodes ?? []).map((item, i) => (
                       <div key={i} className="w-16 h-16 bg-[var(--color-surface)] flex items-center justify-center">
                         {item.image?.url ? (
                           <Image
@@ -223,6 +225,23 @@ export default function OrdersPage() {
               );
             })}
           </div>
+        )}
+
+        {!failed && (nextCursor || !isFirstPage) && (
+          <nav aria-label="Order pages" className="mt-10 flex items-center justify-between text-xs font-semibold tracking-widest uppercase">
+            {isFirstPage ? (
+              <span />
+            ) : (
+              <Link to="/account/orders" className="underline underline-offset-4">
+                ← Newest orders
+              </Link>
+            )}
+            {nextCursor && (
+              <Link to={`/account/orders?after=${encodeURIComponent(nextCursor)}`} className="underline underline-offset-4">
+                Older orders →
+              </Link>
+            )}
+          </nav>
         )}
       </div>
     </Container>
