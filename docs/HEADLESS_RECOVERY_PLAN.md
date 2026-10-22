@@ -370,7 +370,7 @@ Initial status for every recovery task is **Not started**; this document and its
 | R02 | In PR | claude/recovery-r01-r03-gates | oxlint replaces ESLint (typescript-eslint cannot run on TS 7.0); hooks/correctness errors gate; a11y + React-compiler rules are warnings until R20/R21; probe with conditional hook fails | See package/decision table |
 | R03 | In PR | claude/recovery-r01-r03-gates | `.graphqlrc.ts` uses `getSchema`; generated files are now 78 KB/21 KB; surfaced search-sort and URL-scalar type errors, fixed | See package/decision table |
 | R04 | In PR | claude/recovery-r04-cart-safe | Shared `handleCartMutation`: input validation, null-cart and provider-throw handling, cart cookie only for a returned cart; 23 new tests | See package/decision table |
-| R05 | Not started | — | — | See package/decision table |
+| R05 | In PR | claude/recovery-r05-cookies | `server.ts` appends (not replaces) the session cookie and copies cookies through 404 redirects; `commit()` clears `isPending`; 8 new tests. Real-browser/OAuth cookie checks still owed (needs preview) | See package/decision table |
 | R06 | Not started | — | — | See package/decision table |
 | R07 | Not started | — | — | See package/decision table |
 | R08 | Not started | — | — | See package/decision table |
