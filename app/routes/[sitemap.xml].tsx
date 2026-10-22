@@ -26,16 +26,35 @@ const ARTICLES_QUERY = `#graphql
   }
 ` as const;
 
+// NOTE: the same content the policy route checks (built-in policy body, or the Page of that handle's body), so the
+// sitemap can never list a URL that answers 503. Aliases because handles contain hyphens.
 const POLICIES_QUERY = `#graphql
   query SitemapPolicies {
     shop {
-      refundPolicy { id }
-      termsOfService { id }
-      shippingPolicy { id }
-      privacyPolicy { id }
+      refundPolicy { body }
+      termsOfService { body }
+      shippingPolicy { body }
+      privacyPolicy { body }
     }
+    refund: page(handle: "refund-policy") { body }
+    terms: page(handle: "terms-of-service") { body }
+    privacy: page(handle: "privacy-with-legendary-branding") { body }
+    shipping: page(handle: "shipping-policy") { body }
+    sizeGuide: page(handle: "size-guide") { body }
+    about: page(handle: "about") { body }
+    faq: page(handle: "legendary_branding_faqs") { body }
   }
 ` as const;
+
+const POLICY_PAGE_ALIASES: Record<string, string> = {
+  'refund-policy': 'refund',
+  'terms-of-service': 'terms',
+  'privacy-with-legendary-branding': 'privacy',
+  'shipping-policy': 'shipping',
+  'size-guide': 'sizeGuide',
+  about: 'about',
+  legendary_branding_faqs: 'faq',
+};
 
 type Node = {handle: string; updatedAt?: string};
 type Connection = {nodes: Node[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
@@ -64,16 +83,18 @@ export async function loader({context}: LoaderFunctionArgs) {
     paginate(async (after) => (await context.storefront.query(COLLECTIONS_QUERY, {variables: {...variables, after}, cache: CacheLong()})).collections as Connection),
     paginate(async (after) => (await context.storefront.query(PAGES_QUERY, {variables: {...variables, after}, cache: CacheLong()})).pages as Connection),
     paginate(async (after) => (await context.storefront.query(ARTICLES_QUERY, {variables: {...variables, after, blogHandle: 'legendary_blogging'}, cache: CacheLong()})).blog?.articles as Connection | undefined),
-    context.storefront.query(POLICIES_QUERY, {cache: CacheLong()}).then((data) => data.shop as Record<string, {id?: string} | null> | null),
+    context.storefront.query(POLICIES_QUERY, {cache: CacheLong()}) as Promise<Record<string, unknown> & {shop?: Record<string, {body?: string | null} | null> | null}>,
   ]);
 
-  // NOTE: a policy URL is listed only when it serves real content: its built-in store policy exists, or a Page of that
-  // handle does. Contact is always served (it renders its own block).
-  const pageHandles = new Set(pages.map((item) => item.handle));
+  // NOTE: a policy URL is listed only when the route would serve content for it (a built-in policy body, or the body of
+  // the Page of that handle). Contact is always served (it renders its own block).
   const usable = (handle: PolicyHandle) => {
     const entry = POLICY_PAGES[handle];
     if (!entry.required) return true;
-    return Boolean(entry.native && policies?.[entry.native]?.id) || pageHandles.has(handle);
+    const native = entry.native ? policies?.shop?.[entry.native]?.body : null;
+    const alias = POLICY_PAGE_ALIASES[handle];
+    const page = alias ? (policies?.[alias] as {body?: string | null} | null | undefined)?.body : null;
+    return Boolean(native) || Boolean(page);
   };
   const policyHandles = (Object.keys(POLICY_PAGES) as PolicyHandle[]).filter(usable);
 
