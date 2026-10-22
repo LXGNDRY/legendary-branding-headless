@@ -24,6 +24,7 @@
     "@shopify/hydrogen": "2026.4.7",
     "graphql": "16.14.2",
     "isbot": "4.4.0",
+    "parse5": "8.0.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-router": "7.18.2",

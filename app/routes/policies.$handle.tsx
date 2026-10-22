@@ -1,3 +1,4 @@
+import SafeHtml from '~/components/ui/SafeHtml';
 import {type LoaderFunctionArgs, type MetaFunction, useLoaderData, Link} from 'react-router';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
@@ -145,18 +146,14 @@ export default function PolicyPage() {
         </h1>
 
         {bodyHtml ? (
-          <div
-            className="prose prose-sm max-w-none
+          <SafeHtml className="prose prose-sm max-w-none
               [&_p]:text-sm [&_p]:text-[var(--color-foreground)] [&_p]:leading-relaxed [&_p]:mb-4
               [&_h2]:text-lg [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-3
               [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2
               [&_ul]:pl-5 [&_ul]:mb-4 [&_li]:text-sm [&_li]:text-[var(--color-foreground)] [&_li]:mb-1
               [&_ol]:pl-5 [&_ol]:mb-4
               [&_a]:underline [&_a]:underline-offset-2 [&_a]:hover:text-[var(--color-text-secondary)]
-              [&_strong]:font-semibold"
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{__html: bodyHtml}}
-          />
+              [&_strong]:font-semibold" html={bodyHtml} />
         ) : (
           <div className="py-16 text-center border-y border-[var(--color-border-subtle)]">
             <p className="text-sm text-[var(--color-text-secondary)] tracking-wide">

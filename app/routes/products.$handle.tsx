@@ -1,3 +1,4 @@
+import SafeHtml from '~/components/ui/SafeHtml';
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -939,10 +940,7 @@ export default function ProductPage() {
               <div className="border-t border-[var(--color-border-muted)] pt-4">
                 {product.descriptionHtml && (
                   <Accordion label="Description">
-                    <div
-                      className="prose prose-sm max-w-none [&_p]:text-[var(--color-text-secondary)] [&_ul]:text-[var(--color-text-secondary)]"
-                      dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
-                    />
+                    <SafeHtml className="prose prose-sm max-w-none [&_p]:text-[var(--color-text-secondary)] [&_ul]:text-[var(--color-text-secondary)]" html={product.descriptionHtml} />
                   </Accordion>
                 )}
                 <Accordion label="Shipping & Returns">

@@ -1,3 +1,4 @@
+import SafeHtml from '~/components/ui/SafeHtml';
 import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
 import {Image} from '@shopify/hydrogen';
@@ -169,8 +170,7 @@ export default function ArticlePage() {
         </header>
 
         {/* Article body */}
-        <div
-          className="max-w-2xl mx-auto prose prose-sm lg:prose-base max-w-none
+        <SafeHtml className="max-w-2xl mx-auto prose prose-sm lg:prose-base max-w-none
             [&_p]:text-[var(--color-foreground)] [&_p]:leading-relaxed [&_p]:mb-5
             [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-10 [&_h2]:mb-4
             [&_h3]:text-lg [&_h3]:font-bold [&_h3]:tracking-tight [&_h3]:mt-8 [&_h3]:mb-3
@@ -179,10 +179,7 @@ export default function ArticlePage() {
             [&_strong]:font-semibold [&_strong]:text-[var(--color-foreground)]
             [&_a]:underline [&_a]:underline-offset-2 [&_a]:text-[var(--color-foreground)] [&_a]:hover:text-[var(--color-text-secondary)]
             [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--color-foreground)] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-[var(--color-text-secondary)]
-            [&_img]:w-full [&_img]:my-8"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{__html: article.contentHtml}}
-        />
+            [&_img]:w-full [&_img]:my-8" html={article.contentHtml} />
 
         {/* Tags */}
         {article.tags.length > 0 && (
