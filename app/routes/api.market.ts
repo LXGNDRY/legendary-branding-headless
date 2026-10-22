@@ -60,13 +60,18 @@ export async function action({request, context}: ActionFunctionArgs) {
   if (cartId) {
     try {
       const updated = await context.cart.updateBuyerIdentity({countryCode: country as CountryCode});
-      if (!updated?.cart || updated.errors?.length) {
+      if (!updated?.cart) {
+        // NOTE: the saved cart ID no longer resolves (expired or deleted). Drop the unusable
+        // cookie and apply the selection; otherwise the shopper could never change market.
+        headers.append('Set-Cookie', 'cart=; Path=/; Max-Age=0; SameSite=Lax');
+      } else if (updated.errors?.length) {
         throw new Error('Cart buyer identity update was rejected');
-      }
-      cart = updated.cart;
-      // The cart ID can rotate when the market changes; persist whatever Shopify returned.
-      for (const cookie of context.cart.setCartId(updated.cart.id).getSetCookie()) {
-        headers.append('Set-Cookie', cookie);
+      } else {
+        cart = updated.cart;
+        // The cart ID can rotate when the market changes; persist whatever Shopify returned.
+        for (const cookie of context.cart.setCartId(updated.cart.id).getSetCookie()) {
+          headers.append('Set-Cookie', cookie);
+        }
       }
     } catch (error) {
       captureError(error, {route: 'api.market', failure: 'buyer-identity'});

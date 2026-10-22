@@ -87,12 +87,24 @@ describe('api.market action', () => {
     }
 
     it('keeps the previous market when Shopify rejects the cart update', async () => {
-      const {set, run} = setup(async () => ({cart: null, errors: [{message: 'nope'}]}));
+      const {set, run} = setup(async () => ({cart: {id: 'gid://shopify/Cart/old'}, errors: [{message: 'nope'}]}));
       const response = await run();
       expect(response.status).toBe(409);
       expect(set).not.toHaveBeenCalled();
       expect(response.headers.get('Set-Cookie')).toBeNull();
       expect(JSON.stringify(await response.json())).not.toContain('nope');
+    });
+
+    it('recovers from an expired cart: clears the dead cart cookie and still applies the selection', async () => {
+      const {set, run} = setup(async () => ({cart: null, errors: []}));
+      const response = await run();
+      expect(response.status).toBe(200);
+      expect(set).toHaveBeenCalledWith('country', 'ES');
+      expect(set).toHaveBeenCalledWith('language', 'ES');
+      const cookies = response.headers.getSetCookie();
+      expect(cookies).toContain('session=updated');
+      expect(cookies.some((c) => c.startsWith('cart=;') && c.includes('Max-Age=0'))).toBe(true);
+      expect((await response.json()).cart).toBeNull();
     });
 
     it('keeps the previous market when the cart update throws', async () => {
