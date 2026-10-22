@@ -1,16 +1,5 @@
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 
-/**
- * Flat-rate express shipping surcharge (USD), offered alongside free
- * standard shipping on every order. Not queryable from the Storefront API
- * (it's a merchant-level shipping-settings rule, not product data), so this
- * is a single, intentionally-hardcoded business constant -- exported from
- * here so every surface that mentions it (homepage stat strip, homepage
- * marquee, PDP shipping copy) references the same value instead of each
- * hardcoding its own copy that could drift out of sync.
- */
-export const EXPRESS_SHIPPING_COST = 10;
-
 export type CartMoney = {amount: string; currencyCode: CurrencyCode};
 
 export type CartLineImage = {
