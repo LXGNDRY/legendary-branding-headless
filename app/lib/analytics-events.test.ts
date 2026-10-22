@@ -78,6 +78,14 @@ describe('product view', () => {
 });
 
 describe('cart events', () => {
+  it('reads the storefront cart shape (lines.edges[].node), the one the real cart query returns', () => {
+    const cart = {cost: {totalAmount: {amount: '98.00', currencyCode: 'USD'}}, lines: {edges: [{node: line(2)}, null, {node: null}]}};
+    const basket = basketFromCart(cart)!;
+    expect(basket.value).toBe(98);
+    expect(basket.items).toHaveLength(1);
+    expect(basket.items[0]).toMatchObject({id: '111', variantId: '222', quantity: 2, price: 49});
+  });
+
   it('uses the cart total and every line for view/begin checkout', () => {
     const cart = {cost: {totalAmount: {amount: '98.00', currencyCode: 'USD'}}, lines: {nodes: [line(2)]}};
     const basket = basketFromCart(cart)!;

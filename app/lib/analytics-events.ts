@@ -32,7 +32,11 @@ export type CartLineInput = {
 
 export type CartInput = {
   cost?: {totalAmount?: MoneyLike} | null;
-  lines?: {nodes?: ReadonlyArray<CartLineInput | null | undefined> | null} | null;
+  // NOTE: the storefront cart query returns `edges[].node`; `nodes` is accepted for flattened carts.
+  lines?: {
+    edges?: ReadonlyArray<{node?: CartLineInput | null} | null | undefined> | null;
+    nodes?: ReadonlyArray<CartLineInput | null | undefined> | null;
+  } | null;
 } | null | undefined;
 
 /** The numeric tail of a Shopify global id, which is what channel catalogs use. */
@@ -113,7 +117,8 @@ export function basketFromProducts(products: ReadonlyArray<ProductInput>, curren
 /** The whole cart (view cart, begin checkout). Uses the cart's own total when present. */
 export function basketFromCart(cart: CartInput): Basket | null {
   const items: TrackedItem[] = [];
-  for (const line of cart?.lines?.nodes ?? []) {
+  const lines = cart?.lines?.edges ? cart.lines.edges.map((edge) => edge?.node) : (cart?.lines?.nodes ?? []);
+  for (const line of lines) {
     const item = itemFromLine(line, Math.floor(line?.quantity ?? 0));
     if (item) items.push(item);
   }

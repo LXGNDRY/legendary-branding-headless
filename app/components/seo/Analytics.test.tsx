@@ -226,10 +226,15 @@ describe('Analytics commerce bridge', () => {
     expect(gtag.mock.calls.at(-1)![1]).toBe('remove_from_cart');
     handlers.get('custom_event')!({
       eventName: 'begin_checkout',
-      cart: {cost: {totalAmount: {amount: '98.00', currencyCode: 'USD'}}, lines: {nodes: [line(2)]}},
+      // NOTE: the real cart query returns lines.edges[].node, which is what the checkout publishers pass.
+      cart: {cost: {totalAmount: {amount: '98.00', currencyCode: 'USD'}}, lines: {edges: [{node: line(2)}]}},
     });
     expect(gtag.mock.calls.at(-1)![1]).toBe('begin_checkout');
     expect(fbq.mock.calls.at(-1)!.slice(0, 2)).toEqual(['track', 'InitiateCheckout']);
+    handlers.get('cart_viewed')!({
+      cart: {cost: {totalAmount: {amount: '98.00', currencyCode: 'USD'}}, lines: {edges: [{node: line(2)}]}},
+    });
+    expect(gtag.mock.calls.at(-1)![1]).toBe('view_cart');
   });
 
   it('does not double the load page view for Meta and TikTok', () => {
