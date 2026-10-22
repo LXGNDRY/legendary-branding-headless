@@ -377,7 +377,7 @@ Initial status for every recovery task is **Not started**; this document and its
 | R09 | Merged to dev (#373); deployed header check owed | claude/recovery-r09-cache | Predictive search and quick-add are `private` on success and `no-store` on every error; `withDefaultCacheControl` gives all other non-asset responses `private, max-age=0, must-revalidate` (errors `no-store`) unless a route sets its own. Deployed header/two-market check on the preview still owed | — |
 | R10 | Not started | — | — | See package/decision table |
 | R11 | Not started | — | — | See package/decision table |
-| R12 | Not started | — | — | See package/decision table |
+| R12 | In PR (code only) | claude/recovery-r12-pdp | PDP split into long-cache editorial + short-cache (30s, no stale-if-error) commerce query; variants and quick-add paginate past 100; search uses the shared ProductCard fragment (same-variant sale pair) with PRODUCT-only results, validated sort/price/text params; cards never pair range minima. Late-variant purchase and price/stock freshness on the preview still owed | — |
 | R13 | Not started | — | — | See package/decision table |
 | R14 | Not started | — | — | See package/decision table |
 | R15 | Not started | — | — | See package/decision table |

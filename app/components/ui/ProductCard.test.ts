@@ -27,89 +27,38 @@ function product(overrides: Partial<ProductCardFragment> = {}): ProductCardFragm
   };
 }
 
+const variantPair = (price: string, compareAt: string | null): ProductCardFragment['selectedOrFirstAvailableVariant'] => ({
+  id: 'gid://shopify/ProductVariant/1',
+  availableForSale: true,
+  price: {amount: price, currencyCode: 'USD'},
+  compareAtPrice: compareAt ? {amount: compareAt, currencyCode: 'USD'} : null,
+});
+
 describe('isOnSale', () => {
-  it('is true when compareAtPrice exceeds price', () => {
-    expect(
-      isOnSale(
-        product({
-          priceRange: {
-            minVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-            maxVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-          },
-          compareAtPriceRange: {minVariantPrice: {amount: '100.00', currencyCode: 'USD'}},
-        }),
-      ),
-    ).toBe(true);
+  it('is true when the variant compareAtPrice exceeds its price', () => {
+    expect(isOnSale(product({selectedOrFirstAvailableVariant: variantPair('80.00', '100.00')}))).toBe(true);
   });
 
-  it('is false when compareAtPrice equals price (the search/wishlist bug this guards)', () => {
-    expect(
-      isOnSale(
-        product({
-          priceRange: {
-            minVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-            maxVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-          },
-          compareAtPriceRange: {minVariantPrice: {amount: '80.00', currencyCode: 'USD'}},
-        }),
-      ),
-    ).toBe(false);
+  it('is false when compareAtPrice equals price', () => {
+    expect(isOnSale(product({selectedOrFirstAvailableVariant: variantPair('80.00', '80.00')}))).toBe(false);
   });
 
   it('is false when compareAtPrice is below price', () => {
-    expect(
-      isOnSale(
-        product({
-          priceRange: {
-            minVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-            maxVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-          },
-          compareAtPriceRange: {minVariantPrice: {amount: '60.00', currencyCode: 'USD'}},
-        }),
-      ),
-    ).toBe(false);
+    expect(isOnSale(product({selectedOrFirstAvailableVariant: variantPair('80.00', '60.00')}))).toBe(false);
   });
 });
 
 describe('percentOff', () => {
   it('computes a whole-percent discount off the compare-at price', () => {
-    const pct = percentOff(
-      product({
-        priceRange: {
-          minVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-          maxVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-        },
-        compareAtPriceRange: {minVariantPrice: {amount: '100.00', currencyCode: 'USD'}},
-      }),
-    );
-    expect(pct).toBe(20);
+    expect(percentOff(product({selectedOrFirstAvailableVariant: variantPair('80.00', '100.00')}))).toBe(20);
   });
 
   it('returns null when not on sale', () => {
-    expect(
-      percentOff(
-        product({
-          priceRange: {
-            minVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-            maxVariantPrice: {amount: '80.00', currencyCode: 'USD'},
-          },
-          compareAtPriceRange: {minVariantPrice: {amount: '80.00', currencyCode: 'USD'}},
-        }),
-      ),
-    ).toBeNull();
+    expect(percentOff(product({selectedOrFirstAvailableVariant: variantPair('80.00', '80.00')}))).toBeNull();
   });
 
   it('rounds to the nearest whole percent', () => {
-    const pct = percentOff(
-      product({
-        priceRange: {
-          minVariantPrice: {amount: '67.00', currencyCode: 'USD'},
-          maxVariantPrice: {amount: '67.00', currencyCode: 'USD'},
-        },
-        compareAtPriceRange: {minVariantPrice: {amount: '100.00', currencyCode: 'USD'}},
-      }),
-    );
-    expect(pct).toBe(33);
+    expect(percentOff(product({selectedOrFirstAvailableVariant: variantPair('67.00', '100.00')}))).toBe(33);
   });
 });
 
@@ -158,13 +107,13 @@ describe('salePricePair variant precedence (regression: mismatched range minima)
     expect(percentOff(regularVariant)).toBeNull();
   });
 
-  it('falls back to range minima when no variant-level price was fetched at all (search/wishlist card shape)', () => {
+  it('makes no sale claim when no variant-level price was fetched (never pairs range minima)', () => {
     const noVariantData: ProductCardFragment = {
       ...mismatchedRangeProduct,
       selectedOrFirstAvailableVariant: null,
     };
 
-    // Same (imperfect but best-available) behavior as before this fix.
-    expect(isOnSale(noVariantData)).toBe(true);
+    expect(isOnSale(noVariantData)).toBe(false);
+    expect(percentOff(noVariantData)).toBeNull();
   });
 });

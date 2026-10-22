@@ -58,7 +58,7 @@ describe('api.search cache isolation', () => {
 });
 
 describe('api.quick-add cache isolation', () => {
-  const product = {product: {id: 'p1', title: 'Tee', handle: 'tee', options: [], variants: {nodes: []}}};
+  const product = {product: {id: 'p1', title: 'Tee', handle: 'tee', options: [], variants: {nodes: [], pageInfo: {hasNextPage: false, endCursor: null}}}};
 
   it('is private on success and uncached for missing, invalid and failed requests', async () => {
     const ok = contextFor('US', 'EN', {QuickAddProduct: product});
@@ -82,5 +82,23 @@ describe('api.quick-add cache isolation', () => {
     const brokenRes = await quickAddLoader({request: get('/api/quick-add?handle=tee'), context: broken.context, params: {}});
     expect(brokenRes.status).toBe(500);
     expect(brokenRes.headers.get('Cache-Control')).toBe('no-store');
+  });
+});
+
+describe('api.quick-add variant pagination', () => {
+  const variant = (n: number) => ({id: `gid://shopify/ProductVariant/${n}`, availableForSale: true, selectedOptions: [], price: {amount: '1', currencyCode: 'USD'}});
+
+  it('returns every variant of a product with more than 100 variants', async () => {
+    const respond = (variables: Record<string, unknown>) =>
+      variables.after === null
+        ? {product: {id: 'p1', title: 'Tee', handle: 'big', options: [], variants: {nodes: Array.from({length: 100}, (_, i) => variant(i + 1)), pageInfo: {hasNextPage: true, endCursor: 'c1'}}}}
+        : {product: {id: 'p1', variants: {nodes: Array.from({length: 20}, (_, i) => variant(i + 101)), pageInfo: {hasNextPage: false, endCursor: null}}}};
+    const {context, calls} = contextFor('US', 'EN', {QuickAddProduct: respond});
+    // @ts-expect-error - minimal Hydrogen app context
+    const res = await quickAddLoader({request: get('/api/quick-add?handle=big'), context, params: {}});
+    const body = await res.json();
+    expect(body.product.title).toBe('Tee');
+    expect(body.product.variants.nodes).toHaveLength(120);
+    expect(calls()).toHaveLength(2);
   });
 });
