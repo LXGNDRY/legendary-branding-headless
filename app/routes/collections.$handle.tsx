@@ -1,3 +1,7 @@
+import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
+import {cleanSearchText, parsePriceRange} from '~/lib/search-params';
+import {resetPagination} from '~/lib/pagination-params';
 import {
   type LoaderFunctionArgs,
   type MetaFunction,
@@ -139,19 +143,18 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
 
 function buildFilters(searchParams: URLSearchParams): Array<Record<string, unknown>> {
   const filters: Array<Record<string, unknown>> = [];
-  const priceMin = searchParams.get('price_min');
-  const priceMax = searchParams.get('price_max');
-  if (priceMin || priceMax) {
-    const priceFilter: Record<string, number> = {};
-    if (priceMin) priceFilter.min = parseFloat(priceMin);
-    if (priceMax) priceFilter.max = parseFloat(priceMax);
-    if (Object.keys(priceFilter).length > 0) filters.push({price: priceFilter});
+  const {minPrice, maxPrice} = parsePriceRange(searchParams.get('price_min'), searchParams.get('price_max'));
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    filters.push({price: {...(minPrice !== undefined && {min: minPrice}), ...(maxPrice !== undefined && {max: maxPrice})}});
   }
   if (searchParams.get('in_stock') === '1') filters.push({available: true});
-  const productType = searchParams.get('type');
+  const productType = cleanSearchText(searchParams.get('type'));
   if (productType) filters.push({productType});
-  searchParams.getAll('tag').forEach((tag) => filters.push({tag}));
-  const vendor = searchParams.get('vendor');
+  searchParams.getAll('tag').slice(0, 10).forEach((raw) => {
+    const tag = cleanSearchText(raw);
+    if (tag) filters.push({tag});
+  });
+  const vendor = cleanSearchText(searchParams.get('vendor'));
   if (vendor) filters.push({vendor});
   return filters;
 }
@@ -205,12 +208,14 @@ export default function CollectionPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [filterOpen, setFilterOpen] = useState(false);
+  const {containerRef: filterDrawerRef} = useFocusTrap(filterOpen, () => setFilterOpen(false));
+  useBodyScrollLock(filterOpen);
 
   function handleSort(value: string) {
     const params = new URLSearchParams(searchParams);
     if (value === 'featured') params.delete('sort');
     else params.set('sort', value);
-    params.delete('cursor');
+    resetPagination(params);
     navigate(`?${params.toString()}`, {replace: true});
   }
 
@@ -218,14 +223,14 @@ export default function CollectionPage() {
     const params = new URLSearchParams(searchParams);
     if (value === null || value === '') params.delete(key);
     else params.set(key, value);
-    params.delete('cursor');
+    resetPagination(params);
     setSearchParams(params, {replace: true});
   }
 
   function clearAllFilters() {
     const params = new URLSearchParams(searchParams);
     ['price_min', 'price_max', 'in_stock', 'type', 'tag', 'vendor'].forEach((k) => params.delete(k));
-    params.delete('cursor');
+    resetPagination(params);
     setSearchParams(params, {replace: true});
   }
 
@@ -337,7 +342,7 @@ export default function CollectionPage() {
                                 const p = new URLSearchParams(searchParams);
                                 if (isActive) p.delete('type');
                                 else p.set('type', v.label);
-                                p.delete('cursor');
+                                resetPagination(p);
                                 setSearchParams(p, {replace: true});
                               }}
                               className="w-4 h-4 accent-[var(--color-foreground)]"
@@ -462,9 +467,9 @@ export default function CollectionPage() {
 
       {/* Mobile filter drawer */}
       {filterOpen && (
-        <div className="fixed inset-0 z-[500] lg:hidden">
+        <div className="fixed inset-0 z-[500] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
           <div className="absolute inset-0 bg-[var(--color-foreground)]/40" onClick={() => setFilterOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col pb-[env(safe-area-inset-bottom)]">
+          <div ref={filterDrawerRef} className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col pb-[env(safe-area-inset-bottom)]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border-subtle)]">
               <p className="h-eyebrow text-[var(--color-foreground)]">Filters</p>
               <button onClick={() => setFilterOpen(false)} aria-label="Close filters" className="min-h-11 min-w-11 inline-flex items-center justify-center text-[var(--color-foreground)]">
@@ -500,7 +505,7 @@ export default function CollectionPage() {
                                 const p = new URLSearchParams(searchParams);
                                 if (isActive) p.delete('type');
                                 else p.set('type', v.label);
-                                p.delete('cursor');
+                                resetPagination(p);
                                 setSearchParams(p, {replace: true});
                               }}
                               className="w-4 h-4 accent-[var(--color-foreground)]"
