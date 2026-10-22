@@ -16,6 +16,12 @@ export function useFocusTrap(
 ): {containerRef: RefObject<HTMLDivElement | null>} {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  // NOTE: callers usually pass an inline callback, whose identity changes every render. Reading it through a
+  // ref keeps the trap's effect (which saves and restores focus) from restarting on every re-render.
+  const onEscapeRef = useRef(onEscape);
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  }, [onEscape]);
 
   const FOCUSABLE_SELECTOR = [
     'a[href]',
@@ -41,7 +47,7 @@ export function useFocusTrap(
       // Escape
       if (e.key === 'Escape') {
         e.preventDefault();
-        onEscape?.();
+        onEscapeRef.current?.();
         return;
       }
 
@@ -69,7 +75,7 @@ export function useFocusTrap(
         }
       }
     },
-    [active, onEscape, getFocusableElements],
+    [active, getFocusableElements],
   );
 
   useEffect(() => {
@@ -79,7 +85,7 @@ export function useFocusTrap(
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
 
     // Focus the first focusable element
-    setTimeout(() => {
+    const focusTimer = setTimeout(() => {
       const focusable = getFocusableElements();
       if (focusable.length > 0) {
         focusable[0].focus();
@@ -89,6 +95,7 @@ export function useFocusTrap(
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      clearTimeout(focusTimer);
       document.removeEventListener('keydown', handleKeyDown);
       // Restore focus
       previouslyFocusedRef.current?.focus?.();

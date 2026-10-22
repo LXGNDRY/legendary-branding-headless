@@ -1,8 +1,10 @@
-import {useState, useEffect, useRef} from 'react';
+import {useId, useState, useEffect, useRef} from 'react';
 import {Link, useNavigate} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge} from '~/lib/judgeme';
+import {useLanguage} from '~/lib/i18n';
+import {formatMoney} from '~/lib/locale';
 
 interface PredictiveProduct {
   id: string;
@@ -40,8 +42,6 @@ interface SearchTypeaheadProps {
  * Fetches real-time suggestions from Shopify's Predictive Search API
  * as the user types. Shows products, collections, and query suggestions.
  */
-const LISTBOX_ID = 'search-typeahead-listbox';
-
 export default function SearchTypeahead({
   placeholder = 'Search products...',
   onClose,
@@ -54,37 +54,46 @@ export default function SearchTypeahead({
   const inputRef = useRef<HTMLInputElement>(null);
   const itemRefs = useRef<Array<HTMLElement | null>>([]);
   const navigate = useNavigate();
+  const language = useLanguage();
+  // NOTE: per-instance ids so two typeaheads on one page (header + mobile menu) never share ARIA targets.
+  const instanceId = useId();
+  const listboxId = `${instanceId}-listbox`;
+  const itemId = (index: number) => `${instanceId}-item-${index}`;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounced search
+  // Debounced search. Each query owns an AbortController: a newer keystroke, a
+  // cleared input, a close or an unmount aborts the in-flight request, and an
+  // aborted request never touches state, so an old response can't overwrite
+  // newer results or reopen the list after it was dismissed.
   useEffect(() => {
     if (!query || query.length < 2) {
       setResults(null);
       setOpen(false);
+      setLoading(false);
       return;
     }
 
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
+    const controller = new AbortController();
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/search?q=' + encodeURIComponent(query));
+        const res = await fetch('/api/search?q=' + encodeURIComponent(query), {signal: controller.signal});
+        if (controller.signal.aborted) return;
         if (res.ok) {
           const data = (await res.json()) as PredictiveResult;
+          if (controller.signal.aborted) return;
           setResults(data);
           setOpen(true);
         }
       } catch {
         // Fail silently — user can still submit the full search
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, 200);
 
     return () => {
+      controller.abort();
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
@@ -152,7 +161,7 @@ export default function SearchTypeahead({
     itemIndex += 1;
     const i = itemIndex;
     return {
-      id: `search-typeahead-item-${i}`,
+      id: itemId(i),
       ref: (el: HTMLElement | null) => {
         itemRefs.current[i] = el;
       },
@@ -178,8 +187,8 @@ export default function SearchTypeahead({
           aria-label="Search"
           role="combobox"
           aria-expanded={open && (query.length >= 2)}
-          aria-controls={LISTBOX_ID}
-          aria-activedescendant={activeIndex >= 0 ? `search-typeahead-item-${activeIndex}` : undefined}
+          aria-controls={listboxId}
+          aria-activedescendant={activeIndex >= 0 ? itemId(activeIndex) : undefined}
         />
         {loading && (
           <div className="absolute right-0 top-1/2 -translate-y-1/2">
@@ -191,7 +200,7 @@ export default function SearchTypeahead({
       {/* Dropdown */}
       {open && (query.length >= 2) && (
         <div
-          id={LISTBOX_ID}
+          id={listboxId}
           role="listbox"
           aria-label="Search suggestions"
           className="absolute left-0 right-0 top-full mt-2 bg-[var(--color-bg-level-1)] border border-[var(--color-border-muted)] shadow-xl z-50 max-h-[420px] overflow-y-auto rounded-md"
@@ -265,7 +274,7 @@ export default function SearchTypeahead({
                             {product.title}
                           </p>
                           <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">
-                            ${product.priceRange.minVariantPrice.amount}
+                            {formatMoney(product.priceRange.minVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode, language)}
                           </p>
                           {rating && (
                             <StarRating rating={rating.rating} count={rating.count} size="sm" className="mt-1" />
