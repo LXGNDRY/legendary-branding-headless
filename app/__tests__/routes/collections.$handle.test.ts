@@ -143,4 +143,50 @@ describe('collections.$handle loader', () => {
     expect(result.activeFilters).not.toBeNull();
     expect(result.activeFilters).toHaveLength(2);
   });
+
+  describe('URL parameter handling', () => {
+    async function variablesFor(search: string) {
+      const context = mockStorefront.createContext();
+      const request = new Request(`http://localhost/collections/all-products${search}`);
+      // @ts-expect-error - minimal mock context
+      await loader({request, context, params: {handle: 'all-products'}});
+      return mockStorefront.getCalls()[0].variables as Record<string, unknown>;
+    }
+
+    it('ignores malformed price bounds instead of sending NaN or Infinity to Shopify', async () => {
+      for (const search of ['?price_min=NaN', '?price_max=Infinity', '?price_min=-5', '?price_min=abc&price_max=1e999']) {
+        mockStorefront = createMockStorefront({responses: {Collection: {collection: mockCollection}}});
+        const vars = await variablesFor(search);
+        expect(vars.filters).toBeUndefined();
+      }
+    });
+
+    it('swaps an inverted price range and keeps valid bounds', async () => {
+      mockStorefront = createMockStorefront({responses: {Collection: {collection: mockCollection}}});
+      const vars = await variablesFor('?price_min=90&price_max=20');
+      expect(vars.filters).toEqual([{price: {min: 20, max: 90}}]);
+    });
+
+    it('bounds free-text filters and the number of tags', async () => {
+      mockStorefront = createMockStorefront({responses: {Collection: {collection: mockCollection}}});
+      const tags = Array.from({length: 30}, (_, i) => `tag=t${i}`).join('&');
+      const vars = await variablesFor(`?type=${'x'.repeat(500)}&${tags}`);
+      const filters = vars.filters as Array<Record<string, string>>;
+      expect(filters.find((f) => 'productType' in f)?.productType).toHaveLength(100);
+      expect(filters.filter((f) => 'tag' in f)).toHaveLength(10);
+    });
+
+    it('loads the previous page backwards when direction=previous', async () => {
+      mockStorefront = createMockStorefront({responses: {Collection: {collection: mockCollection}}});
+      const vars = await variablesFor('?cursor=abc&direction=previous');
+      expect(vars).toMatchObject({last: 12, startCursor: 'abc'});
+      expect(vars.first).toBeUndefined();
+    });
+
+    it('falls back to the default sort for an unknown sort value', async () => {
+      mockStorefront = createMockStorefront({responses: {Collection: {collection: mockCollection}}});
+      const vars = await variablesFor('?sort=DROP_TABLE');
+      expect(vars.sortKey).toBeDefined();
+    });
+  });
 });
