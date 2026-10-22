@@ -1,91 +1,78 @@
-import {createContext, useContext, useEffect, useState, useCallback, useRef} from 'react';
+import {createContext, useCallback, useContext, useEffect, useRef, useState} from 'react';
 import type {ReactNode} from 'react';
+import {
+  MAX_WISHLIST_ITEMS,
+  mergeWishlists,
+  parseStoredWishlist,
+  parseWishlistEntries,
+  sameWishlist,
+  serializeWishlist,
+  type WishlistEntry,
+} from '~/lib/wishlist';
 
 /**
- * Wishlist context — localStorage for guests, synced to Customer Account
- * metafield (custom.wishlist) when logged in.
+ * Wishlist context.
  *
- * Behavior:
- * - Guest users: localStorage only (30-day TTL)
- * - Logged-in users: server sync via /api/wishlist on mount and on change
- * - On login: merges local wishlist items into the server wishlist
- * - Logout clears in-memory state; localStorage stays as fallback
- *
- * Usage:
- *   const {items, isInWishlist, add, remove, toggle, count} = useWishlist();
+ * - Guests: identity-only list in localStorage (30-day TTL, schema-validated).
+ * - Logged-in shoppers: the Customer Account metafield (custom.wishlist) is the
+ *   source of truth. The list is READ and merged with any guest items before
+ *   anything is written, so a slow or failed read can never overwrite it.
+ * - Account items are never written to browser storage, so logging out or
+ *   switching accounts cannot copy one account's list into another.
+ * - Write failures are retried and surfaced (`syncStatus: 'error'`); local
+ *   edits are kept either way.
  */
 
-interface WishlistItem {
-  id: string;
-  handle: string;
-  title: string;
-  price: string;
-  /** Compare-at price snapshot at the time this item was saved -- see WishlistButton. */
-  compareAtPrice?: string;
-  image?: string;
-  /** Rating snapshot at the time this item was saved -- see WishlistButton. */
-  rating?: number;
-  reviewCount?: number;
-  addedAt: number;
-}
+export type WishlistSyncStatus = 'guest' | 'loading' | 'ready' | 'error';
+
+type WishlistInput = Pick<WishlistEntry, 'id' | 'handle'>;
 
 interface WishlistContextValue {
-  items: WishlistItem[];
+  items: WishlistEntry[];
   count: number;
   isInWishlist: (handle: string) => boolean;
-  add: (item: Omit<WishlistItem, 'addedAt'>) => void;
+  /** Returns false when the list is full (100 items) and the item was not added. */
+  add: (item: WishlistInput) => boolean;
   remove: (handle: string) => void;
-  toggle: (item: Omit<WishlistItem, 'addedAt'>) => void;
+  /** Returns 'full' when adding was refused because the list holds 100 items. */
+  toggle: (item: WishlistInput) => 'added' | 'removed' | 'full';
   clear: () => void;
   isLoading: boolean;
+  syncStatus: WishlistSyncStatus;
 }
 
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 const STORAGE_KEY = 'lb_wishlist';
-const STORAGE_TTL_DAYS = 30;
+const SYNC_DEBOUNCE_MS = 500;
 
-function loadWishlist(): WishlistItem[] {
-  if (typeof window === 'undefined') return [];
+function retryDelay(attempt: number) {
+  return Math.min(30_000, 2_000 * 2 ** attempt);
+}
+
+function readGuestWishlist(): WishlistEntry[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const data = JSON.parse(raw) as {items: WishlistItem[]; savedAt: number};
-    // Expire after 30 days
-    if (data.savedAt && Date.now() - data.savedAt > STORAGE_TTL_DAYS * 864e5) {
-      localStorage.removeItem(STORAGE_KEY);
-      return [];
-    }
-    return data.items || [];
+    return parseStoredWishlist(window.localStorage.getItem(STORAGE_KEY));
   } catch {
     return [];
   }
 }
 
-function saveWishlist(items: WishlistItem[]) {
-  if (typeof window === 'undefined') return;
+function writeGuestWishlist(items: WishlistEntry[]) {
   try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({items, savedAt: Date.now()}),
-    );
+    if (items.length === 0) window.localStorage.removeItem(STORAGE_KEY);
+    else window.localStorage.setItem(STORAGE_KEY, serializeWishlist(items));
   } catch {
-    // Storage full or disabled — fail silently
+    // Storage full, disabled or denied — the in-memory list still works.
   }
 }
 
-/**
- * Merge two wishlists by handle, keeping the older addedAt for duplicates.
- */
-function mergeWishlists(a: WishlistItem[], b: WishlistItem[]): WishlistItem[] {
-  const map = new Map<string, WishlistItem>();
-  for (const item of [...a, ...b]) {
-    const existing = map.get(item.handle);
-    if (!existing || item.addedAt < existing.addedAt) {
-      map.set(item.handle, item);
-    }
+function clearGuestWishlist() {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
   }
-  return Array.from(map.values()).sort((a, b) => a.addedAt - b.addedAt);
 }
 
 interface WishlistProviderProps {
@@ -95,117 +82,251 @@ interface WishlistProviderProps {
 }
 
 export function WishlistProvider({children, isLoggedIn = false}: WishlistProviderProps) {
-  const [items, setItems] = useState<WishlistItem[]>([]);
+  const [items, setItems] = useState<WishlistEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isLoggedInRef = useRef(isLoggedIn);
-  const didInitialFetchRef = useRef(false);
+  const [serverReady, setServerReady] = useState(false);
+  const [syncError, setSyncError] = useState(false);
+  // Counts local edits (and merges) that still need to be written to the account.
+  const [revision, setRevision] = useState(0);
 
-  // Track isLoggedIn in a ref so the debounced sync can check it
-  useEffect(() => {
-    isLoggedInRef.current = isLoggedIn;
-  }, [isLoggedIn]);
+  const itemsRef = useRef(items);
+  const dirtyRef = useRef(false);
+  const revisionRef = useRef(0);
+  const serverReadyRef = useRef(false);
+  const removedWhileLoadingRef = useRef(new Set<string>());
+  const clearedWhileLoadingRef = useRef(false);
+  const wasLoggedInRef = useRef(isLoggedIn);
 
-  // Phase 1: load from localStorage immediately on mount (always)
   useEffect(() => {
-    setItems(loadWishlist());
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    serverReadyRef.current = serverReady;
+  }, [serverReady]);
+
+  const markDirty = useCallback(() => {
+    dirtyRef.current = true;
+    revisionRef.current += 1;
+    setRevision(revisionRef.current);
+  }, []);
+
+  // Load the browser list on mount (guest items, or guest items made before login).
+  useEffect(() => {
+    setItems(readGuestWishlist());
     setIsLoading(false);
   }, []);
 
-  // Phase 2: when user logs in, fetch server wishlist and merge with local
+  // Guests: persist locally and follow edits made in other tabs.
   useEffect(() => {
-    if (!isLoggedIn || didInitialFetchRef.current) return;
+    // NOTE: skipped on the logout render, where `items` is still the account list.
+    if (isLoading || isLoggedIn || wasLoggedInRef.current) return;
+    writeGuestWishlist(items);
+  }, [items, isLoading, isLoggedIn]);
 
-    didInitialFetchRef.current = true;
+  useEffect(() => {
+    if (isLoggedIn) return;
+    function onStorage(event: StorageEvent) {
+      if (event.key === STORAGE_KEY || event.key === null) setItems(readGuestWishlist());
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [isLoggedIn]);
 
-    async function fetchServerWishlist() {
+  // Logging out drops the account list from memory; only guest data remains.
+  useEffect(() => {
+    if (wasLoggedInRef.current && !isLoggedIn) {
+      dirtyRef.current = false;
+      removedWhileLoadingRef.current.clear();
+      clearedWhileLoadingRef.current = false;
+      setItems(readGuestWishlist());
+    }
+    wasLoggedInRef.current = isLoggedIn;
+  }, [isLoggedIn]);
+
+  // Logged in: READ the account list, merge, and only then allow writes.
+  useEffect(() => {
+    if (isLoading || !isLoggedIn) {
+      setServerReady(false);
+      setSyncError(false);
+      return;
+    }
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let attempt = 0;
+
+    async function load() {
       try {
-        const res = await fetch('/api/wishlist', {
-          credentials: 'same-origin',
-        });
-        if (!res.ok) return; // guest or error — keep local
-        const data = (await res.json()) as {items?: WishlistItem[]};
-        if (!data.items) return;
+        const res = await fetch('/api/wishlist', {credentials: 'same-origin', signal: controller.signal});
+        if (!res.ok) throw new Error(`wishlist read ${res.status}`);
+        const data = (await res.json()) as {items?: unknown};
+        if (controller.signal.aborted) return;
 
-        setItems((prevLocal) => mergeWishlists(prevLocal, data.items!));
+        let server = parseWishlistEntries(data.items);
+        if (clearedWhileLoadingRef.current) server = [];
+        server = server.filter((item) => !removedWhileLoadingRef.current.has(item.handle.toLowerCase()));
+        const merged = clearedWhileLoadingRef.current ? itemsRef.current : mergeWishlists(itemsRef.current, server);
+
+        removedWhileLoadingRef.current.clear();
+        clearedWhileLoadingRef.current = false;
+        setItems(merged);
+        setSyncError(false);
+        setServerReady(true);
+        if (!sameWishlist(merged, server)) markDirty();
       } catch {
-        // Network error — keep localStorage as source of truth
+        if (controller.signal.aborted) return;
+        setSyncError(true);
+        // NOTE: keeps retrying (capped backoff) -- giving up would leave the
+        // shopper's account list unreadable until they reload the page.
+        timer = setTimeout(load, retryDelay(attempt));
+        attempt += 1;
       }
     }
 
-    fetchServerWishlist();
+    function retryNow() {
+      if (timer) clearTimeout(timer);
+      void load();
+    }
 
-  }, [isLoggedIn]);
+    load();
+    window.addEventListener('online', retryNow);
+    return () => {
+      window.removeEventListener('online', retryNow);
+      controller.abort();
+      if (timer) clearTimeout(timer);
+      setServerReady(false);
+    };
+  }, [isLoggedIn, isLoading, markDirty]);
 
-  // Phase 3: always persist to localStorage
+  // Logged in: adopt changes made in another tab when nothing is unsynced here.
   useEffect(() => {
-    if (isLoading) return;
-    saveWishlist(items);
-  }, [items, isLoading]);
-
-  // Phase 4: debounced server sync when logged in and items change
-  useEffect(() => {
-    if (isLoading || !isLoggedInRef.current) return;
-    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-
-    syncTimeoutRef.current = setTimeout(async () => {
+    if (!isLoggedIn || !serverReady) return;
+    const controller = new AbortController();
+    async function refresh() {
+      if (document.visibilityState !== 'visible' || dirtyRef.current) return;
       try {
-        await fetch('/api/wishlist', {
+        const res = await fetch('/api/wishlist', {credentials: 'same-origin', signal: controller.signal});
+        if (!res.ok) return;
+        const data = (await res.json()) as {items?: unknown};
+        if (controller.signal.aborted || dirtyRef.current) return;
+        setItems(parseWishlistEntries(data.items));
+      } catch {
+        // Keep the current list; the next focus will try again.
+      }
+    }
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      document.removeEventListener('visibilitychange', refresh);
+      controller.abort();
+    };
+  }, [isLoggedIn, serverReady]);
+
+  // Logged in: debounced write, only after the read finished.
+  useEffect(() => {
+    if (!isLoggedIn || !serverReady || revision === 0 || !dirtyRef.current) return;
+    const controller = new AbortController();
+    const thisRevision = revision;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let attempt = 0;
+
+    async function push() {
+      try {
+        const res = await fetch('/api/wishlist', {
           method: 'POST',
           credentials: 'same-origin',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({items}),
+          body: JSON.stringify({items: itemsRef.current}),
+          signal: controller.signal,
         });
+        if (!res.ok) throw new Error(`wishlist write ${res.status}`);
+        if (controller.signal.aborted) return;
+        setSyncError(false);
+        if (revisionRef.current === thisRevision) dirtyRef.current = false;
+        // Guest items made before login now live on the account.
+        clearGuestWishlist();
       } catch {
-        // Sync failure is non-critical — localStorage has the truth
+        if (controller.signal.aborted) return;
+        setSyncError(true);
+        // NOTE: unsent edits live only in memory for logged-in shoppers, so the
+        // write is retried (capped backoff, and immediately when the browser is
+        // back online) for as long as the page is open.
+        timer = setTimeout(push, retryDelay(attempt));
+        attempt += 1;
       }
-    }, 500);
+    }
 
+    function retryNow() {
+      if (timer) clearTimeout(timer);
+      void push();
+    }
+
+    timer = setTimeout(push, SYNC_DEBOUNCE_MS);
+    window.addEventListener('online', retryNow);
     return () => {
-      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      window.removeEventListener('online', retryNow);
+      controller.abort();
+      if (timer) clearTimeout(timer);
     };
-  }, [items, isLoading]);
+  }, [revision, serverReady, isLoggedIn]);
 
   const isInWishlist = useCallback(
-    (handle: string) => items.some((item) => item.handle === handle),
+    (handle: string) => items.some((item) => item.handle.toLowerCase() === handle.toLowerCase()),
     [items],
   );
 
-  const add = useCallback((item: Omit<WishlistItem, 'addedAt'>) => {
-    setItems((prev) => {
-      if (prev.some((i) => i.handle === item.handle)) return prev;
-      return [...prev, {...item, addedAt: Date.now()}];
-    });
-  }, []);
+  const forget = useCallback(
+    (handle: string) => {
+      const key = handle.toLowerCase();
+      if (!serverReadyRef.current) removedWhileLoadingRef.current.add(key);
+      setItems((prev) => prev.filter((item) => item.handle.toLowerCase() !== key));
+      markDirty();
+    },
+    [markDirty],
+  );
 
-  const remove = useCallback((handle: string) => {
-    setItems((prev) => prev.filter((item) => item.handle !== handle));
-  }, []);
+  const add = useCallback(
+    (item: WishlistInput): boolean => {
+      const [entry] = parseWishlistEntries([{id: item.id, handle: item.handle, addedAt: Date.now()}]);
+      if (!entry) return false;
+      const key = entry.handle.toLowerCase();
+      const current = itemsRef.current;
+      if (current.some((i) => i.handle.toLowerCase() === key)) return true;
+      // NOTE: refuse instead of appending a 101st entry that storage and the API would silently drop.
+      if (current.length >= MAX_WISHLIST_ITEMS) return false;
+      removedWhileLoadingRef.current.delete(key);
+      const next = [...current, entry];
+      itemsRef.current = next;
+      setItems(next);
+      markDirty();
+      return true;
+    },
+    [markDirty],
+  );
 
-  const toggle = useCallback((item: Omit<WishlistItem, 'addedAt'>) => {
-    setItems((prev) => {
-      const exists = prev.some((i) => i.handle === item.handle);
-      if (exists) {
-        return prev.filter((i) => i.handle !== item.handle);
+  const remove = forget;
+
+  const toggle = useCallback(
+    (item: WishlistInput): 'added' | 'removed' | 'full' => {
+      if (itemsRef.current.some((i) => i.handle.toLowerCase() === item.handle.toLowerCase())) {
+        forget(item.handle);
+        return 'removed';
       }
-      return [...prev, {...item, addedAt: Date.now()}];
-    });
-  }, []);
+      return add(item) ? 'added' : 'full';
+    },
+    [add, forget],
+  );
 
-  const clear = useCallback(() => setItems([]), []);
+  const clear = useCallback(() => {
+    if (!serverReadyRef.current) clearedWhileLoadingRef.current = true;
+    setItems([]);
+    markDirty();
+  }, [markDirty]);
+
+  const syncStatus: WishlistSyncStatus = !isLoggedIn ? 'guest' : syncError ? 'error' : serverReady ? 'ready' : 'loading';
 
   return (
     <WishlistContext.Provider
-      value={{
-        items,
-        count: items.length,
-        isInWishlist,
-        add,
-        remove,
-        toggle,
-        clear,
-        isLoading,
-      }}
+      value={{items, count: items.length, isInWishlist, add, remove, toggle, clear, isLoading, syncStatus}}
     >
       {children}
     </WishlistContext.Provider>
