@@ -90,7 +90,7 @@ describe('api.newsletter action', () => {
     expect(init?.headers).toMatchObject({Authorization: 'Klaviyo-API-Key test-key'});
     expect(payload.data.relationships.list.data.id).toBe('test-list');
     expect(payload.data.attributes.custom_source).toBe('footer');
-    expect(payload.included[0].attributes.email).toBe('shopper@example.com');
+    expect(payload.data.attributes.profiles.data[0].attributes.email).toBe('shopper@example.com');
   });
 
   it('returns a provider error when Klaviyo rejects the request', async () => {

@@ -28,8 +28,12 @@ describe('api.waitlist action', () => {
     });
   }
 
-  async function submit(request: Request, env: Record<string, string> = {}) {
-    const context = createMockStorefront().createContext({env});
+  const soldOutVariant = {
+    node: {__typename: 'ProductVariant', id: 'gid://shopify/ProductVariant/456', availableForSale: false, product: {id: 'gid://shopify/Product/123'}},
+  };
+
+  async function submit(request: Request, env: Record<string, string> = {}, node: unknown = soldOutVariant) {
+    const context = createMockStorefront({responses: {WaitlistVariant: node}}).createContext({env});
     // @ts-expect-error - minimal Hydrogen app context for this action
     return action({request, context, params: {}});
   }
@@ -41,10 +45,7 @@ describe('api.waitlist action', () => {
     productTitle: 'Heavyweight Hoodie',
     variantTitle: 'Black / Large',
   };
-  const configured = {
-    PRIVATE_KLAVIYO_API_KEY: 'test-key',
-    PUBLIC_KLAVIYO_WAITLIST_LIST_ID: 'waitlist-test-list',
-  };
+  const configured = {PRIVATE_KLAVIYO_API_KEY: 'test-key'};
 
   it('rejects non-POST requests', async () => {
     const response = await submit(new Request('http://localhost/api/waitlist'));
@@ -91,25 +92,54 @@ describe('api.waitlist action', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('sends the sanitized product and variant details to the waitlist', async () => {
+  it('rejects malformed product or variant IDs without contacting Klaviyo', async () => {
+    for (const bad of [{variantId: '456'}, {variantId: 'gid://shopify/Product/456'}, {productId: 'gid://shopify/ProductVariant/1'}, {variantId: 'gid://shopify/ProductVariant/1; drop'}]) {
+      const response = await submit(makeRequest({...validFields, ...bad}), configured);
+      expect(response.status).toBe(400);
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects a variant that does not exist or belongs to another product', async () => {
+    const missing = await submit(makeRequest(validFields), configured, {node: null});
+    expect(missing.status).toBe(404);
+    const other = await submit(makeRequest(validFields), configured, {
+      node: {...soldOutVariant.node, product: {id: 'gid://shopify/Product/999'}},
+    });
+    expect(other.status).toBe(404);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('refuses a restock request for a variant that is in stock', async () => {
+    const response = await submit(makeRequest(validFields), configured, {
+      node: {...soldOutVariant.node, availableForSale: true},
+    });
+    expect(response.status).toBe(409);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('registers a per-variant restock request with a normalized email', async () => {
     fetchSpy.mockResolvedValueOnce(new Response(null, {status: 202}));
-    const response = await submit(
-      makeRequest({...validFields, email: ' Shopper@Example.com ', productTitle: ' Hoodie\u0000'}),
-      configured,
-    );
-    const payload = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
+    const response = await submit(makeRequest({...validFields, email: ' Shopper@Example.com '}), configured);
+    const [url, init] = fetchSpy.mock.calls[0];
+    const payload = JSON.parse(String(init?.body));
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({success: true});
-    expect(payload.data.relationships.list.data.id).toBe('waitlist-test-list');
-    expect(payload.included[0].attributes.email).toBe('shopper@example.com');
-    expect(payload.included[0].attributes.properties).toMatchObject({
-      waitlist_product_id: validFields.productId,
-      waitlist_variant_id: validFields.variantId,
-      waitlist_product_title: 'Hoodie',
-      waitlist_variant_title: validFields.variantTitle,
-      waitlist_country: 'US',
-    });
+    expect(await response.json()).toMatchObject({success: true, message: expect.stringMatching(/received/i)});
+    expect(url).toBe('https://a.klaviyo.com/api/back-in-stock-subscriptions/');
+    expect(payload.data.attributes.profile.data.attributes.email).toBe('shopper@example.com');
+    expect(payload.data.relationships.variant.data.id).toBe('$shopify:::$default:::456');
+  });
+
+  it('keeps two variants as independent requests for the same address', async () => {
+    fetchSpy.mockResolvedValue(new Response(null, {status: 202}));
+    const second = {
+      node: {...soldOutVariant.node, id: 'gid://shopify/ProductVariant/789'},
+    };
+    await submit(makeRequest(validFields), configured);
+    await submit(makeRequest({...validFields, variantId: 'gid://shopify/ProductVariant/789'}), configured, second);
+    const ids = fetchSpy.mock.calls.map((call) => JSON.parse(String(call[1]?.body)).data.relationships.variant.data.id);
+    expect(ids).toEqual(['$shopify:::$default:::456', '$shopify:::$default:::789']);
   });
 
   it('returns a gateway error when Klaviyo rejects the request', async () => {
