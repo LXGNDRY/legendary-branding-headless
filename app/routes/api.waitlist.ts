@@ -37,7 +37,10 @@ export async function action({request, context}: ActionFunctionArgs) {
 
   const env = context.env as Env;
   if (!env.PRIVATE_KLAVIYO_API_KEY || !env.PUBLIC_KLAVIYO_WAITLIST_LIST_ID) {
-    captureError(new Error('Klaviyo waitlist is not configured'), {route: 'api.waitlist', failure: 'configuration'});
+    captureError(
+      new Error('Klaviyo waitlist is not configured'),
+      {route: 'api.waitlist', failure: 'configuration'},
+    );
     return Response.json(
       {error: 'Back-in-stock signup is temporarily unavailable.'},
       {status: 503},
