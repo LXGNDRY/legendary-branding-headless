@@ -1,7 +1,8 @@
 import {isbot} from 'isbot';
 import {renderToReadableStream} from 'react-dom/server';
 import {ServerRouter} from 'react-router';
-import type {EntryContext} from 'react-router';
+import type {EntryContext, HandleErrorFunction} from 'react-router';
+import {captureServerError} from '~/lib/sentry.server';
 
 export default async function handleRequest(
   request: Request,
@@ -15,7 +16,7 @@ export default async function handleRequest(
     <ServerRouter context={routerContext} url={request.url} />,
     {
       onError(error: unknown) {
-        console.error(error);
+        captureServerError(error, {request, extra: {source: 'render'}});
         status = 500;
       },
     },
@@ -39,3 +40,13 @@ export default async function handleRequest(
     status,
   });
 }
+
+/**
+ * Reports errors React Router handles itself (loader/action failures that
+ * become an error boundary instead of reaching server.ts's outer catch).
+ * A request the browser already abandoned is not an application error.
+ */
+export const handleError: HandleErrorFunction = (error, {request}) => {
+  if (request.signal.aborted) return;
+  captureServerError(error, {request, extra: {source: 'route'}});
+};

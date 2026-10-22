@@ -5,7 +5,7 @@ import {createAppLoadContext} from '~/lib/context';
 import {applySecurityHeaders, isAssetRequest} from '~/lib/security';
 import {withDefaultCacheControl} from '~/lib/cache';
 import {appendPendingSessionCookie, copySetCookies} from '~/lib/response-cookies';
-import {initSentryServer, captureServerError} from '~/lib/sentry.server';
+import {initSentryServer, captureServerError, drainServerReports} from '~/lib/sentry.server';
 
 // Mode is determined by import.meta.env.PROD (set by Vite/Rollup at build time).
 // On Oxygen production, PROD is always true. On local dev, it's false.
@@ -34,6 +34,8 @@ export default {
       });
 
       let response = await handleRequest(request);
+      // Reports raised inside route handlers finish delivering after the response is sent.
+      ctx.waitUntil(drainServerReports());
 
       // Commit session cookie if modified
       await appendPendingSessionCookie(response, appContext.session);
@@ -69,6 +71,7 @@ export default {
 
       // Report to Sentry
       captureServerError(error, {request, waitUntil: ctx.waitUntil.bind(ctx)});
+      ctx.waitUntil(drainServerReports());
 
       // In development, include the error message for debugging
       const isDev = !import.meta.env.PROD;

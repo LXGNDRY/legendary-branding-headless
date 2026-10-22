@@ -16,6 +16,7 @@
 
 import {useEffect} from 'react';
 import {onLCP, onFCP, onCLS, onINP} from 'web-vitals';
+import {captureServerError} from '~/lib/sentry.server';
 
 type SentryModule = typeof import('@sentry/react');
 
@@ -96,6 +97,11 @@ export function captureError(error: unknown, context?: Record<string, unknown>) 
     sentryModule.captureException(error instanceof Error ? error : new Error(String(error)), {
       extra: context,
     });
+    return;
+  }
+  // NOTE: on the server this is the one error pipeline (redaction, release/environment, bounded delivery).
+  if (typeof window === 'undefined') {
+    captureServerError(error, {extra: context});
     return;
   }
   // Still logged to console immediately (so nothing is silent even if

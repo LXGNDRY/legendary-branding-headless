@@ -7,8 +7,52 @@
  * Safe to import/use when no DSN is configured — everything no-ops.
  */
 
+import {analyticsEnvironment} from '~/lib/analytics-environment';
+
 let dsn: string | null = null;
 let initialized = false;
+let release = 'unknown';
+
+/** Bound on how long a report may hold a request's isolate open. */
+const SEND_TIMEOUT_MS = 3_000;
+
+// Delivery promises started since the last drain. server.ts hands the drained
+// batch to `waitUntil` so reports from route-level handlers (which have no
+// ExecutionContext of their own) are not cut off when the response returns.
+const pendingSends: Promise<unknown>[] = [];
+
+/** Takes the in-flight report deliveries, for `ctx.waitUntil`. */
+export function drainServerReports(): Promise<unknown> {
+  return Promise.allSettled(pendingSends.splice(0));
+}
+
+const SENSITIVE_PARAM = /\b(code|state|token|access_token|id_token|refresh_token|key|password|secret|email|session|cart|checkout)=[^&\s"'<>]*/gi;
+const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
+const GID_TOKEN = /\b(?:shpat|shpca|shpss)_[A-Za-z0-9]+/g;
+
+/** Strips credentials and personal data from free text before it leaves the worker. */
+export function redactText(text: string): string {
+  return text.replace(SENSITIVE_PARAM, '$1=[redacted]').replace(EMAIL, '[email]').replace(GID_TOKEN, '[token]');
+}
+
+/** Origin and path only; every query value is dropped (OAuth codes, emails, tokens). */
+export function redactUrl(raw: string): string {
+  try {
+    const url = new URL(raw);
+    const keys = [...new Set(url.searchParams.keys())];
+    return `${url.origin}${url.pathname}${keys.length ? `?${keys.map((k) => `${k}=[redacted]`).join('&')}` : ''}`;
+  } catch {
+    return '[unparseable url]';
+  }
+}
+
+function redactExtra(extra: Record<string, unknown> | undefined): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(extra ?? {})) {
+    out[key] = typeof value === 'string' ? redactText(value) : value;
+  }
+  return out;
+}
 
 /**
  * Initialize Sentry on the server.
@@ -18,6 +62,7 @@ export function initSentryServer(env: Env) {
   if (initialized) return;
   initialized = true;
   dsn = env.PUBLIC_SENTRY_DSN || null;
+  release = (env as unknown as {SHOPIFY_HYDROGEN_DEPLOYMENT_ID?: string}).SHOPIFY_HYDROGEN_DEPLOYMENT_ID || 'unknown';
 }
 
 /** Parse a DSN into its components */
@@ -56,8 +101,8 @@ export function captureServerError(
 ) {
   const err = error instanceof Error ? error : new Error(String(error));
 
-  // Always log to console first
-  console.error('[sentry]', options?.request?.url ?? '', err);
+  // Always log to console first (URL and message redacted: OAuth callbacks carry codes in the query)
+  console.error('[sentry]', options?.request ? redactUrl(options.request.url) : '', redactText(err.message));
 
   if (!dsn) return;
 
@@ -73,14 +118,15 @@ export function captureServerError(
       timestamp,
       level: 'error' as const,
       platform: 'node' as const,
-      environment: 'production',
-      release: 'legendary-headless@1.0.0',
-      message: err.message,
+      // NOTE: live host only; previews and local servers must not report as production.
+      environment: options?.request && analyticsEnvironment(options.request.url).reportToShop ? 'production' : 'preview',
+      release,
+      message: redactText(err.message),
       exception: {
         values: [
           {
             type: err.name || 'Error',
-            value: err.message,
+            value: redactText(err.message),
             stacktrace: err.stack
               ? {
                   frames: err.stack
@@ -107,11 +153,11 @@ export function captureServerError(
       extra: {
         ...(options?.request
           ? {
-              url: options.request.url,
+              url: redactUrl(options.request.url),
               method: options.request.method,
             }
           : {}),
-        ...(options?.extra ?? {}),
+        ...redactExtra(options?.extra),
       },
     };
 
@@ -133,9 +179,11 @@ export function captureServerError(
         'x-sentry-auth': `Sentry sentry_version=7,sentry_client=sentry.javascript.cloudflare/1.0.0,sentry_key=${parsed.key}`,
       },
       body: envelope,
+      signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
     }).catch(() => {
       // swallow — Sentry failure should never break the app
     });
+    pendingSends.push(send);
     options?.waitUntil?.(send);
   } catch {
     // swallow any Sentry errors
