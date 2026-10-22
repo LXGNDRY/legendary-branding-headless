@@ -1,6 +1,6 @@
 import type {LoaderFunctionArgs} from 'react-router';
 import {PRODUCT_CARD_FRAGMENT, type ProductCardFragment} from '~/components/ui/ProductCard';
-import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {enforceRatePolicy} from '~/lib/rate-limit';
 import {captureError} from '~/lib/monitoring';
 import {MAX_WISHLIST_ITEMS} from '~/lib/wishlist';
 
@@ -29,7 +29,7 @@ const HEADERS = {'Cache-Control': 'private, no-store', Vary: 'Cookie'} as const;
  * means the product was deleted, unpublished or is unavailable in this market.
  */
 export async function loader({request, context}: LoaderFunctionArgs) {
-  const limited = rateLimitMiddleware(request, 'wishlist-products', 60);
+  const limited = enforceRatePolicy(request, 'wishlist-products');
   if (limited) return limited;
 
   const raw = new URL(request.url).searchParams.get('ids') ?? '';

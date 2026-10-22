@@ -1,7 +1,7 @@
 import type {LoaderFunctionArgs} from 'react-router';
 import {CacheFresh} from '~/lib/cache';
 import {fetchAllPages} from '~/lib/pagination';
-import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {enforceRatePolicy} from '~/lib/rate-limit';
 
 const QUICK_ADD_PRODUCT_QUERY = `#graphql
   query QuickAddProduct($handle: String!, $after: String, $country: CountryCode, $language: LanguageCode)
@@ -43,7 +43,7 @@ const QUICK_ADD_PRODUCT_QUERY = `#graphql
  * customer picks color and size before anything is added to the bag.
  */
 export async function loader({request, context}: LoaderFunctionArgs) {
-  const rateLimitResponse = rateLimitMiddleware(request, 'quick-add', 60);
+  const rateLimitResponse = enforceRatePolicy(request, 'quick-add');
   if (rateLimitResponse) return rateLimitResponse;
 
   const handle = new URL(request.url).searchParams.get('handle')?.trim();
