@@ -1,9 +1,10 @@
-import {type MetaFunction} from 'react-router';
+import {useFetcher, type MetaFunction} from 'react-router';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import {useWishlist} from '~/components/ui/Wishlist';
 import ProductCard from '~/components/ui/ProductCard';
 import {useEffect, useState} from 'react';
+import type {ProductCardFragment} from '~/components/ui/ProductCard';
 
 export const meta: MetaFunction = () => {
   const canonical = 'https://www.legendary-branding.com/wishlist';
@@ -20,16 +21,29 @@ export const meta: MetaFunction = () => {
 /**
  * Wishlist page — displays all items saved by the user.
  *
- * Client-side only (wishlist is stored in localStorage).
- * Shows placeholders while hydrating on first render.
+ * The saved list holds product identity only; every card is rendered from live
+ * Storefront API data in the active market. Deleted, unpublished or
+ * market-unavailable products are shown honestly with a way to remove them.
  */
 export default function WishlistPage() {
-  const {items, count, clear, remove} = useWishlist();
+  const {items, count, clear, remove, syncStatus} = useWishlist();
   const [mounted, setMounted] = useState(false);
+  const products = useFetcher<{products?: Record<string, ProductCardFragment | null>; error?: string}>();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const idsKey = items.map((item) => item.id).join(',');
+  const loadProducts = products.load;
+  useEffect(() => {
+    if (!mounted || !idsKey) return;
+    loadProducts(`/api/wishlist-products?ids=${encodeURIComponent(idsKey)}`);
+  }, [mounted, idsKey, loadProducts]);
+
+  const liveProducts = products.data?.products ?? null;
+  const loadFailed = Boolean(products.data?.error);
+  const loading = !mounted || (count > 0 && !liveProducts && !loadFailed);
 
   return (
     <Container className="py-12">
@@ -41,6 +55,7 @@ export default function WishlistPage() {
           </h1>
           {mounted && count > 0 && (
             <button
+              type="button"
               onClick={clear}
               className="text-xs font-medium tracking-widest uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
             >
@@ -53,11 +68,15 @@ export default function WishlistPage() {
             {count} {count === 1 ? 'item' : 'items'} saved
           </p>
         )}
+        {mounted && syncStatus === 'error' && (
+          <p role="alert" className="text-sm text-[var(--color-error)] mt-2">
+            We couldn&apos;t sync your wishlist with your account right now. We&apos;ll keep retrying; your changes stay on this page.
+          </p>
+        )}
       </header>
 
-      {!mounted ? (
-        // Skeleton
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5" aria-busy="true">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="space-y-3">
               <div className="aspect-[3/4] bg-[var(--color-surface)] animate-pulse" />
@@ -86,60 +105,64 @@ export default function WishlistPage() {
             Shop All Products
           </Button>
         </div>
+      ) : loadFailed ? (
+        <div role="alert" className="py-16 text-center">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-6">
+            We couldn&apos;t load your saved items right now.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => loadProducts(`/api/wishlist-products?ids=${encodeURIComponent(idsKey)}`)}
+          >
+            Try again
+          </Button>
+        </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
-          {items.map(item => (
-            <div key={item.id} className="relative group">
-              {/* Remove button overlay */}
-              <button
-                onClick={() => remove(item.handle)}
-                className="absolute top-2 right-2 z-20 bg-[var(--color-bg-level-2)]/90 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                aria-label={`Remove ${item.title} from wishlist`}
-              >
-                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-
-              <ProductCard
-                product={{
-                  id: item.id,
-                  handle: item.handle,
-                  title: item.title,
-                  availableForSale: true,
-                  vendor: 'Legendary Branding',
-                  featuredImage: item.image
-                    ? {url: item.image, altText: item.title, width: 600, height: 800}
-                    : null,
-                  images: {nodes: []},
-                  priceRange: {
-                    minVariantPrice: {amount: item.price, currencyCode: 'USD'},
-                    maxVariantPrice: {amount: item.price, currencyCode: 'USD'},
-                  },
-                  compareAtPriceRange: {
-                    minVariantPrice: {
-                      amount: item.compareAtPrice ?? item.price,
-                      currencyCode: 'USD',
-                    },
-                  },
-                  tags: [],
-                  // ProductCard reads reviewBadge through the same
-                  // parseJudgemeBadge() helper as every other surface;
-                  // reconstructing its expected HTML shape from the rating
-                  // snapshot saved at add-to-wishlist time (see
-                  // WishlistButton) lets this page show real stars without
-                  // its own live product query.
-                  reviewBadge:
-                    item.rating != null && item.reviewCount != null
-                      ? {
-                          value: `<div data-average-rating='${item.rating}' data-number-of-reviews='${item.reviewCount}'></div>`,
-                        }
-                      : null,
-                }}
-              />
-            </div>
-          ))}
+          {items.map((item) => {
+            // NOTE: the API answers every requested id (null = unavailable), so an id missing from the
+            // map has simply not been requested yet and must not be shown as unavailable.
+            const known = liveProducts !== null && item.id in liveProducts;
+            const product = known ? liveProducts![item.id] : null;
+            return (
+              <div key={item.id} className="relative group">
+                {!known ? (
+                  <div className="space-y-3" aria-busy="true">
+                    <div className="aspect-[3/4] bg-[var(--color-surface)] animate-pulse" />
+                    <div className="h-4 w-3/4 bg-[var(--color-surface)] animate-pulse" />
+                  </div>
+                ) : product ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => remove(item.handle)}
+                      className="absolute top-2 right-2 z-20 bg-[var(--color-bg-level-2)]/90 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] p-1.5 opacity-100 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                      aria-label={`Remove ${product.title} from wishlist`}
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                    <ProductCard product={product} />
+                  </>
+                ) : (
+                  <div className="aspect-[3/4] flex flex-col items-center justify-center gap-3 border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4 text-center">
+                    <p className="text-sm text-[var(--color-text-secondary)]">
+                      This item is no longer available in your region.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => remove(item.handle)}
+                      className="text-xs font-medium tracking-widest uppercase text-[var(--color-text-primary)] underline underline-offset-4"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </Container>

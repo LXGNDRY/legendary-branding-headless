@@ -1,22 +1,11 @@
+import {useEffect, useState} from 'react';
 import {useWishlist} from '~/components/ui/Wishlist';
 
 interface WishlistButtonProps {
+  /** Identity only: price, availability and imagery always come from the live API. */
   product: {
     id: string;
     handle: string;
-    title: string;
-    price: string;
-    /** Compare-at price snapshot, if the product is on sale at the point
-        this button renders -- saved into the wishlist item so the wishlist
-        page can show a real Sale badge/strikethrough, same pattern as the
-        rating snapshot below. */
-    compareAtPrice?: string;
-    image?: string;
-    /** Rating snapshot, if known at the point this button renders -- saved
-        into the wishlist item so the wishlist page can show real stars
-        without a live query against a client-only localStorage list. */
-    rating?: number;
-    reviewCount?: number;
   };
   className?: string;
   size?: 'sm' | 'md';
@@ -35,20 +24,28 @@ export default function WishlistButton({
 }: WishlistButtonProps) {
   const {isInWishlist, toggle} = useWishlist();
   const inWishlist = isInWishlist(product.handle);
+  const [full, setFull] = useState(false);
+
+  useEffect(() => {
+    if (!full) return;
+    const timer = setTimeout(() => setFull(false), 4000);
+    return () => clearTimeout(timer);
+  }, [full]);
 
   const sizeClasses = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
 
   return (
+    <>
     <button
       type="button"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggle(product);
+        setFull(toggle(product) === 'full');
       }}
       className={`p-1 hover:opacity-70 transition-opacity ${className}`}
       aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-      title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+      title={full ? 'Your wishlist is full (100 items)' : inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
     >
       <svg
         className={sizeClasses}
@@ -62,5 +59,9 @@ export default function WishlistButton({
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
       </svg>
     </button>
+      <span role="status" className="sr-only">
+        {full ? 'Your wishlist is full. Remove an item to save another.' : ''}
+      </span>
+    </>
   );
 }

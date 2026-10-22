@@ -1,6 +1,8 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from 'react-router';
 import {requireSameOrigin} from '~/lib/security';
 import {rateLimitMiddleware} from '~/lib/rate-limit';
+import {captureError} from '~/lib/monitoring';
+import {MAX_WISHLIST_BODY_BYTES, MAX_WISHLIST_ITEMS, parseWishlistEntries, type WishlistEntry} from '~/lib/wishlist';
 
 /**
  * Wishlist sync API — server-side bridge for Customer Account metafields.
@@ -8,19 +10,16 @@ import {rateLimitMiddleware} from '~/lib/rate-limit';
  * GET  /api/wishlist          — fetch wishlist from customer metafield (logged-in only)
  * POST /api/wishlist          — replace entire wishlist (body: { items: WishlistItem[] })
  *
- * Uses the Customer Account API's customerUpdate mutation to write to the
- * custom.wishlist metafield. Returns 200 with items on success, 401 if not
- * logged in, 400 on bad input.
+ * Only product identity (GID, handle, addedAt) is stored. Every response,
+ * including errors, is private and uncacheable.
  */
 
-interface WishlistItem {
-  id: string;
-  handle: string;
-  title: string;
-  price: string;
-  image?: string;
-  addedAt: number;
+const HEADERS = {'Cache-Control': 'no-store', Vary: 'Cookie'} as const;
+
+function respond(body: unknown, status = 200, extra: Record<string, string> = {}) {
+  return Response.json(body, {status, headers: {...HEADERS, ...extra}});
 }
+
 
 const CUSTOMER_WISHLIST_QUERY = `#graphql
   query CustomerWishlist {
@@ -53,53 +52,37 @@ const CUSTOMER_WISHLIST_UPDATE_MUTATION = `#graphql
 export async function loader({context}: LoaderFunctionArgs) {
   const {customerAccount} = context;
 
-  if (!customerAccount) {
-    return Response.json({items: []}, {status: 401});
-  }
-
-  const isLoggedIn = await customerAccount.isLoggedIn();
-  if (!isLoggedIn) {
-    return Response.json({items: []}, {status: 401});
+  if (!customerAccount || !(await customerAccount.isLoggedIn())) {
+    return respond({items: []}, 401);
   }
 
   try {
     const result = await customerAccount.query(CUSTOMER_WISHLIST_QUERY);
     const data = result.data as {
-      customer: {
-        id: string;
-        wishlistMetafield: {value: string} | null;
-      };
+      customer: {id: string; wishlistMetafield: {value: string} | null};
     };
 
+    let items: WishlistEntry[] = [];
     const value = data.customer.wishlistMetafield?.value;
-    let items: WishlistItem[] = [];
-
     if (value) {
       try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          items = parsed.filter(
-            (item: unknown) =>
-              typeof item === 'object' &&
-              item !== null &&
-              'handle' in item &&
-              'id' in item,
-          ) as WishlistItem[];
-        }
+        items = parseWishlistEntries(JSON.parse(value));
       } catch {
         // Invalid metafield JSON — start fresh
         items = [];
       }
     }
-
-    return Response.json({items});
-  } catch (err) {
-    console.error('[wishlist] Failed to fetch wishlist:', err);
-    return Response.json({error: 'Failed to load wishlist.'}, {status: 500});
+    return respond({items});
+  } catch (error) {
+    captureError(error, {route: 'api.wishlist', failure: 'read'});
+    return respond({error: 'Failed to load wishlist.'}, 500);
   }
 }
 
 export async function action({request, context}: ActionFunctionArgs) {
+  if (request.method !== 'POST') {
+    return respond({error: 'Method not allowed.'}, 405, {Allow: 'GET, POST'});
+  }
   const originError = requireSameOrigin(request);
   if (originError) return originError;
   // Rate limiting — 30 requests per minute per IP (wishlist is frequent)
@@ -107,73 +90,62 @@ export async function action({request, context}: ActionFunctionArgs) {
   if (rateLimitResponse) return rateLimitResponse;
 
   const {customerAccount} = context;
-
-  if (!customerAccount) {
-    return Response.json({error: 'Not authenticated.'}, {status: 401});
+  if (!customerAccount || !(await customerAccount.isLoggedIn())) {
+    return respond({error: 'Not authenticated.'}, 401);
   }
 
-  const isLoggedIn = await customerAccount.isLoggedIn();
-  if (!isLoggedIn) {
-    return Response.json({error: 'Not authenticated.'}, {status: 401});
+  const declared = Number(request.headers.get('Content-Length') ?? 0);
+  if (declared > MAX_WISHLIST_BODY_BYTES) {
+    return respond({error: 'Wishlist is too large.'}, 413);
   }
 
-  let items: WishlistItem[] = [];
+  let rawItems: unknown;
   try {
-    const body = (await request.json()) as {items?: unknown};
-    if (!Array.isArray(body.items)) {
-      return Response.json({error: 'Invalid items array.'}, {status: 400});
+    const text = await request.text();
+    if (text.length > MAX_WISHLIST_BODY_BYTES) {
+      return respond({error: 'Wishlist is too large.'}, 413);
     }
-    items = body.items as WishlistItem[];
+    rawItems = (JSON.parse(text) as {items?: unknown} | null)?.items;
   } catch {
-    return Response.json({error: 'Invalid JSON body.'}, {status: 400});
+    return respond({error: 'Invalid JSON body.'}, 400);
   }
-
-  // Cap at 100 items to avoid oversized metafields
-  const trimmedItems = items.slice(0, 100);
+  if (!Array.isArray(rawItems) || rawItems.length > MAX_WISHLIST_ITEMS * 2) {
+    return respond({error: 'Invalid items array.'}, 400);
+  }
+  const items = parseWishlistEntries(rawItems);
 
   try {
     // Step 1: get customer ID (needed for metafieldsSet's ownerId)
     const customerResult = await customerAccount.query(CUSTOMER_WISHLIST_QUERY);
-    const customerData = customerResult.data as {
-      customer: {id: string};
-    };
-    const customerId = customerData.customer.id;
+    const customerId = (customerResult.data as {customer: {id: string}}).customer.id;
 
     // Step 2: set the wishlist metafield
-    const result = await customerAccount.mutate(
-      CUSTOMER_WISHLIST_UPDATE_MUTATION,
-      {
-        variables: {
-          metafields: [
-            {
-              ownerId: customerId,
-              namespace: 'custom',
-              key: 'wishlist',
-              value: JSON.stringify(trimmedItems),
-              type: 'json',
-            },
-          ],
-        },
+    const result = await customerAccount.mutate(CUSTOMER_WISHLIST_UPDATE_MUTATION, {
+      variables: {
+        metafields: [
+          {
+            ownerId: customerId,
+            namespace: 'custom',
+            key: 'wishlist',
+            value: JSON.stringify(items),
+            type: 'json',
+          },
+        ],
       },
-    );
+    });
 
     const data = result.data as {
-      metafieldsSet: {
-        metafields: Array<{id: string; key: string; namespace: string; value: string}> | null;
-        userErrors: Array<{field: string[]; message: string}>;
-      };
+      metafieldsSet: {userErrors: Array<{field: string[]; message: string}>};
     };
-
     if (data.metafieldsSet.userErrors?.length > 0) {
-      return Response.json(
-        {error: data.metafieldsSet.userErrors.map((e) => e.message).join(', ')},
-        {status: 400},
-      );
+      // NOTE: provider messages are not returned to the browser.
+      captureError(new Error('Wishlist metafield rejected'), {route: 'api.wishlist', failure: 'userErrors'});
+      return respond({error: 'Failed to save wishlist.'}, 400);
     }
 
-    return Response.json({success: true, items: trimmedItems});
-  } catch (err) {
-    console.error('[wishlist] Failed to save wishlist:', err);
-    return Response.json({error: 'Failed to save wishlist.'}, {status: 500});
+    return respond({success: true, items});
+  } catch (error) {
+    captureError(error, {route: 'api.wishlist', failure: 'write'});
+    return respond({error: 'Failed to save wishlist.'}, 500);
   }
 }
