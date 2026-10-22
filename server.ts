@@ -9,7 +9,10 @@ import {initSentryServer, captureServerError, drainServerReports} from '~/lib/se
 import {setServerErrorReporter} from '~/lib/monitoring';
 
 // Route captureError() calls made inside loaders and actions through the redacting server reporter.
-setServerErrorReporter((error, context) => captureServerError(error, {extra: context}));
+// NOTE: no AsyncLocalStorage on Oxygen, so the reporter uses the isolate's latest request for URL and live/preview
+// environment. An isolate serves one deployment, so this only mislabels if it serves live and preview hosts at once.
+let latestRequest: Request | undefined;
+setServerErrorReporter((error, context) => captureServerError(error, {request: latestRequest, extra: context}));
 
 // Mode is determined by import.meta.env.PROD (set by Vite/Rollup at build time).
 // On Oxygen production, PROD is always true. On local dev, it's false.
@@ -23,6 +26,7 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
+    latestRequest = request;
     try {
       // Sentry — init early so errors during context setup are captured
       initSentryServer(env);
