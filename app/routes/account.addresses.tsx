@@ -297,22 +297,26 @@ function AddressForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+          <label htmlFor={`${formId}-firstName`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             First Name
           </label>
           <input
-            name="firstName"
+            // NOTE: valid WHATWG token; oxlint's autocomplete-valid list omits it.
+            // oxlint-disable-next-line jsx-a11y/autocomplete-valid
+            id={`${formId}-firstName`} name="firstName" autoComplete="given-name"
             defaultValue={address?.firstName || ''}
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+          <label htmlFor={`${formId}-lastName`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             Last Name
           </label>
           <input
-            name="lastName"
+            // NOTE: valid WHATWG token; oxlint's autocomplete-valid list omits it.
+            // oxlint-disable-next-line jsx-a11y/autocomplete-valid
+            id={`${formId}-lastName`} name="lastName" autoComplete="family-name"
             defaultValue={address?.lastName || ''}
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
@@ -321,22 +325,22 @@ function AddressForm({
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+        <label htmlFor={`${formId}-company`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Company (optional)
         </label>
         <input
-          name="company"
+          id={`${formId}-company`} name="company" autoComplete="organization"
           defaultValue={address?.company || ''}
           className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+        <label htmlFor={`${formId}-address1`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Address
         </label>
         <input
-          name="address1"
+          id={`${formId}-address1`} name="address1" autoComplete="address-line1"
           defaultValue={address?.address1 || ''}
           required
           className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
@@ -344,11 +348,11 @@ function AddressForm({
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+        <label htmlFor={`${formId}-address2`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Apartment, suite, etc. (optional)
         </label>
         <input
-          name="address2"
+          id={`${formId}-address2`} name="address2" autoComplete="address-line2"
           defaultValue={address?.address2 || ''}
           className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
         />
@@ -356,11 +360,11 @@ function AddressForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+          <label htmlFor={`${formId}-city`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             City
           </label>
           <input
-            name="city"
+            id={`${formId}-city`} name="city" autoComplete="address-level2"
             defaultValue={address?.city || ''}
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
@@ -376,7 +380,7 @@ function AddressForm({
           {zones ? (
             <select
               id={`${formId}-province`}
-              name="province"
+              name="province" autoComplete="address-level1"
               key={countryCode}
               defaultValue={countryCode === savedCountry ? (address?.zoneCode ?? '') : ''}
               required
@@ -392,7 +396,7 @@ function AddressForm({
           ) : (
             <input
               id={`${formId}-province`}
-              name="province"
+              name="province" autoComplete="address-level1"
               key={countryCode}
               defaultValue={countryCode === savedCountry ? (address?.zoneCode ?? '') : ''}
               maxLength={3}
@@ -405,11 +409,11 @@ function AddressForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+          <label htmlFor={`${formId}-zip`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
             ZIP / Postal Code
           </label>
           <input
-            name="zip"
+            id={`${formId}-zip`} name="zip" autoComplete="postal-code"
             defaultValue={address?.zip || ''}
             required
             className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
@@ -424,7 +428,7 @@ function AddressForm({
           </label>
           <select
             id={`${formId}-country`}
-            name="country"
+            name="country" autoComplete="country"
             value={countryCode}
             onChange={(event) => setCountryCode(event.target.value)}
             required
@@ -440,11 +444,11 @@ function AddressForm({
       </div>
 
       <div>
-        <label className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
+        <label htmlFor={`${formId}-phoneNumber`} className="block text-xs font-semibold tracking-wide uppercase text-[var(--color-text-secondary)] mb-2">
           Phone (optional)
         </label>
         <input
-          name="phoneNumber"
+          id={`${formId}-phoneNumber`} name="phoneNumber" autoComplete="tel"
           defaultValue={address?.phoneNumber || ''}
           type="tel"
           className="w-full px-4 py-2.5 border border-[var(--color-border-medium)] text-sm bg-[var(--color-bg-level-1)] focus:outline-none focus:border-[var(--color-accent)]"
@@ -540,7 +544,7 @@ export default function AddressesPage() {
         </div>
 
         {actionData?.success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-sm text-green-800 rounded">
+          <div role="status" className="mb-6 p-4 bg-green-50 border border-green-200 text-sm text-green-800 rounded">
             {actionData.action === 'create' && 'Address added successfully.'}
             {actionData.action === 'update' && 'Address updated successfully.'}
             {actionData.action === 'delete' && 'Address deleted.'}
@@ -548,7 +552,7 @@ export default function AddressesPage() {
         )}
 
         {actionData?.errors && actionData.errors.length > 0 && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-sm text-red-800 rounded">
+          <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 text-sm text-red-800 rounded">
             {actionData.errors.map((err, i) => (
               <p key={i}>{err}</p>
             ))}

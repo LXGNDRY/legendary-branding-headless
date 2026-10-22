@@ -26,7 +26,7 @@ interface ButtonAsLinkProps extends ButtonBaseProps {
   as: 'link';
   to: string;
   type?: never;
-  onClick?: never;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
   href?: never;
 }
 
@@ -34,7 +34,7 @@ interface ButtonAsAnchorProps extends ButtonBaseProps {
   as: 'a';
   href: string;
   type?: never;
-  onClick?: never;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
   to?: never;
   target?: string;
   rel?: string;
@@ -78,6 +78,10 @@ const BASE =
  *
  * Use as a button, a React Router link (as="link"), or an external anchor (as="a").
  * For form submissions, use as="button" with type="submit".
+ *
+ * One interactive element each: never wrap a Button in a Link (use as="link"). A disabled or loading link/anchor
+ * variant renders as a disabled <button>, because an <a> cannot truly be disabled: aria-disabled alone still
+ * navigates on click and on Enter. A link is only ever a link while it can be followed.
  */
 export default function Button({
   variant = 'primary',
@@ -105,19 +109,32 @@ export default function Button({
     </>
   );
 
-  if (rest.as === 'link') {
-    const {to} = rest as ButtonAsLinkProps;
+  if (rest.as === 'link' || rest.as === 'a') {
+    if (isDisabled) {
+      return (
+        <button
+          type="button"
+          disabled
+          className={classes}
+          aria-busy={loading || undefined}
+          aria-label={ariaLabel}
+          data-testid={testId}
+        >
+          {content}
+        </button>
+      );
+    }
+    if (rest.as === 'link') {
+      const {to, onClick} = rest as ButtonAsLinkProps;
+      return (
+        <Link to={to} onClick={onClick} className={classes} aria-label={ariaLabel} data-testid={testId}>
+          {content}
+        </Link>
+      );
+    }
+    const {href, target, rel, onClick} = rest as ButtonAsAnchorProps;
     return (
-      <Link to={to} className={classes} aria-disabled={isDisabled} aria-label={ariaLabel} data-testid={testId}>
-        {content}
-      </Link>
-    );
-  }
-
-  if (rest.as === 'a') {
-    const {href, target, rel} = rest as ButtonAsAnchorProps;
-    return (
-      <a href={href} target={target} rel={rel} className={classes} aria-disabled={isDisabled} aria-label={ariaLabel} data-testid={testId}>
+      <a href={href} target={target} rel={rel} onClick={onClick} className={classes} aria-label={ariaLabel} data-testid={testId}>
         {content}
       </a>
     );

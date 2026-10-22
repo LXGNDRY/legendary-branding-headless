@@ -52,6 +52,10 @@ export default function SearchTypeahead({
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Focus the field when the search opens (the user asked for it); not the autoFocus attribute.
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
   const itemRefs = useRef<Array<HTMLElement | null>>([]);
   const navigate = useNavigate();
   const language = useLanguage();
@@ -183,7 +187,6 @@ export default function SearchTypeahead({
           placeholder={placeholder}
           className="w-full bg-transparent border-b border-[var(--color-border-medium)] py-3 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-text-tertiary)]"
           autoComplete="off"
-          autoFocus
           aria-label="Search"
           role="combobox"
           aria-expanded={open && (query.length >= 2)}
@@ -220,6 +223,7 @@ export default function SearchTypeahead({
                       <button
                         key={i}
                         {...item}
+                        aria-selected={item['aria-selected']}
                         role="option"
                         onClick={() => {
                           setQuery(q.text);
@@ -252,6 +256,7 @@ export default function SearchTypeahead({
                         to={`/products/${product.handle}`}
                         onClick={handleSelect}
                         {...item}
+                        aria-selected={item['aria-selected']}
                         role="option"
                         className={`flex gap-3 hover:bg-[var(--color-bg-level-2)] -mx-2 px-2 py-1.5 transition-colors rounded-sm ${item['aria-selected'] ? 'bg-[var(--color-bg-level-2)]' : ''}`}
                       >
@@ -302,6 +307,7 @@ export default function SearchTypeahead({
                         to={`/collections/${col.handle}`}
                         onClick={handleSelect}
                         {...item}
+                        aria-selected={item['aria-selected']}
                         role="option"
                         className={`text-xs border border-[var(--color-border-medium)] px-3 py-1.5 text-[var(--color-text-secondary)] hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)] transition-colors rounded-md ${item['aria-selected'] ? 'border-[var(--color-text-primary)] text-[var(--color-text-primary)] bg-[var(--color-bg-level-2)]' : ''}`}
                       >
@@ -322,6 +328,7 @@ export default function SearchTypeahead({
                       to={`/search?q=${encodeURIComponent(query)}`}
                       onClick={handleSelect}
                       {...item}
+                      aria-selected={item['aria-selected']}
                       role="option"
                       className={`text-xs font-semibold tracking-[0.12em] uppercase text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors ${item['aria-selected'] ? 'text-[var(--color-accent)]' : ''}`}
                     >

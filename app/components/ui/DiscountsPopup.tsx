@@ -154,6 +154,7 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
       <div
         className="absolute inset-0 bg-black/60"
         aria-hidden="true"
+        data-overlay-keep
         onClick={() => setOpen(false)}
       />
       <div

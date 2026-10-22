@@ -85,29 +85,21 @@ export default function AccountPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
           <div className="border border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] rounded-lg p-8">
             <div className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">ORDERS</div>
-            <h3 className="font-serif text-2xl font-normal mb-2 text-[var(--color-text-primary)]">View History</h3>
+            <h2 className="font-serif text-2xl font-normal mb-2 text-[var(--color-text-primary)]">View History</h2>
             <p className="text-sm text-[var(--color-text-secondary)] mb-6">See all your past orders.</p>
-            <Link to="/account/orders">
-              <Button variant="outline" size="sm">
-                View Orders
-              </Button>
-            </Link>
+            <Button as="link" to="/account/orders" variant="outline" size="sm">View Orders</Button>
           </div>
 
           <div className="border border-[var(--color-border-muted)] bg-[var(--color-bg-level-1)] rounded-lg p-8">
             <div className="h-eyebrow mb-3 text-[var(--color-text-tertiary)]">DETAILS</div>
-            <h3 className="font-serif text-2xl font-normal mb-2 text-[var(--color-text-primary)]">Account Details</h3>
+            <h2 className="font-serif text-2xl font-normal mb-2 text-[var(--color-text-primary)]">Account Details</h2>
             <p className="text-sm text-[var(--color-text-secondary)] mb-1">
               {[customer.firstName, customer.lastName].filter(Boolean).join(' ')}
             </p>
             <p className="text-sm text-[var(--color-text-secondary)] mb-6">
               {customer.emailAddress?.emailAddress}
             </p>
-            <Link to="/account/edit">
-              <Button variant="outline" size="sm">
-                Edit Details
-              </Button>
-            </Link>
+            <Button as="link" to="/account/edit" variant="outline" size="sm">Edit Details</Button>
           </div>
         </div>
 

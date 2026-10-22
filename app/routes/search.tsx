@@ -14,6 +14,7 @@ import ProductCard, {PRODUCT_CARD_FRAGMENT, type ProductCardFragment} from '~/co
 import {cleanSearchQuery, cleanSearchText, parsePriceRange, parseSearchSort} from '~/lib/search-params';
 import {CacheShort} from '~/lib/cache';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
+import {focusOnMount} from '~/lib/focus';
 
 const SEARCH_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
@@ -202,7 +203,7 @@ export default function SearchPage() {
               name="q"
               placeholder="Search products, collections, and more..."
               className="w-full bg-transparent border-b border-[var(--color-border-medium)] py-3 text-lg text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors placeholder:text-[var(--color-text-tertiary)]"
-              autoFocus
+              ref={focusOnMount}
             />
           </Form>
         </div>
@@ -506,7 +507,7 @@ export default function SearchPage() {
       {/* Mobile filter drawer */}
       {filterOpen && (
         <div className="fixed inset-0 z-[500] lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
-          <div className="absolute inset-0 bg-[var(--color-foreground)]/40" onClick={() => setFilterOpen(false)} />
+          <button type="button" tabIndex={-1} aria-label="Close filters" className="absolute inset-0 bg-[var(--color-foreground)]/40" data-overlay-keep onClick={() => setFilterOpen(false)} />
           <div
             ref={filterDrawerRef}
             className="absolute bottom-0 left-0 right-0 bg-[var(--color-background)] rounded-t-2xl overflow-hidden max-h-[80dvh] flex flex-col pb-[env(safe-area-inset-bottom)]"

@@ -30,7 +30,7 @@ export default function SizeGuideModal({
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-      <button type="button" className="absolute inset-0 bg-black/60" onClick={onClose} aria-label="Close size guide" />
+      <button type="button" data-overlay-keep className="absolute inset-0 bg-black/60" onClick={onClose} aria-label="Close size guide" />
       <div
         ref={containerRef}
         role="dialog"

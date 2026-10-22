@@ -79,9 +79,11 @@ function CartLineItem({line}: {line: CartLineData}) {
 
   return (
     <div className="flex gap-4 py-5 border-b border-[var(--color-border-muted)]">
-      {/* Image */}
+      {/* Image — the product title beside it is the same link, so this one is hidden from keyboard and assistive tech instead of announcing an unnamed duplicate */}
       <Link
         to={`/products/${product.handle}`}
+        aria-hidden="true"
+        tabIndex={-1}
         className="shrink-0 w-20 h-24 overflow-hidden rounded-md bg-[var(--color-bg-level-2)] block"
       >
         {image ? (
@@ -309,6 +311,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         aria-hidden="true"
+        data-overlay-keep
         onClick={onClose}
       />
 
@@ -477,8 +480,9 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
 
             {/* Checkout */}
             {currentCart.checkoutUrl ? (
-              <div
-                onClick={(e: React.MouseEvent) => {
+              <Button
+                as="a"
+                onClick={(e) => {
                   if (checkingOut) return;
                   publish(AnalyticsEvent.CUSTOM_EVENT, {eventName: 'begin_checkout', cart: currentCart});
                   // A modifier/middle-click opens checkout in a new tab and
@@ -487,20 +491,15 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                   const opensNewTab = e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
                   if (!opensNewTab) setCheckingOut(true);
                 }}
-                className={checkingOut ? 'pointer-events-none' : undefined}
+                href={withCheckoutLocale(currentCart.checkoutUrl, language)}
+                variant="primary"
+                className="w-full justify-center"
+                size="md"
+                loading={checkingOut}
+                testId="drawer-checkout"
               >
-                <Button
-                  as="a"
-                  href={withCheckoutLocale(currentCart.checkoutUrl, language)}
-                  variant="primary"
-                  className="w-full justify-center"
-                  size="md"
-                  loading={checkingOut}
-                  testId="drawer-checkout"
-                >
-                  {checkingOut ? t('status.updating') : t('cart.checkout')}
-                </Button>
-              </div>
+                {checkingOut ? t('status.updating') : t('cart.checkout')}
+              </Button>
             ) : (
               <Button
                 variant="primary"
