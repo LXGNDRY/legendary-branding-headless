@@ -173,17 +173,25 @@ interface FetchJudgemeReviewsRawOptions {
 }
 
 /**
- * Shared request/parse core for the Judge.me reviews endpoint. Always
- * degrades to an empty list rather than throwing -- a failed third-party
- * fetch should never break the page it's decorating.
+ * Shared request/parse core for the Judge.me reviews endpoint. Never throws
+ * -- a failed third-party fetch should never break the page it's decorating --
+ * and says whether the page was actually read (`ok`), so a failed page is not
+ * mistaken for an empty one.
  */
+interface RawPage {
+  reviews: JudgemeApiReview[];
+  ok: boolean;
+}
+
+const FAILED_PAGE: RawPage = {reviews: [], ok: false};
+
 async function fetchJudgemeReviewsRaw({
   apiToken,
   shopDomain,
   perPage,
   page,
   productId,
-}: FetchJudgemeReviewsRawOptions): Promise<JudgemeApiReview[]> {
+}: FetchJudgemeReviewsRawOptions): Promise<RawPage> {
   const url = new URL(JUDGEME_API_BASE);
   url.searchParams.set('api_token', apiToken);
   url.searchParams.set('shop_domain', shopDomain);
@@ -198,21 +206,21 @@ async function fetchJudgemeReviewsRaw({
     response = await fetch(url.toString(), edgeCache());
   } catch (error) {
     console.error('[judgeme] request failed', error);
-    return [];
+    return FAILED_PAGE;
   }
 
   if (!response.ok) {
     console.error(`[judgeme] API responded with ${response.status}`);
-    return [];
+    return FAILED_PAGE;
   }
 
   try {
     const data = (await response.json()) as JudgemeApiResponse;
-    if (!Array.isArray(data.reviews)) return [];
-    return data.reviews.filter((r) => r && !r.hidden && isValidRating(r.rating));
+    if (!Array.isArray(data.reviews)) return FAILED_PAGE;
+    return {ok: true, reviews: data.reviews.filter((r) => r && !r.hidden && isValidRating(r.rating))};
   } catch (error) {
     console.error('[judgeme] failed to parse response', error);
-    return [];
+    return FAILED_PAGE;
   }
 }
 
@@ -278,7 +286,7 @@ export async function fetchJudgemeQuotes({
   minBodyLength = 80,
   perPage = 100,
 }: FetchJudgemeQuotesOptions): Promise<JudgemeQuote[]> {
-  const reviews = await fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage});
+  const {reviews} = await fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage});
 
   const bodyCounts = countBodies(reviews);
 
@@ -500,8 +508,8 @@ export async function fetchJudgemeProductReviews({
         reviewerName: toDisplayName(r.reviewer?.name),
         createdAt: r.created_at ?? undefined,
       }));
-  // The private API does not report a page total, so a last fetched page that is full means there may be more.
-  const mayHaveMore = (pages: JudgemeApiReview[][]) => (pages.at(-1)?.length ?? 0) >= perPage;
+  // The private API does not report a page total: a failed page, or a last page that is full, means the list may be incomplete.
+  const mayHaveMore = (pages: RawPage[]) => pages.some((page) => !page.ok) || (pages.at(-1)?.reviews.length ?? 0) >= perPage;
 
   const internalId = await resolveJudgemeProductId({apiToken, shopDomain, externalId: productId});
   if (internalId) {
@@ -510,7 +518,7 @@ export async function fetchJudgemeProductReviews({
         fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage, page: i + 1, productId: String(internalId)}),
       ),
     );
-    const raw = [...new Map(idPages.flat().map((r) => [r.id, r])).values()];
+    const raw = [...new Map(idPages.flatMap((page) => page.reviews).map((r) => [r.id, r])).values()];
     // Defensive: a resolved-but-wrong id would fall back to unfiltered results the same way a raw Shopify id
     // does, so still check the handle before trusting the response.
     const matched = raw.filter((r) => r.product_handle === productHandle);
@@ -521,6 +529,6 @@ export async function fetchJudgemeProductReviews({
     Array.from({length: maxPages}, (_, i) => fetchJudgemeReviewsRaw({apiToken, shopDomain, perPage, page: i + 1})),
   );
   // Dedup by id -- pagination could theoretically overlap if the shop's review set shifts between the parallel page requests.
-  const deduped = [...new Map(pages.flat().map((r) => [r.id, r])).values()];
+  const deduped = [...new Map(pages.flatMap((page) => page.reviews).map((r) => [r.id, r])).values()];
   return {reviews: toReviews(deduped.filter((r) => r.product_handle === productHandle)), truncated: mayHaveMore(pages)};
 }

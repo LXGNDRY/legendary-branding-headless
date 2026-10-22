@@ -334,6 +334,52 @@ describe('templated reviews', () => {
   });
 });
 
+describe('private-API fallback truncation', () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('marks the list truncated when an intermediate page fails even though the last page is short', async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('reviews_for_widget')) return new Response('', {status: 500});
+      if (url.includes('/products/')) return new Response(JSON.stringify({product: {id: 42}}), {status: 200});
+      const page = Number(new URL(url).searchParams.get('page'));
+      if (page === 2) return new Response('', {status: 500});
+      return new Response(
+        JSON.stringify({reviews: page === 1 ? [{id: 1, rating: 5, body: 'First page review.', product_handle: 'tee'}] : []}),
+        {status: 200},
+      );
+    }) as typeof fetch;
+
+    const result = await fetchJudgemeProductReviews({apiToken: 'x', shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee', maxPages: 3});
+    expect(result.reviews.map((r) => r.id)).toEqual([1]);
+    expect(result.truncated).toBe(true);
+    expect(resolveProductRating(null, result)).toBeNull();
+  });
+
+  it('treats a malformed page as failed, and a clean short list as complete', async () => {
+    const respond = (malformed: boolean) =>
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('reviews_for_widget')) return new Response('', {status: 500});
+        if (url.includes('/products/')) return new Response(JSON.stringify({product: {id: 42}}), {status: 200});
+        const page = Number(new URL(url).searchParams.get('page'));
+        if (page === 2 && malformed) return new Response(JSON.stringify({reviews: 'nope'}), {status: 200});
+        return new Response(
+          JSON.stringify({reviews: page === 1 ? [{id: 1, rating: 5, body: 'First page review.', product_handle: 'tee'}] : []}),
+          {status: 200},
+        );
+      }) as typeof fetch;
+    const options = {apiToken: 'x', shopDomain: 'test.myshopify.com', productId: '1', productHandle: 'tee', maxPages: 3};
+    global.fetch = respond(true);
+    expect((await fetchJudgemeProductReviews(options)).truncated).toBe(true);
+    global.fetch = respond(false);
+    expect((await fetchJudgemeProductReviews(options)).truncated).toBe(false);
+  });
+});
+
 describe('toDisplayName', () => {
   it('masks a multi-word name to first name plus last initial', () => {
     expect(toDisplayName('Jordan Alvarez')).toBe('Jordan A.');
