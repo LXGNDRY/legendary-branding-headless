@@ -1,4 +1,6 @@
 import {Link} from 'react-router';
+import {useLanguage} from '~/lib/i18n';
+import {formatNumber} from '~/lib/locale';
 import {Image} from '@shopify/hydrogen';
 import StarRating, {StarIcon} from '~/components/ui/StarRating';
 
@@ -31,6 +33,7 @@ export default function VerifiedReviews({
   aggregateCount,
   products,
 }: VerifiedReviewsProps) {
+  const language = useLanguage();
   if (aggregateCount === 0 || products.length === 0) return null;
 
   return (
@@ -47,7 +50,7 @@ export default function VerifiedReviews({
             ))}
           </div>
           <p className="text-sm text-[var(--color-text-secondary)] mt-3">
-            {aggregateRating.toFixed(1)} out of 5 &middot; from {aggregateCount.toLocaleString()}{' '}
+            {aggregateRating.toFixed(1)} out of 5 &middot; from {formatNumber(aggregateCount, language)}{' '}
             {aggregateCount === 1 ? 'review' : 'reviews'}
           </p>
         </div>

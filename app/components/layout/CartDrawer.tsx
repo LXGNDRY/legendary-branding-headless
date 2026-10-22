@@ -7,7 +7,7 @@ import {withCheckoutLocale} from '~/lib/cart';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
-import {useTranslation} from '~/lib/i18n';
+import {useLanguage, useTranslation} from '~/lib/i18n';
 import TrustSignals from '~/components/ui/TrustSignals';
 
 function CloseIcon() {
@@ -192,6 +192,7 @@ interface CartDrawerProps {
 
 export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
   const t = useTranslation();
+  const language = useLanguage();
   const {publish} = useAnalytics();
   const currentCart = cart;
   const lines = currentCart?.lines?.edges?.map(({node}) => node) ?? [];
@@ -491,7 +492,7 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
               >
                 <Button
                   as="a"
-                  href={withCheckoutLocale(currentCart.checkoutUrl)}
+                  href={withCheckoutLocale(currentCart.checkoutUrl, language)}
                   variant="primary"
                   className="w-full justify-center"
                   size="md"

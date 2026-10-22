@@ -66,4 +66,51 @@ describe('api.market action', () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({error: 'Language is not available for this storefront'});
   });
+
+  describe('with an existing cart', () => {
+    function setup(updateBuyerIdentity: () => Promise<unknown>) {
+      const set = vi.fn();
+      const context = createMockStorefront({responses: {StorefrontLocalization: localization}}).createContext({
+        session: {get: () => null, set, unset: () => {}, commit: async () => 'session=updated', isPending: false},
+        cart: {
+          getCartId: async () => 'gid://shopify/Cart/old',
+          updateBuyerIdentity,
+          setCartId: (id: string) => new Headers({'Set-Cookie': `cart=${id}`}),
+        },
+      });
+      const request = new Request('http://localhost/api/market', {
+        method: 'POST',
+        headers: {Origin: 'http://localhost'},
+        body: new URLSearchParams({country: 'ES', language: 'ES'}),
+      });
+      return {set, run: () => action({request, context, params: {}} as never)};
+    }
+
+    it('keeps the previous market when Shopify rejects the cart update', async () => {
+      const {set, run} = setup(async () => ({cart: null, errors: [{message: 'nope'}]}));
+      const response = await run();
+      expect(response.status).toBe(409);
+      expect(set).not.toHaveBeenCalled();
+      expect(response.headers.get('Set-Cookie')).toBeNull();
+      expect(JSON.stringify(await response.json())).not.toContain('nope');
+    });
+
+    it('keeps the previous market when the cart update throws', async () => {
+      const {set, run} = setup(async () => {
+        throw new Error('upstream stack trace');
+      });
+      const response = await run();
+      expect(response.status).toBe(409);
+      expect(set).not.toHaveBeenCalled();
+    });
+
+    it('commits the session and the returned cart id together on success', async () => {
+      const {set, run} = setup(async () => ({cart: {id: 'gid://shopify/Cart/new'}, errors: []}));
+      const response = await run();
+      expect(response.status).toBe(200);
+      expect(set).toHaveBeenCalledWith('country', 'ES');
+      expect(set).toHaveBeenCalledWith('language', 'ES');
+      expect(response.headers.getSetCookie()).toEqual(['cart=gid://shopify/Cart/new', 'session=updated']);
+    });
+  });
 });

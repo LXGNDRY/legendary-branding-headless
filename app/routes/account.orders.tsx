@@ -1,3 +1,5 @@
+import {useLanguage} from '~/lib/i18n';
+import {formatDate, formatMoney} from '~/lib/locale';
 import {
   redirect,
   type LoaderFunctionArgs,
@@ -105,23 +107,10 @@ export async function loader({context}: LoaderFunctionArgs) {
   return {orders: result.data.customer.orders};
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-function formatMoney(amount: string, currency: string) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(parseFloat(amount));
-}
 
 export default function OrdersPage() {
   const {orders} = useLoaderData<typeof loader>();
+  const language = useLanguage();
   const orderList = orders.nodes as OrderNode[];
 
   return (
@@ -162,7 +151,7 @@ export default function OrdersPage() {
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                     <div>
                       <p className="text-sm text-[var(--color-text-secondary)] mb-1">
-                        {formatDate(order.processedAt)}
+                        {formatDate(order.processedAt, language)}
                       </p>
                       <h3 className="text-xl font-normal">
                         Order #{order.number}
@@ -174,6 +163,7 @@ export default function OrdersPage() {
                         {formatMoney(
                           order.totalPrice.amount,
                           order.totalPrice.currencyCode,
+                          language,
                         )}
                       </p>
                       <span

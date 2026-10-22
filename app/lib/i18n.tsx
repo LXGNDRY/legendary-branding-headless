@@ -39,12 +39,22 @@ export function translate(language: LanguageCode | string | null | undefined, ke
 const TranslationContext = createContext<(key: TranslationKey, values?: Interpolation) => string>(
   (key, values) => translate('EN', key, values),
 );
+const LanguageContext = createContext<LanguageCode>('EN');
 
 export function LocaleProvider({language, children}: {language: LanguageCode; children: ReactNode}) {
   const value = useMemo(() => (key: TranslationKey, values?: Interpolation) => translate(language, key, values), [language]);
-  return <TranslationContext.Provider value={value}>{children}</TranslationContext.Provider>;
+  return (
+    <LanguageContext.Provider value={language}>
+      <TranslationContext.Provider value={value}>{children}</TranslationContext.Provider>
+    </LanguageContext.Provider>
+  );
 }
 
 export function useTranslation() {
   return useContext(TranslationContext);
+}
+
+/** The active storefront language (Shopify LanguageCode), e.g. `EN`, `PT_BR`. */
+export function useLanguage() {
+  return useContext(LanguageContext);
 }

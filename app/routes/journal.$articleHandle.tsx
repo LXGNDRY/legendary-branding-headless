@@ -1,6 +1,8 @@
 import SafeHtml from '~/components/ui/SafeHtml';
 import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
 import {useLoaderData, Link} from 'react-router';
+import {useLanguage} from '~/lib/i18n';
+import {formatDate} from '~/lib/locale';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
@@ -90,16 +92,10 @@ export async function loader({params, context}: LoaderFunctionArgs) {
   return {article: article as ArticleData};
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
 
 export default function ArticlePage() {
   const {article} = useLoaderData<typeof loader>();
+  const language = useLanguage();
 
   const articleJsonLd = articleSchema({
     title: article.title,
@@ -153,7 +149,7 @@ export default function ArticlePage() {
           </h1>
 
           <div className="flex items-center gap-4 text-[11px] text-[var(--color-text-tertiary)] tracking-wide">
-            <span>{formatDate(article.publishedAt)}</span>
+            <span>{formatDate(article.publishedAt, language)}</span>
             {article.author?.name && (
               <>
                 <span>·</span>

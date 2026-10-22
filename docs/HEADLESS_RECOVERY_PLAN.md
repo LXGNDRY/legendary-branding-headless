@@ -376,7 +376,7 @@ Initial status for every recovery task is **Not started**; this document and its
 | R08 | Merged to dev (#372); live acceptance owed | claude/recovery-r08-leads | Subscribe payload fixed to the documented 2024-02-15 shape (profiles at `data.attributes.profiles.data`); restock now uses Klaviyo's per-variant back-in-stock endpoint with server-side variant/product/sold-out validation and no marketing opt-in; 202 treated as accepted not confirmed. **Live acceptance with a controlled address and the account's Back in Stock flow still owed** | Owner: test address, Klaviyo catalog sync + Back in Stock flow |
 | R09 | In PR (code only) | claude/recovery-r09-cache | Predictive search and quick-add are `private` on success and `no-store` on every error; `withDefaultCacheControl` gives all other non-asset responses `private, max-age=0, must-revalidate` (errors `no-store`) unless a route sets its own. Deployed header/two-market check on the preview still owed | — |
 | R10 | Not started | — | — | See package/decision table |
-| R11 | Not started | — | — | See package/decision table |
+| R11 | In PR (code only) | claude/recovery-r11-market | Checkout locale, `<html lang>`, dates, money and review counts follow the selected language (`locale.ts`); market switch updates the cart first and commits session + returned cart id together or keeps the previous market; stale saved markets/languages are cleared. Still open: translating the untranslated UI strings (footer, cart, account, forms, errors) and EN/FR/DE/PT-BR browser journeys on the preview | Owner: translation review |
 | R12 | Not started | — | — | See package/decision table |
 | R13 | Not started | — | — | See package/decision table |
 | R14 | Not started | — | — | See package/decision table |

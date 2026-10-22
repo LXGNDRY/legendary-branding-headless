@@ -69,6 +69,27 @@ export function isAvailableCountry(
   return availableCountries.some((candidate) => candidate.isoCode === country);
 }
 
+/**
+ * Session keys holding a market choice Shopify no longer offers (a removed
+ * market or language). Clearing them lets the storefront fall back to edge
+ * detection and the default language instead of silently using stale values.
+ */
+export function staleMarketSelections(
+  stored: {country?: unknown; language?: unknown},
+  localization: Pick<LocalizationData, 'availableCountries' | 'availableLanguages'>,
+): Array<'country' | 'language'> {
+  const stale: Array<'country' | 'language'> = [];
+  const country = normalizeCountryCode(stored.country);
+  if (stored.country != null && (!country || !isAvailableCountry(country, localization.availableCountries))) {
+    stale.push('country');
+  }
+  const language = normalizeLanguageCode(stored.language);
+  if (stored.language != null && (!language || !isAvailableLanguage(language, localization.availableLanguages))) {
+    stale.push('language');
+  }
+  return stale;
+}
+
 // ISO 3166-1 alpha-2 codes only -- names are derived via Intl.DisplayNames
 // (below) rather than hardcoded, so they always match the runtime's locale
 // data. Used for the account address form's country <select>: submitting
