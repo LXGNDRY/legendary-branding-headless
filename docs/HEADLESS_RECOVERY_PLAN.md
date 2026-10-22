@@ -375,7 +375,7 @@ Initial status for every recovery task is **Not started**; this document and its
 | R07 | Not started | — | — | See package/decision table |
 | R08 | In PR (code only) | claude/recovery-r08-leads | Subscribe payload fixed to the documented 2024-02-15 shape (profiles at `data.attributes.profiles.data`); restock now uses Klaviyo's per-variant back-in-stock endpoint with server-side variant/product/sold-out validation and no marketing opt-in; 202 treated as accepted not confirmed. **Live acceptance with a controlled address and the account's Back in Stock flow still owed** | Owner: test address, Klaviyo catalog sync + Back in Stock flow |
 | R09 | Not started | — | — | See package/decision table |
-| R10 | Not started | — | — | See package/decision table |
+| R10 | In PR (code only) | claude/recovery-r10-wishlist | Identity-only wishlist (validated, versioned, migrates legacy snapshots); read-merge-then-write provider with cancellation, retry/error status and account isolation (found+fixed a logout leak); API validates/bounds (405/413/400), private no-store, no provider messages; live-market cards via `/api/wishlist-products` with honest unavailable/error states; RecentlyViewed cookie validated and size-bounded. Real synthetic-account and two-tab acceptance still owed | Owner: synthetic account |
 | R11 | Not started | — | — | See package/decision table |
 | R12 | Not started | — | — | See package/decision table |
 | R13 | Not started | — | — | See package/decision table |

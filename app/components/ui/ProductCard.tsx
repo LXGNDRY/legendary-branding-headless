@@ -382,18 +382,7 @@ export default function ProductCard({
           <WishlistButton
             size="sm"
             className="bg-[var(--color-bg-level-1)]/90 backdrop-blur-sm rounded-full p-1.5 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] border border-[var(--color-border-muted)]"
-            product={{
-              id: product.id,
-              handle: product.handle,
-              title: product.title,
-              price: displayPrice.amount,
-              compareAtPrice: onSale
-                ? displayCompareAt.amount
-                : undefined,
-              image: product.featuredImage?.url,
-              rating: reviewRating?.rating,
-              reviewCount: reviewRating?.count,
-            }}
+            product={{id: product.id, handle: product.handle}}
           />
         </div>
 

@@ -1,22 +1,10 @@
 import {useWishlist} from '~/components/ui/Wishlist';
 
 interface WishlistButtonProps {
+  /** Identity only: price, availability and imagery always come from the live API. */
   product: {
     id: string;
     handle: string;
-    title: string;
-    price: string;
-    /** Compare-at price snapshot, if the product is on sale at the point
-        this button renders -- saved into the wishlist item so the wishlist
-        page can show a real Sale badge/strikethrough, same pattern as the
-        rating snapshot below. */
-    compareAtPrice?: string;
-    image?: string;
-    /** Rating snapshot, if known at the point this button renders -- saved
-        into the wishlist item so the wishlist page can show real stars
-        without a live query against a client-only localStorage list. */
-    rating?: number;
-    reviewCount?: number;
   };
   className?: string;
   size?: 'sm' | 'md';
