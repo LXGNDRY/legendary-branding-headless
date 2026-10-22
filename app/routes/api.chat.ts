@@ -224,7 +224,7 @@ export function loader(_args: LoaderFunctionArgs) {
 function sanitizeMessage(input: unknown): string {
   if (typeof input !== 'string') return '';
   return input
-    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+    .replace(/\p{Cc}/gu, '')
     .trim()
     .slice(0, MAX_MESSAGE_LENGTH);
 }

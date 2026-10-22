@@ -1,4 +1,4 @@
-import {useEffect, useState, useRef} from 'react';
+import {useEffect, useState} from 'react';
 import {Link, useFetcher} from 'react-router';
 import Button from '~/components/ui/Button';
 import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';

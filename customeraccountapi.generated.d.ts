@@ -1,6 +1,0 @@
-interface GeneratedQueryTypes {
-}
-
-interface GeneratedMutationTypes {
-}
-

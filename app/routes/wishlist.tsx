@@ -1,4 +1,4 @@
-import {Link, useNavigate, type MetaFunction} from 'react-router';
+import {type MetaFunction} from 'react-router';
 import Container from '~/components/ui/Container';
 import Button from '~/components/ui/Button';
 import {useWishlist} from '~/components/ui/Wishlist';
@@ -25,7 +25,6 @@ export const meta: MetaFunction = () => {
  */
 export default function WishlistPage() {
   const {items, count, clear, remove} = useWishlist();
-  const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

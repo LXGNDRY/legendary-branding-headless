@@ -8,7 +8,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function clean(value: FormDataEntryValue | null, max: number) {
   return typeof value === 'string'
-    ? value.replace(/[\u0000-\u001F\u007F-\u009F]/g, '').trim().slice(0, max)
+    ? value.replace(/\p{Cc}/gu, '').trim().slice(0, max)
     : '';
 }
 

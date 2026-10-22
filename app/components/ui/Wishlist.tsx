@@ -116,7 +116,6 @@ export function WishlistProvider({children, isLoggedIn = false}: WishlistProvide
   useEffect(() => {
     if (!isLoggedIn || didInitialFetchRef.current) return;
 
-    let cancelled = false;
     didInitialFetchRef.current = true;
 
     async function fetchServerWishlist() {
@@ -136,9 +135,6 @@ export function WishlistProvider({children, isLoggedIn = false}: WishlistProvide
 
     fetchServerWishlist();
 
-    return () => {
-      cancelled = true;
-    };
   }, [isLoggedIn]);
 
   // Phase 3: always persist to localStorage

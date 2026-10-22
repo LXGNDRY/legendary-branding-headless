@@ -118,7 +118,7 @@ function sanitizeString(input: unknown, maxLength: number = 255): string {
   if (typeof input !== 'string') return '';
   // Trim, strip control characters, cap length
   return input
-    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+    .replace(/\p{Cc}/gu, '')
     .trim()
     .slice(0, maxLength);
 }
@@ -126,7 +126,7 @@ function sanitizeString(input: unknown, maxLength: number = 255): string {
 function sanitizeEmail(input: unknown): string {
   if (typeof input !== 'string') return '';
   return input
-    .replace(/[\u0000-\u001F\u007F-\u009F\s]/g, '')
+    .replace(/[\p{Cc}\s]/gu, '')
     .toLowerCase()
     .slice(0, 254);
 }
