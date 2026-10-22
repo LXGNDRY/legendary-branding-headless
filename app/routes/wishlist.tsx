@@ -120,10 +120,18 @@ export default function WishlistPage() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
           {items.map((item) => {
-            const product = liveProducts?.[item.id] ?? null;
+            // NOTE: the API answers every requested id (null = unavailable), so an id missing from the
+            // map has simply not been requested yet and must not be shown as unavailable.
+            const known = liveProducts !== null && item.id in liveProducts;
+            const product = known ? liveProducts![item.id] : null;
             return (
               <div key={item.id} className="relative group">
-                {product ? (
+                {!known ? (
+                  <div className="space-y-3" aria-busy="true">
+                    <div className="aspect-[3/4] bg-[var(--color-surface)] animate-pulse" />
+                    <div className="h-4 w-3/4 bg-[var(--color-surface)] animate-pulse" />
+                  </div>
+                ) : product ? (
                   <>
                     <button
                       type="button"

@@ -13,7 +13,7 @@ interface StatStripProps {
 const DEFAULT_STATS: Stat[] = [
   {value: '220GSM+', label: 'Fabric Weight'},
   {value: '380-460GSM', label: 'Hoodies'},
-  {value: 'Free', label: 'Shipping, Every Order'},
+  {value: 'Worldwide', label: 'Shipping'},
 ];
 
 /**

@@ -3,26 +3,22 @@ import {CacheLong} from '~/lib/cache';
 import {urlEntry} from '~/lib/sitemap';
 
 const PRODUCTS_QUERY = `#graphql
-  query SitemapProducts($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
-    @inContext(country: $country, language: $language) {
+  query SitemapProducts($first: Int!, $after: String) {
     products(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }
   }
 ` as const;
 const COLLECTIONS_QUERY = `#graphql
-  query SitemapCollections($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
-    @inContext(country: $country, language: $language) {
+  query SitemapCollections($first: Int!, $after: String) {
     collections(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }
   }
 ` as const;
 const PAGES_QUERY = `#graphql
-  query SitemapPages($country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
-    @inContext(country: $country, language: $language) {
+  query SitemapPages($first: Int!, $after: String) {
     pages(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }
   }
 ` as const;
 const ARTICLES_QUERY = `#graphql
-  query SitemapArticles($blogHandle: String!, $country: CountryCode, $language: LanguageCode, $first: Int!, $after: String)
-    @inContext(country: $country, language: $language) {
+  query SitemapArticles($blogHandle: String!, $first: Int!, $after: String) {
     blog(handle: $blogHandle) {
       articles(first: $first, after: $after) { nodes { handle updatedAt: publishedAt } pageInfo { hasNextPage endCursor } }
     }
@@ -71,7 +67,8 @@ export async function loader({request, context}: LoaderFunctionArgs) {
   // redirecting apex host whenever this env var is set.
   const domain = context.env.PUBLIC_CHECKOUT_DOMAIN?.trim().replace(/^www\./, '');
   const origin = domain ? `https://www.${domain}` : new URL(request.url).origin;
-  const variables = {country: context.storefront.i18n.country, language: context.storefront.i18n.language, first: 250};
+  // NOTE: deliberately no @inContext/country/language -- the response is served from a shared public cache, so it must be identical for every market (the shop's default market and language).
+  const variables = {first: 250};
 
   const [products, collections, pages, articles] = await Promise.all([
     paginate(async (after) => (await context.storefront.query(PRODUCTS_QUERY, {variables: {...variables, after}, cache: CacheLong()})).products as Connection),

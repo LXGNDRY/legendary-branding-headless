@@ -1,6 +1,7 @@
 import {createContext, useCallback, useContext, useEffect, useRef, useState} from 'react';
 import type {ReactNode} from 'react';
 import {
+  MAX_WISHLIST_ITEMS,
   mergeWishlists,
   parseStoredWishlist,
   parseWishlistEntries,
@@ -30,9 +31,11 @@ interface WishlistContextValue {
   items: WishlistEntry[];
   count: number;
   isInWishlist: (handle: string) => boolean;
-  add: (item: WishlistInput) => void;
+  /** Returns false when the list is full (100 items) and the item was not added. */
+  add: (item: WishlistInput) => boolean;
   remove: (handle: string) => void;
-  toggle: (item: WishlistInput) => void;
+  /** Returns 'full' when adding was refused because the list holds 100 items. */
+  toggle: (item: WishlistInput) => 'added' | 'removed' | 'full';
   clear: () => void;
   isLoading: boolean;
   syncStatus: WishlistSyncStatus;
@@ -42,7 +45,6 @@ const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 const STORAGE_KEY = 'lb_wishlist';
 const SYNC_DEBOUNCE_MS = 500;
-const MAX_ATTEMPTS = 5;
 
 function retryDelay(attempt: number) {
   return Math.min(30_000, 2_000 * 2 ** attempt);
@@ -174,15 +176,22 @@ export function WishlistProvider({children, isLoggedIn = false}: WishlistProvide
       } catch {
         if (controller.signal.aborted) return;
         setSyncError(true);
-        if (attempt < MAX_ATTEMPTS) {
-          timer = setTimeout(load, retryDelay(attempt));
-          attempt += 1;
-        }
+        // NOTE: keeps retrying (capped backoff) -- giving up would leave the
+        // shopper's account list unreadable until they reload the page.
+        timer = setTimeout(load, retryDelay(attempt));
+        attempt += 1;
       }
     }
 
+    function retryNow() {
+      if (timer) clearTimeout(timer);
+      void load();
+    }
+
     load();
+    window.addEventListener('online', retryNow);
     return () => {
+      window.removeEventListener('online', retryNow);
       controller.abort();
       if (timer) clearTimeout(timer);
       setServerReady(false);
@@ -238,15 +247,23 @@ export function WishlistProvider({children, isLoggedIn = false}: WishlistProvide
       } catch {
         if (controller.signal.aborted) return;
         setSyncError(true);
-        if (attempt < MAX_ATTEMPTS) {
-          timer = setTimeout(push, retryDelay(attempt));
-          attempt += 1;
-        }
+        // NOTE: unsent edits live only in memory for logged-in shoppers, so the
+        // write is retried (capped backoff, and immediately when the browser is
+        // back online) for as long as the page is open.
+        timer = setTimeout(push, retryDelay(attempt));
+        attempt += 1;
       }
     }
 
+    function retryNow() {
+      if (timer) clearTimeout(timer);
+      void push();
+    }
+
     timer = setTimeout(push, SYNC_DEBOUNCE_MS);
+    window.addEventListener('online', retryNow);
     return () => {
+      window.removeEventListener('online', retryNow);
       controller.abort();
       if (timer) clearTimeout(timer);
     };
@@ -268,12 +285,20 @@ export function WishlistProvider({children, isLoggedIn = false}: WishlistProvide
   );
 
   const add = useCallback(
-    (item: WishlistInput) => {
+    (item: WishlistInput): boolean => {
       const [entry] = parseWishlistEntries([{id: item.id, handle: item.handle, addedAt: Date.now()}]);
-      if (!entry) return;
-      removedWhileLoadingRef.current.delete(entry.handle.toLowerCase());
-      setItems((prev) => (prev.some((i) => i.handle.toLowerCase() === entry.handle.toLowerCase()) ? prev : [...prev, entry]));
+      if (!entry) return false;
+      const key = entry.handle.toLowerCase();
+      const current = itemsRef.current;
+      if (current.some((i) => i.handle.toLowerCase() === key)) return true;
+      // NOTE: refuse instead of appending a 101st entry that storage and the API would silently drop.
+      if (current.length >= MAX_WISHLIST_ITEMS) return false;
+      removedWhileLoadingRef.current.delete(key);
+      const next = [...current, entry];
+      itemsRef.current = next;
+      setItems(next);
       markDirty();
+      return true;
     },
     [markDirty],
   );
@@ -281,9 +306,12 @@ export function WishlistProvider({children, isLoggedIn = false}: WishlistProvide
   const remove = forget;
 
   const toggle = useCallback(
-    (item: WishlistInput) => {
-      if (itemsRef.current.some((i) => i.handle.toLowerCase() === item.handle.toLowerCase())) forget(item.handle);
-      else add(item);
+    (item: WishlistInput): 'added' | 'removed' | 'full' => {
+      if (itemsRef.current.some((i) => i.handle.toLowerCase() === item.handle.toLowerCase())) {
+        forget(item.handle);
+        return 'removed';
+      }
+      return add(item) ? 'added' : 'full';
     },
     [add, forget],
   );

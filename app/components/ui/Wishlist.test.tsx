@@ -9,7 +9,7 @@ const B = {id: 'gid://shopify/Product/2', handle: 'tee-2'};
 const entry = (p: {id: string; handle: string}, addedAt = 1_000) => ({...p, addedAt});
 
 function Probe() {
-  const {items, add, remove, syncStatus, isLoading} = useWishlist();
+  const {items, add, remove, syncStatus, isLoading, toggle} = useWishlist();
   return (
     <div>
       <p data-testid="handles">{items.map((i) => i.handle).join(',')}</p>
@@ -17,6 +17,12 @@ function Probe() {
       <button onClick={() => add(A)}>add-a</button>
       <button onClick={() => add(B)}>add-b</button>
       <button onClick={() => remove(A.handle)}>remove-a</button>
+      <button onClick={() => add({id: 'gid://shopify/Product/9999', handle: 'overflow'})}>add-overflow</button>
+      <p data-testid="toggle-result" />
+      <button onClick={(e) => {
+        const r = toggle({id: 'gid://shopify/Product/9999', handle: 'overflow'});
+        (e.currentTarget.previousSibling as HTMLElement).textContent = r;
+      }}>toggle-overflow</button>
     </div>
   );
 }
@@ -215,6 +221,66 @@ describe('WishlistProvider', () => {
       expect(handles()).toBe('');
       expect(window.localStorage.getItem('lb_wishlist')).toBeNull();
       expect(status()).toBe('guest');
+    });
+
+    it('keeps retrying a failed write past the old retry budget and recovers when the browser comes back online', async () => {
+      let writes = 0;
+      fetchMock.mockImplementation((_url: string, init?: RequestInit) => {
+        if (init?.method !== 'POST') return Promise.resolve(json({items: []}));
+        writes += 1;
+        return Promise.resolve(writes <= 7 ? json({error: 'x'}, 500) : json({success: true}));
+      });
+      mount(true);
+      await flush();
+      await click('add-a');
+      await flush(600);
+      await flush(5 * 60_000); // far beyond the previous 5-attempt budget
+      expect(writes).toBeGreaterThan(6);
+      expect(status()).toBe('ready');
+      expect(handles()).toBe('tee-1');
+    });
+
+    it('retries immediately when the browser reports it is back online', async () => {
+      let ok = false;
+      let writes = 0;
+      fetchMock.mockImplementation((_url: string, init?: RequestInit) => {
+        if (init?.method !== 'POST') return Promise.resolve(json({items: []}));
+        writes += 1;
+        return Promise.resolve(ok ? json({success: true}) : json({error: 'offline'}, 500));
+      });
+      mount(true);
+      await flush();
+      await click('add-a');
+      await flush(600);
+      expect(status()).toBe('error');
+      const before = writes;
+      ok = true;
+      await act(async () => {
+        window.dispatchEvent(new Event('online'));
+      });
+      await flush(10);
+      expect(writes).toBe(before + 1);
+      expect(status()).toBe('ready');
+    });
+  });
+
+  describe('item limit', () => {
+    const many = Array.from({length: 100}, (_, i) => ({id: `gid://shopify/Product/${i + 1}`, handle: i === 0 ? 'tee-1' : `p${i + 1}`, addedAt: 1000 + i}));
+
+    it('refuses a 101st item instead of showing one that would be silently dropped', async () => {
+      window.localStorage.setItem('lb_wishlist', JSON.stringify({items: many, savedAt: Date.now()}));
+      mount(false);
+      await flush();
+      expect(handles().split(',')).toHaveLength(100);
+      await click('add-overflow');
+      expect(handles().split(',')).toHaveLength(100);
+      expect(handles()).not.toContain('overflow');
+      await click('toggle-overflow');
+      expect(screen.getByTestId('toggle-result').textContent).toBe('full');
+      // removing one makes room again
+      await click('remove-a');
+      await click('add-overflow');
+      expect(handles()).toContain('overflow');
     });
   });
 });
