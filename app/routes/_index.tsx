@@ -17,7 +17,6 @@ import NewsletterBand from '~/components/sections/NewsletterBand';
 import BrandMarquee from '~/components/sections/BrandMarquee';
 import CurrentOffers from '~/components/sections/CurrentOffers';
 import {CacheLong, CacheShort} from '~/lib/cache';
-import {EXPRESS_SHIPPING_COST} from '~/lib/cart';
 import type {ActiveDiscount} from '~/lib/discounts';
 import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
 import {
@@ -182,7 +181,6 @@ const MARQUEE_ITEMS = [
   '220GSM+ PREMIUM-WEIGHT TEES',
   'MADE TO ORDER',
   'FREE SHIPPING ON EVERY ORDER',
-  `$${EXPRESS_SHIPPING_COST} EXPRESS SHIPPING AVAILABLE`,
   'WORLDWIDE SHIPPING',
   'AUTHENTICITY GUARANTEED',
   'NEW DROPS EVERY FRIDAY',
