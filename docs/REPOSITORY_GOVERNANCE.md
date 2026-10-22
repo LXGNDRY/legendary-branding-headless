@@ -75,7 +75,7 @@ topology still works.
 ## Release provenance (R23)
 
 - The deploy job builds with `VITE_RELEASE_SHA=${{ github.sha }}`; the same SHA passed `quality` and `e2e`.
-- After deploy, `GET /api/release` on the deployed URL must return `ok:true`, `missing:0` and exactly that SHA,
+- After deploy, `GET /api/release` (answered in `server.ts` before context construction, so it works even when boot validation would fail) on the deployed URL must return `ok:true`, `missing:0` and exactly that SHA,
   or the job fails (it reports presence/count only — never variable names or values).
 - Every deploy uploads `release-evidence-<sha>` (SHA, run, lockfile hash, deploy URL, outcome).
 - A failed verification prints the last healthy deploy SHA. Recovery is a normal revert PR through CI.

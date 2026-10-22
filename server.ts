@@ -9,6 +9,7 @@ import {applyHostRobotsHeader} from '~/lib/robots';
 import {appendPendingSessionCookie, copySetCookies} from '~/lib/response-cookies';
 import {initSentryServer, captureServerError, drainServerReports} from '~/lib/sentry.server';
 import {setServerErrorReporter} from '~/lib/monitoring';
+import {releaseProbe} from '~/lib/release';
 
 // Route captureError() calls made inside loaders and actions through the redacting server reporter.
 // NOTE: no AsyncLocalStorage on Oxygen, so the reporter uses the isolate's latest request for URL and live/preview
@@ -32,6 +33,16 @@ export default {
     try {
       // Sentry — init early so errors during context setup are captured
       initSentryServer(env);
+
+      // NOTE: answered before context construction so a missing variable yields the 503 diagnostic, not a generic 500.
+      const probe = releaseProbe(request, env as unknown as Record<string, unknown>, import.meta.env.VITE_RELEASE_SHA);
+      if (probe) {
+        if (probe.failure) {
+          captureServerError(new Error(probe.failure), {request, waitUntil: ctx.waitUntil.bind(ctx)});
+          ctx.waitUntil(drainServerReports());
+        }
+        return applySecurityHeaders(probe.response, request);
+      }
 
       const appContext = await createAppLoadContext(request, env, ctx);
 

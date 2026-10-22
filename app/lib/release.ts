@@ -30,3 +30,29 @@ export function releaseStatus(
     missingNames,
   };
 }
+
+export const RELEASE_PROBE_PATH = '/api/release';
+
+/**
+ * Answers GET /api/release straight from the raw worker env so it still works when context construction would
+ * throw on a missing variable. Returns null for any other request.
+ */
+export function releaseProbe(
+  request: Request,
+  env: Record<string, unknown>,
+  sha: string | undefined,
+): {response: Response; failure: string | null} | null {
+  if (new URL(request.url).pathname !== RELEASE_PROBE_PATH) return null;
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return {response: new Response(null, {status: 405, headers: {Allow: 'GET, HEAD'}}), failure: null};
+  }
+  const {status, missingNames} = releaseStatus(env, sha);
+  const response = Response.json(status, {
+    status: status.ok ? 200 : 503,
+    headers: {'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex'},
+  });
+  return {
+    response,
+    failure: status.ok ? null : `Release contract incomplete at runtime: ${missingNames.join(', ')}`,
+  };
+}
