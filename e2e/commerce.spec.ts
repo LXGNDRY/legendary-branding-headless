@@ -130,14 +130,17 @@ test.describe('Golden commerce journey', () => {
 
     // Checkout handoff: follow the link as a shopper's browser would (GET only -- no form is submitted, so no order,
     // payment or customer data is created) and require it to load over https without a server error.
-    // NOTE: Shopify may answer automated clients with a bot-protection status; that is recorded as an explicit
-    // annotation instead of being silently treated as a pass.
+    // NOTE: Shopify may answer automated clients with a bot-protection status; that (including a 200 challenge page) is
+    // recorded as an explicit annotation instead of being silently treated as a pass.
     const handoffHref = (await page.getByTestId('cart-checkout').getAttribute('href')) as string;
     const handoff = await page.request.get(new URL(handoffHref, baseURL).toString(), {maxRedirects: 5});
-    if ([403, 429, 430].includes(handoff.status())) {
-      test.info().annotations.push({type: 'checkout-handoff-unverified', description: `bot protection returned ${handoff.status()}`});
+    const handoffBody = await handoff.text();
+    const challenged = [403, 429, 430].includes(handoff.status()) || /verifying your connection|just a moment|captcha/i.test(handoffBody);
+    if (challenged) {
+      test.info().annotations.push({type: 'checkout-handoff-unverified', description: `bot protection (status ${handoff.status()})`});
     } else {
       expect(handoff.status(), 'checkout handoff returned an error status').toBeLessThan(400);
+      expect(handoffBody.length, 'checkout handoff returned an empty page').toBeGreaterThan(0);
       // NOTE: Shopify may redirect to its own checkout hosts, so only the transport is asserted after the redirect.
       expect(new URL(handoff.url()).protocol).toBe('https:');
     }
