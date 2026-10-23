@@ -99,3 +99,35 @@ describe('sitemap.xml', () => {
     expect(article).not.toContain('lastmod');
   });
 });
+
+
+describe('sitemap pagination integrity', () => {
+  const runProducts = async (response: (variables: Record<string, unknown>) => unknown) => {
+    const mock = createMockStorefront({responses: {
+      SitemapPolicies: policies(),
+      SitemapProducts: response,
+      SitemapCollections: {collections: connection('all')},
+      SitemapPages: {pages: connection('lookbook')},
+      SitemapArticles: {blog: {articles: connection('post')}},
+    }});
+    return loader({request: new Request('https://legendary-branding.com/sitemap.xml'), context: mock.createContext(), params: {}} as never);
+  };
+
+  it('follows every cursor and deduplicates overlapping connection nodes', async () => {
+    const response = await runProducts(({after}) => ({products: {
+      nodes: after ? [{handle: 'tee'}, {handle: 'last'}] : [{handle: 'tee'}],
+      pageInfo: {hasNextPage: !after, endCursor: after ? null : 'next'},
+    }}));
+    const body = await response.text();
+    expect(body.match(/<loc>https:\/\/legendary-branding.com\/products\/tee<\/loc>/g)).toHaveLength(1);
+    expect(body).toContain('/products/last</loc>');
+  });
+
+  it.each(['missing', 'repeated', 'limit'])('rejects a %s cursor instead of publishing a partial sitemap', async (kind) => {
+    const result = runProducts(({after}) => ({products: {
+      nodes: [{handle: 'tee'}],
+      pageInfo: {hasNextPage: true, endCursor: kind === 'missing' ? null : kind === 'repeated' ? 'same' : `${Number(after ?? 0) + 1}`},
+    }}));
+    await expect(result).rejects.toMatchObject({status: 503});
+  });
+});

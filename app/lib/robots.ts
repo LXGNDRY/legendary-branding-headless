@@ -47,7 +47,8 @@ export const DISALLOWED_PARAMS = ['sort', 'price_min', 'price_max', 'in_stock', 
 
 /** Oxygen deployment URLs (previews and the raw production URL) must never compete with the live domain. */
 export function isIndexableHost(host: string): boolean {
-  return !host.toLowerCase().endsWith('.myshopify.dev');
+  const hostname = host.toLowerCase().replace(/:\d+$/, '').replace(/\.$/, '');
+  return !hostname.endsWith('.myshopify.dev') && !hostname.endsWith('.shopifypreview.com');
 }
 
 const group = (comment: string, agents: readonly string[], lines: readonly string[]) => [

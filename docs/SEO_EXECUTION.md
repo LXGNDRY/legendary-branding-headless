@@ -10,6 +10,13 @@ Owner scope: execute the technical SEO plan in verified slices to dev; preserve 
 - Local validation: build, typecheck, lint (existing warnings), 823 tests and coverage passed. Statements 81.76%, branches 69.50%, functions 74.91%, lines 83.27%. Node 24.19/npm 10.9.4 install; default npm 11 failed on missing cross-platform optional lock entries. Lockfile unchanged.
 - Browser CI and merge evidence: pending; do not treat local tests as live production verification.
 
+## Slice 2 — discovery integrity (SEO-02)
+
+- Five failing-before tests reproduced preview case/port bypasses, duplicate sitemap nodes and silently incomplete pagination.
+- Sitemap connections now deduplicate handles and fail with a non-cacheable 503 on missing/repeated cursors or the safety limit, rather than publish an apparently complete partial inventory.
+- Shopify preview aliases and case/port-normalized Oxygen hosts retain noindex protections. Local E2E servers retain their existing behavior.
+- Local validation: build, typecheck, lint (existing warnings), 827 tests and coverage passed. Browser CI/merge evidence pending.
+
 ## Remaining packages
 
 SEO-02: pagination completeness and preview aliases. SEO-03: historical redirects. SEO-04: read-only www/checkout verification; no settings writes. SEO-05: resource SEO metadata. SEO-06: pagination identity. SEO-07: localized URL/content policy. SEO-08: indexing/feed access. SEO-09: final combined evidence.
