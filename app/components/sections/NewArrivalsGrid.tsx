@@ -1,4 +1,4 @@
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import ProductCard, {type ProductCardFragment} from '~/components/ui/ProductCard';
 import {useRevealChildren} from '~/hooks/useReveal';
 

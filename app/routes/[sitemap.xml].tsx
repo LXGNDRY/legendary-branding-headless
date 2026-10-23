@@ -1,6 +1,6 @@
 import type {LoaderFunctionArgs} from 'react-router';
 import {CacheLong} from '~/lib/cache';
-import {urlEntry} from '~/lib/sitemap';
+import {localizedUrlEntries} from '~/lib/sitemap';
 import {POLICY_PAGES, ROUTES, SITE_ORIGIN, isPolicyHandle, type PolicyHandle} from '~/lib/site';
 
 const PRODUCTS_QUERY = `#graphql
@@ -59,17 +59,31 @@ const POLICY_PAGE_ALIASES: Record<string, string> = {
 type Node = {handle: string; updatedAt?: string};
 type Connection = {nodes: Node[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
 
+function sitemapUnavailable() {
+  return new Response('Sitemap temporarily unavailable', {
+    status: 503,
+    headers: {'Cache-Control': 'no-store', 'Retry-After': '300'},
+  });
+}
+
 async function paginate(queryPage: (after: string | null) => Promise<Connection | null | undefined>) {
-  const nodes: Node[] = [];
+  const nodes = new Map<string, Node>();
+  const seen = new Set<string>();
   let after: string | null = null;
   for (let page = 0; page < 100; page += 1) {
     const connection = await queryPage(after);
-    if (!connection) break;
-    nodes.push(...connection.nodes);
-    if (!connection.pageInfo.hasNextPage || !connection.pageInfo.endCursor) break;
-    after = connection.pageInfo.endCursor;
+    // NOTE: a missing optional blog is valid only before pagination begins.
+    if (!connection && after === null) return [];
+    if (!connection) throw sitemapUnavailable();
+    for (const node of connection.nodes) nodes.set(node.handle, node);
+    if (!connection.pageInfo.hasNextPage) return [...nodes.values()];
+    const next = connection.pageInfo.endCursor;
+    if (!next || seen.has(next)) throw sitemapUnavailable();
+    seen.add(next);
+    after = next;
   }
-  return nodes;
+  throw sitemapUnavailable();
+
 }
 
 export async function loader({context}: LoaderFunctionArgs) {
@@ -98,21 +112,24 @@ export async function loader({context}: LoaderFunctionArgs) {
   };
   const policyHandles = (Object.keys(POLICY_PAGES) as PolicyHandle[]).filter(usable);
 
+  // SEO-07: every logical page is advertised in all 8 enabled languages with reciprocal
+  // xhtml:link alternates. Each urlset entry fans out into 8 <url> blocks, so a 182-URL
+  // inventory becomes ~1456 entries (well under the 50,000 cap).
   const entries = [
-    urlEntry(origin, '/'),
-    urlEntry(origin, '/collections'),
-    urlEntry(origin, '/journal'),
-    ...collections.map((item) => urlEntry(origin, `/collections/${item.handle}`, item.updatedAt)),
+    localizedUrlEntries(origin, '/'),
+    localizedUrlEntries(origin, '/collections'),
+    localizedUrlEntries(origin, '/journal'),
+    ...collections.map((item) => localizedUrlEntries(origin, `/collections/${item.handle}`, item.updatedAt)),
     // NOTE: no <lastmod> for products -- Shopify bumps Product.updatedAt on every inventory adjustment (each order), which is not a real content change.
-    ...products.map((item) => urlEntry(origin, `/products/${item.handle}`)),
-    ...policyHandles.map((handle) => urlEntry(origin, ROUTES.policy(handle))),
+    ...products.map((item) => localizedUrlEntries(origin, `/products/${item.handle}`)),
+    ...policyHandles.map((handle) => localizedUrlEntries(origin, ROUTES.policy(handle))),
     // NOTE: pages with a policy handle redirect to /policies, so they are not listed twice.
-    ...pages.filter((item) => !isPolicyHandle(item.handle)).map((item) => urlEntry(origin, ROUTES.page(item.handle), item.updatedAt)),
+    ...pages.filter((item) => !isPolicyHandle(item.handle)).map((item) => localizedUrlEntries(origin, ROUTES.page(item.handle), item.updatedAt)),
     // NOTE: no <lastmod> for articles: the Storefront API exposes only publishedAt, which is not a modified date.
-    ...articles.map((item) => urlEntry(origin, ROUTES.article(item.handle))),
+    ...articles.map((item) => localizedUrlEntries(origin, ROUTES.article(item.handle))),
   ];
 
-  return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>`, {
+  return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>`, {
     headers: {'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'},
   });
 }

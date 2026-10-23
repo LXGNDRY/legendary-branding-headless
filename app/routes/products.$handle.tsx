@@ -48,7 +48,7 @@ import {withBudget} from '~/lib/trust';
 import ProductReviewList from '~/components/sections/ProductReviewList';
 import TrustSignals, {useStoreTrust} from '~/components/ui/TrustSignals';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
-import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
+import {ROUTES, canonicalLocaleUrl, withImageTransform} from '~/lib/site';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -68,6 +68,7 @@ type ProductFull = {
   title: string;
   handle: string;
   descriptionHtml: string;
+  seo?: {title?: string | null; description?: string | null};
   tags: string[];
   vendor: string;
   productType: string;
@@ -139,6 +140,7 @@ const PRODUCT_QUERY = `#graphql
       title
       handle
       descriptionHtml
+      seo { title description }
       tags
       vendor
       productType
@@ -220,27 +222,28 @@ const PRODUCT_COMMERCE_QUERY = `#graphql
   }
 ` as const;
 
-export const meta: MetaFunction<typeof loader> = ({data, location}) => {
+export const meta: MetaFunction<typeof loader> = ({data, location, matches}) => {
   const product = data?.product;
-  const description = product?.descriptionHtml
+  const title = product?.seo?.title?.trim() || `${product?.title ?? 'Product'} | LEGENDARY BRANDING`;
+  const description = product?.seo?.description?.trim() || (product?.descriptionHtml
     ? product.descriptionHtml.replace(/<[^>]+>/g, '').slice(0, 155)
-    : `Shop ${product?.title ?? 'this product'} at Legendary Branding.`;
+    : `Shop ${product?.title ?? 'this product'} at Legendary Branding.`);
   const ogImage = product?.images?.nodes?.[0]?.url ?? '';
   const ogSquare = withImageTransform(ogImage, {width: 1200, height: 1200});
   const ogWide = withImageTransform(ogImage, {width: 1200, height: 630});
   // NOTE: from the handle, not the URL path, so a trailing slash or different casing can't create a second canonical.
-  const canonical = canonicalUrl(ROUTES.product(product?.handle ?? location.pathname.replace(/^\/products\//, '').replace(/\/+$/, '')));
+  const canonical = canonicalLocaleUrl(ROUTES.product(product?.handle ?? location.pathname.replace(/^\/products\//, '').replace(/\/+$/, '')), matches);
   return [
-    {title: `${product?.title ?? 'Product'} | LEGENDARY BRANDING`},
+    {title},
     {name: 'description', content: description},
     {tagName: 'link', rel: 'canonical', href: canonical},
     {property: 'og:type', content: 'product'},
-    {property: 'og:title', content: `${product?.title ?? 'Product'} | LEGENDARY BRANDING`},
+    {property: 'og:title', content: title},
     {property: 'og:description', content: description},
     ...(ogSquare ? [{property: 'og:image', content: ogSquare}] : []),
     {property: 'og:url', content: canonical},
     {name: 'twitter:card', content: 'summary_large_image'},
-    {name: 'twitter:title', content: product?.title ?? 'Product'},
+    {name: 'twitter:title', content: title},
     {name: 'twitter:description', content: description},
     ...(ogWide ? [{name: 'twitter:image', content: ogWide}] : []),
   ];

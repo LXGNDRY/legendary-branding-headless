@@ -1,4 +1,6 @@
-import {Link} from 'react-router';
+import LocaleLink from '~/components/ui/LocaleLink';
+// LocaleLink preserves the active URL locale on client-side navigation.
+const Link = LocaleLink;
 
 type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'dark';
 type ButtonSize = 'sm' | 'md' | 'lg';

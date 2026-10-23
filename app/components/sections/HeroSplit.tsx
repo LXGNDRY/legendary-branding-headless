@@ -1,4 +1,4 @@
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {Image} from '@shopify/hydrogen';
 import Button from '~/components/ui/Button';
 import type {ProductCardFragment} from '~/components/ui/ProductCard';

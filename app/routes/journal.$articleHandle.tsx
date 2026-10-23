@@ -1,6 +1,7 @@
 import SafeHtml from '~/components/ui/SafeHtml';
 import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
-import {useLoaderData, Link} from 'react-router';
+import {useLoaderData} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {useLanguage} from '~/lib/i18n';
 import {formatDate} from '~/lib/locale';
 import {Image} from '@shopify/hydrogen';
@@ -8,7 +9,7 @@ import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {articleSchema, breadcrumbSchema} from '~/components/seo/SeoSchema';
-import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
+import {ROUTES, canonicalLocaleUrl, withImageTransform} from '~/lib/site';
 
 type ArticleData = {
   id: string;
@@ -52,12 +53,12 @@ const ARTICLE_QUERY = `#graphql
   }
 ` as const;
 
-export const meta: MetaFunction<typeof loader> = ({data, location}) => {
+export const meta: MetaFunction<typeof loader> = ({data, location, matches}) => {
   const article = data?.article;
   const description = article?.excerpt ?? `${article?.title ?? 'Article'} | Legendary Branding Journal`;
   const ogImage = withImageTransform(article?.image?.url, {width: 1200, height: 630});
   // NOTE: from the handle, not the URL path, so a trailing slash or different casing can't create a second canonical.
-  const canonical = canonicalUrl(ROUTES.article(article?.handle ?? location.pathname.replace(/^\/journal\//, '').replace(/\/+$/, '')));
+  const canonical = canonicalLocaleUrl(ROUTES.article(article?.handle ?? location.pathname.replace(/^\/journal\//, '').replace(/\/+$/, '')), matches);
   return [
     {title: `${article?.title ?? 'Article'} | The Journal | LEGENDARY BRANDING`},
     {name: 'description', content: description},

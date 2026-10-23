@@ -1,4 +1,4 @@
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {useLanguage} from '~/lib/i18n';
 import {formatNumber} from '~/lib/locale';
 import {Image} from '@shopify/hydrogen';

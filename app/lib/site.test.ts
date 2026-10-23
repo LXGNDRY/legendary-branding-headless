@@ -7,12 +7,17 @@ import {
   ROUTES,
   SITE_ORIGIN,
   absoluteUrl,
+  canonicalLocaleUrl,
   canonicalUrl,
   isPolicyHandle,
   withImageTransform,
 } from '~/lib/site';
 
 describe('absoluteUrl / canonicalUrl', () => {
+  it('indexes the non-www Hydrogen storefront independently of the Online Store host', () => {
+    expect(SITE_ORIGIN).toBe('https://legendary-branding.com');
+    expect(canonicalUrl('/products/tee')).toBe('https://legendary-branding.com/products/tee');
+  });
   it('builds canonical URLs on the one origin, without query, fragment or trailing slash', () => {
     expect(canonicalUrl('/')).toBe(`${SITE_ORIGIN}/`);
     expect(canonicalUrl('/products/tee')).toBe(`${SITE_ORIGIN}/products/tee`);
@@ -27,8 +32,12 @@ describe('absoluteUrl / canonicalUrl', () => {
     expect(absoluteUrl(undefined as unknown as string)).toBe(SITE_ORIGIN);
   });
 
-  it('passes a well-formed absolute https URL through without its query', () => {
-    expect(absoluteUrl('https://example.com/x?y=1')).toBe('https://example.com/x');
+  it('normalizes the Online Store alias without accepting an external SEO origin', () => {
+    expect(absoluteUrl('https://www.legendary-branding.com/products/tee?variant=1')).toBe('https://legendary-branding.com/products/tee');
+    expect(absoluteUrl('https://legendary-branding.com/products/tee?variant=1')).toBe('https://legendary-branding.com/products/tee');
+    expect(absoluteUrl('https://example.com/x?y=1')).toBe(SITE_ORIGIN);
+    expect(absoluteUrl('https://legendary-branding.com.evil.test/x')).toBe(SITE_ORIGIN);
+    expect(absoluteUrl('https://legendary-branding.com:8443/x')).toBe(SITE_ORIGIN);
   });
 
   it('exposes named routes', () => {
@@ -106,5 +115,41 @@ describe('source scans', () => {
   it('has a real file behind the fallback logo', () => {
     const path = FALLBACK_LOGO_URL.replace(`${SITE_ORIGIN}/`, '');
     expect(existsSync(join('public', path))).toBe(true);
+  });
+});
+
+describe('canonicalLocaleUrl', () => {
+  const matchesFor = (isoCode: string | null | undefined) => [
+    {id: 'root', data: {localization: {language: {isoCode}}}},
+    {id: 'routes/products.$handle', data: {}},
+  ];
+
+  it('returns the EN canonical when the root loader has no language set', () => {
+    expect(canonicalLocaleUrl('/products/foo', matchesFor(null))).toBe('https://legendary-branding.com/products/foo');
+    expect(canonicalLocaleUrl('/products/foo', [])).toBe('https://legendary-branding.com/products/foo');
+  });
+
+  it('returns the EN canonical when the language is EN', () => {
+    expect(canonicalLocaleUrl('/products/foo', matchesFor('EN'))).toBe('https://legendary-branding.com/products/foo');
+  });
+
+  it('prefixes the canonical with the locale slug for every supported non-default language', () => {
+    expect(canonicalLocaleUrl('/products/foo', matchesFor('DE'))).toBe('https://legendary-branding.com/de/products/foo');
+    expect(canonicalLocaleUrl('/products/foo', matchesFor('FR'))).toBe('https://legendary-branding.com/fr/products/foo');
+    expect(canonicalLocaleUrl('/products/foo', matchesFor('PT_BR'))).toBe('https://legendary-branding.com/pt-br/products/foo');
+  });
+
+  it('maps the home path to /<slug> (no trailing slash) for non-default languages', () => {
+    expect(canonicalLocaleUrl('/', matchesFor('DE'))).toBe('https://legendary-branding.com/de');
+    expect(canonicalLocaleUrl('/', matchesFor('EN'))).toBe('https://legendary-branding.com/');
+  });
+
+  it('ignores an unknown language code and returns the EN canonical', () => {
+    expect(canonicalLocaleUrl('/products/foo', matchesFor('XX'))).toBe('https://legendary-branding.com/products/foo');
+  });
+
+  it('tolerates malformed matches input', () => {
+    expect(canonicalLocaleUrl('/products/foo', null)).toBe('https://legendary-branding.com/products/foo');
+    expect(canonicalLocaleUrl('/products/foo', 'not-an-array')).toBe('https://legendary-branding.com/products/foo');
   });
 });

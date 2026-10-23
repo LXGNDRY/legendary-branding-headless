@@ -48,6 +48,10 @@ export default {
 
       // NOTE: Hydrogen's handler (not react-router's) is required -- it serves
       // the same-origin Storefront API proxy that consent/analytics depend on.
+      // Locale (SEO-07): the URL carries its own locale prefix and routes are
+      // registered under every supported prefix in app/routes.ts, so React
+      // Router matches `/de/products/foo` directly. The context reads the
+      // language from request.url via parseLocalizedPath -- no URL rewrite.
       const handleRequest = createRequestHandler({
         build: build as unknown as ServerBuild,
         mode: import.meta.env.PROD ? 'production' : 'development',

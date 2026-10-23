@@ -57,13 +57,13 @@ describe('faqPageSchema', () => {
 describe('breadcrumbSchema', () => {
   it('resolves a site-relative url to an absolute one -- Google requires BreadcrumbList item to be absolute', () => {
     const schema = breadcrumbSchema([{name: 'Home', url: '/'}, {name: 'Journal', url: '/journal'}]);
-    expect(schema.itemListElement[0].item).toBe('https://www.legendary-branding.com/');
-    expect(schema.itemListElement[1].item).toBe('https://www.legendary-branding.com/journal');
+    expect(schema.itemListElement[0].item).toBe('https://legendary-branding.com/');
+    expect(schema.itemListElement[1].item).toBe('https://legendary-branding.com/journal');
   });
 
-  it('leaves an already-absolute url untouched', () => {
+  it('rejects an external origin in a site breadcrumb', () => {
     const schema = breadcrumbSchema([{name: 'External', url: 'https://example.com/x'}]);
-    expect(schema.itemListElement[0].item).toBe('https://example.com/x');
+    expect(schema.itemListElement[0].item).toBe('https://legendary-branding.com');
   });
 
   it('omits the item field entirely for the final (current-page) breadcrumb with no url', () => {
@@ -80,14 +80,14 @@ describe('collectionPageSchema', () => {
       products: [{name: 'Hoodie', url: '/products/hoodie', image: 'https://cdn.shopify.com/x.jpg'}],
     });
     expect(schema.mainEntity).toMatchObject({
-      itemListElement: [{url: 'https://www.legendary-branding.com/products/hoodie'}],
+      itemListElement: [{url: 'https://legendary-branding.com/products/hoodie'}],
     });
   });
 });
 
 describe('organization and product schema facts', () => {
   it('uses a logo asset that exists when the store has none, never favicon.ico', () => {
-    expect(organizationSchema().logo).toBe('https://www.legendary-branding.com/icon-512.png');
+    expect(organizationSchema().logo).toBe('https://legendary-branding.com/icon-512.png');
     expect(organizationSchema({logoUrl: 'https://cdn.shopify.com/logo.png'}).logo).toBe('https://cdn.shopify.com/logo.png');
   });
 
@@ -111,7 +111,7 @@ describe('organization and product schema facts', () => {
 
   it('builds offer ids and urls from the product route on the live origin', () => {
     const schema = product({}) as {'@id': string; offers: Array<{url: string; '@id': string}>};
-    expect(schema['@id']).toBe('https://www.legendary-branding.com/products/tee#product');
-    expect(schema.offers[0].url).toBe('https://www.legendary-branding.com/products/tee');
+    expect(schema['@id']).toBe('https://legendary-branding.com/products/tee#product');
+    expect(schema.offers[0].url).toBe('https://legendary-branding.com/products/tee');
   });
 });

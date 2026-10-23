@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import type {ActiveDiscount} from '~/lib/discounts';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useBodyScrollLock, isBodyScrollLocked} from '~/hooks/useBodyScrollLock';

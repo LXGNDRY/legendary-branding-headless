@@ -1,7 +1,7 @@
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
 import {cleanSearchText, parsePriceRange} from '~/lib/search-params';
-import {resetPagination} from '~/lib/pagination-params';
+import {resetPagination, normalizePagination, paginationSearch} from '~/lib/pagination-params';
 import {
   type LoaderFunctionArgs,
   type MetaFunction,
@@ -18,7 +18,7 @@ import ProductCard, {
 import {CacheShort} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {collectionPageSchema, breadcrumbSchema} from '~/components/seo/SeoSchema';
-import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
+import {ROUTES, canonicalLocaleUrl, withImageTransform} from '~/lib/site';
 
 const COLLECTION_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
@@ -38,6 +38,7 @@ const COLLECTION_QUERY = `#graphql
       id
       title
       description
+      seo { title description }
       handle
       image {
         url
@@ -107,6 +108,7 @@ interface CollectionData {
   id: string;
   title: string;
   description: string;
+  seo?: {title?: string | null; description?: string | null};
   handle: string;
   image?: {url: string; altText?: string | null; width?: number | null; height?: number | null} | null;
   products: {
@@ -121,15 +123,17 @@ interface CollectionData {
   };
 }
 
-export const meta: MetaFunction<typeof loader> = ({data}) => {
+export const meta: MetaFunction<typeof loader> = ({data, matches}) => {
   const collection = data?.collection;
-  const title = `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
-  const description = collection?.description ?? `Shop ${collection?.title ?? 'this collection'}.`;
-  const canonical = canonicalUrl(ROUTES.collection(collection?.handle ?? 'all'));
+  const title = collection?.seo?.title?.trim() || `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
+  const description = collection?.seo?.description?.trim() || collection?.description || `Shop ${collection?.title ?? 'this collection'}.`;
+  const faceted = Boolean(data?.activeFilters || (data?.sort && data.sort !== 'featured'));
+  const canonical = canonicalLocaleUrl(ROUTES.collection(collection?.handle ?? 'all-products'), matches) + (faceted ? '' : data?.canonicalSearch ?? '');
   const ogImage = withImageTransform(collection?.image?.url, {width: 1200, height: 630});
 
   return [
     {title},
+    ...(faceted ? [{name: 'robots', content: 'noindex, follow'}] : []),
     {name: 'description', content: description},
     {tagName: 'link', rel: 'canonical', href: canonical},
     {property: 'og:type', content: 'product.group'},
@@ -165,25 +169,41 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const sort = url.searchParams.get('sort') ?? 'featured';
   const sortOption = SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0];
-  const paginationVariables = getPaginationVariables(request, {pageBy: 12});
+  normalizePagination(url.searchParams);
+  const paginationVariables = getPaginationVariables(new Request(url, request), {pageBy: 12});
   const filters = buildFilters(url.searchParams);
 
-  const {collection} = await context.storefront.query(COLLECTION_QUERY, {
-    variables: {
-      handle,
-      ...paginationVariables,
-      sortKey: sortOption.sortKey as SortKey,
-      reverse: sortOption.reverse,
-      filters: filters.length > 0 ? filters : undefined,
-      country: context.storefront.i18n.country,
-      language: context.storefront.i18n.language,
-    },
-    cache: CacheShort(),
-  });
+  const variables = {
+    handle,
+    ...paginationVariables,
+    sortKey: sortOption.sortKey as SortKey,
+    reverse: sortOption.reverse,
+    filters: filters.length > 0 ? filters : undefined,
+    country: context.storefront.i18n.country,
+    language: context.storefront.i18n.language,
+  };
+  const {collection} = await context.storefront.query(COLLECTION_QUERY, {variables, cache: CacheShort()});
 
   if (!collection) throw new Response('Collection not found', {status: 404});
 
-  return {collection: collection as CollectionData, sort, activeFilters: filters.length > 0 ? filters : null};
+  let canonicalSearch = '';
+  if (!filters.length && sortOption.value === 'featured' && collection.products.pageInfo.hasPreviousPage) {
+    if (url.searchParams.get('direction') === 'previous') {
+      // NOTE: backward and forward traversal must identify the same product window. The item immediately
+      // before this window is its stable forward boundary; the first page needs no cursor or extra query.
+      if (!collection.products.pageInfo.startCursor) throw new Response('Collection pagination temporarily unavailable', {status: 503});
+      const {collection: previous} = await context.storefront.query(COLLECTION_QUERY, {
+        variables: {...variables, first: undefined, last: 1, endCursor: undefined, startCursor: collection.products.pageInfo.startCursor},
+        cache: CacheShort(),
+      });
+      const boundary = previous?.products.pageInfo.endCursor;
+      if (!boundary) throw new Response('Collection pagination temporarily unavailable', {status: 503});
+      canonicalSearch = paginationSearch(`?${new URLSearchParams({cursor: boundary})}`);
+    } else {
+      canonicalSearch = paginationSearch(url.search);
+    }
+  }
+  return {collection: collection as CollectionData, sort: sortOption.value, activeFilters: filters.length > 0 ? filters : null, canonicalSearch};
 }
 
 function CloseIcon() {

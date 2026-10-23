@@ -4,6 +4,10 @@
 
 Start with [Headless Storefront Recovery Plan](HEADLESS_RECOVERY_PLAN.md) — the execution index with per-slice status (R01–R24), owner-owed items and evidence links. Full findings: [audits/2026-10-22/FINDINGS.md](audits/2026-10-22/FINDINGS.md); closure state per finding: [CLOSURE.md](audits/2026-10-22/CLOSURE.md); every-file register: [FILE_REVIEW.md](audits/2026-10-22/FILE_REVIEW.md). Read `CLAUDE.md` for operating constraints and the owner's latest conversation instructions for scope/authorization.
 
+## Planned technical SEO correction
+
+[Hydrogen technical SEO correction plan](HYDROGEN_TECHNICAL_SEO_PLAN.md) — preserves the owner-approved non-www Hydrogen / www Online Store domain setup. Defines priority packages, official-source cross-references, acceptance tests, release gates and rollback. Execution assigned to Codex in verified dev slices; see [execution evidence and open items](SEO_EXECUTION.md). Production remains unchanged until an authorized main release.
+
 ## Active reference documents
 
 | Document | Covers |

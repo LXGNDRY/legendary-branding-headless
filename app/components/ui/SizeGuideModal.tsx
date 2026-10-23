@@ -1,5 +1,5 @@
 import {Image} from '@shopify/hydrogen';
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
 

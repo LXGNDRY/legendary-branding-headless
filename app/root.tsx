@@ -12,7 +12,7 @@ import {
   useRouteLoaderData,
   Await,
 } from 'react-router';
-import {languageTag} from '~/lib/locale';
+import {languageTag, localeAlternates, parseLocalizedPath, toSupportedLanguage, languageHtmlTag} from '~/lib/locale';
 import {useState, useEffect, Suspense} from 'react';
 import {type LinksFunction, type MetaFunction, type LoaderFunctionArgs} from 'react-router';
 import styles from '~/styles/app.css?url';
@@ -314,8 +314,18 @@ export async function loader({context, request}: LoaderFunctionArgs) {
 export function Layout({children}: {children: React.ReactNode}) {
   // NOTE: the root loader data is absent when the loader itself failed, so fall back to English.
   const rootData = useRouteLoaderData<typeof loader>('root');
+  const location = useLocation();
+  // The browser URL still carries the locale prefix (/de/products/foo) even though the server
+  // routed on the stripped path, so hreflang reads directly from location.pathname.
+  const urlLocale = parseLocalizedPath(location?.pathname ?? '/');
+  const sessionLanguage = toSupportedLanguage(rootData?.localization?.language?.isoCode);
+  const activeLanguage = urlLocale.language !== 'EN' ? urlLocale.language : (sessionLanguage ?? 'EN');
+  const htmlLang = urlLocale.language !== 'EN'
+    ? languageHtmlTag(urlLocale.language)
+    : languageTag(rootData?.localization?.language?.isoCode);
+  const alternates = localeAlternates(urlLocale.path);
   return (
-    <html lang={languageTag(rootData?.localization?.language?.isoCode)}>
+    <html lang={htmlLang}>
       <head>
         <meta charSet="utf-8" />
         {/* Hardcoded here rather than in the `meta` export below: React
@@ -328,10 +338,22 @@ export function Layout({children}: {children: React.ReactNode}) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="dark" />
         <meta name="theme-color" content="#0A0A0A" />
+        {/* SEO-07: hreflang alternates for every supported locale plus x-default.
+            Emitted here (not in route meta) so every indexable page carries the
+            full reciprocal set without each route rebuilding it. */}
+        {alternates.map((alt) => (
+          <link
+            key={alt.language}
+            rel="alternate"
+            hrefLang={alt.htmlLang}
+            href={`${SITE_ORIGIN}${alt.path}`}
+          />
+        ))}
+        <link rel="alternate" hrefLang="x-default" href={`${SITE_ORIGIN}${urlLocale.path}`} />
         <Meta />
         <Links />
       </head>
-      <body>
+      <body data-active-locale={activeLanguage}>
         {children}
         <ScrollRestoration />
         <Scripts />

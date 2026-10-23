@@ -32,7 +32,7 @@ function run(country: string, language: string, options: {pages?: string[]; poli
   });
   mock.storefront.i18n = {country, language} as typeof mock.storefront.i18n;
   // @ts-expect-error - minimal Hydrogen app context
-  return loader({request: new Request(options.requestUrl ?? 'https://www.legendary-branding.com/sitemap.xml'), context: mock.createContext(), params: {}}).then(async (res: Response) => ({
+  return loader({request: new Request(options.requestUrl ?? 'https://legendary-branding.com/sitemap.xml'), context: mock.createContext(), params: {}}).then(async (res: Response) => ({
     res,
     body: await res.text(),
     calls: mock.getCalls(),
@@ -59,11 +59,27 @@ describe('sitemap.xml', () => {
     expect(body).toContain('/journal/post');
   });
 
+  it('advertises every path in all 8 enabled locales with reciprocal hreflang alternates (SEO-07)', async () => {
+    const {body} = await run('US', 'EN');
+    expect(body).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
+    // EN at root, each other at its slug
+    for (const slug of ['', '/de', '/es', '/fr', '/hi', '/id', '/it', '/pt-br']) {
+      expect(body).toContain(`<loc>https://legendary-branding.com${slug}/products/tee</loc>`);
+    }
+    // Each block declares a full alternate set + x-default pointing to EN
+    const product = body.match(/<loc>https:\/\/legendary-branding\.com\/pt-br\/products\/tee<\/loc>[\s\S]*?<\/url>/)?.[0] ?? '';
+    expect(product).toContain('hreflang="en"');
+    expect(product).toContain('hreflang="de"');
+    expect(product).toContain('hreflang="pt-BR"');
+    expect(product).toContain('hreflang="x-default"');
+    expect(product).toContain('hreflang="x-default" href="https://legendary-branding.com/products/tee"');
+  });
+
   it('always uses the canonical public origin, whatever host served the request', async () => {
     const {body} = await run('US', 'EN', {requestUrl: 'https://legendary-abc.o2.myshopify.dev/sitemap.xml'});
     const locs = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
     expect(locs.length).toBeGreaterThan(5);
-    expect(locs.every((loc) => loc.startsWith('https://www.legendary-branding.com/') || loc === 'https://www.legendary-branding.com')).toBe(true);
+    expect(locs.every((loc) => loc.startsWith('https://legendary-branding.com/') || loc === 'https://legendary-branding.com')).toBe(true);
   });
 
   it('lists only policy URLs the route would serve: a built-in policy body or a Page body, plus contact', async () => {
@@ -97,5 +113,37 @@ describe('sitemap.xml', () => {
     const article = body.match(/<url>\s*<loc>[^<]*\/journal\/post<\/loc>[\s\S]*?<\/url>/)?.[0] ?? '';
     expect(article).toContain('/journal/post');
     expect(article).not.toContain('lastmod');
+  });
+});
+
+
+describe('sitemap pagination integrity', () => {
+  const runProducts = async (response: (variables: Record<string, unknown>) => unknown) => {
+    const mock = createMockStorefront({responses: {
+      SitemapPolicies: policies(),
+      SitemapProducts: response,
+      SitemapCollections: {collections: connection('all')},
+      SitemapPages: {pages: connection('lookbook')},
+      SitemapArticles: {blog: {articles: connection('post')}},
+    }});
+    return loader({request: new Request('https://legendary-branding.com/sitemap.xml'), context: mock.createContext(), params: {}} as never);
+  };
+
+  it('follows every cursor and deduplicates overlapping connection nodes', async () => {
+    const response = await runProducts(({after}) => ({products: {
+      nodes: after ? [{handle: 'tee'}, {handle: 'last'}] : [{handle: 'tee'}],
+      pageInfo: {hasNextPage: !after, endCursor: after ? null : 'next'},
+    }}));
+    const body = await response.text();
+    expect(body.match(/<loc>https:\/\/legendary-branding.com\/products\/tee<\/loc>/g)).toHaveLength(1);
+    expect(body).toContain('/products/last</loc>');
+  });
+
+  it.each(['missing', 'repeated', 'limit'])('rejects a %s cursor instead of publishing a partial sitemap', async (kind) => {
+    const result = runProducts(({after}) => ({products: {
+      nodes: [{handle: 'tee'}],
+      pageInfo: {hasNextPage: true, endCursor: kind === 'missing' ? null : kind === 'repeated' ? 'same' : `${Number(after ?? 0) + 1}`},
+    }}));
+    await expect(result).rejects.toMatchObject({status: 503});
   });
 });

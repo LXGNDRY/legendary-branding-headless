@@ -2,6 +2,7 @@
  * Private routes (customer account, cart) carry per-visitor data. Every response from them, errors and
  * redirects included, must be uncacheable and unindexable; this is the one place that contract lives.
  */
+import {parseLocalizedPath} from './locale';
 
 const PRIVATE_PREFIXES = ['/account', '/cart'];
 
@@ -16,7 +17,11 @@ function normalize(pathname: string): string {
 export function isPrivatePath(pathname: string): boolean {
   const path = normalize(pathname);
   if (pathname.endsWith('.data') && path === '/_root') return true;
-  return PRIVATE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+  // SEO-07: routes are mirrored under every locale slug, so `/de/cart`, `/pt-br/account/x`
+  // and their `.data` variants carry the same private payload as the unprefixed path and
+  // must receive the same `private, no-store` + `X-Robots-Tag: noindex, nofollow` treatment.
+  const {path: bare} = parseLocalizedPath(path);
+  return PRIVATE_PREFIXES.some((prefix) => bare === prefix || bare.startsWith(`${prefix}/`));
 }
 
 /** Route `meta` entry for private pages. Child routes replace the parent's meta, so each one includes it. */

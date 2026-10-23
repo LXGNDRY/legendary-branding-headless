@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
-import {Link, useFetcher} from 'react-router';
+import {useFetcher} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import Button from '~/components/ui/Button';
 import {AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import type {CartData, CartLineData, CartDiscountAllocation} from '~/lib/cart';

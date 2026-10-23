@@ -1,5 +1,7 @@
 import {useCallback, useState} from 'react';
-import {Link} from 'react-router';
+import LocaleLink from '~/components/ui/LocaleLink';
+// LocaleLink preserves the active URL locale on client-side navigation.
+const Link = LocaleLink;
 import {Image, Money} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import Badge from '~/components/ui/Badge';

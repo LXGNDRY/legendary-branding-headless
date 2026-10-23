@@ -37,6 +37,10 @@ export const AI_TRAINING_CRAWLERS = ['GPTBot', 'ClaudeBot', 'meta-externalagent'
  */
 export const DISALLOWED_PATHS = ['/account', '/cart', '/checkout', '/wishlist', '/search', '/api/'] as const;
 
+/** Locale subfolder slugs for every non-default Shopify language (SEO-07). Kept here so the robots rules
+ *  below can disallow `/de/account`, `/pt-br/cart`, etc. without pulling in the full locale lib. */
+export const LOCALE_PATH_PREFIXES = ['/de', '/es', '/fr', '/hi', '/id', '/it', '/pt-br'] as const;
+
 /**
  * Collection filter/sort parameters. Each combination is a new crawlable URL
  * with the same canonical, so they are blocked to save crawl budget. UTM,
@@ -47,7 +51,8 @@ export const DISALLOWED_PARAMS = ['sort', 'price_min', 'price_max', 'in_stock', 
 
 /** Oxygen deployment URLs (previews and the raw production URL) must never compete with the live domain. */
 export function isIndexableHost(host: string): boolean {
-  return !host.toLowerCase().endsWith('.myshopify.dev');
+  const hostname = host.toLowerCase().replace(/:\d+$/, '').replace(/\.$/, '');
+  return !hostname.endsWith('.myshopify.dev') && !hostname.endsWith('.shopifypreview.com');
 }
 
 const group = (comment: string, agents: readonly string[], lines: readonly string[]) => [
@@ -68,7 +73,16 @@ export function buildRobotsTxt({
 }): string {
   if (!indexable) return 'User-agent: *\nDisallow: /\n';
 
-  const rules = [...DISALLOWED_PATHS.map((path) => `Disallow: ${path}`), ...DISALLOWED_PARAMS.map((param) => `Disallow: /*?*${param}=`)];
+  // Also disallow the localized mirror of each private/thin path (`/de/account`, `/pt-br/cart`, ...)
+  // so crawlers don't waste budget on duplicate URLs for pages that must stay out of the index.
+  const localizedPathRules = LOCALE_PATH_PREFIXES.flatMap((prefix) =>
+    DISALLOWED_PATHS.map((path) => `Disallow: ${prefix}${path}`),
+  );
+  const rules = [
+    ...DISALLOWED_PATHS.map((path) => `Disallow: ${path}`),
+    ...localizedPathRules,
+    ...DISALLOWED_PARAMS.map((param) => `Disallow: /*?*${param}=`),
+  ];
   // NOTE: a named group REPLACES the wildcard group for that crawler, so each one repeats every rule.
   const open = ['Allow: /', ...rules];
 
