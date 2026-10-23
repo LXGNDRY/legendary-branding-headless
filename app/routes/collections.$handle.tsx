@@ -1,7 +1,7 @@
 import {useFocusTrap} from '~/hooks/useFocusTrap';
 import {useBodyScrollLock} from '~/hooks/useBodyScrollLock';
 import {cleanSearchText, parsePriceRange} from '~/lib/search-params';
-import {resetPagination} from '~/lib/pagination-params';
+import {resetPagination, normalizePagination, paginationSearch} from '~/lib/pagination-params';
 import {
   type LoaderFunctionArgs,
   type MetaFunction,
@@ -38,6 +38,7 @@ const COLLECTION_QUERY = `#graphql
       id
       title
       description
+      seo { title description }
       handle
       image {
         url
@@ -107,6 +108,7 @@ interface CollectionData {
   id: string;
   title: string;
   description: string;
+  seo?: {title?: string | null; description?: string | null};
   handle: string;
   image?: {url: string; altText?: string | null; width?: number | null; height?: number | null} | null;
   products: {
@@ -121,15 +123,17 @@ interface CollectionData {
   };
 }
 
-export const meta: MetaFunction<typeof loader> = ({data}) => {
+export const meta: MetaFunction<typeof loader> = ({data, location}) => {
   const collection = data?.collection;
-  const title = `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
-  const description = collection?.description ?? `Shop ${collection?.title ?? 'this collection'}.`;
-  const canonical = canonicalUrl(ROUTES.collection(collection?.handle ?? 'all'));
+  const title = collection?.seo?.title?.trim() || `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
+  const description = collection?.seo?.description?.trim() || collection?.description || `Shop ${collection?.title ?? 'this collection'}.`;
+  const faceted = Boolean(data?.activeFilters || (data?.sort && data.sort !== 'featured'));
+  const canonical = canonicalUrl(ROUTES.collection(collection?.handle ?? 'all-products')) + (faceted ? '' : paginationSearch(location.search));
   const ogImage = withImageTransform(collection?.image?.url, {width: 1200, height: 630});
 
   return [
     {title},
+    ...(faceted ? [{name: 'robots', content: 'noindex, follow'}] : []),
     {name: 'description', content: description},
     {tagName: 'link', rel: 'canonical', href: canonical},
     {property: 'og:type', content: 'product.group'},
@@ -165,7 +169,8 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const sort = url.searchParams.get('sort') ?? 'featured';
   const sortOption = SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0];
-  const paginationVariables = getPaginationVariables(request, {pageBy: 12});
+  normalizePagination(url.searchParams);
+  const paginationVariables = getPaginationVariables(new Request(url, request), {pageBy: 12});
   const filters = buildFilters(url.searchParams);
 
   const {collection} = await context.storefront.query(COLLECTION_QUERY, {
@@ -183,7 +188,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
 
   if (!collection) throw new Response('Collection not found', {status: 404});
 
-  return {collection: collection as CollectionData, sort, activeFilters: filters.length > 0 ? filters : null};
+  return {collection: collection as CollectionData, sort: sortOption.value, activeFilters: filters.length > 0 ? filters : null};
 }
 
 function CloseIcon() {

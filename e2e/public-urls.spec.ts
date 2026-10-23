@@ -62,3 +62,16 @@ test('historic blog links redirect permanently to existing journal content', asy
   expect(legacy.headers()['location']).toBe(`${LIVE_ORIGIN}${articlePath}`);
   expect((await request.get(articlePath!)).status()).toBe(200);
 });
+
+
+test('a later collection page retains its cursor in the canonical', async ({page}) => {
+  await page.goto('/collections/all-products', {waitUntil: 'domcontentloaded'});
+  const href = await page.locator('a[href*="cursor="]').evaluateAll((links) => links.map((a) => a.getAttribute('href')).find((href) => href?.includes('direction=next')));
+  expect(href).toBeTruthy();
+  await page.goto(href!, {waitUntil: 'domcontentloaded'});
+  const url = new URL(page.url());
+  const expected = new URL(`${LIVE_ORIGIN}/collections/all-products`);
+  expected.searchParams.set('cursor', url.searchParams.get('cursor')!);
+  expected.searchParams.set('direction', 'next');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', expected.toString());
+});

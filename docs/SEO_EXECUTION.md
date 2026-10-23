@@ -15,7 +15,7 @@ Owner scope: execute the technical SEO plan in verified slices to dev; preserve 
 - Five failing-before tests reproduced preview case/port bypasses, duplicate sitemap nodes and silently incomplete pagination.
 - Sitemap connections now deduplicate handles and fail with a non-cacheable 503 on missing/repeated cursors or the safety limit, rather than publish an apparently complete partial inventory.
 - Shopify preview aliases and case/port-normalized Oxygen hosts retain noindex protections. Local E2E servers retain their existing behavior.
-- Local validation: build, typecheck, lint (existing warnings), 827 tests and coverage passed. Browser CI/merge evidence pending.
+- Local validation: build, typecheck, lint (existing warnings), 827 tests and coverage passed. PR #404: quality/governance and all four browser projects passed; merged to dev at 282307a5e938a19615f1000a0c6d540bba84947d.
 
 ## Slice 3 — verified historic blog redirects (SEO-03)
 
@@ -23,7 +23,15 @@ Owner scope: execute the technical SEO plan in verified slices to dev; preserve 
 - The existing catch-all now recognizes only the known default-language blog paths, verifies article existence through the existing journal loader/query, and redirects 301 to the actual non-www resource. Missing articles, unknown blogs, malformed paths and unresolved localized paths remain 404 for Shopify's existing redirect fallback.
 - Safe attribution parameters survive; redirect/auth parameters are not forwarded. No GraphQL selections or merchant redirects are changed.
 - Localized mappings remain open: do not silently drop a language prefix and claim equivalent content. This slice adds no language URL architecture.
-- Local validation: build/typecheck/lint passed; all 835 tests and measured coverage passed. Browser CI pending.
+- Local validation: build/typecheck/lint passed; all 835 tests and measured coverage passed. PR #405: quality/governance and all four browser projects passed; merged to dev after verification.
+
+## Slice 4 — merchant metadata and pagination (SEO-05/06)
+
+- Three failing-before metadata tests reproduced ignored merchant SEO fields and the loss of collection pagination identity.
+- Product/collection GraphQL queries now select SEO title/description; generated types regenerated successfully with the installed schema. Blank overrides fall back to actual content.
+- Canonical collection pagination keeps only a valid cursor/direction pair. The loader uses the same normalization, so direction without a cursor cannot silently fetch the final page. Filter/sort views remain non-indexable duplicates instead of claiming an unfiltered paginated identity.
+- Browser regression loads a real next collection page and checks its canonical. React checklist: route metadata/server loading only; no new hooks, UI state, client dependencies or interaction changes.
+- Local validation: codegen/build/typecheck/lint and 845 tests with coverage passed; final browser CI pending.
 
 ## Remaining packages
 
