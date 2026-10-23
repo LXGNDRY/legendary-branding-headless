@@ -3,6 +3,7 @@
   "checkout_host": "www.legendary-branding.com",
   "http_status": 200,
   "final_host": "www.legendary-branding.com",
-  "redirect_theme": true,
-  "test_cart_cleared": true
+  "test_cart_cleared": true,
+  "contains_location_replace_script": true,
+  "note": "A generic location.replace occurrence does not identify the redirect theme or prove checkout browser behavior."
 }

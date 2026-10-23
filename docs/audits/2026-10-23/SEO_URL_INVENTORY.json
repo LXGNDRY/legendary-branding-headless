@@ -1,0 +1,1470 @@
+{
+  "date": "2026-10-23",
+  "scope": "Full current published sitemap on production before SEO promotion; checked equivalent non-www paths, not a dev verification",
+  "total": 182,
+  "checked": 182,
+  "status_counts": {
+    "200": 182
+  },
+  "request_errors": 0,
+  "rows": [
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/"
+      ],
+      "noindex": false,
+      "path": "/"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/collections"
+      ],
+      "noindex": false,
+      "path": "/collections"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/collections/accessories-more"
+      ],
+      "noindex": false,
+      "path": "/collections/accessories-more"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/collections/all-products"
+      ],
+      "noindex": false,
+      "path": "/collections/all-products"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/collections/halloween-26"
+      ],
+      "noindex": false,
+      "path": "/collections/halloween-26"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/collections/hoodies-jackets"
+      ],
+      "noindex": false,
+      "path": "/collections/hoodies-jackets"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/collections/marque-legendaire-luxury-streetwear"
+      ],
+      "noindex": false,
+      "path": "/collections/marque-legendaire-luxury-streetwear"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/collections/shirts-tops"
+      ],
+      "noindex": false,
+      "path": "/collections/shirts-tops"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal"
+      ],
+      "noindex": false,
+      "path": "/journal"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/280gsm-vs-460gsm-fleece-the-complete-hoodie-weight-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/280gsm-vs-460gsm-fleece-the-complete-hoodie-weight-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/5-outfit-ideas-built-around-premium-streetwear-basics"
+      ],
+      "noindex": false,
+      "path": "/journal/5-outfit-ideas-built-around-premium-streetwear-basics"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/best-fabrics-for-streetwear-in-cold-weather-2026-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/best-fabrics-for-streetwear-in-cold-weather-2026-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/best-heavyweight-hoodies-for-men-in-2025-premium-picks"
+      ],
+      "noindex": false,
+      "path": "/journal/best-heavyweight-hoodies-for-men-in-2025-premium-picks"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/best-heavyweight-hoodies-for-women-in-2025"
+      ],
+      "noindex": false,
+      "path": "/journal/best-heavyweight-hoodies-for-women-in-2025"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/best-neutral-streetwear-pieces-for-a-versatile-wardrobe"
+      ],
+      "noindex": false,
+      "path": "/journal/best-neutral-streetwear-pieces-for-a-versatile-wardrobe"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/best-oversized-hoodies-for-streetwear-outfits-2025"
+      ],
+      "noindex": false,
+      "path": "/journal/best-oversized-hoodies-for-streetwear-outfits-2025"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/best-premium-hoodie-guide-what-to-look-for-in-2026"
+      ],
+      "noindex": false,
+      "path": "/journal/best-premium-hoodie-guide-what-to-look-for-in-2026"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/best-streetwear-colors-your-complete-color-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/best-streetwear-colors-your-complete-color-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/best-streetwear-outfits-for-fall-2025-complete-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/best-streetwear-outfits-for-fall-2025-complete-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/build-a-minimalist-streetwear-wardrobe-with-just-5-pieces"
+      ],
+      "noindex": false,
+      "path": "/journal/build-a-minimalist-streetwear-wardrobe-with-just-5-pieces"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/buy-premium-streetwear-online-without-the-markup"
+      ],
+      "noindex": false,
+      "path": "/journal/buy-premium-streetwear-online-without-the-markup"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/crewneck-vs-hoodie-the-ultimate-streetwear-breakdown"
+      ],
+      "noindex": false,
+      "path": "/journal/crewneck-vs-hoodie-the-ultimate-streetwear-breakdown"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/drop-shoulder-vs-regular-fit-hoodies-your-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/drop-shoulder-vs-regular-fit-hoodies-your-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/durable-streetwear-hoodies-why-quality-outlasts-trends"
+      ],
+      "noindex": false,
+      "path": "/journal/durable-streetwear-hoodies-why-quality-outlasts-trends"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/french-terry-vs-fleece-hoodie-the-complete-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/french-terry-vs-fleece-hoodie-the-complete-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/heavyweight-joggers-the-underrated-streetwear-staple"
+      ],
+      "noindex": false,
+      "path": "/journal/heavyweight-joggers-the-underrated-streetwear-staple"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/high-low-streetwear-the-art-of-mixing-luxury-and-budget"
+      ],
+      "noindex": false,
+      "path": "/journal/high-low-streetwear-the-art-of-mixing-luxury-and-budget"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/history-of-streetwear-from-skate-culture-to-luxury"
+      ],
+      "noindex": false,
+      "path": "/journal/history-of-streetwear-from-skate-culture-to-luxury"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/hoodie-care-label-guide-read-labels-like-a-fabric-expert"
+      ],
+      "noindex": false,
+      "path": "/journal/hoodie-care-label-guide-read-labels-like-a-fabric-expert"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-chicago-winters-shaped-heavyweight-streetwear-standards"
+      ],
+      "noindex": false,
+      "path": "/journal/how-chicago-winters-shaped-heavyweight-streetwear-standards"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-chicagos-architecture-shaped-modern-streetwear-silhouettes"
+      ],
+      "noindex": false,
+      "path": "/journal/how-chicagos-architecture-shaped-modern-streetwear-silhouettes"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-hip-hop-shaped-streetwear-as-we-know-it"
+      ],
+      "noindex": false,
+      "path": "/journal/how-hip-hop-shaped-streetwear-as-we-know-it"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-independent-streetwear-brands-compete-with-nike"
+      ],
+      "noindex": false,
+      "path": "/journal/how-independent-streetwear-brands-compete-with-nike"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-long-does-a-hoodie-last-the-truth-about-quality"
+      ],
+      "noindex": false,
+      "path": "/journal/how-long-does-a-hoodie-last-the-truth-about-quality"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-often-should-you-buy-new-streetwear-pieces"
+      ],
+      "noindex": false,
+      "path": "/journal/how-often-should-you-buy-new-streetwear-pieces"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-premium-streetwear-is-made-cotton-to-finished-garment"
+      ],
+      "noindex": false,
+      "path": "/journal/how-premium-streetwear-is-made-cotton-to-finished-garment"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-social-media-changed-streetwear-forever"
+      ],
+      "noindex": false,
+      "path": "/journal/how-social-media-changed-streetwear-forever"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-streetwear-went-mainstream-without-losing-its-soul"
+      ],
+      "noindex": false,
+      "path": "/journal/how-streetwear-went-mainstream-without-losing-its-soul"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-break-in-a-new-hoodie-without-ruining-it"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-break-in-a-new-hoodie-without-ruining-it"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-build-streetwear-brand-loyalty-a-real-ones-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-build-streetwear-brand-loyalty-a-real-ones-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-dress-up-streetwear-for-a-night-out"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-dress-up-streetwear-for-a-night-out"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-find-your-perfect-streetwear-aesthetic"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-find-your-perfect-streetwear-aesthetic"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-know-if-a-streetwear-brand-is-legit"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-know-if-a-streetwear-brand-is-legit"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-read-a-garment-tag-like-a-streetwear-pro"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-read-a-garment-tag-like-a-streetwear-pro"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-spot-quality-streetwear-fabric-construction-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-spot-quality-streetwear-fabric-construction-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-style-an-oversized-hoodie-like-a-pro"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-style-an-oversized-hoodie-like-a-pro"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-style-oversized-joggers-for-a-clean-streetwear-look"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-style-oversized-joggers-for-a-clean-streetwear-look"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-tell-if-a-streetwear-brand-actually-cares-about-quality"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-tell-if-a-streetwear-brand-actually-cares-about-quality"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-wash-a-heavyweight-hoodie-without-ruining-it"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-wash-a-heavyweight-hoodie-without-ruining-it"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/how-to-wear-a-heavyweight-crewneck-5-looks-to-try"
+      ],
+      "noindex": false,
+      "path": "/journal/how-to-wear-a-heavyweight-crewneck-5-looks-to-try"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/limited-drop-streetwear-why-exclusivity-rules-culture"
+      ],
+      "noindex": false,
+      "path": "/journal/limited-drop-streetwear-why-exclusivity-rules-culture"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/made-in-usa-streetwear-why-brands-are-coming-home"
+      ],
+      "noindex": false,
+      "path": "/journal/made-in-usa-streetwear-why-brands-are-coming-home"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/monochrome-streetwear-build-a-tonal-outfit-head-to-toe"
+      ],
+      "noindex": false,
+      "path": "/journal/monochrome-streetwear-build-a-tonal-outfit-head-to-toe"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/premium-streetwear-value-why-quality-costs-less-per-wear"
+      ],
+      "noindex": false,
+      "path": "/journal/premium-streetwear-value-why-quality-costs-less-per-wear"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/preshrunk-vs-unshrunk-cotton-streetwear-fit-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/preshrunk-vs-unshrunk-cotton-streetwear-fit-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/quality-over-hype-streetwear-the-movement-that-matters"
+      ],
+      "noindex": false,
+      "path": "/journal/quality-over-hype-streetwear-the-movement-that-matters"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/smart-casual-streetwear-how-to-dress-for-work"
+      ],
+      "noindex": false,
+      "path": "/journal/smart-casual-streetwear-how-to-dress-for-work"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-capsule-wardrobe-15-essential-pieces-you-need-16"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-capsule-wardrobe-15-essential-pieces-you-need-16"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-fit-guide-oversized-vs-regular-fit-decoded"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-fit-guide-oversized-vs-regular-fit-decoded"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-for-every-body-type-a-practical-style-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-for-every-body-type-a-practical-style-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-gift-guide-what-to-buy-for-hype-heads"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-gift-guide-what-to-buy-for-hype-heads"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-history-2010s-the-most-iconic-moments"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-history-2010s-the-most-iconic-moments"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-on-a-budget-build-a-premium-wardrobe"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-on-a-budget-build-a-premium-wardrobe"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-outfit-formulas-that-never-go-out-of-style"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-outfit-formulas-that-never-go-out-of-style"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-sizing-guide-japanese-american-european-fits"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-sizing-guide-japanese-american-european-fits"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-vs-athleisure-where-the-lines-blur"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-vs-athleisure-where-the-lines-blur"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-vs-techwear-what-actually-sets-them-apart"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-vs-techwear-what-actually-sets-them-apart"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/streetwear-winter-layering-stay-warm-without-losing-style"
+      ],
+      "noindex": false,
+      "path": "/journal/streetwear-winter-layering-stay-warm-without-losing-style"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/summer-streetwear-staying-fresh-when-it-heats-up"
+      ],
+      "noindex": false,
+      "path": "/journal/summer-streetwear-staying-fresh-when-it-heats-up"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/the-anatomy-of-a-quality-streetwear-piece"
+      ],
+      "noindex": false,
+      "path": "/journal/the-anatomy-of-a-quality-streetwear-piece"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/the-rise-of-independent-streetwear-brands-in-the-2020s"
+      ],
+      "noindex": false,
+      "path": "/journal/the-rise-of-independent-streetwear-brands-in-the-2020s"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/the-ultimate-guide-to-streetwear-color-palettes"
+      ],
+      "noindex": false,
+      "path": "/journal/the-ultimate-guide-to-streetwear-color-palettes"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/top-10-streetwear-brands-for-quality-you-can-trust"
+      ],
+      "noindex": false,
+      "path": "/journal/top-10-streetwear-brands-for-quality-you-can-trust"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/what-does-400gsm-mean-on-a-hoodie-tag-fabric-weight-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/what-does-400gsm-mean-on-a-hoodie-tag-fabric-weight-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/what-is-drop-shoulder-the-streetwear-silhouette-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/what-is-drop-shoulder-the-streetwear-silhouette-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/what-is-generative-engine-optimization-for-fashion-brands"
+      ],
+      "noindex": false,
+      "path": "/journal/what-is-generative-engine-optimization-for-fashion-brands"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/what-is-gsm-in-clothing-the-complete-fabric-weight-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/what-is-gsm-in-clothing-the-complete-fabric-weight-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/what-makes-a-460gsm-hoodie-worth-every-penny"
+      ],
+      "noindex": false,
+      "path": "/journal/what-makes-a-460gsm-hoodie-worth-every-penny"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/what-makes-streetwear-premium-a-buyers-quality-guide"
+      ],
+      "noindex": false,
+      "path": "/journal/what-makes-streetwear-premium-a-buyers-quality-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/what-to-look-for-in-a-streetwear-brands-about-page"
+      ],
+      "noindex": false,
+      "path": "/journal/what-to-look-for-in-a-streetwear-brands-about-page"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-authenticity-is-everything-in-streetwear-culture"
+      ],
+      "noindex": false,
+      "path": "/journal/why-authenticity-is-everything-in-streetwear-culture"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-black-hoodies-are-a-streetwear-staple-worth-investing-in"
+      ],
+      "noindex": false,
+      "path": "/journal/why-black-hoodies-are-a-streetwear-staple-worth-investing-in"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-chicago-is-a-hub-for-authentic-streetwear-culture"
+      ],
+      "noindex": false,
+      "path": "/journal/why-chicago-is-a-hub-for-authentic-streetwear-culture"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-chicago-the-midwest-are-the-new-streetwear-capitals"
+      ],
+      "noindex": false,
+      "path": "/journal/why-chicago-the-midwest-are-the-new-streetwear-capitals"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-chicago-weather-demands-better-fabric"
+      ],
+      "noindex": false,
+      "path": "/journal/why-chicago-weather-demands-better-fabric"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-gsm-matters-your-guide-to-streetwear-fabric-weight"
+      ],
+      "noindex": false,
+      "path": "/journal/why-gsm-matters-your-guide-to-streetwear-fabric-weight"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-heavyweight-cotton-dominates-streetwear-in-2025"
+      ],
+      "noindex": false,
+      "path": "/journal/why-heavyweight-cotton-dominates-streetwear-in-2025"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-heavyweight-cotton-holds-dye-better-than-blends"
+      ],
+      "noindex": false,
+      "path": "/journal/why-heavyweight-cotton-holds-dye-better-than-blends"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-heavyweight-hoodies-hit-different-in-chicago-winters"
+      ],
+      "noindex": false,
+      "path": "/journal/why-heavyweight-hoodies-hit-different-in-chicago-winters"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-heavyweight-hoodies-shrink-less-than-regular-hoodies"
+      ],
+      "noindex": false,
+      "path": "/journal/why-heavyweight-hoodies-shrink-less-than-regular-hoodies"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-is-streetwear-so-expensive-the-real-answer"
+      ],
+      "noindex": false,
+      "path": "/journal/why-is-streetwear-so-expensive-the-real-answer"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-people-love-streetwear-the-psychology-explained"
+      ],
+      "noindex": false,
+      "path": "/journal/why-people-love-streetwear-the-psychology-explained"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-your-favorite-streetwear-piece-fits-different-after-a-year"
+      ],
+      "noindex": false,
+      "path": "/journal/why-your-favorite-streetwear-piece-fits-different-after-a-year"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-your-hoodie-feels-different-after-10-washes"
+      ],
+      "noindex": false,
+      "path": "/journal/why-your-hoodie-feels-different-after-10-washes"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal/why-your-hoodie-shrinks-how-to-stop-it-forever"
+      ],
+      "noindex": false,
+      "path": "/journal/why-your-hoodie-shrinks-how-to-stop-it-forever"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/pages/data-sharing-opt-out"
+      ],
+      "noindex": false,
+      "path": "/pages/data-sharing-opt-out"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/pages/oversized-hoodies-streetwear-the-piece-that-never-loses"
+      ],
+      "noindex": false,
+      "path": "/pages/oversized-hoodies-streetwear-the-piece-that-never-loses"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/pages/the-ultimate-streetwear-guide"
+      ],
+      "noindex": false,
+      "path": "/pages/the-ultimate-streetwear-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/policies/about"
+      ],
+      "noindex": false,
+      "path": "/policies/about"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/policies/contact"
+      ],
+      "noindex": false,
+      "path": "/policies/contact"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/policies/legendary_branding_faqs"
+      ],
+      "noindex": false,
+      "path": "/policies/legendary_branding_faqs"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/policies/privacy-with-legendary-branding"
+      ],
+      "noindex": false,
+      "path": "/policies/privacy-with-legendary-branding"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/policies/refund-policy"
+      ],
+      "noindex": false,
+      "path": "/policies/refund-policy"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/policies/shipping-policy"
+      ],
+      "noindex": false,
+      "path": "/policies/shipping-policy"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/policies/size-guide"
+      ],
+      "noindex": false,
+      "path": "/policies/size-guide"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/policies/terms-of-service"
+      ],
+      "noindex": false,
+      "path": "/policies/terms-of-service"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/350gsm-cotton-blend-sweatpants"
+      ],
+      "noindex": false,
+      "path": "/products/350gsm-cotton-blend-sweatpants"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/blank-oversized-snow-wash-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/blank-oversized-snow-wash-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/blank-washed-gradient-goat-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/blank-washed-gradient-goat-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/blank-washed-gradient-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/blank-washed-gradient-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/bottom-sunfade-gradient-washed-vintage-goat-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/bottom-sunfade-gradient-washed-vintage-goat-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/dawg-pit-bull-oversized-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/dawg-pit-bull-oversized-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/foam-trucker-hat-with-mesh-panels"
+      ],
+      "noindex": false,
+      "path": "/products/foam-trucker-hat-with-mesh-panels"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goat-club-atlanta-trucker-hat"
+      ],
+      "noindex": false,
+      "path": "/products/goat-club-atlanta-trucker-hat"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goat-club-california-trucker-hat"
+      ],
+      "noindex": false,
+      "path": "/products/goat-club-california-trucker-hat"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goat-club-chicago-trucker-hat"
+      ],
+      "noindex": false,
+      "path": "/products/goat-club-chicago-trucker-hat"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goat-club-syracuse-trucker-hat"
+      ],
+      "noindex": false,
+      "path": "/products/goat-club-syracuse-trucker-hat"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goat-club-texas-trucker-hat"
+      ],
+      "noindex": false,
+      "path": "/products/goat-club-texas-trucker-hat"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goat-essential-non-shrink-mock-neck-sweatshirt"
+      ],
+      "noindex": false,
+      "path": "/products/goat-essential-non-shrink-mock-neck-sweatshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goat-hoodie-440gsm"
+      ],
+      "noindex": false,
+      "path": "/products/goat-hoodie-440gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goat-sh-t-only-oversized-cropped-t-shirt280gsm"
+      ],
+      "noindex": false,
+      "path": "/products/goat-sh-t-only-oversized-cropped-t-shirt280gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goated-heavyweight-fleece-crewneck-sweatshirt"
+      ],
+      "noindex": false,
+      "path": "/products/goated-heavyweight-fleece-crewneck-sweatshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/goated-legendary-loose-fit-t-shirt-190gsm"
+      ],
+      "noindex": false,
+      "path": "/products/goated-legendary-loose-fit-t-shirt-190gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/heavyweight-multi-pocket-jean"
+      ],
+      "noindex": false,
+      "path": "/products/heavyweight-multi-pocket-jean"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/heavyweight-oversized-hoodie-460gsm"
+      ],
+      "noindex": false,
+      "path": "/products/heavyweight-oversized-hoodie-460gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/land-of-the-goated-oversized-t-shirt190-gsm"
+      ],
+      "noindex": false,
+      "path": "/products/land-of-the-goated-oversized-t-shirt190-gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-01-boxy-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-01-boxy-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-branding-fleece-zip-up"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-branding-fleece-zip-up"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-branding-heavyweight-sweatpants-440gsm"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-branding-heavyweight-sweatpants-440gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-branding-og-permanent-marker-t-shirt-unisex-heavyweight-40s-combed-cotton-oversized-t-shirt-235gsm"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-branding-og-permanent-marker-t-shirt-unisex-heavyweight-40s-combed-cotton-oversized-t-shirt-235gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-coast-club-oversized-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-coast-club-oversized-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-discipline-boxy-t-shirt-400gsm"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-discipline-boxy-t-shirt-400gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-goat-boxy-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-goat-boxy-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-wide-leg-sweatpants"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-wide-leg-sweatpants"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-x-champion-r-simple-sweatshirt"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-x-champion-r-simple-sweatshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/legendary-x-champion-r-water-resistant-jacket"
+      ],
+      "noindex": false,
+      "path": "/products/legendary-x-champion-r-water-resistant-jacket"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-1-4-zip-panel-sweatshirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-1-4-zip-panel-sweatshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-art-the-clown-tribute-oversized-tee"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-art-the-clown-tribute-oversized-tee"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-blindfold-snow-wash-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-blindfold-snow-wash-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-camo-t-shirt-240gsm"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-camo-t-shirt-240gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-color-block-essential-polo-shirt-240gsm"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-color-block-essential-polo-shirt-240gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-color-block-raglan-sleeve-track-jacket-380gsm"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-color-block-raglan-sleeve-track-jacket-380gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-contrast-striped-lapel-collar-sweatshirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-contrast-striped-lapel-collar-sweatshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-cropped-oversized-zip-up-hoodie-og"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-cropped-oversized-zip-up-hoodie-og"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-cropped-zip-hoodie"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-cropped-zip-hoodie"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-essential-heavyweight-sweat-cardigan-450gsm"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-essential-heavyweight-sweat-cardigan-450gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-eternal-legends-boxy-graphic-tshirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-eternal-legends-boxy-graphic-tshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-eternal-legends-boxy-zip-up-hoodie"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-eternal-legends-boxy-zip-up-hoodie"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-frankenstein-tribute-boxy-oversized-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-frankenstein-tribute-boxy-oversized-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-frankenstein-tribute-oversized-hoodie"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-frankenstein-tribute-oversized-hoodie"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-frayed-fleece-hoodie"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-frayed-fleece-hoodie"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-french-terry-boxy-tank-top"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-french-terry-boxy-tank-top"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-ghost-tribeface-boxy-fleece-hoodie"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-ghost-tribeface-boxy-fleece-hoodie"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-goat-speed-boxy-hoodie"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-goat-speed-boxy-hoodie"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-halloween-26-boxy-fleece-hoodie"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-halloween-26-boxy-fleece-hoodie"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-halloween-heritage-oversized-sweatshirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-halloween-heritage-oversized-sweatshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-heavyweight-fleece-crewneck"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-heavyweight-fleece-crewneck"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-hockeyface-oversized-t-shirt-250gsm"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-hockeyface-oversized-t-shirt-250gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-knitted-oversize-sweatshirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-knitted-oversize-sweatshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-oversized-crewneck-sweatshirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-oversized-crewneck-sweatshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-raglan-polo-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-raglan-polo-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-reaper-snow-wash-oversized-tshirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-reaper-snow-wash-oversized-tshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-redman-boxy-tee"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-redman-boxy-tee"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-shadow-fear-oversized-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-shadow-fear-oversized-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-snow-wash-oversized-t-shirt-250gsm"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-snow-wash-oversized-t-shirt-250gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-spooky-mansion-oversized-sweatshirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-spooky-mansion-oversized-sweatshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-three-quarter-sweatpants"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-three-quarter-sweatpants"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-tribeface-oversized-graphic-tshirt"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-tribeface-oversized-graphic-tshirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-varsity-jacket"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-varsity-jacket"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-vintage-wash-full-zip-denim-jacket-320gsm"
+      ],
+      "noindex": false,
+      "path": "/products/marque-legendaire-vintage-wash-full-zip-denim-jacket-320gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-lgendaire-drip-graphic-oversized-t-shirt-300gsm"
+      ],
+      "noindex": false,
+      "path": "/products/marque-lgendaire-drip-graphic-oversized-t-shirt-300gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-lgendaire-halloween-sunfade-sweatshirt-350gsm"
+      ],
+      "noindex": false,
+      "path": "/products/marque-lgendaire-halloween-sunfade-sweatshirt-350gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/mini-goat-oversized-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/mini-goat-oversized-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/neverdy-eagles-oversized-snow-wash-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/neverdy-eagles-oversized-snow-wash-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/neverdy-oversized-t-shirt-235gsm"
+      ],
+      "noindex": false,
+      "path": "/products/neverdy-oversized-t-shirt-235gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/no-risk-no-story-oversized-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/no-risk-no-story-oversized-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/stay-rich-oversized-t-shirt190-gsm"
+      ],
+      "noindex": false,
+      "path": "/products/stay-rich-oversized-t-shirt190-gsm"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/the-lb-hat-foam-trucker-hat"
+      ],
+      "noindex": false,
+      "path": "/products/the-lb-hat-foam-trucker-hat"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/the-legendary-heavyweight-oversized-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/the-legendary-heavyweight-oversized-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/unisex-oversized-snow-wash-t-shirt285gsm-2"
+      ],
+      "noindex": false,
+      "path": "/products/unisex-oversized-snow-wash-t-shirt285gsm-2"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/urban-framework-boxy-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/urban-framework-boxy-t-shirt"
+    },
+    {
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/urban-framework-vineyard-boxy-t-shirt"
+      ],
+      "noindex": false,
+      "path": "/products/urban-framework-vineyard-boxy-t-shirt"
+    }
+  ],
+  "checked_origin": "https://legendary-branding.com",
+  "sitemap_origin": "https://www.legendary-branding.com"
+}
