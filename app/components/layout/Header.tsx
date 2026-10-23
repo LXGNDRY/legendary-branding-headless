@@ -256,10 +256,10 @@ function MobileMenu({
         <Link
           to="/"
           onClick={onClose}
-          className="flex items-baseline gap-2 font-serif text-xl tracking-tight text-[var(--color-text-primary)]"
+          aria-label="Legendary Branding"
+          className="flex items-center text-[var(--color-text-primary)]"
         >
-          <BrandLogo className="h-6 w-6 shrink-0 translate-y-[5px]" />
-          LEGENDARY
+          <BrandLogo className="h-8 w-8 shrink-0" />
         </Link>
         <button
           onClick={onClose}
@@ -466,21 +466,13 @@ export default function Header({
               <MenuIcon />
             </button>
 
-            {/* Wordmark -- `items-baseline` anchors the icon's bottom edge to
-                the text's real glyph baseline (Instrument Serif's line-box
-                reserves headroom well above the cap height, so `items-center`
-                put the icon visibly above the text). The icon is still taller
-                than the text's cap height though, so its own visual center
-                sits above the text's optical center even baseline-anchored --
-                translate-y closes that gap, measured against actual canvas
-                text metrics (ascent/descent) at each breakpoint's font size
-                rather than eyeballed. */}
+            {/* Icon-only logo (owner decision): the link's accessible name is the brand name. */}
             <Link
               to="/"
-              className="flex items-baseline gap-2 font-serif text-[1.25rem] lg:text-[1.35rem] tracking-tight text-[var(--color-text-primary)] select-none shrink-0"
+              aria-label="Legendary Branding"
+              className="flex items-center text-[var(--color-text-primary)] select-none shrink-0"
             >
-              <BrandLogo className="h-6 w-6 lg:h-7 lg:w-7 shrink-0 translate-y-[5px] lg:translate-y-[6.5px]" />
-              LEGENDARY
+              <BrandLogo className="h-8 w-8 lg:h-9 lg:w-9 shrink-0" />
             </Link>
 
             {/* Desktop nav */}
