@@ -142,9 +142,20 @@ export function assertAll(baseline, expectedSha) {
       if (!href.startsWith(ORIGIN)) failures.push(`${check.path} canonical off public origin: ${href}`);
     }
   }
+  const originRoot = new URL(ORIGIN).origin;
   for (const redirect of baseline.legacyRedirects) {
     if (redirect.status !== 301 && redirect.status !== 308) failures.push(`${redirect.path} status ${redirect.status} (want 301/308)`);
-    if (!redirect.location || !redirect.location.startsWith(ORIGIN)) {
+    // Hydrogen's own redirects emit an absolute non-www URL; Shopify's URL Redirects
+    // (which handle /pages/<policy>) emit a RELATIVE Location like "/policies/about".
+    // A relative same-origin redirect is valid, so resolve the Location against the
+    // public origin and only flag a target that leaves it or points at www.
+    let resolved = null;
+    try {
+      resolved = redirect.location ? new URL(redirect.location, ORIGIN) : null;
+    } catch {
+      resolved = null;
+    }
+    if (!resolved || resolved.origin !== originRoot) {
       failures.push(`${redirect.path} redirect target off origin: ${redirect.location}`);
     }
   }
