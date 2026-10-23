@@ -1,5 +1,5 @@
 /**
- * Overlay stack: which modal overlay (cart drawer, menu, quick add, popups, chat, size guide, filter drawer) is on
+ * Overlay stack: which modal overlay (cart drawer, menu, quick add, popups, size guide, filter drawer) is on
  * top, and which parts of the page are inert while it is.
  *
  * - Only the topmost overlay traps focus and answers Escape, so nested or stacked overlays never fight.

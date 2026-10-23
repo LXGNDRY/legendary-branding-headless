@@ -26,8 +26,6 @@ import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
 import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import DiscountsPopup from '~/components/ui/DiscountsPopup';
-import ChatWidget from '~/components/chat/ChatWidget';
-import {chatReadiness} from '~/lib/chat-policy';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
 import {STORE_TRUST_QUERY, toStoreTrust, withBudget} from '~/lib/trust';
 import Analytics from '~/components/seo/Analytics';
@@ -287,8 +285,6 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     // Oxygen, not values baked in at Vite build time, so import.meta.env
     // reads of PUBLIC_* client analytics vars are always undefined in the
     // deployed build regardless of Vite's envPrefix config.
-    // NOTE: the widget is only offered when its provider is configured; a visible-but-dead chat is worse than none.
-    chatAvailable: chatReadiness(context.env).available,
     analyticsConfig: {
       // NOTE: GA4, Meta and TikTok only get their IDs on the live host, so previews and local servers never
       // send events to production properties. Klaviyo's ID stays (it powers on-site forms, consent-gated).
@@ -338,7 +334,7 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, chatAvailable, consent, activeDiscounts} = useLoaderData<typeof loader>();
+  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, consent, activeDiscounts} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
   const location = useLocation();
@@ -447,7 +443,6 @@ export default function App() {
         onClose={() => setCartOpen(false)}
       />
 
-      {chatAvailable && <ChatWidget />}
       </div>
     </WishlistProvider>
     </LocaleProvider>

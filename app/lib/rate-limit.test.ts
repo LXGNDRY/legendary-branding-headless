@@ -155,17 +155,12 @@ describe('enforceRatePolicy', () => {
   const from = (ip: string) => new Request('https://example.com', {headers: {'cf-connecting-ip': ip}});
 
   it('applies the named policy per client', () => {
-    for (let i = 0; i < RATE_POLICIES.chat.max; i++) expect(enforceRatePolicy(from('1.1.1.1'), 'chat')).toBeNull();
-    expect(enforceRatePolicy(from('1.1.1.1'), 'chat')?.status).toBe(429);
-    expect(enforceRatePolicy(from('2.2.2.2'), 'chat')).toBeNull();
-  });
-
-  it('applies a global policy across clients and reports the limit', async () => {
-    for (let i = 0; i < RATE_POLICIES['chat-global'].max; i++) enforceRatePolicy(from(`10.0.${i % 250}.${Math.floor(i / 250)}`), 'chat-global');
-    const limited = enforceRatePolicy(from('9.9.9.9'), 'chat-global');
+    for (let i = 0; i < RATE_POLICIES.newsletter.max; i++) expect(enforceRatePolicy(from('1.1.1.1'), 'newsletter')).toBeNull();
+    const limited = enforceRatePolicy(from('1.1.1.1'), 'newsletter');
     expect(limited?.status).toBe(429);
-    expect(limited?.headers.get('X-RateLimit-Limit')).toBe(String(RATE_POLICIES['chat-global'].max));
+    expect(limited?.headers.get('X-RateLimit-Limit')).toBe(String(RATE_POLICIES.newsletter.max));
     expect(limited?.headers.get('Cache-Control')).toBe('no-store');
+    expect(enforceRatePolicy(from('2.2.2.2'), 'newsletter')).toBeNull();
   });
 
   it('requires every listed policy to pass', () => {

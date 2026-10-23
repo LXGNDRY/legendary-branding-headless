@@ -3,23 +3,17 @@
  *
  * LOCAL LAYER ONLY. State lives in one worker isolate's memory: it resets when an isolate is recycled and is not
  * shared between isolates, so the effective limit across the fleet is roughly (limit x live isolates). It slows
- * spam and accidental loops; it is NOT a spend or abuse guarantee. Anything that costs money per call (chat)
- * also needs a shared control (provider spend cap or an edge rule): see docs/CHAT_PROTECTION.md.
+ * spam and accidental loops; it is NOT a spend or abuse guarantee. Anything that costs money per call
+ * would also need a shared control (provider spend cap or an edge rule).
  */
 
 export type RatePolicy = {
   max: number;
   windowMs: number;
-  /** 'client' keys by caller identity; 'global' is one bucket for the whole isolate. */
-  scope?: 'client' | 'global';
 };
 
 /** Every route's limit lives here so the numbers are reviewed in one place. */
 export const RATE_POLICIES = {
-  chat: {max: 15, windowMs: 60_000},
-  'chat-hourly': {max: 60, windowMs: 3_600_000},
-  // NOTE: soft per-isolate ceiling on paid model calls; see the header comment for why it is not a cap.
-  'chat-global': {max: 600, windowMs: 3_600_000, scope: 'global'},
   newsletter: {max: 5, windowMs: 60_000},
   waitlist: {max: 5, windowMs: 60_000},
   market: {max: 10, windowMs: 60_000},
@@ -155,7 +149,7 @@ export function rateLimitMiddleware(
 export function enforceRatePolicy(request: Request, ...names: RatePolicyName[]): Response | null {
   for (const name of names) {
     const policy: RatePolicy = RATE_POLICIES[name];
-    const key = policy.scope === 'global' ? `${name}:*` : `${name}:${getClientIP(request)}`;
+    const key = `${name}:${getClientIP(request)}`;
     const result = checkRateLimit(key, policy.max, policy.windowMs);
     if (result.limited) return tooMany(policy.max, result.retryAfter);
   }

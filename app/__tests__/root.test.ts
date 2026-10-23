@@ -83,13 +83,6 @@ describe('root loader resilience', () => {
     expect(data.navCollections).toEqual([]);
   });
 
-  it('offers the chat widget only when its provider is configured', async () => {
-    const off = (await run()) as {chatAvailable: boolean};
-    const on = (await run({env: {PRIVATE_ANTHROPIC_API_KEY: 'key'}})) as {chatAvailable: boolean};
-    expect(off.chatAvailable).toBe(false);
-    expect(on.chatAvailable).toBe(true);
-  });
-
   it('only hands third-party pixel ids to the live host, never to previews or local servers', async () => {
     const env = {PUBLIC_GA4_MEASUREMENT_ID: 'G-TEST123', PUBLIC_META_PIXEL_ID: '123', PUBLIC_TIKTOK_PIXEL_ID: 'TT1', PUBLIC_KLAVIYO_COMPANY_ID: 'AbC123'};
     const live = (await run({url: 'https://www.legendary-branding.com/', env})) as {analyticsConfig: Record<string, string | undefined>};

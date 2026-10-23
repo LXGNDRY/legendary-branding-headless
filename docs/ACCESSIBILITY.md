@@ -16,7 +16,7 @@
 
 ## Overlays (`app/lib/overlay-stack.ts`, `app/hooks/useFocusTrap.ts`)
 
-- Cart drawer, mobile menu, quick add, size guide, discounts popup, chat and the filter drawers share one stack.
+- Cart drawer, mobile menu, quick add, size guide, discounts popup and the filter drawers share one stack.
 - Only the **topmost** overlay traps Tab and answers Escape, so one Escape closes one overlay.
 - While an overlay is open, everything outside its own branch of the document is `inert` (not focusable, not clickable, hidden from
   assistive technology). Closing the top overlay hands this to the one beneath; closing the last restores the page. Elements that
@@ -24,12 +24,12 @@
 - Scrims that close their overlay on click, and live regions, carry `data-overlay-keep` so they stay interactive.
 - Closing returns focus to the control that opened it (if it is still in the page). The trap does not restart when its owner re-renders
   (typing, cart revalidation), and its focus timer is cancelled on cleanup.
-- Body scroll is locked by a shared counter (`useBodyScrollLock`). The chat panel uses the trap and stack but does not lock page scroll.
+- Body scroll is locked by a shared counter (`useBodyScrollLock`).
 
 ## Tests and linting
 
 - jsdom + axe (`app/__tests__/a11y.test.tsx`): Button states, account dashboard/orders/edit/addresses (filled, empty, failed, paginated),
-  filled cart drawer, cookie banner and its category panel, chat, size guide. `color-contrast` cannot run in jsdom.
+  filled cart drawer, cookie banner and its category panel, size guide. `color-contrast` cannot run in jsdom.
 - Keyboard/overlay behavior (`app/hooks/overlay.test.tsx`): inert background, topmost-only Escape, focus restoration, typing keeps focus.
 - Real browser (`e2e/a11y.spec.ts`): cart page axe, cookie preferences dialog axe, cart drawer focus/inert/Escape/restore.
   Contrast is excluded there until the theme reconciliation (R21).
