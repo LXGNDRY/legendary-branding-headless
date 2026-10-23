@@ -17,7 +17,11 @@ async function violations(page: Page) {
 
 async function dismissBanners(page: Page) {
   const reject = page.getByRole('button', {name: /reject non-essential/i});
-  if (await reject.isVisible().catch(() => false)) await reject.click();
+  // NOTE: every test has a fresh browser context; consent appears after hydration/reconciliation.
+  // Wait for the real banner instead of racing its delayed initial render.
+  await expect(reject).toBeVisible();
+  await reject.click();
+  await expect(page.getByRole('dialog', {name: 'Cookie consent'})).toBeHidden();
 }
 
 test('the cart page has no axe violations', async ({page}) => {

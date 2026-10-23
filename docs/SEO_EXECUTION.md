@@ -93,3 +93,10 @@ The installed Hydrogen 2026.4.7 provider calls sendShopifyAnalytics without a sh
 The correction adds only https://monorail-edge.shopifysvc.com to connect-src, preserving consent, preview suppression and the rest of the policy. A browser test intercepts a synthetic request to verify actual CSP permission without sending an analytics event to Shopify. This fixes a concrete reporting barrier; it does not prove organic traffic, attribution or complete consent continuity. Verify real consenting production events after an authorized release.
 
 Official references: [Hydrogen analytics validation](https://shopify.dev/docs/storefronts/headless/legacy/hydrogen/analytics/validation) and [2026-04 CSP utility](https://shopify.dev/docs/api/hydrogen/2026-04/utilities/createcontentsecuritypolicy). Local validation: build/typecheck/lint and all 853 tests with coverage passed. Browser/merge gates pending.
+
+
+## Slice 7 — deterministic first-visit consent setup in browser checks
+
+A post-merge dev run (39913124235) failed mobile-safari accessibility setup: its instantaneous isVisible check missed the asynchronously mounted consent banner, which then intercepted the footer Cookie preferences click. The trace identifies the Cookie consent dialog as the pointer interceptor. This was a setup race, not proof that the footer action itself was broken.
+
+Each accessibility test uses a fresh browser context. Setup now waits for the real rejection control, clicks it normally and verifies the dialog is hidden before testing the cart/footer overlays. No force-click, arbitrary sleep, skip, retry increase or production UI change is introduced. The existing browser assertions remain required across all four projects. All pending staging/deploy checks remain open until the final combined run succeeds.
