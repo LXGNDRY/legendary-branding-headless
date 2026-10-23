@@ -318,6 +318,28 @@ jobs:
             exit 1
           fi
 
+      - name: Capture SEO post-release baseline (production only)
+        if: github.ref_name == 'main'
+        run: |
+          mkdir -p release-evidence
+          OUT="release-evidence/seo-postrelease-baseline.json"
+          # Give the edge a moment to settle on the new worker before probing live.
+          sleep 15
+          if ! node scripts/seo-postrelease-baseline.mjs \
+            --origin https://legendary-branding.com \
+            --release-sha "$GITHUB_SHA" \
+            --out "$OUT"; then
+            echo "::error::SEO post-release baseline FAILED -- see $OUT"
+            cat "$OUT" || true
+            exit 1
+          fi
+          {
+            echo "### SEO post-release baseline"
+            echo '```json'
+            cat "$OUT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Collect E2E execution summaries
         if: always()
         continue-on-error: true

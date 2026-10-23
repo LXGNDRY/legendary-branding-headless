@@ -54,6 +54,20 @@ Owner-approved domain split: non-www serves Hydrogen; www remains Shopify Online
 - The language switcher (`MarketSelector`) posts to `api.market` and navigates to the equivalent locale URL for the current
   page instead of reloading in place.
 
+## Post-release SEO baseline
+
+- Every production deploy (push to `main`) runs `scripts/seo-postrelease-baseline.mjs` after `/api/release` confirms the
+  reviewed commit is live. It probes the live non-www origin and fails the deploy job when:
+  - any sample indexable page returns non-200, carries `noindex`, or has a canonical pointing to `www.*` or off-origin;
+  - any legacy `/blogs/legendary_blogging` path (root + article) or `/pages/<policy-handle>` fails to 301 to the public origin
+    (`/pages/*` is handled upstream by Shopify's URL Redirects via `storefrontRedirect` in `server.ts`);
+  - the sitemap carries any www `<loc>`, or robots.txt advertises a www `Sitemap:` line.
+- The captured JSON is uploaded as the `release-evidence-<sha>` artifact alongside the release manifest. Local runs:
+  `npm run seo:baseline -- --origin https://legendary-branding.com --out docs/audits/<date>/SEO_POSTRELEASE_BASELINE.json`.
+- Checkout boundary (SEO-04) has a separate safe verifier: `npm run seo:checkout-boundary -- --out <path>` creates an
+  anonymous cart via Storefront API, records the issued `checkoutUrl` host and its first-hop redirect, then clears the cart.
+  No order is submitted.
+
 ## Not done / merchant-managed values
 
 Contact email, social profiles, blog handle and menu handles are named constants in `site.ts` / route files rather than a
