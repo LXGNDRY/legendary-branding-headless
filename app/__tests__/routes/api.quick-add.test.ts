@@ -32,6 +32,7 @@ describe('api.quick-add loader', () => {
       id: 'gid://shopify/Product/123',
       title: 'Heavyweight Hoodie',
       handle: 'heavyweight-hoodie',
+      options: [{name: 'Size', optionValues: [{name: 'M', swatch: null}, {name: 'L', swatch: null}]}],
       variants: {
         pageInfo: {hasNextPage: false, endCursor: null},
         nodes: [{id: 'gid://shopify/ProductVariant/456', availableForSale: true}],
@@ -47,6 +48,7 @@ describe('api.quick-add loader', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('private, max-age=60');
     expect(await response.json()).toEqual({product: {...product, variants: {nodes: product.variants.nodes}}});
+    expect(mock.getCalls()[0].query).toContain('options');
     expect(mock.getCalls()[0]).toMatchObject({
       operationName: 'QuickAddProduct',
       variables: {
