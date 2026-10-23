@@ -14,6 +14,9 @@ import VerifiedReviews from '~/components/sections/VerifiedReviews';
 import ReviewQuotes from '~/components/sections/ReviewQuotes';
 import NewsletterBand from '~/components/sections/NewsletterBand';
 import CurrentOffers from '~/components/sections/CurrentOffers';
+import TrustStrip from '~/components/sections/TrustStrip';
+import FitConfidence from '~/components/sections/FitConfidence';
+import HomepageFAQ from '~/components/sections/HomepageFAQ';
 import {CacheLong, CacheShort} from '~/lib/cache';
 import type {ActiveDiscount} from '~/lib/discounts';
 import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
@@ -205,15 +208,17 @@ export default function Homepage() {
     <div>
       {/* 1 — Split hero */}
       <HeroSplit
-        eyebrow="220GSM+ · Made To Order · DTG Prints"
-        heading={`LEGENDARY\nBRANDING`}
-        subtext={`Heavyweight Apparel Co.\nPremium Essentials Built To Last`}
-        primaryLabel="Shop Now"
+        eyebrow="220GSM+ · Made To Order · Built For Repeat Wear"
+        heading={`Heavyweight streetwear.\nBuilt with intention.`}
+        subtext={`Structured essentials, oversized silhouettes, and premium-weight fabrics designed to hold their shape.`}
+        primaryLabel="Shop New Arrivals"
         primaryHref="/collections/all-products"
-        secondaryLabel="Lookbook"
-        secondaryHref="/journal"
+        secondaryLabel="Explore Marque Légendaire"
+        secondaryHref="/collections/marque-legendaire-luxury-streetwear"
         rightProduct={newDropProducts[0] ?? null}
       />
+
+      <TrustStrip />
 
       {/* 3.5 — Current offers (real active Shopify discounts, when any exist) */}
       {activeDiscountsPromise && (
@@ -226,15 +231,15 @@ export default function Homepage() {
 
       {/* 4 — Featured categories */}
       <CategoryGrid
-        eyebrow="Explore"
-        heading="Shop by Category"
+        eyebrow="Find your next piece"
+        heading="Shop by intent"
         items={categoryItems}
       />
 
       {/* 5 — New arrivals asymmetric grid */}
       <NewArrivalsGrid
-        eyebrow="Just Dropped"
-        heading="New Arrivals"
+        eyebrow="Start here"
+        heading="Just dropped"
         products={newDropProducts}
         viewAllHref="/collections/all-products"
       />
@@ -242,14 +247,16 @@ export default function Homepage() {
       {/* 6 — Editorial dark band */}
       <EditorialBand
         theme="dark"
-        eyebrow="Our Craft"
-        heading="Built different. Made to last."
-        body="Every piece starts with fabric weight most brands won't touch: 220GSM+ premium-weight cotton, structured for the streets. Made to order. No shortcuts, no restocks."
-        primaryLabel="Shop the collection"
+        eyebrow="Why it feels different"
+        heading="You can feel the difference."
+        body="Premium-weight cotton brings structure, drape, and a more substantial hand feel. Every silhouette is designed to earn a place in your weekly rotation."
+        primaryLabel="Shop heavyweight essentials"
         primaryHref="/collections/all-products"
-        secondaryLabel="Our story"
-        secondaryHref="/policies/about"
+        secondaryLabel="Find your fit"
+        secondaryHref="/policies/size-guide"
       />
+
+      <FitConfidence />
 
       {/* 7 — Marque Légendaire collection */}
       {marqueLegendaireProducts.length > 0 && (
@@ -257,10 +264,11 @@ export default function Homepage() {
           <div className="h-container">
             <div className="flex items-end justify-between mb-10">
               <div>
-                <p className="h-eyebrow mb-3">Luxury Streetwear</p>
+                <p className="h-eyebrow mb-3">The signature collection</p>
                 <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-foreground)]">
                   Marque Légendaire
                 </h2>
+                <p className="mt-3 max-w-lg text-sm leading-relaxed text-[var(--color-text-secondary)]">Elevated heavyweight essentials shaped by bold graphics and deliberate proportions.</p>
               </div>
               <Button as="link" to="/collections/marque-legendaire-luxury-streetwear" variant="ghost">
                 View All
@@ -283,8 +291,8 @@ export default function Homepage() {
 
       {/* 8 — Verified reviews (real Judge.me aggregate, no invented quotes) */}
       <VerifiedReviews
-        eyebrow="Customer Reviews"
-        heading="Rated by the Culture"
+        eyebrow="Real customer feedback"
+        heading="Worn by the culture"
         aggregateRating={aggregateRating}
         aggregateCount={aggregateCount}
         products={ratedProducts}
@@ -299,11 +307,13 @@ export default function Homepage() {
         </Await>
       </Suspense>
 
+      <HomepageFAQ />
+
       {/* 10 — Newsletter */}
       <NewsletterBand
-        eyebrow="Stay in the loop"
-        heading="Get early access to drops."
-        subtext="New arrivals, restocks, and editorial content, straight to your inbox."
+        eyebrow="Enter the list"
+        heading="Get first access to every drop."
+        subtext="Early access, restock alerts, editorial releases, and private offers."
       />
     </div>
   );
