@@ -11,7 +11,7 @@ const PASS_BASELINE = Object.freeze({
   ],
   sitemap: {status: 200, total: 182, www: 0, nonWww: 182, sample: []},
   robots: {status: 200, sitemaps: ['https://legendary-branding.com/sitemap.xml']},
-  release: {status: 200, release: {commit: 'abcdef1234'}},
+  release: {status: 200, release: {ok: true, sha: 'abcdef1234', missing: 0}},
 });
 
 const clone = (overrides) => ({
@@ -61,12 +61,35 @@ describe('assertAll (post-release SEO baseline)', () => {
     expect(assertAll(bad)).toEqual(expect.arrayContaining([expect.stringContaining('has 2 canonical')]));
   });
 
-  it('fails when /api/release reports a commit other than the expected release SHA', () => {
+  it('passes when /api/release serves the expected SHA with a complete env contract', () => {
+    expect(assertAll(PASS_BASELINE, 'abcdef1234')).toEqual([]);
+  });
+
+  it('fails when /api/release reports a sha other than the expected release SHA', () => {
     const failures = assertAll(PASS_BASELINE, 'deadbeef');
     expect(failures).toEqual(expect.arrayContaining([expect.stringContaining('!= expected deadbeef')]));
   });
 
-  it('passes without an expected SHA when none is supplied', () => {
+  it('fails when the release probe is not 200 (origin down or serving an error)', () => {
+    const bad = clone({release: {status: 503, release: undefined}});
+    expect(assertAll(bad, 'abcdef1234')).toEqual(expect.arrayContaining([expect.stringContaining('probe status 503')]));
+  });
+
+  it('fails when the release probe reports an incomplete runtime env contract', () => {
+    const bad = clone({release: {status: 200, release: {ok: false, sha: 'abcdef1234', missing: 2}}});
+    expect(assertAll(bad, 'abcdef1234')).toEqual(expect.arrayContaining([expect.stringContaining('incomplete runtime env contract')]));
+  });
+
+  it('fails when the release probe reports no sha', () => {
+    const bad = clone({release: {status: 200, release: {ok: true, missing: 0}}});
+    expect(assertAll(bad, 'abcdef1234')).toEqual(expect.arrayContaining([expect.stringContaining('did not report a sha')]));
+  });
+
+  it('does not check the release probe when no expected SHA is supplied', () => {
     expect(assertAll(PASS_BASELINE, null)).toEqual([]);
+    // Even a down probe is ignored without an expected SHA (callers that want the
+    // gate pass --release-sha; local snapshots may omit it).
+    const noSha = clone({release: {status: 0, release: undefined}});
+    expect(assertAll(noSha)).toEqual([]);
   });
 });

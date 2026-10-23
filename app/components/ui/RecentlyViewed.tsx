@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {Image} from '@shopify/hydrogen';
 import StarRating from '~/components/ui/StarRating';
 import {

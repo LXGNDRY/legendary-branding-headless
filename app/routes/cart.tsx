@@ -1,5 +1,6 @@
 import type {MetaFunction, LoaderFunctionArgs, ActionFunctionArgs} from 'react-router';
-import {useLoaderData, useFetcher, Link} from 'react-router';
+import {useLoaderData, useFetcher} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {Analytics, AnalyticsEvent, CartForm, Image, Money, useAnalytics} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useEffect, useState} from 'react';

@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useState} from 'react';
 import {createPortal} from 'react-dom';
-import {Link, useFetcher} from 'react-router';
+import {useFetcher} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {CartForm, Image, Money} from '@shopify/hydrogen';
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {useFocusTrap} from '~/hooks/useFocusTrap';

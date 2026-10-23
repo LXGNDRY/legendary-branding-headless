@@ -1,6 +1,6 @@
 import SafeHtml from '~/components/ui/SafeHtml';
 import {Image} from '@shopify/hydrogen';
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import type {ContentBlock} from '~/lib/content-blocks';
 
 /**

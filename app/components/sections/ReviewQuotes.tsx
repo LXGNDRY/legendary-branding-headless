@@ -1,4 +1,4 @@
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {useRevealChildren} from '~/hooks/useReveal';
 import type {JudgemeQuote} from '~/lib/judgeme';
 import {StarIcon} from '~/components/ui/StarRating';

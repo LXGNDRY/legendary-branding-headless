@@ -1,4 +1,5 @@
-import {type MetaFunction, type LoaderFunctionArgs, Link, redirect} from 'react-router';
+import {type MetaFunction, type LoaderFunctionArgs, redirect} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {canonicalUrl, ROUTES} from '~/lib/site';
 import {loader as loadArticle} from './journal.$articleHandle';
 import Container from '~/components/ui/Container';

@@ -1,4 +1,4 @@
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
 import type {ActiveDiscount} from '~/lib/discounts';
 

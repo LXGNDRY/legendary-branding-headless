@@ -1,5 +1,6 @@
 import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
-import {useLoaderData, Link} from 'react-router';
+import {useLoaderData} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {Image} from '@shopify/hydrogen';
 import Container from '~/components/ui/Container';
 import Placeholder from '~/components/ui/Placeholder';
