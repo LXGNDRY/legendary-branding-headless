@@ -1,4 +1,6 @@
-import {type MetaFunction, Link} from 'react-router';
+import {type MetaFunction, type LoaderFunctionArgs, Link, redirect} from 'react-router';
+import {canonicalUrl, ROUTES} from '~/lib/site';
+import {loader as loadArticle} from './journal.$articleHandle';
 import Container from '~/components/ui/Container';
 
 export const meta: MetaFunction = () => [
@@ -7,7 +9,30 @@ export const meta: MetaFunction = () => [
   {name: 'robots', content: 'noindex, follow'},
 ];
 
-export async function loader() {
+export async function loader(args: LoaderFunctionArgs) {
+  const url = new URL(args.request.url);
+  const match = /^\/blogs\/legendary_blogging(?:\/([^/]+))?\/?$/.exec(url.pathname);
+  if (match) {
+    let destination: string = ROUTES.journal;
+    if (match[1]) {
+      let articleHandle: string;
+      try {
+        articleHandle = decodeURIComponent(match[1]);
+      } catch {
+        throw new Response('Not Found', {status: 404});
+      }
+      // NOTE: only the known blog maps into the flattened journal, and only if its article exists.
+      const {article} = await loadArticle({...args, params: {articleHandle}});
+      destination = ROUTES.article(encodeURIComponent(article.handle));
+    }
+    const target = new URL(canonicalUrl(destination));
+    for (const [key, value] of url.searchParams) {
+      if ((/^utm_[a-z_]+$/.test(key) || ['gclid', 'fbclid', 'msclkid'].includes(key)) && value.length <= 500) {
+        target.searchParams.append(key, value);
+      }
+    }
+    return redirect(target.toString(), {status: 301});
+  }
   throw new Response('Not Found', {status: 404});
 }
 
