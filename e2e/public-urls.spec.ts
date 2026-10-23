@@ -74,4 +74,8 @@ test('a later collection page retains its cursor in the canonical', async ({page
   expected.searchParams.set('cursor', url.searchParams.get('cursor')!);
   expected.searchParams.set('direction', 'next');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', expected.toString());
+  const previous = await page.locator('a[href*="direction=previous"]').first().getAttribute('href');
+  expect(previous).toBeTruthy();
+  await page.goto(previous!, {waitUntil: 'domcontentloaded'});
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${LIVE_ORIGIN}/collections/all-products`);
 });

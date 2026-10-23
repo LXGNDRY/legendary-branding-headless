@@ -123,12 +123,12 @@ interface CollectionData {
   };
 }
 
-export const meta: MetaFunction<typeof loader> = ({data, location}) => {
+export const meta: MetaFunction<typeof loader> = ({data}) => {
   const collection = data?.collection;
   const title = collection?.seo?.title?.trim() || `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
   const description = collection?.seo?.description?.trim() || collection?.description || `Shop ${collection?.title ?? 'this collection'}.`;
   const faceted = Boolean(data?.activeFilters || (data?.sort && data.sort !== 'featured'));
-  const canonical = canonicalUrl(ROUTES.collection(collection?.handle ?? 'all-products')) + (faceted ? '' : paginationSearch(location.search));
+  const canonical = canonicalUrl(ROUTES.collection(collection?.handle ?? 'all-products')) + (faceted ? '' : data?.canonicalSearch ?? '');
   const ogImage = withImageTransform(collection?.image?.url, {width: 1200, height: 630});
 
   return [
@@ -173,22 +173,37 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const paginationVariables = getPaginationVariables(new Request(url, request), {pageBy: 12});
   const filters = buildFilters(url.searchParams);
 
-  const {collection} = await context.storefront.query(COLLECTION_QUERY, {
-    variables: {
-      handle,
-      ...paginationVariables,
-      sortKey: sortOption.sortKey as SortKey,
-      reverse: sortOption.reverse,
-      filters: filters.length > 0 ? filters : undefined,
-      country: context.storefront.i18n.country,
-      language: context.storefront.i18n.language,
-    },
-    cache: CacheShort(),
-  });
+  const variables = {
+    handle,
+    ...paginationVariables,
+    sortKey: sortOption.sortKey as SortKey,
+    reverse: sortOption.reverse,
+    filters: filters.length > 0 ? filters : undefined,
+    country: context.storefront.i18n.country,
+    language: context.storefront.i18n.language,
+  };
+  const {collection} = await context.storefront.query(COLLECTION_QUERY, {variables, cache: CacheShort()});
 
   if (!collection) throw new Response('Collection not found', {status: 404});
 
-  return {collection: collection as CollectionData, sort: sortOption.value, activeFilters: filters.length > 0 ? filters : null};
+  let canonicalSearch = '';
+  if (!filters.length && sortOption.value === 'featured' && collection.products.pageInfo.hasPreviousPage) {
+    if (url.searchParams.get('direction') === 'previous') {
+      // NOTE: backward and forward traversal must identify the same product window. The item immediately
+      // before this window is its stable forward boundary; the first page needs no cursor or extra query.
+      if (!collection.products.pageInfo.startCursor) throw new Response('Collection pagination temporarily unavailable', {status: 503});
+      const {collection: previous} = await context.storefront.query(COLLECTION_QUERY, {
+        variables: {...variables, first: undefined, last: 1, endCursor: undefined, startCursor: collection.products.pageInfo.startCursor},
+        cache: CacheShort(),
+      });
+      const boundary = previous?.products.pageInfo.endCursor;
+      if (!boundary) throw new Response('Collection pagination temporarily unavailable', {status: 503});
+      canonicalSearch = paginationSearch(`?${new URLSearchParams({cursor: boundary})}`);
+    } else {
+      canonicalSearch = paginationSearch(url.search);
+    }
+  }
+  return {collection: collection as CollectionData, sort: sortOption.value, activeFilters: filters.length > 0 ? filters : null, canonicalSearch};
 }
 
 function CloseIcon() {

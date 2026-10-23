@@ -1,0 +1,8 @@
+{
+  "scope": "Anonymous cart verification; no customer data or order submission",
+  "checkout_host": "www.legendary-branding.com",
+  "http_status": 200,
+  "final_host": "www.legendary-branding.com",
+  "redirect_theme": true,
+  "test_cart_cleared": true
+}
