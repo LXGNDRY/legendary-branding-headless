@@ -495,16 +495,28 @@ jobs:
       # executed, skipped and retried; the deploy job aggregates these into the release evidence.
       - name: Summarize E2E execution
         if: always()
+        env:
+          E2E_PROJECT: ${{ matrix.project }}
+          E2E_CREDS_SKIPPED: ${{ steps.verify-creds.outputs.skipped }}
+        # NOTE: node, not jq -- the Playwright container image does not ship jq.
         run: |
           mkdir -p e2e-summary
-          if [ "${{ steps.verify-creds.outputs.skipped }}" = "true" ]; then
-            jq -n --arg project "${{ matrix.project }}" '{project:$project, ran:false, reason:"no Storefront API credentials", expected:0, skipped:0, unexpected:0, flaky:0}' > "e2e-summary/e2e-summary-${{ matrix.project }}.json"
-          elif [ -f e2e-results.json ]; then
-            jq --arg project "${{ matrix.project }}" '{project:$project, ran:true, expected:.stats.expected, skipped:.stats.skipped, unexpected:.stats.unexpected, flaky:.stats.flaky, durationMs:.stats.duration}' e2e-results.json > "e2e-summary/e2e-summary-${{ matrix.project }}.json"
-          else
-            jq -n --arg project "${{ matrix.project }}" '{project:$project, ran:false, reason:"no results file", expected:0, skipped:0, unexpected:0, flaky:0}' > "e2e-summary/e2e-summary-${{ matrix.project }}.json"
-          fi
-          cat "e2e-summary/e2e-summary-${{ matrix.project }}.json"
+          node -e '
+            const fs = require("fs");
+            const project = process.env.E2E_PROJECT;
+            const base = {project, ran: false, expected: 0, skipped: 0, unexpected: 0, flaky: 0};
+            let summary;
+            if (process.env.E2E_CREDS_SKIPPED === "true") {
+              summary = {...base, reason: "no Storefront API credentials"};
+            } else if (fs.existsSync("e2e-results.json")) {
+              const {stats} = JSON.parse(fs.readFileSync("e2e-results.json", "utf8"));
+              summary = {project, ran: true, expected: stats.expected, skipped: stats.skipped, unexpected: stats.unexpected, flaky: stats.flaky, durationMs: stats.duration};
+            } else {
+              summary = {...base, reason: "no results file"};
+            }
+            fs.writeFileSync(`e2e-summary/e2e-summary-${project}.json`, JSON.stringify(summary));
+            console.log(JSON.stringify(summary));
+          '
 
       - name: Upload E2E execution summary
         if: always()

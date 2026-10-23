@@ -31,16 +31,26 @@ process.on('SIGINT', () => {
 const rows = [];
 try {
   for (const m of MUTATIONS) {
-    current = m.file;
-    original = readFileSync(m.file, 'utf8');
-    const first = original.indexOf(m.find);
-    if (first === -1 || original.indexOf(m.find, first + 1) !== -1) {
+    // NOTE: read into a local first -- a renamed/deleted target must not leave `current`/`original` pointing at the previous file.
+    let source;
+    try {
+      source = readFileSync(m.file, 'utf8');
+    } catch {
+      rows.push({...m, outcome: 'STALE (file not found)'});
+      continue;
+    }
+    const first = source.indexOf(m.find);
+    if (first === -1 || source.indexOf(m.find, first + 1) !== -1) {
       rows.push({...m, outcome: 'STALE (pattern not found exactly once)'});
       continue;
     }
+    current = m.file;
+    original = source;
     writeFileSync(m.file, original.replace(m.find, () => m.replace));
     const run = spawnSync('npx', ['vitest', 'run', '--reporter=dot', ...m.tests], {encoding: 'utf8'});
     writeFileSync(m.file, original);
+    current = undefined;
+    original = undefined;
     // NOTE: a non-zero exit alone could be a missing test file; require an actual failing test.
     const failedATest = /\d+ failed/.test(`${run.stdout}${run.stderr}`);
     rows.push({...m, outcome: run.status === 0 ? 'SURVIVED' : failedATest ? 'caught' : 'ERROR (no test failed)'});
