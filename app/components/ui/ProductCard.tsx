@@ -240,7 +240,7 @@ export default function ProductCard({
         <Link
           to={`/products/${product.handle}`}
           prefetch="intent"
-          className="relative overflow-hidden rounded-md w-28 h-36 md:w-36 md:h-48 shrink-0 bg-[var(--color-bg-level-2)]"
+          className="relative overflow-hidden rounded-[var(--radius-card)] w-28 h-36 md:w-36 md:h-48 shrink-0 bg-[var(--color-bg-level-2)]"
         >
           {product.featuredImage ? (
             <Image
@@ -323,7 +323,7 @@ export default function ProductCard({
       data-product-id={product.id}
     >
       {/* Media */}
-      <div className="relative overflow-hidden rounded-md aspect-square bg-[var(--color-bg-level-2)]">
+      <div className="relative overflow-hidden rounded-[var(--radius-card)] aspect-square bg-[var(--color-bg-level-2)]">
         <Link
           to={`/products/${product.handle}`}
           prefetch="intent"
