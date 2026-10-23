@@ -6,7 +6,7 @@ Start with [Headless Storefront Recovery Plan](HEADLESS_RECOVERY_PLAN.md) — th
 
 ## Planned technical SEO correction
 
-[Hydrogen technical SEO correction plan](HYDROGEN_TECHNICAL_SEO_PLAN.md) — preserves the owner-approved non-www Hydrogen / www Online Store domain setup. Defines priority packages, official-source cross-references, acceptance tests, release gates and rollback. Planned only; the current public-origin contract is not corrected until implementation is released.
+[Hydrogen technical SEO correction plan](HYDROGEN_TECHNICAL_SEO_PLAN.md) — preserves the owner-approved non-www Hydrogen / www Online Store domain setup. Defines priority packages, official-source cross-references, acceptance tests, release gates and rollback. Execution assigned to Codex in verified dev slices; see [execution evidence and open items](SEO_EXECUTION.md). Production remains unchanged until an authorized main release.
 
 ## Active reference documents
 

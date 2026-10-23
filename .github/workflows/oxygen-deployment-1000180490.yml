@@ -249,9 +249,11 @@ jobs:
           }
 
           TITLE_MARKER='<title[^>]*>[^<]*LEGENDARY BRANDING'
+          # NOTE: resource titles honor Shopify SEO overrides, including the merchant's casing.
+          RESOURCE_TITLE_MARKER='<title[^>]*>[[:space:]]*[^[:space:]<][^<]*</title>'
 
           check_route "/" "Homepage" "$TITLE_MARKER"
-          check_route "/collections/all-products" "All products" "$TITLE_MARKER" '"@type":"CollectionPage"'
+          check_route "/collections/all-products" "All products" "$RESOURCE_TITLE_MARKER" '"@type":"CollectionPage"' 'rel="canonical" href="https://legendary-branding[.]com/collections/all-products"' 'href="/products/'
           check_route "/cart" "Cart" "$TITLE_MARKER"
           check_route "/policies/about" "About policy" "$TITLE_MARKER"
           check_route "/sitemap.xml" "Sitemap" '<urlset' '<loc>https://'
@@ -268,7 +270,7 @@ jobs:
             "$DEPLOY_URL/collections/all-products") || PRODUCT_RESULT="000"
           PRODUCT_PATH=$(grep -oE 'href="/products/[^"]+"' "$PRODUCT_OUT" | head -n 1 | cut -d '"' -f 2 || true)
           if echo "$PRODUCT_RESULT" | grep -q "^2" && [ -n "$PRODUCT_PATH" ]; then
-            check_route "$PRODUCT_PATH" "Product detail" "$TITLE_MARKER" '"@type":"Product"'
+            check_route "$PRODUCT_PATH" "Product detail" "$RESOURCE_TITLE_MARKER" '"@type":"Product"' 'rel="canonical" href="https://legendary-branding[.]com/products/'
           else
             echo "Product detail: FAIL (could not discover a product path from all-products)"
             FAILURES=$((FAILURES + 1))

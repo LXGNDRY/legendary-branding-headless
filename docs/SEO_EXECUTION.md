@@ -31,11 +31,11 @@ Owner scope: execute the technical SEO plan in verified slices to dev; preserve 
 - Product/collection GraphQL queries now select SEO title/description; generated types regenerated successfully with the installed schema. Blank overrides fall back to actual content.
 - Canonical collection pagination keeps only a valid cursor/direction pair. The loader uses the same normalization, so direction without a cursor cannot silently fetch the final page. Filter/sort views remain non-indexable duplicates instead of claiming an unfiltered paginated identity.
 - Browser regression loads a real next collection page and checks its canonical. React checklist: route metadata/server loading only; no new hooks, UI state, client dependencies or interaction changes.
-- Local validation: codegen/build/typecheck/lint and 847 tests with coverage passed; browser CI is rerunning after the review correction below.
+- PR #406: the revised head 0cf827fe8ab6ecdd2ea8b7e35dcf0656f71306f3 passed quality/governance and all four browser projects; the review finding was corrected and resolved before merging to dev at 4a17d551db50252089cfed226ccf1a3b7338480c. Local codegen/build/typecheck/lint and all 847 tests with coverage passed.
 
-## Remaining packages
+## Open work
 
-SEO-02: pagination completeness and preview aliases. SEO-03: historical redirects. SEO-04: read-only www/checkout verification; no settings writes. SEO-05: resource SEO metadata. SEO-06: pagination identity. SEO-07: localized URL/content policy. SEO-08: indexing/feed access. SEO-09: final combined evidence.
+The package-state table below is authoritative. Code corrections are staged in dev; localized URLs, feed/Search Console access and production verification remain explicitly open.
 
 Production still serves the old deployment until an explicitly authorized main release. Search Console checks remain unavailable through the expired GSC Wizard subscription. No claim of search recovery or full plan closure.
 
@@ -53,3 +53,34 @@ PR #406 review identified duplicate canonical identities when returning from pag
 - SEO-07 remains open for genuine localized routes/content mapping. Existing cookie/session selection cannot justify invented hreflang URLs. Unknown localized links are not silently rewritten as English.
 - SEO-08: Search Console selected-canonical/submission checks are blocked by expired GSC Wizard access. Merchant feed link/mobile_link values still require a connected feed audit; preserve variant parameters when switching their landing origin to non-www. No feed edits were made.
 - SEO-09: full production URL crawl, Rich Results Test, Google-selected canonical checks and production consent continuity remain release/access dependent. Green dev CI must not be labeled production SEO recovery.
+
+
+## Published URL inventory completed
+
+The complete current production sitemap contained 182 unique URLs. Every equivalent non-www path was fetched with concurrency 3: 182/182 HTTP 200, no request errors, and no observed meta noindex. This confirms destination availability at crawl time, not canonical correctness: all 182 sitemap entries still used www because production has not received these dev changes. Full evidence is in [SEO_URL_INVENTORY.json](audits/2026-10-23/SEO_URL_INVENTORY.json). This inventory does not include historical URLs absent from the current sitemap or inaccessible Search Console history.
+
+## Package state after four code slices
+
+| Package | State |
+|---|---|
+| SEO-00 | Published URL baseline complete; historical/Search Console inventory still partial |
+| SEO-01 | Implemented and verified in dev, PR #403 |
+| SEO-02 | Origin, sitemap pagination integrity and known preview protections implemented in dev, PR #403/#404; live corrected-output crawl awaits a main release |
+| SEO-03 | Default-language known blog redirects implemented in dev, PR #405; localized/other legacy mappings remain open |
+| SEO-04 | Www checkout destination verified with anonymous cart and HTTP 200; browser consent continuity and runtime checkout-domain review remain open |
+| SEO-05 | Merchant product/collection SEO fields implemented, types regenerated, shared JSON-LD origin corrected; Google Rich Results/live-render checks remain open |
+| SEO-06 | Forward/backward collection window identity fixed and browser-tested, PR #406 |
+| SEO-07 | No new locale architecture or hreflang claims shipped; localized legacy mapping requires a genuine translated-content contract |
+| SEO-08 | Search Console access and merchant feed verification remain open; no feed/settings writes |
+| SEO-09 | All four code PRs passed quality/governance and chromium/webkit/mobile/mobile-safari before dev merge; combined dev deployment evidence is tracked by Actions. Production verification is not claimed |
+
+These are staged corrections, not full plan closure. No main merge or domain/theme/merchant-setting change was made. Further main promotion requires the owner's explicit call under CLAUDE.md.
+
+
+## Slice 5 — deployment smoke compatibility and evidence
+
+The first combined dev run (39911774645) built and published successfully, but its smoke result was 7/8: the collection returned HTTP 200 with a valid merchant SEO title, while the old smoke asserted the uppercase brand string. This is not treated as a green deploy. The correction retains the existing error-boundary/status checks and requires a nonempty resource title plus CollectionPage JSON-LD, the exact non-www collection canonical and real product links. PDP checks also honor merchant title casing while retaining Product schema and a non-www product canonical. Five focused regression cases exercise actual grep matching, including missing evidence and empty titles; two failed before the fix.
+
+The optional Shopify standalone component validator was also attempted for the touched routes. It does not use this project's DOM.Iterable/strict-null compiler context and reported incompatible existing Money props; those diagnostics were not hidden with application suppressions. Pinned-project codegen, strict tsc and the full browser gates remain the implementation evidence.
+
+Slice 5 local validation: workflow YAML parsed, smoke shell syntax checked, build/typecheck/lint passed, all 852 tests and coverage thresholds passed. Its PR/browser/deploy gates remain required before a healthy staging claim.
