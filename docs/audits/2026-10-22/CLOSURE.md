@@ -30,8 +30,8 @@ Every finding, its slice, and what is still needed before it can be called **clo
 | F24 | P1 | R14 | Merged to dev (#379) | Sentry DSN + preview verification | Business owner |
 | F25 | P1 | R15 | Merged to dev (#380) | test GA4/Meta/TikTok IDs, vendor-debugger and checkout purchase verification | Business owner |
 | F26 | P1 | R15 | Merged to dev (#380) | test GA4/Meta/TikTok IDs, vendor-debugger and checkout purchase verification | Business owner |
-| F27 | P1 | R16 | Merged to dev (#381) | chat spend cap / shared limit | Business owner |
-| F28 | P1 | R16 | Merged to dev (#381) | chat spend cap / shared limit | Business owner |
+| F27 | P1 | R16 | Resolved by removal (#381 then chat bot removed) | none — chat bot removed (owner decision 2026-10-23) | None |
+| F28 | P1 | R16 | Resolved by removal (#381 then chat bot removed) | none — chat bot removed (owner decision 2026-10-23) | None |
 | F29 | P1 | R17 | Merged to dev (#382) | synthetic customer account for end-to-end checks | Business owner |
 | F30 | P2 | R17 | Merged to dev (#382) | synthetic customer account for end-to-end checks | Business owner |
 | F31 | P1 | R18 | Merged to dev (#383) | attribution/quote policy approval; measured edge-cache hits | Business owner |

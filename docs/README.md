@@ -13,7 +13,6 @@ Start with [Headless Storefront Recovery Plan](HEADLESS_RECOVERY_PLAN.md) — th
 | [Repository governance](REPOSITORY_GOVERNANCE.md) | Promotion path, ruleset contract, release provenance |
 | [Analytics](ANALYTICS.md) | Consent categories, per-channel event mapping |
 | [Accessibility](ACCESSIBILITY.md) | Overlay stack, axe checks, open manual checks |
-| [Chat protection](CHAT_PROTECTION.md) | Rate limits, grounding, spend-cap decision |
 | [Public URLs](PUBLIC_URLS.md) | Canonical origin, robots, sitemap, policy authority |
 | [Reviews](REVIEWS.md) | Judge.me attribution and aggregate rules |
 | [Testing](TESTING.md) | Gates, coverage floors, failing-before audit |
