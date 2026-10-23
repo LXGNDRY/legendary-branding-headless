@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-23",
+  "scope": "Production baseline before any SEO release to main",
+  "sitemap_urls": 182,
+  "sitemap_unique": 182,
+  "sitemap_www": 182,
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/"
+      ],
+      "noindex": false
+    },
+    {
+      "path": "/collections/all-products",
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/collections/all-products"
+      ],
+      "noindex": false
+    },
+    {
+      "path": "/journal",
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/journal"
+      ],
+      "noindex": false
+    },
+    {
+      "path": "/policies/shipping-policy",
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/policies/shipping-policy"
+      ],
+      "noindex": false
+    },
+    {
+      "path": "/products/marque-legendaire-camo-t-shirt-240gsm",
+      "status": 200,
+      "canonical": [
+        "https://www.legendary-branding.com/products/marque-legendaire-camo-t-shirt-240gsm"
+      ],
+      "noindex": false
+    },
+    {
+      "path": "/blogs/legendary_blogging",
+      "status": 404
+    },
+    {
+      "path": "/fr/blogs/legendary_blogging/limited-drop-streetwear-why-exclusivity-rules-culture",
+      "status": 404
+    }
+  ]
+}

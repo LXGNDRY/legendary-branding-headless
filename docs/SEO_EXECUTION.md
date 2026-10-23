@@ -15,7 +15,7 @@ Owner scope: execute the technical SEO plan in verified slices to dev; preserve 
 - Five failing-before tests reproduced preview case/port bypasses, duplicate sitemap nodes and silently incomplete pagination.
 - Sitemap connections now deduplicate handles and fail with a non-cacheable 503 on missing/repeated cursors or the safety limit, rather than publish an apparently complete partial inventory.
 - Shopify preview aliases and case/port-normalized Oxygen hosts retain noindex protections. Local E2E servers retain their existing behavior.
-- Local validation: build, typecheck, lint (existing warnings), 827 tests and coverage passed. Browser CI/merge evidence pending.
+- Local validation: build, typecheck, lint (existing warnings), 827 tests and coverage passed. PR #404: quality/governance and all four browser projects passed; merged to dev at 282307a5e938a19615f1000a0c6d540bba84947d.
 
 ## Slice 3 — verified historic blog redirects (SEO-03)
 
@@ -23,10 +23,33 @@ Owner scope: execute the technical SEO plan in verified slices to dev; preserve 
 - The existing catch-all now recognizes only the known default-language blog paths, verifies article existence through the existing journal loader/query, and redirects 301 to the actual non-www resource. Missing articles, unknown blogs, malformed paths and unresolved localized paths remain 404 for Shopify's existing redirect fallback.
 - Safe attribution parameters survive; redirect/auth parameters are not forwarded. No GraphQL selections or merchant redirects are changed.
 - Localized mappings remain open: do not silently drop a language prefix and claim equivalent content. This slice adds no language URL architecture.
-- Local validation: build/typecheck/lint passed; all 835 tests and measured coverage passed. Browser CI pending.
+- Local validation: build/typecheck/lint passed; all 835 tests and measured coverage passed. PR #405: quality/governance and all four browser projects passed; merged to dev after verification.
+
+## Slice 4 — merchant metadata and pagination (SEO-05/06)
+
+- Three failing-before metadata tests reproduced ignored merchant SEO fields and the loss of collection pagination identity.
+- Product/collection GraphQL queries now select SEO title/description; generated types regenerated successfully with the installed schema. Blank overrides fall back to actual content.
+- Canonical collection pagination keeps only a valid cursor/direction pair. The loader uses the same normalization, so direction without a cursor cannot silently fetch the final page. Filter/sort views remain non-indexable duplicates instead of claiming an unfiltered paginated identity.
+- Browser regression loads a real next collection page and checks its canonical. React checklist: route metadata/server loading only; no new hooks, UI state, client dependencies or interaction changes.
+- Local validation: codegen/build/typecheck/lint and 847 tests with coverage passed; browser CI is rerunning after the review correction below.
 
 ## Remaining packages
 
 SEO-02: pagination completeness and preview aliases. SEO-03: historical redirects. SEO-04: read-only www/checkout verification; no settings writes. SEO-05: resource SEO metadata. SEO-06: pagination identity. SEO-07: localized URL/content policy. SEO-08: indexing/feed access. SEO-09: final combined evidence.
 
 Production still serves the old deployment until an explicitly authorized main release. Search Console checks remain unavailable through the expired GSC Wizard subscription. No claim of search recovery or full plan closure.
+
+
+## Review correction — backwards pagination
+
+PR #406 review identified duplicate canonical identities when returning from page two or reaching an intermediate window backwards. The loader now collapses the first window to the base collection URL. For a backwards intermediate window only, it requests the preceding single item using the same query/sort/filter context to derive the stable forward boundary. Two loader tests and a browser return-to-first-page check cover this behavior. GraphQL selections are unchanged by this correction.
+
+## Current verification limits and next actions
+
+- Production baseline: 182 unique sitemap URLs, all still www. Five sampled public pages still declare www. Default/localized historic blog examples remain 404 in production. See the baseline JSON; these code slices are dev-only.
+- Checkout: an anonymous test cart through Hydrogen's public proxy produced a www checkout URL and returned HTTP 200; its test lines were removed. No customer information/order was submitted. This establishes the destination host, not full browser consent/checkout continuity. A generic JavaScript redirect string in checkout HTML is not proof of a redirect-theme failure.
+- Runtime PUBLIC_CHECKOUT_DOMAIN was observed as non-www in public SSR data. Review it against the verified www checkout destination before a separately authorized runtime configuration change. No settings were changed here.
+- Local production-worker startup is blocked by Shopify CLI uv_interface_addresses in this sandbox. Local default npm 11 also rejects cross-platform optional lock entries; npm 10.9.4 installed successfully with no lockfile change. GitHub's configured browser/worker and deploy checks provide runtime evidence.
+- SEO-07 remains open for genuine localized routes/content mapping. Existing cookie/session selection cannot justify invented hreflang URLs. Unknown localized links are not silently rewritten as English.
+- SEO-08: Search Console selected-canonical/submission checks are blocked by expired GSC Wizard access. Merchant feed link/mobile_link values still require a connected feed audit; preserve variant parameters when switching their landing origin to non-www. No feed edits were made.
+- SEO-09: full production URL crawl, Rich Results Test, Google-selected canonical checks and production consent continuity remain release/access dependent. Green dev CI must not be labeled production SEO recovery.
