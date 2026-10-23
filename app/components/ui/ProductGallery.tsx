@@ -78,7 +78,7 @@ export default function ProductGallery({
     <div className="space-y-3">
       {/* Main image */}
       <div
-        className="relative touch-pan-y overflow-hidden rounded-md bg-[var(--color-bg-level-2)]"
+        className="relative touch-pan-y overflow-hidden rounded-[var(--radius-card)] bg-[var(--color-bg-level-2)]"
         onTouchStart={(event) => {
           touchStartX.current = event.touches[0]?.clientX ?? null;
         }}
