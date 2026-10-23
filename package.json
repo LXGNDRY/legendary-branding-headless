@@ -11,6 +11,7 @@
     "preview": "shopify hydrogen preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:mutations": "node scripts/regression-mutations.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium webkit",
