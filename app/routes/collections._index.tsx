@@ -85,6 +85,9 @@ export async function loader({context}: LoaderFunctionArgs) {
 
 export default function CollectionsIndex() {
   const {collections} = useLoaderData<typeof loader>();
+  const liveCollections = (collections.nodes as CollectionNode[]).filter(
+    (collection) => collection.products.nodes.length > 0,
+  );
 
   const breadcrumbJsonLd = breadcrumbSchema([
     {name: 'Home', url: '/'},
@@ -92,55 +95,79 @@ export default function CollectionsIndex() {
   ]);
 
   return (
-    <Container className="py-16">
+    <div className="bg-[var(--color-bg-level-0)] text-[var(--color-text-primary)]">
+      <section className="border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-level-1)]">
+        <Container className="py-20 md:py-28">
+          <p className="h-eyebrow mb-4 text-[var(--color-accent)]">The Legendary catalog</p>
+          <div className="grid gap-8 lg:grid-cols-[1.15fr_.85fr] lg:items-end">
+            <h1 className="max-w-4xl font-serif text-[clamp(3.5rem,9vw,8rem)] font-normal leading-[.84] tracking-[-.06em]">
+              Find your
+              <br />
+              weight.
+            </h1>
+            <p className="max-w-xl text-lg leading-relaxed text-[var(--color-text-secondary)]">
+              Explore the live Legendary catalog by silhouette, season, and point of view. Start with the collection that fits the way you want to wear the brand.
+            </p>
+          </div>
+        </Container>
+      </section>
+
+      <Container className="py-16 md:py-24">
       <JsonLd data={breadcrumbJsonLd} />
-      <div className="mb-12">
-        <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-text-secondary)] mb-2">
-          Shop
+      <div className="mb-10 flex items-end justify-between gap-6">
+        <div>
+          <p className="h-eyebrow mb-3">Shop by intent</p>
+          <h2 className="font-serif text-3xl font-normal tracking-tight md:text-5xl">Live collections</h2>
+        </div>
+        <p className="hidden max-w-xs text-right text-sm leading-relaxed text-[var(--color-text-secondary)] md:block">
+          Customer-facing collections only. Empty and unpublished collections stay out of the shopping path.
         </p>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-          All Collections
-        </h1>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(collections.nodes as CollectionNode[]).map((collection) => (
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {liveCollections.map((collection) => (
           <Link
             key={collection.id}
             to={`/collections/${collection.handle}`}
             prefetch="intent"
             className="group block"
           >
-            <div className="relative overflow-hidden rounded-lg mb-4">
+            <div className="relative mb-4 aspect-square overflow-hidden rounded-[var(--radius-card)] bg-[var(--color-bg-level-2)]">
               {collection.image ? (
                 <Image
                   data={collection.image}
-                  aspectRatio="4/3"
-                  width={800}
-                  height={600}
+                  aspectRatio="1/1"
+                  width={900}
+                  height={900}
                   sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                  className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="h-full w-full object-cover transition-transform duration-500 ease-[var(--ease-expo)] group-hover:scale-[1.04]"
+                  loading="lazy"
                 />
               ) : (
-                <Placeholder aspect="aspect-[4/3]" label={collection.title} />
+                <Placeholder aspect="aspect-square" label={collection.title} />
               )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" />
+              <span className="absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[.12em] text-white/75">
+                Enter collection ↗
+              </span>
             </div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm font-medium tracking-[0.12em] uppercase group-hover:text-[var(--color-text-secondary)] transition-colors">
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="font-serif text-xl leading-tight text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent)]">
                 {collection.title}
               </span>
-              <span className="text-xs text-[var(--color-text-secondary)]">
-                {collection.products.nodes.length > 0 ? 'Shop Now' : 'Coming Soon'}
+              <span className="shrink-0 font-mono text-[10px] uppercase tracking-[.08em] text-[var(--color-text-tertiary)]">
+                Live
               </span>
             </div>
             {collection.description && (
-              <p className="mt-1 text-xs text-[var(--color-text-secondary)] line-clamp-1">
+              <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--color-text-secondary)]">
                 {collection.description}
               </p>
             )}
           </Link>
         ))}
       </div>
-    </Container>
+      </Container>
+    </div>
   );
 }
