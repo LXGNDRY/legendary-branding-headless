@@ -1712,13 +1712,24 @@ export type StoreTrustQueryVariables = Exact<{
 
 export type StoreTrustQuery = {
   shop: {
-    refundPolicy: {body: string; title: string; url: unknown} | null;
-    shippingPolicy: {title: string} | null;
+    refundPolicy: {body: string; url: unknown} | null;
     paymentSettings: {
       acceptedCardBrands: Array<StorefrontAPI.CardBrand>;
       supportedDigitalWallets: Array<StorefrontAPI.DigitalWallet>;
     };
     brand: {logo: {image: {url: unknown} | null} | null} | null;
+  };
+};
+
+export type StorePolicyTitlesQueryVariables = Exact<{
+  country?: StorefrontAPI.CountryCode | null | undefined;
+  language?: StorefrontAPI.LanguageCode | null | undefined;
+}>;
+
+export type StorePolicyTitlesQuery = {
+  shop: {
+    refundPolicy: {title: string} | null;
+    shippingPolicy: {title: string} | null;
   };
 };
 
@@ -2772,9 +2783,13 @@ interface GeneratedQueryTypes {
     return: NavAllCollectionsQuery;
     variables: NavAllCollectionsQueryVariables;
   };
-  '#graphql\n  query StoreTrust($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { body title url }\n      shippingPolicy { title }\n      paymentSettings { acceptedCardBrands supportedDigitalWallets }\n      brand { logo { image { url } } }\n    }\n  }\n': {
+  '#graphql\n  query StoreTrust($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { body url }\n      paymentSettings { acceptedCardBrands supportedDigitalWallets }\n      brand { logo { image { url } } }\n    }\n  }\n': {
     return: StoreTrustQuery;
     variables: StoreTrustQueryVariables;
+  };
+  '#graphql\n  query StorePolicyTitles($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { title }\n      shippingPolicy { title }\n    }\n  }\n': {
+    return: StorePolicyTitlesQuery;
+    variables: StorePolicyTitlesQueryVariables;
   };
   '#graphql\n  query SitemapProducts($first: Int!, $after: String) {\n    products(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }\n  }\n': {
     return: SitemapProductsQuery;

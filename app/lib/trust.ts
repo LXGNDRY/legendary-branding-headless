@@ -115,8 +115,7 @@ export const STORE_TRUST_QUERY = `#graphql
   query StoreTrust($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
     shop {
-      refundPolicy { body title url }
-      shippingPolicy { title }
+      refundPolicy { body url }
       paymentSettings { acceptedCardBrands supportedDigitalWallets }
       brand { logo { image { url } } }
     }
@@ -125,23 +124,38 @@ export const STORE_TRUST_QUERY = `#graphql
 
 interface StoreTrustQueryResult {
   shop?: {
-    refundPolicy?: {body?: string | null; title?: string | null; url?: unknown} | null;
-    shippingPolicy?: {title?: string | null} | null;
+    refundPolicy?: {body?: string | null; url?: unknown} | null;
     paymentSettings?: {acceptedCardBrands?: string[] | null; supportedDigitalWallets?: string[] | null} | null;
     brand?: {logo?: {image?: {url?: unknown} | null} | null} | null;
   } | null;
 }
 
+/** Policy titles in the shopper's active language (the trust query itself stays English for the return-window parser). */
+export const STORE_POLICY_TITLES_QUERY = `#graphql
+  query StorePolicyTitles($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    shop {
+      refundPolicy { title }
+      shippingPolicy { title }
+    }
+  }
+` as const;
+
+interface StorePolicyTitlesResult {
+  shop?: {refundPolicy?: {title?: string | null} | null; shippingPolicy?: {title?: string | null} | null} | null;
+}
+
 export function toStoreTrust(
   data: StoreTrustQueryResult | null | undefined,
   countries: readonly string[] = [],
+  titles?: StorePolicyTitlesResult | null,
 ): StoreTrust {
   const shop = data?.shop;
   return {
     returnDays: parseReturnWindowDays(shop?.refundPolicy?.body),
     refundPolicyUrl: shop?.refundPolicy?.url ? String(shop.refundPolicy.url) : null,
-    refundPolicyTitle: shop?.refundPolicy?.title || null,
-    shippingPolicyTitle: shop?.shippingPolicy?.title || null,
+    refundPolicyTitle: titles?.shop?.refundPolicy?.title || null,
+    shippingPolicyTitle: titles?.shop?.shippingPolicy?.title || null,
     paymentMethods: paymentMethodLabels(
       shop?.paymentSettings?.acceptedCardBrands,
       shop?.paymentSettings?.supportedDigitalWallets,

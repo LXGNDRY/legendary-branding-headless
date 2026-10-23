@@ -65,11 +65,6 @@ Marketing and product wording that is not yet sourced from Shopify content: home
 
 Discount offers shown on the storefront use the Admin API (`app/lib/discounts.ts`), which sits outside "Storefront API exclusively"; owner decision pending on keeping, replacing or removing that feed.
 
----|---|---|
-| "Never hardcode copy" | Substantial static UI/marketing copy exists in components (see `docs/SECTIONS.md`, recovery plan R07/R21) | Which copy moves to Shopify content vs. stays in code |
-| Admin API discounts vs. "Storefront API exclusively" | Discount availability logic reaches beyond the Storefront-only boundary (recovery plan F49/R07) | Keep, replace, or restrict |
-| Agent merge into `main` | This file allows green-CI agent merges; `docs/REPOSITORY_GOVERNANCE.md` says every PR requires owner approval | Pick one rule, then apply `.github/rulesets/*.json` |
-
 ---
 
 ## Hard Constraints — Never Do These
