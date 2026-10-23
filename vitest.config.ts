@@ -17,8 +17,8 @@ export default defineConfig({
       reporter: ['text-summary', 'json-summary', 'lcov'],
       reportsDirectory: 'coverage',
       include: ['app/**/*.{ts,tsx}', 'server.ts'],
-      // NOTE: floors sit just under the measured baseline (2026-10-22: 73.9/58.5/62.7/74.7) and only ratchet up.
-      thresholds: {statements: 72, branches: 56, functions: 60, lines: 72},
+      // NOTE: floors sit just under the measured baseline (2026-10-23: 81.1/68.5/73.9/82.4) and only ratchet up.
+      thresholds: {statements: 79, branches: 66, functions: 71, lines: 80},
       exclude: [
         'app/**/*.test.{ts,tsx}',
         'app/__tests__/**',

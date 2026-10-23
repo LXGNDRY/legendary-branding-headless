@@ -193,6 +193,7 @@ jobs:
           check_route() {
             local path="$1"
             local label="$2"
+            local markers=("${@:3}")
             local outfile
             outfile="$(mktemp)"
             TOTAL=$((TOTAL + 1))
@@ -221,16 +222,27 @@ jobs:
             elif grep -qi "something went wrong\|unexpected error occurred\|server error" "$outfile" 2>/dev/null; then
               echo "  FAIL: $label contains error boundary text"
               FAILURES=$((FAILURES + 1))
+            else
+              # NOTE: a 200 is not enough -- each route must also contain content that proves the right page rendered.
+              local marker
+              for marker in "${markers[@]}"; do
+                if ! grep -Eq "$marker" "$outfile" 2>/dev/null; then
+                  echo "  FAIL: $label is missing expected content: $marker"
+                  FAILURES=$((FAILURES + 1))
+                fi
+              done
             fi
             rm -f "$outfile"
           }
 
-          check_route "/" "Homepage"
-          check_route "/collections/all-products" "All products"
-          check_route "/cart" "Cart"
-          check_route "/policies/about" "About policy"
-          check_route "/sitemap.xml" "Sitemap"
-          check_route "/robots.txt" "Robots"
+          TITLE_MARKER='<title[^>]*>[^<]*LEGENDARY BRANDING'
+
+          check_route "/" "Homepage" "$TITLE_MARKER"
+          check_route "/collections/all-products" "All products" "$TITLE_MARKER" '"@type":"CollectionPage"'
+          check_route "/cart" "Cart" "$TITLE_MARKER"
+          check_route "/policies/about" "About policy" "$TITLE_MARKER"
+          check_route "/sitemap.xml" "Sitemap" '<urlset' '<loc>https://'
+          check_route "/robots.txt" "Robots" '^Sitemap: https://'
 
           # Discover a real PDP handle from the storefront at runtime so this
           # smoke test remains valid when catalog products change.
@@ -242,7 +254,7 @@ jobs:
             "$DEPLOY_URL/collections/all-products") || PRODUCT_RESULT="000"
           PRODUCT_PATH=$(grep -oE 'href="/products/[^"]+"' "$PRODUCT_OUT" | head -n 1 | cut -d '"' -f 2 || true)
           if echo "$PRODUCT_RESULT" | grep -q "^2" && [ -n "$PRODUCT_PATH" ]; then
-            check_route "$PRODUCT_PATH" "Product detail"
+            check_route "$PRODUCT_PATH" "Product detail" "$TITLE_MARKER" '"@type":"Product"'
           else
             echo "Product detail: FAIL (could not discover a product path from all-products)"
             FAILURES=$((FAILURES + 1))
