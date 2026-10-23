@@ -13,6 +13,10 @@ import {
 } from '~/lib/site';
 
 describe('absoluteUrl / canonicalUrl', () => {
+  it('indexes the non-www Hydrogen storefront independently of the Online Store host', () => {
+    expect(SITE_ORIGIN).toBe('https://legendary-branding.com');
+    expect(canonicalUrl('/products/tee')).toBe('https://legendary-branding.com/products/tee');
+  });
   it('builds canonical URLs on the one origin, without query, fragment or trailing slash', () => {
     expect(canonicalUrl('/')).toBe(`${SITE_ORIGIN}/`);
     expect(canonicalUrl('/products/tee')).toBe(`${SITE_ORIGIN}/products/tee`);
@@ -27,8 +31,12 @@ describe('absoluteUrl / canonicalUrl', () => {
     expect(absoluteUrl(undefined as unknown as string)).toBe(SITE_ORIGIN);
   });
 
-  it('passes a well-formed absolute https URL through without its query', () => {
-    expect(absoluteUrl('https://example.com/x?y=1')).toBe('https://example.com/x');
+  it('normalizes the Online Store alias without accepting an external SEO origin', () => {
+    expect(absoluteUrl('https://www.legendary-branding.com/products/tee?variant=1')).toBe('https://legendary-branding.com/products/tee');
+    expect(absoluteUrl('https://legendary-branding.com/products/tee?variant=1')).toBe('https://legendary-branding.com/products/tee');
+    expect(absoluteUrl('https://example.com/x?y=1')).toBe(SITE_ORIGIN);
+    expect(absoluteUrl('https://legendary-branding.com.evil.test/x')).toBe(SITE_ORIGIN);
+    expect(absoluteUrl('https://legendary-branding.com:8443/x')).toBe(SITE_ORIGIN);
   });
 
   it('exposes named routes', () => {

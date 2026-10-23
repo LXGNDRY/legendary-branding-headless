@@ -84,7 +84,7 @@ describe('/policies/:handle content authority', () => {
 
   it('canonicalizes to the policy route on the live origin', () => {
     const entries = (policyMeta as unknown as (a: unknown) => Array<Record<string, string>>)({data: {handle: 'refund-policy', title: 'Refund'}});
-    expect(entries.find((m) => m.rel === 'canonical')?.href).toBe('https://www.legendary-branding.com/policies/refund-policy');
+    expect(entries.find((m) => m.rel === 'canonical')?.href).toBe('https://legendary-branding.com/policies/refund-policy');
   });
 });
 
@@ -101,7 +101,7 @@ describe('/pages/:handle', () => {
     const data = await runPage('lookbook', {Page: {page: {id: 'p', title: 'Lookbook', body: '<p>x</p>', metafield: null}}});
     expect(data.page.title).toBe('Lookbook');
     const entries = (pageMeta as unknown as (a: unknown) => Array<Record<string, string>>)({data, params: {handle: 'lookbook'}});
-    expect(entries.find((m) => m.rel === 'canonical')?.href).toBe('https://www.legendary-branding.com/pages/lookbook');
+    expect(entries.find((m) => m.rel === 'canonical')?.href).toBe('https://legendary-branding.com/pages/lookbook');
   });
 
   it('404s a missing page', async () => {
