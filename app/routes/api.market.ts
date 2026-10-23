@@ -95,6 +95,8 @@ export async function action({request, context}: ActionFunctionArgs) {
   // from so the client-side can navigate to /de/products/foo instead of
   // reloading /products/foo (which would render in EN and drop the choice
   // Google indexed). Falls back to the home URL for the selected language.
+  // Preserves the referer's search string so a filter, sort, pagination or
+  // search-query page keeps its state across the language switch.
   const target = toSupportedLanguage(language);
   let redirectTo: string | null = null;
   if (target) {
@@ -102,10 +104,11 @@ export async function action({request, context}: ActionFunctionArgs) {
       const referer = request.headers.get('referer');
       const originUrl = new URL(request.url);
       const refererUrl = referer ? new URL(referer) : null;
-      const samePathname =
-        refererUrl && refererUrl.origin === originUrl.origin ? refererUrl.pathname : '/';
+      const sameOrigin = refererUrl && refererUrl.origin === originUrl.origin;
+      const samePathname = sameOrigin ? refererUrl.pathname : '/';
+      const search = sameOrigin ? refererUrl.search : '';
       const {path: bare} = parseLocalizedPath(samePathname);
-      redirectTo = localizePath(bare, target);
+      redirectTo = `${localizePath(bare, target)}${search}`;
     } catch {
       redirectTo = localizePath('/', target);
     }

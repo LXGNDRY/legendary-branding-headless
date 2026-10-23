@@ -57,4 +57,27 @@ describe('applyPrivateHeaders', () => {
   it('exposes the matching robots meta entry', () => {
     expect(PRIVATE_ROBOTS_META).toEqual({name: 'robots', content: 'noindex, nofollow'});
   });
+
+  // SEO-07 regression (Codex P1 on #411): routes are mirrored under every locale slug,
+  // so the private-route contract must apply to the localized variants too — otherwise
+  // /de/cart, /pt-br/account/x and their .data payloads leak per-visitor data uncached.
+  it('treats every locale-prefixed private path as private', () => {
+    for (const slug of ['de', 'es', 'fr', 'hi', 'id', 'it', 'pt-br']) {
+      expect(isPrivatePath(`/${slug}/account`)).toBe(true);
+      expect(isPrivatePath(`/${slug}/account/orders`)).toBe(true);
+      expect(isPrivatePath(`/${slug}/cart`)).toBe(true);
+      expect(isPrivatePath(`/${slug}/account.data`)).toBe(true);
+      expect(isPrivatePath(`/${slug}/cart/x.data`)).toBe(true);
+    }
+    // And still ignores locale-prefixed public paths.
+    expect(isPrivatePath('/de/products/foo')).toBe(false);
+    expect(isPrivatePath('/pt-br/journal/x')).toBe(false);
+  });
+
+  it('applies private headers to locale-prefixed account/cart URLs', () => {
+    const response = respond(200);
+    const result = applyPrivateHeaders(response, 'https://shop.test/de/account');
+    expect(result.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(result.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+  });
 });

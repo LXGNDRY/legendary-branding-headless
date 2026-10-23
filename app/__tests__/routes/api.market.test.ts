@@ -125,4 +125,75 @@ describe('api.market action', () => {
       expect(response.headers.getSetCookie()).toEqual(['cart=gid://shopify/Cart/new', 'session=updated']);
     });
   });
+
+  // SEO-07 regression (Codex P2 on #411): the language switch computes a locale-prefixed
+  // redirect target, which must preserve the referer's query string so a filtered,
+  // sorted, paginated or searched page keeps its state.
+  describe('redirectTo (locale switch)', () => {
+    // Rate-limit buckets are keyed by caller identity; vary the IP so each sub-case
+    // uses its own bucket and never hits the 10/min cap (the suite as a whole uses
+    // more than that against this policy).
+    let callN = 0;
+    const switchTo = async (refererPath: string, language: string) => {
+      callN += 1;
+      const mockStorefront = createMockStorefront({responses: {StorefrontLocalization: localization}});
+      const context = mockStorefront.createContext({
+        session: {get: () => null, set: () => {}, unset: () => {}, commit: async () => 'session=updated', isPending: true},
+        cart: {getCartId: async () => null},
+      });
+      const request = new Request('http://localhost/api/market', {
+        method: 'POST',
+        headers: {
+          Origin: 'http://localhost',
+          Referer: `http://localhost${refererPath}`,
+          'cf-connecting-ip': `10.0.0.${callN}`,
+        },
+        body: new URLSearchParams({country: 'ES', language}),
+      });
+      // @ts-expect-error - minimal Hydrogen app context
+      const response = await action({request, context, params: {}});
+      return response.json() as Promise<{redirectTo?: string | null; success?: boolean}>;
+    };
+
+    it('returns the bare path for an EN switch', async () => {
+      expect((await switchTo('/products/foo', 'EN')).redirectTo).toBe('/products/foo');
+    });
+
+    it('prefixes the path with the locale slug when switching to a non-default language', async () => {
+      expect((await switchTo('/products/foo', 'ES')).redirectTo).toBe('/es/products/foo');
+    });
+
+    it('strips any existing locale prefix before applying the new one', async () => {
+      // Switching from DE to ES on /de/products/foo should go to /es/products/foo, not /es/de/products/foo.
+      expect((await switchTo('/de/products/foo', 'ES')).redirectTo).toBe('/es/products/foo');
+    });
+
+    it('preserves the referer query string (filters, pagination, search queries)', async () => {
+      expect((await switchTo('/search?q=shirt', 'ES')).redirectTo).toBe('/es/search?q=shirt');
+      expect((await switchTo('/collections/all-products?sort=price&page=2', 'ES')).redirectTo).toBe('/es/collections/all-products?sort=price&page=2');
+    });
+
+    it('ignores a cross-origin referer and falls back to the locale home', async () => {
+      callN += 1;
+      // A referer from another origin should not leak into our URL
+      const mockStorefront = createMockStorefront({responses: {StorefrontLocalization: localization}});
+      const context = mockStorefront.createContext({
+        session: {get: () => null, set: () => {}, unset: () => {}, commit: async () => 'session=updated', isPending: true},
+        cart: {getCartId: async () => null},
+      });
+      const request = new Request('http://localhost/api/market', {
+        method: 'POST',
+        headers: {
+          Origin: 'http://localhost',
+          Referer: 'https://evil.example.com/products/foo?q=stealme',
+          'cf-connecting-ip': `10.0.1.${callN}`,
+        },
+        body: new URLSearchParams({country: 'ES', language: 'ES'}),
+      });
+      // @ts-expect-error - minimal Hydrogen app context
+      const response = await action({request, context, params: {}});
+      const body = (await response.json()) as {redirectTo?: string | null};
+      expect(body.redirectTo).toBe('/es');
+    });
+  });
 });
