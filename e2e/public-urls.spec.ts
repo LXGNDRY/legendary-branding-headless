@@ -47,3 +47,18 @@ test('an unknown policy handle is a 404, not a soft success', async ({request}) 
   const response = await request.get('/policies/definitely-not-a-policy', {maxRedirects: 0});
   expect(response.status()).toBe(404);
 });
+
+
+test('historic blog links redirect permanently to existing journal content', async ({request}) => {
+  const index = await request.get('/blogs/legendary_blogging?utm_source=legacy-test', {maxRedirects: 0});
+  expect(index.status()).toBe(301);
+  expect(index.headers()['location']).toBe(`${LIVE_ORIGIN}/journal?utm_source=legacy-test`);
+  const journal = await request.get('/journal');
+  expect(journal.status()).toBe(200);
+  const articlePath = (await journal.text()).match(/href="(\/journal\/[^"?#]+)"/)?.[1];
+  expect(articlePath).toBeTruthy();
+  const legacy = await request.get(articlePath!.replace('/journal/', '/blogs/legendary_blogging/'), {maxRedirects: 0});
+  expect(legacy.status()).toBe(301);
+  expect(legacy.headers()['location']).toBe(`${LIVE_ORIGIN}${articlePath}`);
+  expect((await request.get(articlePath!)).status()).toBe(200);
+});
