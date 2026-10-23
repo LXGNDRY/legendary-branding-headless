@@ -94,10 +94,10 @@ export default function Footer({
           <div className="max-w-lg">
             <Link
               to="/"
-              className="inline-flex items-center gap-3 text-[clamp(2rem,4vw,3rem)] font-serif leading-none text-[var(--color-text-primary)] select-none"
+              aria-label="Legendary Branding"
+              className="inline-flex items-center text-[var(--color-text-primary)] select-none"
             >
-              <BrandLogo className="h-[0.85em] w-[0.85em] shrink-0" />
-              LEGENDARY
+              <BrandLogo className="h-12 w-12 md:h-14 md:w-14 shrink-0" />
             </Link>
             <p className="mt-5 text-[var(--color-text-secondary)] leading-relaxed">
               Premium streetwear crafted with intention. Designed for the bold.

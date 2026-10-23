@@ -24,6 +24,18 @@ afterEach(() => {
 });
 
 describe('Header', () => {
+  it('shows the icon-only logo (no wordmark) with the brand name as its accessible name', () => {
+    renderHeader();
+    const logos = screen.getAllByRole('link', {name: 'Legendary Branding'});
+    expect(logos.length).toBeGreaterThan(0);
+    for (const logo of logos) {
+      expect(logo).toHaveAttribute('href', '/');
+      expect(logo.textContent?.trim()).toBe('');
+      expect(logo.querySelector('svg')).not.toBeNull();
+    }
+    expect(document.body.textContent).not.toMatch(/LEGENDARY/);
+  });
+
   it('renders the main navigation with the Shop link first', () => {
     renderHeader();
     const nav = screen.getByRole('navigation', {name: 'Main'});
