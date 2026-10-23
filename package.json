@@ -16,6 +16,8 @@
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium webkit",
     "validate:release-env": "node scripts/validate-release-env.mjs",
+    "seo:baseline": "node scripts/seo-postrelease-baseline.mjs",
+    "seo:checkout-boundary": "node scripts/seo-checkout-boundary.mjs",
     "locales:check": "python3 scripts/locales.py --check"
   },
   "type": "module",
