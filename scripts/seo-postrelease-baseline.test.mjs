@@ -41,6 +41,24 @@ describe('assertAll (post-release SEO baseline)', () => {
     expect(failures.some((failure) => failure.includes('redirect target off origin'))).toBe(true);
   });
 
+  it('accepts a relative same-origin redirect Location (Shopify URL Redirects for /pages/<policy>)', () => {
+    const ok = clone({
+      legacyRedirects: [
+        {path: '/blogs/legendary_blogging', status: 301, location: 'https://legendary-branding.com/journal'},
+        {path: '/pages/about', status: 301, location: '/policies/about'},
+        {path: '/pages/shipping-policy', status: 308, location: '/policies/shipping-policy'},
+      ],
+    });
+    expect(assertAll(ok)).toEqual([]);
+  });
+
+  it('still rejects a redirect Location that resolves off the public origin or to www', () => {
+    const www = clone({legacyRedirects: [{path: '/pages/about', status: 301, location: 'https://www.legendary-branding.com/policies/about'}]});
+    expect(assertAll(www)).toEqual(expect.arrayContaining([expect.stringContaining('redirect target off origin')]));
+    const offsite = clone({legacyRedirects: [{path: '/pages/about', status: 301, location: 'https://evil.example.com/policies/about'}]});
+    expect(assertAll(offsite)).toEqual(expect.arrayContaining([expect.stringContaining('redirect target off origin')]));
+  });
+
   it('fails when the sitemap still carries www loc entries', () => {
     const bad = clone({sitemap: {status: 200, total: 182, www: 5, nonWww: 177, sample: []}});
     expect(assertAll(bad)).toEqual(expect.arrayContaining([expect.stringContaining('sitemap has 5 www loc')]));
