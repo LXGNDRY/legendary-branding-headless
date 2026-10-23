@@ -48,6 +48,24 @@ describe('trust', () => {
     expect(STORE_POLICY_TITLES_QUERY).toMatch(/\$language: LanguageCode/);
   });
 
+  it('prefers the published refund and shipping Pages over the built-in policies', () => {
+    const trust = toStoreTrust(
+      {
+        shop: {refundPolicy: {body: 'You have 14 days to request a return.'}},
+        refundPage: {body: 'You have 30 days from the date of delivery to request a return.'},
+      },
+      [],
+      {
+        shop: {refundPolicy: {title: 'Refund policy'}, shippingPolicy: {title: 'Shipping policy'}},
+        refundPage: {title: 'Return & Refund Policy', body: '<p>x</p>'},
+        shippingPage: {title: 'Worldwide Shipping', body: '<p>x</p>'},
+      },
+    );
+    expect(trust.returnDays).toBe(30);
+    expect(trust.refundPolicyTitle).toBe('Return & Refund Policy');
+    expect(trust.shippingPolicyTitle).toBe('Worldwide Shipping');
+  });
+
   it('ignores other durations in the policy', () => {
     const real =
       'Return Window You have 30 days from the date of delivery to request a return. If approved, your refund will be issued to your original payment method within 5–7 business days. Damaged item? Email us within 30 days of delivery.';

@@ -132,6 +132,8 @@ const PRODUCT_QUERY = `#graphql
       shippingPolicy { title body }
       refundPolicy { title body }
     }
+    shippingPage: page(handle: "shipping-policy") { title body }
+    refundPage: page(handle: "refund-policy") { title body }
     product(handle: $handle) {
       id
       title
@@ -255,7 +257,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const selectedOptions = getSelectedProductOptions(request);
   const market = {country: context.storefront.i18n.country, language: context.storefront.i18n.language};
 
-  const [{product: content, shop}, commerce] = await Promise.all([
+  const [{product: content, shop, shippingPage, refundPage}, commerce] = await Promise.all([
     context.storefront.query(PRODUCT_QUERY, {variables: {handle, ...market}, cache: CacheLong()}),
     (async () => {
       const extras: {
@@ -325,10 +327,11 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
     relatedProducts: relatedProducts as {products?: {nodes?: unknown[]}} | null,
     reviews,
     reviewSummary,
-    // NOTE: shipping, duties and returns text is relayed from the store's own policies, never written in code.
+    // NOTE: shipping, duties and returns text is relayed from the store, never written in code. The published Page of
+    // the policy handle wins (same rule as /policies); the built-in policy is the fallback.
     policies: {
-      shipping: shop?.shippingPolicy ?? null,
-      returns: shop?.refundPolicy ?? null,
+      shipping: shippingPage?.body ? {title: shippingPage.title, body: String(shippingPage.body)} : (shop?.shippingPolicy ?? null),
+      returns: refundPage?.body ? {title: refundPage.title, body: String(refundPage.body)} : (shop?.refundPolicy ?? null),
     },
   };
 }
