@@ -29,11 +29,18 @@ async function thrown(promise: Promise<unknown>): Promise<Response> {
 }
 
 describe('/policies/:handle content authority', () => {
-  it('a built-in store policy beats a stale Page of the same handle', async () => {
+  it('the published Page of the handle beats the built-in store policy', async () => {
     const data = await runPolicy('refund-policy', {
-      Policy: {page: {id: 'p', title: 'Old returns', body: '<p>stale</p>'}, shop: {...noShop, refundPolicy: policy('Refund policy', '<p>current</p>')}},
+      Policy: {page: {id: 'p', title: 'Return & Refund Policy', body: '<p>page copy</p>'}, shop: {...noShop, refundPolicy: policy('Refund policy', '<p>built-in</p>')}},
     });
-    expect(data).toEqual({handle: 'refund-policy', title: 'Refund policy', bodyHtml: '<p>current</p>'});
+    expect(data).toEqual({handle: 'refund-policy', title: 'Return & Refund Policy', bodyHtml: '<p>page copy</p>'});
+  });
+
+  it('falls back to the built-in policy when the Page of that handle has no body', async () => {
+    const data = await runPolicy('refund-policy', {
+      Policy: {page: {id: 'p', title: 'Returns', body: ''}, shop: {...noShop, refundPolicy: policy('Refund policy', '<p>built-in</p>')}},
+    });
+    expect(data).toEqual({handle: 'refund-policy', title: 'Refund policy', bodyHtml: '<p>built-in</p>'});
   });
 
   it('falls back to a Page of that handle when there is no built-in policy', async () => {

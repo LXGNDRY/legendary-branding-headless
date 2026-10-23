@@ -1719,6 +1719,7 @@ export type StoreTrustQuery = {
     };
     brand: {logo: {image: {url: unknown} | null} | null} | null;
   };
+  refundPage: {body: unknown} | null;
 };
 
 export type StorePolicyTitlesQueryVariables = Exact<{
@@ -1731,6 +1732,8 @@ export type StorePolicyTitlesQuery = {
     refundPolicy: {title: string} | null;
     shippingPolicy: {title: string} | null;
   };
+  refundPage: {title: string; body: unknown} | null;
+  shippingPage: {title: string; body: unknown} | null;
 };
 
 export type SitemapProductsQueryVariables = Exact<{
@@ -2472,6 +2475,8 @@ export type ProductQuery = {
     shippingPolicy: {title: string; body: string} | null;
     refundPolicy: {title: string; body: string} | null;
   };
+  shippingPage: {title: string; body: unknown} | null;
+  refundPage: {title: string; body: unknown} | null;
   product: {
     id: string;
     title: string;
@@ -2732,11 +2737,11 @@ interface GeneratedQueryTypes {
     return: NavAllCollectionsQuery;
     variables: NavAllCollectionsQueryVariables;
   };
-  '#graphql\n  query StoreTrust($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { body url }\n      paymentSettings { acceptedCardBrands supportedDigitalWallets }\n      brand { logo { image { url } } }\n    }\n  }\n': {
+  '#graphql\n  query StoreTrust($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { body url }\n      paymentSettings { acceptedCardBrands supportedDigitalWallets }\n      brand { logo { image { url } } }\n    }\n    refundPage: page(handle: "refund-policy") { body }\n  }\n': {
     return: StoreTrustQuery;
     variables: StoreTrustQueryVariables;
   };
-  '#graphql\n  query StorePolicyTitles($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { title }\n      shippingPolicy { title }\n    }\n  }\n': {
+  '#graphql\n  query StorePolicyTitles($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { title }\n      shippingPolicy { title }\n    }\n    refundPage: page(handle: "refund-policy") { title body }\n    shippingPage: page(handle: "shipping-policy") { title body }\n  }\n': {
     return: StorePolicyTitlesQuery;
     variables: StorePolicyTitlesQueryVariables;
   };
@@ -2804,7 +2809,7 @@ interface GeneratedQueryTypes {
     return: PolicyQuery;
     variables: PolicyQueryVariables;
   };
-  '#graphql\n  query Product(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    shop {\n      shippingPolicy { title body }\n      refundPolicy { title body }\n    }\n    product(handle: $handle) {\n      id\n      title\n      handle\n      descriptionHtml\n      tags\n      vendor\n      productType\n      metafields(identifiers: [\n        {namespace: "custom", key: "material"}\n        {namespace: "custom", key: "fit"}\n        {namespace: "custom", key: "care"}\n        {namespace: "custom", key: "size_chart"}\n        {namespace: "judgeme", key: "badge"}\n        {namespace: "judgeme", key: "widget"}\n        {namespace: "reviews", key: "rating"}\n        {namespace: "reviews", key: "rating_count"}\n      ]) {\n        key\n        value\n        type\n        reference {\n          ... on MediaImage {\n            image { url altText width height }\n          }\n        }\n      }\n      # NOTE: the gallery is intentionally capped at the first 10 images; a selected variant\'s own image is added separately.\n      images(first: 10) {\n        nodes { id url altText width height }\n      }\n    }\n  }\n': {
+  '#graphql\n  query Product(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    shop {\n      shippingPolicy { title body }\n      refundPolicy { title body }\n    }\n    shippingPage: page(handle: "shipping-policy") { title body }\n    refundPage: page(handle: "refund-policy") { title body }\n    product(handle: $handle) {\n      id\n      title\n      handle\n      descriptionHtml\n      tags\n      vendor\n      productType\n      metafields(identifiers: [\n        {namespace: "custom", key: "material"}\n        {namespace: "custom", key: "fit"}\n        {namespace: "custom", key: "care"}\n        {namespace: "custom", key: "size_chart"}\n        {namespace: "judgeme", key: "badge"}\n        {namespace: "judgeme", key: "widget"}\n        {namespace: "reviews", key: "rating"}\n        {namespace: "reviews", key: "rating_count"}\n      ]) {\n        key\n        value\n        type\n        reference {\n          ... on MediaImage {\n            image { url altText width height }\n          }\n        }\n      }\n      # NOTE: the gallery is intentionally capped at the first 10 images; a selected variant\'s own image is added separately.\n      images(first: 10) {\n        nodes { id url altText width height }\n      }\n    }\n  }\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };
