@@ -7,6 +7,12 @@ describe('Security headers', () => {
       expect(SECURITY_HEADERS['Content-Security-Policy']).toBeTruthy();
     });
 
+    it('allows the exact analytics endpoint used by the installed Hydrogen provider', () => {
+      const connect = SECURITY_HEADERS['Content-Security-Policy'].split(';').find((d) => d.trim().startsWith('connect-src '));
+      expect(connect?.trim().split(/\s+/)).toContain('https://monorail-edge.shopifysvc.com');
+      expect(connect?.trim().split(/\s+/)).not.toContain('https://*.shopifysvc.com');
+    });
+
     it('CSP blocks object-src', () => {
       expect(SECURITY_HEADERS['Content-Security-Policy']).toContain("object-src 'none'");
     });
