@@ -59,6 +59,22 @@ describe('sitemap.xml', () => {
     expect(body).toContain('/journal/post');
   });
 
+  it('advertises every path in all 8 enabled locales with reciprocal hreflang alternates (SEO-07)', async () => {
+    const {body} = await run('US', 'EN');
+    expect(body).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
+    // EN at root, each other at its slug
+    for (const slug of ['', '/de', '/es', '/fr', '/hi', '/id', '/it', '/pt-br']) {
+      expect(body).toContain(`<loc>https://legendary-branding.com${slug}/products/tee</loc>`);
+    }
+    // Each block declares a full alternate set + x-default pointing to EN
+    const product = body.match(/<loc>https:\/\/legendary-branding\.com\/pt-br\/products\/tee<\/loc>[\s\S]*?<\/url>/)?.[0] ?? '';
+    expect(product).toContain('hreflang="en"');
+    expect(product).toContain('hreflang="de"');
+    expect(product).toContain('hreflang="pt-BR"');
+    expect(product).toContain('hreflang="x-default"');
+    expect(product).toContain('hreflang="x-default" href="https://legendary-branding.com/products/tee"');
+  });
+
   it('always uses the canonical public origin, whatever host served the request', async () => {
     const {body} = await run('US', 'EN', {requestUrl: 'https://legendary-abc.o2.myshopify.dev/sitemap.xml'});
     const locs = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);

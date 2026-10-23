@@ -7,6 +7,7 @@ import {
   normalizeLanguageCode,
 } from '~/lib/market';
 import {CART_QUERY_FRAGMENT, CART_MUTATE_FRAGMENT} from '~/lib/fragments';
+import {parseLocalizedPath} from '~/lib/locale';
 
 /**
  * The subset of Cloudflare's `IncomingRequestCfProperties` we rely on.
@@ -87,6 +88,12 @@ export async function createAppLoadContext(
   const activeCountry = storedCountry ?? resolveCountry(request);
   const storedLanguage = normalizeLanguageCode(session.get('language'));
 
+  // The URL locale prefix wins over the session (and the session wins over the default).
+  // Google needs each language on its own URL; the session is kept only so a visitor who lands
+  // on the EN root but previously picked DE still sees DE translations without a redirect loop.
+  const urlLocale = parseLocalizedPath(new URL(request.url).pathname);
+  const activeLanguage = urlLocale.language !== 'EN' ? urlLocale.language : (storedLanguage ?? DEFAULT_LANGUAGE);
+
   // Configure customer account if env vars are present
   const hasCustomerAccount = Boolean(
     env.PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID,
@@ -99,7 +106,7 @@ export async function createAppLoadContext(
     waitUntil,
     session,
     i18n: {
-      language: storedLanguage ?? DEFAULT_LANGUAGE,
+      language: activeLanguage,
       country: activeCountry,
     },
     cart: {

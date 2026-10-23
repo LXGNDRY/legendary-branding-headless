@@ -31,6 +31,16 @@ describe('buildRobotsTxt', () => {
     expect(text).not.toContain('Disallow: /cart/');
   });
 
+  // SEO-07 regression (Codex P1 on #411): localized routes mirror all public paths,
+  // so each private/thin path has a locale-prefixed variant that must also be blocked.
+  it('blocks the locale-prefixed variant of every private/thin path', () => {
+    for (const slug of ['de', 'es', 'fr', 'hi', 'id', 'it', 'pt-br']) {
+      for (const path of ['/account', '/cart', '/checkout', '/wishlist', '/search', '/api/']) {
+        expect(text).toContain(`Disallow: /${slug}${path}`);
+      }
+    }
+  });
+
   it('blocks collection facets but not canonicalised parameters', () => {
     expect(text).toContain('Disallow: /*?*sort=');
     expect(text).toContain('Disallow: /*?*tag=');

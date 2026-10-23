@@ -5,10 +5,10 @@ import {useWishlist} from '~/components/ui/Wishlist';
 import ProductCard from '~/components/ui/ProductCard';
 import {useEffect, useState} from 'react';
 import type {ProductCardFragment} from '~/components/ui/ProductCard';
-import {ROUTES, canonicalUrl} from '~/lib/site';
+import {ROUTES, canonicalLocaleUrl} from '~/lib/site';
 
-export const meta: MetaFunction = () => {
-  const canonical = canonicalUrl(ROUTES.wishlist);
+export const meta: MetaFunction = ({matches}) => {
+  const canonical = canonicalLocaleUrl(ROUTES.wishlist, matches);
   return [
     {title: 'Wishlist | LEGENDARY BRANDING'},
     {name: 'description', content: 'Your saved items from Legendary Branding.'},

@@ -15,7 +15,7 @@ export default function MarketSelector({
   languages: MarketLanguage[];
 }) {
   const t = useTranslation();
-  const fetcher = useFetcher<{success?: boolean; error?: string}>();
+  const fetcher = useFetcher<{success?: boolean; error?: string; redirectTo?: string | null}>();
   const busy = fetcher.state !== 'idle';
   const selectId = useId();
   const errorId = `${selectId}-error`;
@@ -25,9 +25,17 @@ export default function MarketSelector({
       // Root loader reads the selected country from the server session. A
       // document navigation makes every price and availability query use the
       // newly selected Shopify Market, rather than only updating this control.
-      window.location.reload();
+      // When the language changed, go to the equivalent locale URL (SEO-07)
+      // so the shopper lands on the indexable language variant instead of
+      // reloading the previous locale.
+      const redirectTo = fetcher.data.redirectTo;
+      if (typeof redirectTo === 'string' && redirectTo !== window.location.pathname) {
+        window.location.assign(redirectTo);
+      } else {
+        window.location.reload();
+      }
     }
-  }, [fetcher.data?.success]);
+  }, [fetcher.data?.success, fetcher.data?.redirectTo]);
 
   return (
     <fetcher.Form method="post" action="/api/market" className="flex items-center gap-2">

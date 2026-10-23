@@ -11,7 +11,7 @@ import {parseContentBlocks} from '~/lib/content-blocks';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema} from '~/components/seo/SeoSchema';
-import {ROUTES, canonicalUrl, isPolicyHandle} from '~/lib/site';
+import {ROUTES, canonicalLocaleUrl, isPolicyHandle} from '~/lib/site';
 
 const PAGE_QUERY = `#graphql
   query Page($handle: String!, $country: CountryCode, $language: LanguageCode)
@@ -34,9 +34,9 @@ interface PageData {
   metafield?: {value: string} | null;
 }
 
-export const meta: MetaFunction<typeof loader> = ({data, params}) => {
+export const meta: MetaFunction<typeof loader> = ({data, params, matches}) => {
   const title = `${data?.page?.title ?? 'Page'} | LEGENDARY BRANDING`;
-  const canonical = canonicalUrl(ROUTES.page(params.handle ?? ''));
+  const canonical = canonicalLocaleUrl(ROUTES.page(params.handle ?? ''), matches);
 
   return [
     {title},

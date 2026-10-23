@@ -23,7 +23,7 @@ import {
   resolveMenuCollections,
   type MenuItemNode,
 } from '~/lib/nav';
-import {ROUTES, canonicalUrl} from '~/lib/site';
+import {ROUTES, canonicalLocaleUrl} from '~/lib/site';
 
 const HOMEPAGE_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
@@ -54,16 +54,17 @@ const HOMEPAGE_QUERY = `#graphql
   }
 ` as const;
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = ({matches}) => {
   const description = 'Premium editorial streetwear. Bold, minimal, fast.';
+  const canonical = canonicalLocaleUrl(ROUTES.home, matches);
   return [
     {title: 'LEGENDARY BRANDING | Premium Editorial Streetwear'},
     {name: 'description', content: description},
-    {tagName: 'link', rel: 'canonical', href: canonicalUrl(ROUTES.home)},
+    {tagName: 'link', rel: 'canonical', href: canonical},
     {property: 'og:type', content: 'website'},
     {property: 'og:title', content: 'LEGENDARY BRANDING'},
     {property: 'og:description', content: description},
-    {property: 'og:url', content: canonicalUrl(ROUTES.home)},
+    {property: 'og:url', content: canonical},
     {name: 'twitter:card', content: 'summary_large_image'},
     {name: 'twitter:title', content: 'LEGENDARY BRANDING'},
     {name: 'twitter:description', content: description},

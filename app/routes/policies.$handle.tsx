@@ -4,7 +4,7 @@ import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema, faqPageSchema, parseFaqFromHtml} from '~/components/seo/SeoSchema';
-import {POLICY_PAGES, ROUTES, SUPPORT_EMAIL, canonicalUrl, isPolicyHandle} from '~/lib/site';
+import {POLICY_PAGES, ROUTES, SUPPORT_EMAIL, canonicalLocaleUrl, isPolicyHandle} from '~/lib/site';
 
 const POLICY_QUERY = `#graphql
   query Policy(
@@ -34,10 +34,10 @@ type ShopPolicies = {
   privacyPolicy?: ShopPolicy | null;
 };
 
-export const meta: MetaFunction<typeof loader> = ({data}) => {
+export const meta: MetaFunction<typeof loader> = ({data, matches}) => {
   const title = `${data?.title ?? 'Policy'} | LEGENDARY BRANDING`;
   const description = data?.title ? `${data.title} | Legendary Branding` : 'Legendary Branding policies.';
-  const canonical = canonicalUrl(ROUTES.policy(data?.handle ?? ''));
+  const canonical = canonicalLocaleUrl(ROUTES.policy(data?.handle ?? ''), matches);
 
   return [
     {title},
