@@ -1,6 +1,7 @@
 import SafeHtml from '~/components/ui/SafeHtml';
 import type {MetaFunction, LoaderFunctionArgs} from 'react-router';
-import {useLoaderData, Link} from 'react-router';
+import {useLoaderData} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {useLanguage} from '~/lib/i18n';
 import {formatDate} from '~/lib/locale';
 import {Image} from '@shopify/hydrogen';

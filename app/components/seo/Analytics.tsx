@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {AnalyticsEvent, useAnalytics} from '@shopify/hydrogen';
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {
   ALL_DENIED,
   ALL_GRANTED,

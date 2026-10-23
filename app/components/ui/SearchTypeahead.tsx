@@ -1,5 +1,6 @@
 import {useId, useState, useEffect, useRef} from 'react';
-import {Link, useNavigate} from 'react-router';
+import {useNavigate} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {Image} from '@shopify/hydrogen';
 import StarRating from '~/components/ui/StarRating';
 import {parseJudgemeBadge} from '~/lib/judgeme';

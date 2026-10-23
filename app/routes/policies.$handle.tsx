@@ -1,5 +1,6 @@
 import SafeHtml from '~/components/ui/SafeHtml';
-import {redirect, type LoaderFunctionArgs, type MetaFunction, useLoaderData, Link} from 'react-router';
+import {redirect, type LoaderFunctionArgs, type MetaFunction, useLoaderData} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import Container from '~/components/ui/Container';
 import {CacheLong} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';

@@ -155,8 +155,22 @@ export function assertAll(baseline, expectedSha) {
   for (const sitemapLine of baseline.robots.sitemaps) {
     if (sitemapLine.startsWith(WWW_ORIGIN)) failures.push(`robots Sitemap: line points to www: ${sitemapLine}`);
   }
-  if (expectedSha && baseline.release.release?.commit && baseline.release.release.commit !== expectedSha) {
-    failures.push(`/api/release commit ${baseline.release.release.commit} != expected ${expectedSha}`);
+  // /api/release returns {ok, sha, missing} (see app/lib/release.ts). The SHA field
+  // is `sha`, not `commit`, and a healthy probe is 200 with ok:true and missing:0.
+  // When a release SHA is expected, the probe must be reachable, healthy, and serving
+  // exactly that commit -- otherwise the gate could "pass" against a down origin or an
+  // older deployment.
+  if (expectedSha) {
+    const release = baseline.release?.release;
+    if (baseline.release?.status !== 200) {
+      failures.push(`/api/release probe status ${baseline.release?.status ?? 'unknown'} (want 200)`);
+    } else if (release?.ok !== true || release?.missing !== 0) {
+      failures.push(`/api/release reports an incomplete runtime env contract (ok=${release?.ok}, missing=${release?.missing})`);
+    } else if (typeof release?.sha !== 'string') {
+      failures.push('/api/release did not report a sha');
+    } else if (release.sha !== expectedSha && release.sha !== expectedSha.toLowerCase()) {
+      failures.push(`/api/release sha ${release.sha} != expected ${expectedSha}`);
+    }
   }
   return failures;
 }

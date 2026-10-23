@@ -1,4 +1,4 @@
-import {Link} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {Image} from '@shopify/hydrogen';
 import {useRevealChildren} from '~/hooks/useReveal';
 

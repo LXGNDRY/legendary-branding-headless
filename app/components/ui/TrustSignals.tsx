@@ -1,4 +1,5 @@
-import {Link, useRouteLoaderData} from 'react-router';
+import {useRouteLoaderData} from 'react-router';
+import {LocaleLink as Link} from '~/components/ui/LocaleLink';
 import {useTranslation} from '~/lib/i18n';
 import {EMPTY_STORE_TRUST, type StoreTrust} from '~/lib/trust';
 
