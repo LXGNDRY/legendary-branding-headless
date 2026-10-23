@@ -27,7 +27,7 @@ import CartDrawer from '~/components/layout/CartDrawer';
 import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import DiscountsPopup from '~/components/ui/DiscountsPopup';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
-import {STORE_TRUST_QUERY, toStoreTrust, withBudget} from '~/lib/trust';
+import {STORE_POLICY_TITLES_QUERY, STORE_TRUST_QUERY, toStoreTrust, withBudget} from '~/lib/trust';
 import Analytics from '~/components/seo/Analytics';
 import {analyticsEnvironment} from '~/lib/analytics-environment';
 import type {CartData} from '~/lib/cart';
@@ -169,13 +169,19 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     cache: CacheLong(),
   });
   (context.waitUntil ?? (() => {}))(storeTrustLookup.then(() => undefined, () => undefined));
+  // Policy link labels use the shopper's language (Shopify serves its own translation of each title).
+  const policyTitlesLookup = context.storefront.query(STORE_POLICY_TITLES_QUERY, {
+    variables: {country: context.storefront.i18n.country, language: context.storefront.i18n.language},
+    cache: CacheLong(),
+  });
+  (context.waitUntil ?? (() => {}))(policyTitlesLookup.then(() => undefined, () => undefined));
 
   const shopAnalytics = analyticsEnvironment(request.url);
 
   // NOTE: localization is CRITICAL (it decides currency and language, so a wrong fallback would show wrong
   // prices) and may fail the request. Cart, analytics shop, menu and trust are optional: each has a budget
   // and a safe fallback so one slow or failing dependency can't take every page down.
-  const [cartData, localizationResult, shop, menuResult, storeTrustResult] = await Promise.all([
+  const [cartData, localizationResult, shop, menuResult, storeTrustResult, policyTitlesResult] = await Promise.all([
     optional('cart', cart.get(), {ms: OPTIONAL_BUDGET_MS, fallback: null}),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
@@ -211,6 +217,7 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       {ms: OPTIONAL_BUDGET_MS, fallback: null},
     ),
     withBudget(storeTrustLookup, STORE_TRUST_BUDGET_MS),
+    withBudget(policyTitlesLookup, STORE_TRUST_BUDGET_MS),
   ]);
 
   // A saved market or language Shopify no longer offers is dropped so it can't linger in the session.
@@ -278,7 +285,7 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     shop,
     // NOTE: the return policy text states no regions, so product schema claims it only for the active market (the one
     // whose prices and offers the page shows), never for every market the store sells to.
-    storeTrust: toStoreTrust(storeTrustResult, [context.storefront.i18n.country]),
+    storeTrust: toStoreTrust(storeTrustResult, [context.storefront.i18n.country], policyTitlesResult),
     activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on

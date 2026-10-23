@@ -7,14 +7,12 @@ import ProductCard, {
 } from '~/components/ui/ProductCard';
 import Button from '~/components/ui/Button';
 import HeroSplit from '~/components/sections/HeroSplit';
-import StatStrip from '~/components/sections/StatStrip';
 import CategoryGrid from '~/components/sections/CategoryGrid';
 import NewArrivalsGrid from '~/components/sections/NewArrivalsGrid';
 import EditorialBand from '~/components/sections/EditorialBand';
 import VerifiedReviews from '~/components/sections/VerifiedReviews';
 import ReviewQuotes from '~/components/sections/ReviewQuotes';
 import NewsletterBand from '~/components/sections/NewsletterBand';
-import BrandMarquee from '~/components/sections/BrandMarquee';
 import CurrentOffers from '~/components/sections/CurrentOffers';
 import {CacheLong, CacheShort} from '~/lib/cache';
 import type {ActiveDiscount} from '~/lib/discounts';
@@ -179,16 +177,6 @@ export async function loader({context}: LoaderFunctionArgs) {
   };
 }
 
-const MARQUEE_ITEMS = [
-  '220GSM+ PREMIUM-WEIGHT TEES',
-  'MADE TO ORDER',
-  'SHIPPING CALCULATED AT CHECKOUT',
-  'WORLDWIDE SHIPPING',
-  'AUTHENTICITY GUARANTEED',
-  'NEW DROPS EVERY FRIDAY',
-  'DTG PRINTS',
-];
-
 export default function Homepage() {
   const {
     categoryItems,
@@ -225,12 +213,6 @@ export default function Homepage() {
         secondaryHref="/journal"
         rightProduct={newDropProducts[0] ?? null}
       />
-
-      {/* 2 — Marquee */}
-      <BrandMarquee items={MARQUEE_ITEMS} style="bold" speed={30} />
-
-      {/* 3 — Stats */}
-      <StatStrip />
 
       {/* 3.5 — Current offers (real active Shopify discounts, when any exist) */}
       {activeDiscountsPromise && (

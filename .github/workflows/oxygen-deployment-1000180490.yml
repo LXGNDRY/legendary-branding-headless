@@ -255,7 +255,8 @@ jobs:
           check_route "/cart" "Cart" "$TITLE_MARKER"
           check_route "/policies/about" "About policy" "$TITLE_MARKER"
           check_route "/sitemap.xml" "Sitemap" '<urlset' '<loc>https://'
-          check_route "/robots.txt" "Robots" '^Sitemap: https://'
+          # NOTE: Oxygen preview hosts deliberately serve `Disallow: /` with no Sitemap line (see app/lib/robots.ts), so only the file's shape is checked.
+          check_route "/robots.txt" "Robots" '^User-agent:'
 
           # Discover a real PDP handle from the storefront at runtime so this
           # smoke test remains valid when catalog products change.

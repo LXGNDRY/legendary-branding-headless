@@ -195,10 +195,6 @@ export default function DiscountsPopup({discounts}: {discounts: ActiveDiscount[]
           ))}
         </ul>
 
-        <p className="mb-6 text-xs text-[var(--color-text-tertiary)]">
-          Offers may have conditions such as minimum spend, products or markets. Eligibility and final savings are confirmed at checkout.
-        </p>
-
         <Link
           to="/collections/all-products"
           onClick={() => setOpen(false)}
