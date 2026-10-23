@@ -16,6 +16,7 @@ Start with [Headless Storefront Recovery Plan](HEADLESS_RECOVERY_PLAN.md) — th
 | [Chat protection](CHAT_PROTECTION.md) | Rate limits, grounding, spend-cap decision |
 | [Public URLs](PUBLIC_URLS.md) | Canonical origin, robots, sitemap, policy authority |
 | [Reviews](REVIEWS.md) | Judge.me attribution and aggregate rules |
+| [Testing](TESTING.md) | Gates, coverage floors, failing-before audit |
 | [Sections](SECTIONS.md) | Active vs dormant section registry, reveal rules |
 | [Metafield definitions](metafield-definitions.md) | Storefront-readable metafield contract |
 | [Production readiness](PRODUCTION_READINESS.md), [Launch checklist](LAUNCH_CHECKLIST.md) | Point-in-time records (see their evidence notes) |
