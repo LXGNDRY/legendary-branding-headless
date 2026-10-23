@@ -160,6 +160,19 @@ jobs:
           PRIVATE_KLAVIYO_API_KEY: ${{ secrets.PRIVATE_KLAVIYO_API_KEY }}
           PUBLIC_KLAVIYO_LIST_ID: ${{ secrets.PUBLIC_KLAVIYO_LIST_ID }}
 
+      - name: Require executed E2E evidence for production
+        if: github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download "$GITHUB_RUN_ID" --pattern 'e2e-summary-*' --dir e2e-gate
+          COUNT=$(find e2e-gate -name 'e2e-summary-*.json' | wc -l)
+          if [ "$COUNT" -lt 4 ] || ! find e2e-gate -name 'e2e-summary-*.json' | xargs jq -e -s 'all(.ran == true and .expected > 0 and .unexpected == 0)' >/dev/null; then
+            echo "::error::Production deploys require all four E2E projects to have executed tests (found $COUNT summaries)."
+            find e2e-gate -name 'e2e-summary-*.json' -exec cat {} \;
+            exit 1
+          fi
+
       - name: Build and Publish to Oxygen
         id: deploy
         run: |
@@ -302,16 +315,26 @@ jobs:
             exit 1
           fi
 
+      - name: Collect E2E execution summaries
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" --pattern 'e2e-summary-*' --dir e2e-summaries
+
       - name: Record release evidence
         if: always()
         run: |
           mkdir -p release-evidence
+          E2E=$(find e2e-summaries -name 'e2e-summary-*.json' 2>/dev/null | xargs -r jq -s '.' 2>/dev/null || true)
+          E2E=${E2E:-[]}
           jq -n \
             --arg sha "$GITHUB_SHA" --arg ref "$GITHUB_REF_NAME" --arg run "$GITHUB_RUN_ID" \
             --arg attempt "$GITHUB_RUN_ATTEMPT" --arg url "${DEPLOY_URL:-}" \
             --arg lock "$(sha256sum package-lock.json | cut -d' ' -f1)" \
             --arg outcome "${{ job.status }}" \
-            '{sha:$sha, ref:$ref, run:$run, attempt:$attempt, deployUrl:$url, lockfileSha256:$lock, outcome:$outcome}' \
+            --argjson e2e "$E2E" \
+            '{sha:$sha, ref:$ref, run:$run, attempt:$attempt, deployUrl:$url, lockfileSha256:$lock, outcome:$outcome, e2e:$e2e}' \
             | tee release-evidence/release.json
           {
             echo "### Release evidence"
@@ -464,7 +487,32 @@ jobs:
 
       - name: Run E2E tests against local production build
         if: steps.verify-creds.outputs.skipped != 'true'
-        run: npm run test:e2e -- --project=${{ matrix.project }} --workers=1
+        run: npm run test:e2e -- --project=${{ matrix.project }} --workers=1 --reporter=github,json
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-results.json
+
+      # NOTE: a green job is not proof tests ran (Dependabot/fork runs skip E2E), so every run records what was
+      # executed, skipped and retried; the deploy job aggregates these into the release evidence.
+      - name: Summarize E2E execution
+        if: always()
+        run: |
+          mkdir -p e2e-summary
+          if [ "${{ steps.verify-creds.outputs.skipped }}" = "true" ]; then
+            jq -n --arg project "${{ matrix.project }}" '{project:$project, ran:false, reason:"no Storefront API credentials", expected:0, skipped:0, unexpected:0, flaky:0}' > "e2e-summary/e2e-summary-${{ matrix.project }}.json"
+          elif [ -f e2e-results.json ]; then
+            jq --arg project "${{ matrix.project }}" '{project:$project, ran:true, expected:.stats.expected, skipped:.stats.skipped, unexpected:.stats.unexpected, flaky:.stats.flaky, durationMs:.stats.duration}' e2e-results.json > "e2e-summary/e2e-summary-${{ matrix.project }}.json"
+          else
+            jq -n --arg project "${{ matrix.project }}" '{project:$project, ran:false, reason:"no results file", expected:0, skipped:0, unexpected:0, flaky:0}' > "e2e-summary/e2e-summary-${{ matrix.project }}.json"
+          fi
+          cat "e2e-summary/e2e-summary-${{ matrix.project }}.json"
+
+      - name: Upload E2E execution summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: e2e-summary-${{ matrix.project }}
+          path: e2e-summary/e2e-summary-${{ matrix.project }}.json
+          if-no-files-found: warn
 
       - name: Upload test results on failure
         if: failure()

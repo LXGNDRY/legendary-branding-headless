@@ -5,6 +5,7 @@
 | Unit/behavior (Vitest, hermetic: unmocked `fetch` fails) | `npm run test:coverage` | CI quality job; coverage floors in `vitest.config.ts` only ratchet up |
 | Accessibility (axe, jsdom + real browser) | included above / `e2e/a11y.spec.ts` | CI; `color-contrast` in e2e still off until a preview run |
 | E2E (Playwright: chromium, webkit, mobile, mobile-safari) | `npm run test:e2e` | CI e2e job (needs live Storefront credentials) |
+| E2E execution record | e2e job summary artifacts | each E2E project records executed/skipped/flaky counts (`e2e-summary-<project>`); the deploy job folds them into `release-evidence-<sha>`, and a production deploy fails unless all four projects executed tests with no unexpected failures |
 | Post-deploy smoke + release probe | deploy job | blocks the deploy job; first run on every merge to `dev`/`main` |
 | Failing-before audit | `npm run test:mutations` | manual / before release: re-introduces 12 P0/P1 defects one at a time and requires a test to fail for each |
 
