@@ -84,3 +84,12 @@ The first combined dev run (39911774645) built and published successfully, but i
 The optional Shopify standalone component validator was also attempted for the touched routes. It does not use this project's DOM.Iterable/strict-null compiler context and reported incompatible existing Money props; those diagnostics were not hidden with application suppressions. Pinned-project codegen, strict tsc and the full browser gates remain the implementation evidence.
 
 Slice 5 local validation: workflow YAML parsed, smoke shell syntax checked, build/typecheck/lint passed, all 852 tests and coverage thresholds passed. Its PR/browser/deploy gates remain required before a healthy staging claim.
+
+
+## Slice 6 — Shopify analytics CSP destination
+
+The installed Hydrogen 2026.4.7 provider calls sendShopifyAnalytics without a shopDomain override; its sender fetches https://monorail-edge.shopifysvc.com/unstable/produce_batch. app/lib/security.ts supplied a custom connect-src allowing Shopify .com hosts but omitted this distinct .shopifysvc.com destination. Shopify's own default CSP includes that exact origin. The new unit test failed before the fix.
+
+The correction adds only https://monorail-edge.shopifysvc.com to connect-src, preserving consent, preview suppression and the rest of the policy. A browser test intercepts a synthetic request to verify actual CSP permission without sending an analytics event to Shopify. This fixes a concrete reporting barrier; it does not prove organic traffic, attribution or complete consent continuity. Verify real consenting production events after an authorized release.
+
+Official references: [Hydrogen analytics validation](https://shopify.dev/docs/storefronts/headless/legacy/hydrogen/analytics/validation) and [2026-04 CSP utility](https://shopify.dev/docs/api/hydrogen/2026-04/utilities/createcontentsecuritypolicy). Local validation: build/typecheck/lint and all 853 tests with coverage passed. Browser/merge gates pending.

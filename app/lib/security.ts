@@ -29,7 +29,7 @@ export const SECURITY_HEADERS: Record<string, string> = {
     // Iframe: Shopify checkout, shop pay, Klaviyo onsite forms
     "frame-src 'self' *.shopify.com shop.app *.shopifypay.com *.klaviyo.com",
     // Connect: API calls, analytics beacons, Sentry, WebSocket for HMR in dev
-    "connect-src 'self' *.shopify.com cdn.shopify.com wss: ws: www.google-analytics.com analytics.google.com www.googletagmanager.com graph.facebook.com analytics.tiktok.com *.sentry.io *.klaviyo.com static.klaviyo.com cdn.judge.me api.judge.me judge.me",
+    "connect-src 'self' https://monorail-edge.shopifysvc.com *.shopify.com cdn.shopify.com wss: ws: www.google-analytics.com analytics.google.com www.googletagmanager.com graph.facebook.com analytics.tiktok.com *.sentry.io *.klaviyo.com static.klaviyo.com cdn.judge.me api.judge.me judge.me",
     // Form actions
     "form-action 'self' *.shopify.com",
     // Base URI
