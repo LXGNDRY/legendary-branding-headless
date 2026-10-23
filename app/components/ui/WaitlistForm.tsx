@@ -53,7 +53,7 @@ export default function WaitlistForm({
         <button
           type="submit"
           disabled={fetcher.state !== 'idle'}
-          className="px-4 py-2 bg-[var(--color-bg-level-3)] text-[var(--color-text-inverse)] text-[0.65rem] font-semibold tracking-[0.1em] uppercase hover:bg-black/80 transition-colors"
+          className="px-4 py-2 bg-[var(--color-text-primary)] text-[var(--color-text-inverse)] text-[0.65rem] font-semibold tracking-[0.1em] uppercase hover:bg-[var(--color-text-secondary)] transition-colors"
         >
           {fetcher.state !== 'idle' ? 'Saving…' : 'Notify Me'}
         </button>

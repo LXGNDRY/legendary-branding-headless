@@ -87,8 +87,8 @@ function sourceFiles(dir: string): string[] {
 describe('source scans', () => {
   const files = sourceFiles('app');
 
-  it('spells the live domain only in site.ts (plus the assistant prompt, which names the brand)', () => {
-    const allowed = new Set([join('app', 'lib', 'site.ts'), join('app', 'lib', 'chat-grounding.ts')]);
+  it('spells the live domain only in site.ts ', () => {
+    const allowed = new Set([join('app', 'lib', 'site.ts')]);
     const offenders = files.filter((file) => !allowed.has(file) && /legendary-branding\.com/.test(readFileSync(file, 'utf8')));
     expect(offenders).toEqual([]);
   });

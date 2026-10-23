@@ -10,7 +10,7 @@ feature/fix/chore branch -> dev -> main
 - Only `dev` may open a release pull request into `main`.
 - Direct feature pull requests into `main` are rejected by `PR Governance`.
 - A green workflow is evidence, not approval.
-- Every pull request requires explicit owner approval.
+- Merges into `dev` happen when CI is fully green and review threads are handled; merges into `main` happen only on the owner's explicit call.
 
 ## Required GitHub rulesets
 
@@ -55,3 +55,31 @@ The connected GitHub integration can create branches, commits, pull requests,
 reviews and merges, but does not expose repository ruleset or branch-protection
 administration. The rules above must be enabled in GitHub settings and then
 verified by attempting a blocked direct push and an unapproved PR merge.
+
+## Ruleset contract files (R23)
+
+Importable definitions live in `.github/rulesets/dev.json` and `.github/rulesets/main.json` with the exact
+check names the workflow emits today. Applying them is an owner/admin action (Settings → Rules → Rulesets →
+Import); agents never change repository settings and never weaken a rule to merge remediation.
+
+Decisions the owner must make before importing:
+- **Review requirement (decided 2026-10-23):** the owner merges to `main` by explicit instruction, and agents merge to
+  `dev` on green CI. The ruleset files therefore require a pull request and the exact status checks but no approving
+  review; the `main` approval is a process rule (the owner's call), because merges are currently performed under the
+  owner's own GitHub account, which cannot approve its own pull requests.
+- **Bypass list:** empty by design (no administrator bypass). Add the owner only for audited emergency recovery.
+- **Up-to-date branch:** strict status checks force a branch update before each merge, which serializes PRs.
+
+After import, read the rulesets back and confirm: (1) check names match the PR's check list exactly, (2) a direct push
+to `dev`/`main` and a merge with a failing check are both rejected in a safe test, (3) the `claude/* → dev → main`
+topology still works.
+
+## Release provenance (R23)
+
+- The deploy job builds with `VITE_RELEASE_SHA=${{ github.sha }}`; the same SHA passed `quality` and `e2e`.
+- After deploy, `GET /api/release` (answered in `server.ts` before context construction, so it works even when boot validation would fail) on the deployed URL must return `ok:true`, `missing:0` and exactly that SHA,
+  or the job fails (it reports presence/count only — never variable names or values).
+- Every deploy uploads `release-evidence-<sha>` (SHA, run, lockfile hash, deploy URL, outcome).
+- A failed verification prints the last healthy deploy SHA. Recovery is a normal revert PR through CI.
+- Still owed: the Oxygen CLI builds its own bundle, so the tested artifact and the deployed artifact are the same
+  *commit and lockfile* but not the same bytes; adopting a prebuilt-artifact deploy path needs a supported CLI flow.

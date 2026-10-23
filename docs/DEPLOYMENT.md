@@ -33,15 +33,13 @@ The workflow (`Storefront 1000180490`) triggers on `push` to `main`/`dev`, `pull
 
 ### `quality` (runs on every trigger)
 1. Checkout
-2. Setup Node 20
+2. Setup Node 22
 3. Cache `~/.npm` (keyed on `package-lock.json` hash)
 4. `npm ci --legacy-peer-deps`
 5. **Codegen** — `npm run codegen`, with `PUBLIC_STORE_DOMAIN` / `PUBLIC_STOREFRONT_API_TOKEN`
    from repo secrets and a hardcoded `SESSION_SECRET: ci-only-do-not-use`. This step does **not**
-   have `continue-on-error: true` in the current workflow file — codegen is a real, blocking gate
-   in CI (this differs from the "continue-on-error" description in `CLAUDE.md`'s aspirational
-   pipeline shape; per `docs/PRODUCTION_READINESS.md` §2, `.graphqlrc.ts` was fixed so codegen
-   validates for real rather than being a soft-fail step).
+   have `continue-on-error: true` — codegen is a real, blocking gate in CI (`CLAUDE.md` now matches;
+   per `docs/PRODUCTION_READINESS.md` §2, `.graphqlrc.ts` was fixed so codegen validates for real).
 6. **Generated drift** — rejects changes to committed Storefront or Customer Account declarations.
 7. **Build** — `npm run build` (must run before typecheck; generates `.react-router/types/`)
 8. **Typecheck** — `npm run typecheck` (`tsc --noEmit`)
@@ -135,12 +133,6 @@ Oxygen environment (Shopify Admin → Hydrogen → Environments), not via GitHub
 - `PUBLIC_META_PIXEL_ID`, `PUBLIC_TIKTOK_PIXEL_ID` — each optional pixel in
   `app/components/seo/Analytics.tsx` simply doesn't load if its ID is unset.
 - `PUBLIC_KLAVIYO_COMPANY_ID` — optional consent-gated Klaviyo on-site forms.
-- `PRIVATE_ANTHROPIC_API_KEY` — powers the storefront Q&A chat widget
-  (`app/routes/api.chat.ts`). Server-only. Without it the widget's API route
-  returns a clean `503` ("Chat is temporarily unavailable") rather than
-  crashing or faking a reply; the widget UI still renders either way. Get a
-  key at console.anthropic.com and set it in the Oxygen environment when
-  ready to turn the widget on.
 
 Newsletter and waitlist endpoints now fail truthfully with `503` when their required Klaviyo
 configuration is missing. Customer Account navigation is hidden and its routes fail with `503`
@@ -248,3 +240,10 @@ above:
   graph only resolves with this flag.
 - `tsconfig.json` must keep `"rootDirs": [".", "./.react-router/types"]` so TypeScript can resolve
   `.js` import extensions in React Router v7's generated type stubs to their `.tsx` sources.
+
+## Release verification (R23)
+
+After `shopify hydrogen deploy`, the job runs the route smoke test, then requires `GET /api/release` on the
+deployed URL to report `ok:true`, `missing:0` and the exact commit SHA built (`VITE_RELEASE_SHA`), and uploads a
+`release-evidence-<sha>` artifact. See `docs/REPOSITORY_GOVERNANCE.md` (Release provenance) for the details and the
+one known gap (same commit/lockfile, not byte-identical artifact).

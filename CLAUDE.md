@@ -45,10 +45,25 @@ A separate platform is handling Liquid theme conversion (`Theme-Files-edits-here
   git push -u origin dev
   ```
 - Every PR must be ready for review (not draft) and include a clear description of what changed and why.
-- Agents may merge a `dev` → `main` release PR into `main` when **either**:
-  - the PR's CI is fully green (Quality Gate + full E2E matrix) and `mergeable_state` is `clean` — no owner sign-off required in this case, or
-  - the owner explicitly instructs it in conversation (e.g. "merge PR #X into main"), even if CI hasn't finished.
-  In either case, still never force-push and never bypass a failing check to get there.
+- **`dev` → `main` is merged only on the owner's explicit call** (e.g. "merge PR #X into main"). Agents prepare and open the release PR, report CI status, and wait; green CI alone never authorizes a production merge. Merges of `claude/*` PRs into `dev` are made when CI is fully green and all review threads are handled.
+- In every case: never force-push and never bypass a failing check.
+
+---
+
+## Owner decisions on record
+
+| Date | Decision | Effect |
+|---|---|---|
+| 2026-10-23 | `dev` → `main` is merged only on the owner's call | CI green is necessary, never sufficient, for a production merge |
+| 2026-10-23 | Hardcoded copy is not used unless necessary | New UI text must come from Shopify content or be structural (labels, ARIA); see "Copy still in code" below |
+| 2026-10-23 | Shipping, duties, returns and discount terms are not hardcoded and relay the store's policies | The PDP shows the Shopify shipping/refund policy text (sanitized) and policy pages are linked by their Shopify titles; discount text comes only from live Shopify discounts; `commerce-claims.test.ts` blocks reintroduction |
+| 2026-10-23 | The chat bot is removed | No chat widget, route, env var or provider dependency |
+
+## Copy still in code (open, per the copy rule)
+
+Marketing and product wording that is not yet sourced from Shopify content: homepage hero text and section headings, the PDP "true to size" and fabric-tier text (`app/locales`, `products.$handle.tsx`), category/lookbook headings, `StatStrip`/`BrandMarquee` content (components kept but no longer rendered on the homepage). Moving these to Shopify content (metaobjects/pages) needs a content-model decision from the owner.
+
+Discount offers shown on the storefront use the Admin API (`app/lib/discounts.ts`), which sits outside "Storefront API exclusively"; owner decision pending on keeping, replacing or removing that feed.
 
 ---
 
@@ -76,9 +91,10 @@ A separate platform is handling Liquid theme conversion (`Theme-Files-edits-here
 
 ### Before every commit
 ```bash
-npm run typecheck && npm run lint && npm run build
+npm run build && npm run typecheck && npm run lint && npm run test:coverage
+# also `npm run codegen` and commit the generated types whenever a #graphql query changes
 ```
-All three must pass with zero errors. No exceptions.
+All must pass with zero errors (build first: it generates the React Router types typecheck needs). No exceptions.
 
 ### Code quality
 - TypeScript strict mode — fix all type errors at the source, never suppress them.
@@ -132,20 +148,27 @@ The quality job runs on every PR and push. The deploy job runs only on pushes to
 ```
 quality job (all triggers):
   1. checkout
-  2. setup node 20
+  2. setup node 22
   3. npm ci --legacy-peer-deps
-  4. npm run codegen              # continue-on-error: true (needs live store secrets)
+  4. verify Storefront API credentials + npm run codegen   # blocking; generated-type drift is rejected
   5. npm run build                # MUST run before typecheck — generates .react-router/types/
   6. npm run typecheck            # tsc --noEmit
-  7. npm run lint
-  8. npm run test
+  7. npm run lint                 # oxlint
+  8. npm run test:coverage        # vitest with the measured coverage floor
+  9. npm run locales:check
 
-deploy job (push to main or dev only, needs quality to pass):
-  9. npm ci --legacy-peer-deps
-  10. npx shopify hydrogen deploy --force
+e2e job (needs quality): Playwright against a local production build — chromium, webkit, mobile, mobile-safari
+
+deploy job (push to main or dev only, needs quality AND e2e):
+  10. npm ci --legacy-peer-deps
+  11. validate production env contract (main only)
+  12. npx shopify hydrogen deploy --force --env-branch <branch>   # built with VITE_RELEASE_SHA=<commit>
+  13. post-deploy smoke (routes + semantic GraphQL proxy check)
+  14. GET /api/release must report the same commit and a complete runtime env contract
+  15. upload release-evidence artifact
 ```
 
-Any push to `main` that fails steps 5–8 must NOT deploy. Agents must ensure this gate exists before any new code ships.
+Any push to `main` that fails the quality or e2e job must NOT deploy. Agents must ensure this gate exists before any new code ships.
 
 ### Critical workflow rules (learned from production incidents)
 
@@ -179,7 +202,7 @@ agent branch (claude/*)
         └─► merge        # owner or agent merges when CI green
               └─► Oxygen preview deploy (automatic via CI on push to dev)
                     └─► owner reviews preview URL
-                          └─► PR: dev → main    # owner or agent merges when CI green (or owner says so)
+                          └─► PR: dev → main    # merged only when the owner says so
                                 └─► Oxygen production deploy (automatic via CI on push to main)
 ```
 
@@ -239,6 +262,7 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 | 12 | Content — real imagery replacing all `<Placeholder>` usage; full visual QA | ⏳ Blocked on theme import |
 | 13 | Hardening — smoke tests (vitest) ✅, tsconfig cleanup, zip removal post-theme-import | ⏳ In progress |
 | 14 | Reviews & Ratings — real Judge.me reviews (homepage aggregate + quote cards, PDP rating + full review widget, star ratings on every product-card surface site-wide); fixed the Storefront-API metafield-access gap and a `product.metafields` data-shape bug that had silently broken PDP ratings/Care/Material/Fit | ✅ Complete |
+| 15 | Recovery plan R01–R24 — execution index and per-slice status in `docs/HEADLESS_RECOVERY_PLAN.md` | ⏳ Slices merged to `dev`; owner decisions and preview evidence outstanding |
 
 ---
 
@@ -246,8 +270,9 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 
 | Layer | Technology |
 |---|---|
-| Framework | Shopify Hydrogen 2025 + React Router v7 |
-| Language | TypeScript (strict mode) |
+| Framework | Shopify Hydrogen 2026.4 + React Router v7 |
+| Language | TypeScript 7 (strict mode) |
+| Lint / tests | oxlint (`.oxlintrc.json`), Vitest 5 + coverage floor, Playwright e2e (4 projects), axe a11y |
 | Styles | Tailwind CSS v4 — `@theme` tokens only, no arbitrary hex values |
 | Data | Shopify Storefront API (GraphQL via `context.storefront.query()`) |
 | Session | `AppSession` in `app/lib/session.ts` |
@@ -273,19 +298,14 @@ Deployments and their preview URLs are visible in the Shopify Partners dashboard
 ## Design System
 
 ### Tailwind `@theme` tokens
-```css
---font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif
---color-canvas: #ffffff
---color-ink: #0a0a0a
---color-muted: #6b6b6b
---color-subtle: #999999
---color-border: #e5e5e5
---color-surface: #f7f7f7
---color-accent: #0a0a0a
-```
+The shipped theme is the **dark "Onyx" system** in `app/styles/app.css` (source of truth; do not copy hex values here).
+Key tokens: `--color-bg-level-0…4` (near-black surfaces), `--color-text-primary/secondary/tertiary/inverse`,
+`--color-accent` (red `#E63936`), `--color-border-*`, plus aliases (`--color-canvas`, `--color-ink`, `--color-surface`).
+Fonts: Instrument Serif (display) + Inter (body). Token pairs the components render are contrast-tested in
+`app/lib/contrast.test.ts` (WCAG AA 4.5:1).
 
 ### Design direction
-**Premium editorial streetwear** — white canvas, black typography, bold campaign imagery zones, minimal high-end aesthetic, mobile-first, WCAG AA accessible. No decorative color outside these tokens. No gradients, shadows, or visual noise that undercuts the luxury positioning.
+**Premium editorial streetwear** — near-black canvas, off-white typography, bold campaign imagery zones, minimal high-end aesthetic, mobile-first, WCAG AA accessible. No decorative color outside the tokens. Avoid visual noise that undercuts the luxury positioning. A light theme is not shipped; changing the theme direction is an owner decision.
 
 ### Image handling
 - All product images served from Shopify CDN via `<Image>` from `@shopify/hydrogen`.

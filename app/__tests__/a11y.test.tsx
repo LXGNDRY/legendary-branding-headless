@@ -5,7 +5,6 @@ import {ShopifyProvider} from '@shopify/hydrogen-react';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import Button from '~/components/ui/Button';
 import CartDrawer from '~/components/layout/CartDrawer';
-import ChatWidget from '~/components/chat/ChatWidget';
 import Analytics from '~/components/seo/Analytics';
 import SizeGuideModal from '~/components/ui/SizeGuideModal';
 import AccountIndex from '~/routes/account._index';
@@ -230,18 +229,6 @@ describe('dialogs', () => {
     await screen.findByRole('dialog', {name: 'Cookie consent'}, {timeout: 2000});
     await expectClean(container);
     fireEvent.click(screen.getByLabelText('Choose cookie categories'));
-    await expectClean(container);
-  });
-
-  it('chat dialog (open) has no violations and a labelled input', async () => {
-    const {container} = render(
-      <MemoryRouter>
-        <ChatWidget />
-      </MemoryRouter>,
-    );
-    fireEvent.click(screen.getByLabelText('Chat with us'));
-    await settle();
-    expect(screen.getByRole('dialog', {name: /chat with legendary branding/i})).toBeTruthy();
     await expectClean(container);
   });
 

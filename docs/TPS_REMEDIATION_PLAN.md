@@ -1,3 +1,5 @@
+> **Historical document.** Superseded by [HEADLESS_RECOVERY_PLAN.md](HEADLESS_RECOVERY_PLAN.md) (2026-10-22). Statements below describe the state at the time of writing and are not current evidence. Retained unchanged for audit history.
+
 # TPS Remediation Plan
 
 > **Historical execution plan — superseded 2026-10-22.** Use [Headless Storefront Recovery Plan](HEADLESS_RECOVERY_PLAN.md) and its pinned findings/evidence register. Completed PR history below is retained; this 11-gap list is not the full current backlog.

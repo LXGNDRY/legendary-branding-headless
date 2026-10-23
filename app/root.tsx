@@ -26,10 +26,8 @@ import Footer from '~/components/layout/Footer';
 import CartDrawer from '~/components/layout/CartDrawer';
 import AnnouncementBar from '~/components/layout/AnnouncementBar';
 import DiscountsPopup from '~/components/ui/DiscountsPopup';
-import ChatWidget from '~/components/chat/ChatWidget';
-import {chatReadiness} from '~/lib/chat-policy';
 import {DefaultSeoSchema} from '~/components/seo/SeoSchema';
-import {STORE_TRUST_QUERY, toStoreTrust, withBudget} from '~/lib/trust';
+import {STORE_POLICY_TITLES_QUERY, STORE_TRUST_QUERY, toStoreTrust, withBudget} from '~/lib/trust';
 import Analytics from '~/components/seo/Analytics';
 import {analyticsEnvironment} from '~/lib/analytics-environment';
 import type {CartData} from '~/lib/cart';
@@ -171,13 +169,19 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     cache: CacheLong(),
   });
   (context.waitUntil ?? (() => {}))(storeTrustLookup.then(() => undefined, () => undefined));
+  // Policy link labels use the shopper's language (Shopify serves its own translation of each title).
+  const policyTitlesLookup = context.storefront.query(STORE_POLICY_TITLES_QUERY, {
+    variables: {country: context.storefront.i18n.country, language: context.storefront.i18n.language},
+    cache: CacheLong(),
+  });
+  (context.waitUntil ?? (() => {}))(policyTitlesLookup.then(() => undefined, () => undefined));
 
   const shopAnalytics = analyticsEnvironment(request.url);
 
   // NOTE: localization is CRITICAL (it decides currency and language, so a wrong fallback would show wrong
   // prices) and may fail the request. Cart, analytics shop, menu and trust are optional: each has a budget
   // and a safe fallback so one slow or failing dependency can't take every page down.
-  const [cartData, localizationResult, shop, menuResult, storeTrustResult] = await Promise.all([
+  const [cartData, localizationResult, shop, menuResult, storeTrustResult, policyTitlesResult] = await Promise.all([
     optional('cart', cart.get(), {ms: OPTIONAL_BUDGET_MS, fallback: null}),
     context.storefront.query(LOCALIZATION_QUERY, {
       variables: {
@@ -213,6 +217,7 @@ export async function loader({context, request}: LoaderFunctionArgs) {
       {ms: OPTIONAL_BUDGET_MS, fallback: null},
     ),
     withBudget(storeTrustLookup, STORE_TRUST_BUDGET_MS),
+    withBudget(policyTitlesLookup, STORE_TRUST_BUDGET_MS),
   ]);
 
   // A saved market or language Shopify no longer offers is dropped so it can't linger in the session.
@@ -280,15 +285,13 @@ export async function loader({context, request}: LoaderFunctionArgs) {
     shop,
     // NOTE: the return policy text states no regions, so product schema claims it only for the active market (the one
     // whose prices and offers the page shows), never for every market the store sells to.
-    storeTrust: toStoreTrust(storeTrustResult, [context.storefront.i18n.country]),
+    storeTrust: toStoreTrust(storeTrustResult, [context.storefront.i18n.country], policyTitlesResult),
     activeDiscounts,
     // Read from context.env (the Oxygen worker's runtime environment),
     // not import.meta.env -- these are runtime-configured secrets/IDs on
     // Oxygen, not values baked in at Vite build time, so import.meta.env
     // reads of PUBLIC_* client analytics vars are always undefined in the
     // deployed build regardless of Vite's envPrefix config.
-    // NOTE: the widget is only offered when its provider is configured; a visible-but-dead chat is worse than none.
-    chatAvailable: chatReadiness(context.env).available,
     analyticsConfig: {
       // NOTE: GA4, Meta and TikTok only get their IDs on the live host, so previews and local servers never
       // send events to production properties. Klaviyo's ID stays (it powers on-site forms, consent-gated).
@@ -338,7 +341,7 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, chatAvailable, consent, activeDiscounts} = useLoaderData<typeof loader>();
+  const {cart, analyticsCart, isLoggedIn, accountsEnabled, localization, navCollections, shop, analyticsConfig, consent, activeDiscounts} = useLoaderData<typeof loader>();
   const [cartOpen, setCartOpen] = useState(false);
   const navigation = useNavigation();
   const location = useLocation();
@@ -447,7 +450,6 @@ export default function App() {
         onClose={() => setCartOpen(false)}
       />
 
-      {chatAvailable && <ChatWidget />}
       </div>
     </WishlistProvider>
     </LocaleProvider>
@@ -473,15 +475,15 @@ export function ErrorBoundary({error}: {error: unknown}) {
   const is404 = isRouteErrorResponse(error) && error.status === 404;
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-8 bg-[#FAF9F6]">
+    <div className="min-h-dvh flex items-center justify-center p-8 bg-[var(--color-background)]">
       <div className="max-w-xl text-center">
         <p className="h-eyebrow mb-6">
           {is404 ? '404 — Not Found' : 'Something went wrong'}
         </p>
-        <h1 className="font-serif text-[clamp(3.5rem,8vw,7rem)] leading-[0.95] mb-8 text-[#1A1A1A]">
+        <h1 className="font-serif text-[clamp(3.5rem,8vw,7rem)] leading-[0.95] mb-8 text-[var(--color-foreground)]">
           {is404 ? 'Lost.' : 'Oops.'}
         </h1>
-        <p className="text-[#6B6B6B] text-lg mb-12">
+        <p className="text-[var(--color-text-secondary)] text-lg mb-12">
           {is404
             ? 'The page you\'re looking for doesn\'t exist or has been moved.'
             : 'An unexpected error occurred. Please try again in a few moments.'}
@@ -492,7 +494,7 @@ export function ErrorBoundary({error}: {error: unknown}) {
           </a>
           <a
             href="/collections/all-products"
-            className="px-6 py-3 border border-[#1A1A1A] text-sm tracking-wide uppercase hover:bg-[#1A1A1A] hover:text-white transition-colors"
+            className="px-6 py-3 border border-[var(--color-border-strong)] text-sm tracking-wide uppercase hover:bg-[var(--color-text-primary)] hover:text-[var(--color-text-inverse)] transition-colors"
           >
             Shop All
           </a>

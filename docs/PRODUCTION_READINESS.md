@@ -1,5 +1,7 @@
 # Legendary Branding Headless — Production Readiness & Release Plan
 
+> **Evidence note (2026-10-22):** the status marks below record work reported at the time. They are not current launch evidence — current status, owner-owed items and verification live in [HEADLESS_RECOVERY_PLAN.md](HEADLESS_RECOVERY_PLAN.md).
+
 **Status as of:** 2026-08-21 · **Branch:** `dev` @ `3f39be7`
 **Dark theme (Onyx):** merged to `dev`.
 **Owner approval required at:** every PR → `dev`, and the final `dev → main` release gate.

@@ -1,3 +1,5 @@
+> **Historical document.** Superseded by [HEADLESS_RECOVERY_PLAN.md](HEADLESS_RECOVERY_PLAN.md) (2026-10-22). Statements below describe the state at the time of writing and are not current evidence. Retained unchanged for audit history.
+
 # Audit Phase 2 — Library Layer (`app/lib/`): Findings
 
 Ref: `docs/full-site-audit-plan.md` Phase 2. Status legend: **Pass** / **Gap** / **Fixed**.

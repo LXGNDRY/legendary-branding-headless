@@ -1,3 +1,5 @@
+> **Historical document.** Superseded by [HEADLESS_RECOVERY_PLAN.md](HEADLESS_RECOVERY_PLAN.md) (2026-10-22). Statements below describe the state at the time of writing and are not current evidence. Retained unchanged for audit history.
+
 # Legendary Branding — E2E Plan: Scaling to a $50K–100K Caliber Hydrogen Storefront
 
 **Baseline as of dev@343ae91 (2026-08-19):** Hydrogen + React Router + TypeScript, Onyx dark theme, 29 routes, 16 section components, Vitest (51/51) + Playwright E2E (9 golden journeys), GitHub Actions CI/CD to Oxygen. Real gaps flagged in `PRODUCTION_READINESS.md`: no verified real checkout/order test, unverified marketing/testimonial claims, incomplete release docs.

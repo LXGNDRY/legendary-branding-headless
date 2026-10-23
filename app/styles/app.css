@@ -549,28 +549,16 @@
 
   /* ── Reveal animations ────────────────────────────────────────────────── */
 
+  /* Content is visible by default; useReveal hides below-fold elements only
+     (data-reveal="pending") once JS, IntersectionObserver and motion are available. */
   .h-reveal {
+    transition: opacity var(--duration-reveal) var(--ease-expo),
+                transform var(--duration-reveal) var(--ease-expo);
+  }
+
+  .h-reveal[data-reveal='pending'] {
     opacity: 0;
     transform: translateY(16px);
-    transition: opacity var(--duration-reveal) var(--ease-expo),
-                transform var(--duration-reveal) var(--ease-expo);
-  }
-
-  .h-reveal.is-visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .h-reveal-img {
-    opacity: 0;
-    transform: scale(0.98);
-    transition: opacity var(--duration-reveal) var(--ease-expo),
-                transform var(--duration-reveal) var(--ease-expo);
-  }
-
-  .h-reveal-img.is-visible {
-    opacity: 1;
-    transform: scale(1);
   }
 
   /* Staggered child reveals */
@@ -750,8 +738,7 @@
     scroll-behavior: auto !important;
   }
 
-  .h-reveal,
-  .h-reveal-img {
+  .h-reveal {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
@@ -766,27 +753,7 @@
    rule inside `@layer components` still loses to a `utilities`-layer class
    on the same element. An unlayered rule beats every layered rule
    regardless of where either appears in the file, which is exactly what's
-   needed here: overriding the `bottom-5`/`bottom-24` utility classes still
-   present on the chat widget elements below (Codex-caught on PR #196;
-   confirmed the layered version was a no-op). */
-
-/* The chat widget button/panel are rendered once, globally, in root.tsx,
-   with no per-page knowledge of the PDP's fixed mobile purchase bar
-   (#mobile-purchase-bar, see products.$handle.tsx) sitting at the very
-   bottom of small screens -- without this, the two fixed-position
-   elements overlapped, with the chat bubble sitting on top of (and
-   blocking) the Add to Bag / Choose options button. #mobile-purchase-bar
-   exists in the DOM at every viewport width (it's only hidden above the
-   `lg` breakpoint via `lg:hidden`), so this is scoped to the same
-   breakpoint rather than relying on the element's own visibility. */
-@media (max-width: 1023px) {
-  body:has(#mobile-purchase-bar) #chat-widget-button {
-    bottom: calc(5.25rem + env(safe-area-inset-bottom));
-  }
-  body:has(#mobile-purchase-bar) #chat-widget-panel {
-    bottom: calc(8.25rem + env(safe-area-inset-bottom));
-  }
-}
+   needed for any override of a Tailwind utility class below. */
 
 /* iOS Safari zooms the page when a focused field's text is under 16px.
    Unlayered so it beats `text-xs`/`text-sm` utilities on phones only. */

@@ -40,14 +40,16 @@ test.describe('Golden commerce journey', () => {
     await expect(chartOrGuidance.first()).toBeVisible();
     await sizeGuide.getByRole('button', {name: 'Close size guide'}).click();
 
-    await page.getByRole('button', {name: 'Shipping & Returns'}).click();
-    // Dollar amounts/thresholds intentionally live only on the shipping
-    // policy page (single source of truth, see products.$handle.tsx) --
-    // the PDP accordion links out to it rather than duplicating the figures.
-    await expect(page.getByText(/Shipping, duties and taxes are calculated at checkout/).first()).toBeVisible();
-    // No unconditional shipping or duties guarantees until the owner approves structured facts.
+    // Shipping, duties and returns wording is relayed from the store's own policies (never hardcoded): the policy
+    // accordion must show real policy text and link to the full policy page.
+    const shippingAccordion = page.locator('button[aria-expanded]', {hasText: /shipping/i}).first();
+    await shippingAccordion.click();
+    const policyText = shippingAccordion.locator('xpath=following-sibling::div[1]');
+    await expect(policyText).toBeVisible();
+    expect(((await policyText.textContent()) ?? '').trim().length).toBeGreaterThan(40);
+    await expect(policyText.getByRole('link').last()).toHaveAttribute('href', '/policies/shipping-policy');
+    // No unconditional shipping or duties guarantees invented in code.
     await expect(page.getByText(/free (standard )?shipping on every order|duties (are )?included/i)).toHaveCount(0);
-    await expect(page.getByRole('link', {name: 'shipping policy'})).toBeVisible();
   });
 
   test('international market selection updates and persists for the session', async ({page}) => {
@@ -127,6 +129,23 @@ test.describe('Golden commerce journey', () => {
       await page.getByTestId('cart-checkout').getAttribute('href'),
       baseURL,
     );
+
+    // Checkout handoff: follow the link as a shopper's browser would (GET only -- no form is submitted, so no order,
+    // payment or customer data is created) and require it to load over https without a server error.
+    // NOTE: Shopify may answer automated clients with a bot-protection status; that (including a 200 challenge page) is
+    // recorded as an explicit annotation instead of being silently treated as a pass.
+    const handoffHref = (await page.getByTestId('cart-checkout').getAttribute('href')) as string;
+    const handoff = await page.request.get(new URL(handoffHref, baseURL).toString(), {maxRedirects: 5});
+    const handoffBody = await handoff.text();
+    const challenged = [403, 429, 430].includes(handoff.status()) || /verifying your connection|just a moment|captcha/i.test(handoffBody);
+    if (challenged) {
+      test.info().annotations.push({type: 'checkout-handoff-unverified', description: `bot protection (status ${handoff.status()})`});
+    } else {
+      expect(handoff.status(), 'checkout handoff returned an error status').toBeLessThan(400);
+      expect(handoffBody.length, 'checkout handoff returned an empty page').toBeGreaterThan(0);
+      // NOTE: Shopify may redirect to its own checkout hosts, so only the transport is asserted after the redirect.
+      expect(new URL(handoff.url()).protocol).toBe('https:');
+    }
 
     let remaining = 2;
     for (let removals = 0; remaining > 0 && removals < 3; removals += 1) {

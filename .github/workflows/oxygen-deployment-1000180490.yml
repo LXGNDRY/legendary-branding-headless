@@ -17,6 +17,7 @@ on:
 permissions:
   contents: read
   deployments: write
+  actions: read
 
 concurrency:
   group: ${{ github.ref }}-deployment
@@ -87,8 +88,16 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
-        run: npm run test
+      - name: Test (with coverage floor)
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: coverage-summary
+          path: coverage/coverage-summary.json
+          if-no-files-found: ignore
 
       - name: Check locale catalogs
         run: npm run locales:check
@@ -151,6 +160,19 @@ jobs:
           PRIVATE_KLAVIYO_API_KEY: ${{ secrets.PRIVATE_KLAVIYO_API_KEY }}
           PUBLIC_KLAVIYO_LIST_ID: ${{ secrets.PUBLIC_KLAVIYO_LIST_ID }}
 
+      - name: Require executed E2E evidence for production
+        if: github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download "$GITHUB_RUN_ID" --pattern 'e2e-summary-*' --dir e2e-gate
+          COUNT=$(find e2e-gate -name 'e2e-summary-*.json' | wc -l)
+          if [ "$COUNT" -lt 4 ] || ! find e2e-gate -name 'e2e-summary-*.json' | xargs jq -e -s 'all(.ran == true and .expected > 0 and .unexpected == 0)' >/dev/null; then
+            echo "::error::Production deploys require all four E2E projects to have executed tests (found $COUNT summaries)."
+            find e2e-gate -name 'e2e-summary-*.json' -exec cat {} \;
+            exit 1
+          fi
+
       - name: Build and Publish to Oxygen
         id: deploy
         run: |
@@ -171,6 +193,8 @@ jobs:
           echo "AUTH_BYPASS_TOKEN=$AUTH_BYPASS_TOKEN" >> "$GITHUB_ENV"
         env:
           SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000180490 }}
+          # NOTE: baked into the worker at build time so /api/release can prove which commit is serving.
+          VITE_RELEASE_SHA: ${{ github.sha }}
 
       - name: Post-deploy smoke test
         run: |
@@ -182,6 +206,7 @@ jobs:
           check_route() {
             local path="$1"
             local label="$2"
+            local markers=("${@:3}")
             local outfile
             outfile="$(mktemp)"
             TOTAL=$((TOTAL + 1))
@@ -210,16 +235,28 @@ jobs:
             elif grep -qi "something went wrong\|unexpected error occurred\|server error" "$outfile" 2>/dev/null; then
               echo "  FAIL: $label contains error boundary text"
               FAILURES=$((FAILURES + 1))
+            else
+              # NOTE: a 200 is not enough -- each route must also contain content that proves the right page rendered.
+              local marker
+              for marker in "${markers[@]}"; do
+                if ! grep -Eq "$marker" "$outfile" 2>/dev/null; then
+                  echo "  FAIL: $label is missing expected content: $marker"
+                  FAILURES=$((FAILURES + 1))
+                fi
+              done
             fi
             rm -f "$outfile"
           }
 
-          check_route "/" "Homepage"
-          check_route "/collections/all-products" "All products"
-          check_route "/cart" "Cart"
-          check_route "/policies/about" "About policy"
-          check_route "/sitemap.xml" "Sitemap"
-          check_route "/robots.txt" "Robots"
+          TITLE_MARKER='<title[^>]*>[^<]*LEGENDARY BRANDING'
+
+          check_route "/" "Homepage" "$TITLE_MARKER"
+          check_route "/collections/all-products" "All products" "$TITLE_MARKER" '"@type":"CollectionPage"'
+          check_route "/cart" "Cart" "$TITLE_MARKER"
+          check_route "/policies/about" "About policy" "$TITLE_MARKER"
+          check_route "/sitemap.xml" "Sitemap" '<urlset' '<loc>https://'
+          # NOTE: Oxygen preview hosts deliberately serve `Disallow: /` with no Sitemap line (see app/lib/robots.ts), so only the file's shape is checked.
+          check_route "/robots.txt" "Robots" '^User-agent:'
 
           # Discover a real PDP handle from the storefront at runtime so this
           # smoke test remains valid when catalog products change.
@@ -231,7 +268,7 @@ jobs:
             "$DEPLOY_URL/collections/all-products") || PRODUCT_RESULT="000"
           PRODUCT_PATH=$(grep -oE 'href="/products/[^"]+"' "$PRODUCT_OUT" | head -n 1 | cut -d '"' -f 2 || true)
           if echo "$PRODUCT_RESULT" | grep -q "^2" && [ -n "$PRODUCT_PATH" ]; then
-            check_route "$PRODUCT_PATH" "Product detail"
+            check_route "$PRODUCT_PATH" "Product detail" "$TITLE_MARKER" '"@type":"Product"'
           else
             echo "Product detail: FAIL (could not discover a product path from all-products)"
             FAILURES=$((FAILURES + 1))
@@ -250,7 +287,7 @@ jobs:
             -H "oxygen-auth-bypass-token: $AUTH_BYPASS_TOKEN" \
             --data '{"query":"{ shop { name } }"}' \
             "$DEPLOY_URL/api/unstable/graphql.json") || GRAPHQL_STATUS="000"
-          if [ "$GRAPHQL_STATUS" != "200" ] || ! jq -e '.data != null or .errors != null' "$GRAPHQL_OUT" >/dev/null 2>&1; then
+          if [ "$GRAPHQL_STATUS" != "200" ] || ! jq -e '.errors == null and (.data.shop.name | type == "string" and length > 0)' "$GRAPHQL_OUT" >/dev/null 2>&1; then
             echo "Storefront GraphQL proxy: FAIL (HTTP $GRAPHQL_STATUS)"
             FAILURES=$((FAILURES + 1))
           else
@@ -265,6 +302,65 @@ jobs:
           fi
 
           echo "All smoke tests passed ($TOTAL/$TOTAL routes verified)"
+
+      - name: Verify deployed commit and runtime environment contract
+        run: |
+          RELEASE_OUT="$(mktemp)"
+          STATUS=$(curl -sS -o "$RELEASE_OUT" -w "%{http_code}" --max-time 30 \
+            -H "oxygen-auth-bypass-token: $AUTH_BYPASS_TOKEN" \
+            "$DEPLOY_URL/api/release") || STATUS="000"
+          echo "Release endpoint: HTTP $STATUS"
+          jq -c . "$RELEASE_OUT" || true
+          if [ "$STATUS" != "200" ] || ! jq -e --arg sha "$GITHUB_SHA" '.ok == true and .missing == 0 and .sha == $sha' "$RELEASE_OUT" >/dev/null; then
+            echo "::error::Deployed worker is not the reviewed commit ($GITHUB_SHA) or its runtime environment is incomplete"
+            exit 1
+          fi
+
+      - name: Collect E2E execution summaries
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" --pattern 'e2e-summary-*' --dir e2e-summaries
+
+      - name: Record release evidence
+        if: always()
+        run: |
+          mkdir -p release-evidence
+          E2E=$(find e2e-summaries -name 'e2e-summary-*.json' 2>/dev/null | xargs -r jq -s '.' 2>/dev/null || true)
+          E2E=${E2E:-[]}
+          jq -n \
+            --arg sha "$GITHUB_SHA" --arg ref "$GITHUB_REF_NAME" --arg run "$GITHUB_RUN_ID" \
+            --arg attempt "$GITHUB_RUN_ATTEMPT" --arg url "${DEPLOY_URL:-}" \
+            --arg lock "$(sha256sum package-lock.json | cut -d' ' -f1)" \
+            --arg outcome "${{ job.status }}" \
+            --argjson e2e "$E2E" \
+            '{sha:$sha, ref:$ref, run:$run, attempt:$attempt, deployUrl:$url, lockfileSha256:$lock, outcome:$outcome, e2e:$e2e}' \
+            | tee release-evidence/release.json
+          {
+            echo "### Release evidence"
+            echo '```json'
+            cat release-evidence/release.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-evidence-${{ github.sha }}
+          path: release-evidence/release.json
+          if-no-files-found: ignore
+
+      - name: Identify last healthy deploy
+        if: failure()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # NOTE: recovery is a normal PR/CI revert to this SHA — never a manual deploy or force-push.
+          LAST=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/oxygen-deployment-1000180490.yml/runs?branch=$GITHUB_REF_NAME&event=push&status=success&per_page=1" --jq '.workflow_runs[0] | "\(.head_sha) (run \(.id))"' 2>/dev/null || true)
+          echo "::error::Deploy verification failed. Last healthy deploy on $GITHUB_REF_NAME: ${LAST:-unknown}"
 
   e2e:
     name: E2E Tests (${{ matrix.project }})
@@ -392,7 +488,44 @@ jobs:
 
       - name: Run E2E tests against local production build
         if: steps.verify-creds.outputs.skipped != 'true'
-        run: npm run test:e2e -- --project=${{ matrix.project }} --workers=1
+        run: npm run test:e2e -- --project=${{ matrix.project }} --workers=1 --reporter=github,json
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-results.json
+
+      # NOTE: a green job is not proof tests ran (Dependabot/fork runs skip E2E), so every run records what was
+      # executed, skipped and retried; the deploy job aggregates these into the release evidence.
+      - name: Summarize E2E execution
+        if: always()
+        env:
+          E2E_PROJECT: ${{ matrix.project }}
+          E2E_CREDS_SKIPPED: ${{ steps.verify-creds.outputs.skipped }}
+        # NOTE: node, not jq -- the Playwright container image does not ship jq.
+        run: |
+          mkdir -p e2e-summary
+          node -e '
+            const fs = require("fs");
+            const project = process.env.E2E_PROJECT;
+            const base = {project, ran: false, expected: 0, skipped: 0, unexpected: 0, flaky: 0};
+            let summary;
+            if (process.env.E2E_CREDS_SKIPPED === "true") {
+              summary = {...base, reason: "no Storefront API credentials"};
+            } else if (fs.existsSync("e2e-results.json")) {
+              const {stats} = JSON.parse(fs.readFileSync("e2e-results.json", "utf8"));
+              summary = {project, ran: true, expected: stats.expected, skipped: stats.skipped, unexpected: stats.unexpected, flaky: stats.flaky, durationMs: stats.duration};
+            } else {
+              summary = {...base, reason: "no results file"};
+            }
+            fs.writeFileSync(`e2e-summary/e2e-summary-${project}.json`, JSON.stringify(summary));
+            console.log(JSON.stringify(summary));
+          '
+
+      - name: Upload E2E execution summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: e2e-summary-${{ matrix.project }}
+          path: e2e-summary/e2e-summary-${{ matrix.project }}.json
+          if-no-files-found: warn
 
       - name: Upload test results on failure
         if: failure()
