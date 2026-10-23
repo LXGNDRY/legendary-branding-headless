@@ -119,6 +119,7 @@ export const STORE_TRUST_QUERY = `#graphql
       paymentSettings { acceptedCardBrands supportedDigitalWallets }
       brand { logo { image { url } } }
     }
+    refundPage: page(handle: "refund-policy") { body }
   }
 ` as const;
 
@@ -128,6 +129,7 @@ interface StoreTrustQueryResult {
     paymentSettings?: {acceptedCardBrands?: string[] | null; supportedDigitalWallets?: string[] | null} | null;
     brand?: {logo?: {image?: {url?: unknown} | null} | null} | null;
   } | null;
+  refundPage?: {body?: unknown} | null;
 }
 
 /** Policy titles in the shopper's active language (the trust query itself stays English for the return-window parser). */
@@ -138,11 +140,15 @@ export const STORE_POLICY_TITLES_QUERY = `#graphql
       refundPolicy { title }
       shippingPolicy { title }
     }
+    refundPage: page(handle: "refund-policy") { title body }
+    shippingPage: page(handle: "shipping-policy") { title body }
   }
 ` as const;
 
 interface StorePolicyTitlesResult {
   shop?: {refundPolicy?: {title?: string | null} | null; shippingPolicy?: {title?: string | null} | null} | null;
+  refundPage?: {title?: string | null; body?: unknown} | null;
+  shippingPage?: {title?: string | null; body?: unknown} | null;
 }
 
 export function toStoreTrust(
@@ -152,10 +158,15 @@ export function toStoreTrust(
 ): StoreTrust {
   const shop = data?.shop;
   return {
-    returnDays: parseReturnWindowDays(shop?.refundPolicy?.body),
+    // NOTE: the published Page of the policy handle wins over the built-in policy (same rule as /policies).
+    returnDays: parseReturnWindowDays(
+      typeof data?.refundPage?.body === 'string' && data.refundPage.body ? data.refundPage.body : shop?.refundPolicy?.body,
+    ),
     refundPolicyUrl: shop?.refundPolicy?.url ? String(shop.refundPolicy.url) : null,
-    refundPolicyTitle: titles?.shop?.refundPolicy?.title || null,
-    shippingPolicyTitle: titles?.shop?.shippingPolicy?.title || null,
+    refundPolicyTitle:
+      (titles?.refundPage?.body ? titles.refundPage.title : titles?.shop?.refundPolicy?.title) || null,
+    shippingPolicyTitle:
+      (titles?.shippingPage?.body ? titles.shippingPage.title : titles?.shop?.shippingPolicy?.title) || null,
     paymentMethods: paymentMethodLabels(
       shop?.paymentSettings?.acceptedCardBrands,
       shop?.paymentSettings?.supportedDigitalWallets,

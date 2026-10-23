@@ -18,10 +18,9 @@ Code: `app/lib/site.ts` (origin, routes, policy handles, URL helpers), `app/rout
 
 - `/policies/:handle` is the one canonical home for the handles in `POLICY_PAGES`
   (refund-policy, terms-of-service, privacy-with-legendary-branding, shipping-policy, size-guide, about, contact, legendary_branding_faqs).
-- **Content authority:** for the four legal handles, Shopify's built-in store policy (Settings > Policies) wins when it has a body; a
-  Page of the same handle is used only when there is no built-in policy. Handles with no built-in policy take their content from the Page.
-  **Owner decision:** this changes today's behavior (a custom Page used to override the built-in policy). If the store relies on such a
-  Page, either move its text into Settings > Policies or tell me to flip the rule (one line in the loader).
+- **Content authority (owner decision 2026-10-23):** the published Page of a handle wins whenever it has a body, on `/policies/:handle`,
+  the product page accordions and the return-window/title lookups. Shopify's built-in store policy (Settings > Policies) is only the fallback
+  for the four legal handles. Reason: the store's live shipping copy is the Page `shipping-policy`; the built-in policy was out of date.
 - A required page with no content answers **503** (temporary, keeps indexing), not a 200 placeholder. `contact` renders its own block and is exempt.
 - `/pages/<policy handle>` redirects 301 to `/policies/<handle>`. `/policies/<other handle>` redirects 301 to `/pages/<handle>` when such a page
   exists, else 404. Shopify Admin URL redirects are untouched.

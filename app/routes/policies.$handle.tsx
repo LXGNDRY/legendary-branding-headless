@@ -70,12 +70,11 @@ export async function loader({params, context}: LoaderFunctionArgs) {
   }
 
   const entry = POLICY_PAGES[handle];
-  // NOTE: one rule for who owns the content. A built-in store policy (Settings > Policies), when it has a body, is
-  // the authority for its handle, so a stale Page with the same handle can never override legal text. Handles with
-  // no built-in policy (size guide, about, FAQ, contact) take their content from the Page of that handle.
+  // NOTE: one rule for who owns the content. The Page of that handle is what the owner edits and publishes, so it wins
+  // whenever it has a body; Shopify's built-in policy (Settings > Policies) is the fallback for handles that have one.
   const native = entry.native ? (shop as ShopPolicies | null | undefined)?.[entry.native] : null;
-  const title = native?.body ? (native.title ?? entry.title) : (page?.title ?? entry.title);
-  const bodyHtml = native?.body ? native.body : page?.body ? (page.body as string) : null;
+  const title = page?.body ? (page.title ?? entry.title) : (native?.title ?? entry.title);
+  const bodyHtml = page?.body ? (page.body as string) : native?.body ? native.body : null;
 
   // NOTE: a required page with no content is a configuration gap, not an empty page: say so with a 503 (temporary,
   // keeps indexing) instead of a 200 that looks like success. Contact renders its own block, so it is exempt.

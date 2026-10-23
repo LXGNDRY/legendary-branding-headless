@@ -79,6 +79,13 @@ describe('products.$handle loader', () => {
     expect(none.policies).toEqual({shipping: null, returns: null});
   });
 
+  it('prefers the published shipping and returns Pages over the built-in policies', async () => {
+    const shop = {shippingPolicy: {title: 'Shipping policy', body: '<p>old</p>'}, refundPolicy: {title: 'Refund policy', body: '<p>old</p>'}};
+    const shippingPage = {title: 'Shipping Policy', body: '<p>Free over $100</p>'};
+    const {result} = await run('test-product', {...responses, Product: {product: content, shop, shippingPage, refundPage: null}});
+    expect(result.policies).toEqual({shipping: shippingPage, returns: shop.refundPolicy});
+  });
+
   it('queries content and commerce separately with the handle and market', async () => {
     const {calls} = await run('my-product', responses);
     expect(calls.map((c) => c.operationName).sort()).toEqual(['Product', 'ProductCommerce']);
