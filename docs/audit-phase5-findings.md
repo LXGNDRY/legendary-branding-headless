@@ -1,3 +1,5 @@
+> **Historical document.** Superseded by [HEADLESS_RECOVERY_PLAN.md](HEADLESS_RECOVERY_PLAN.md) (2026-10-22). Statements below describe the state at the time of writing and are not current evidence. Retained unchanged for audit history.
+
 # Audit Phase 5 — Component Layer Wiring: Findings
 
 Ref: `docs/full-site-audit-plan.md` Phase 5. All 46 files under `app/components/` were read in full (layout/5, sections/18, ui/19, seo/3, chat/1), delegated to a sub-agent with instructions to report only high-confidence findings and cross-check against Phases 1-4 first. 7 real findings came back; all verified and fixed here, except one deliberate, reviewed exception.
