@@ -7,6 +7,9 @@ export interface StoreTrust {
   /** Return window in days, parsed from the published refund policy; null when it doesn't state one. */
   returnDays: number | null;
   refundPolicyUrl: string | null;
+  /** Policy titles as published in Shopify (localized by Shopify) -- used as link labels so no policy wording is written in code. */
+  refundPolicyTitle: string | null;
+  shippingPolicyTitle: string | null;
   /** Human-readable payment method names, cards first then wallets. */
   paymentMethods: string[];
   logoUrl: string | null;
@@ -127,14 +130,32 @@ interface StoreTrustQueryResult {
   } | null;
 }
 
+/** Policy titles in the shopper's active language (the trust query itself stays English for the return-window parser). */
+export const STORE_POLICY_TITLES_QUERY = `#graphql
+  query StorePolicyTitles($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    shop {
+      refundPolicy { title }
+      shippingPolicy { title }
+    }
+  }
+` as const;
+
+interface StorePolicyTitlesResult {
+  shop?: {refundPolicy?: {title?: string | null} | null; shippingPolicy?: {title?: string | null} | null} | null;
+}
+
 export function toStoreTrust(
   data: StoreTrustQueryResult | null | undefined,
   countries: readonly string[] = [],
+  titles?: StorePolicyTitlesResult | null,
 ): StoreTrust {
   const shop = data?.shop;
   return {
     returnDays: parseReturnWindowDays(shop?.refundPolicy?.body),
     refundPolicyUrl: shop?.refundPolicy?.url ? String(shop.refundPolicy.url) : null,
+    refundPolicyTitle: titles?.shop?.refundPolicy?.title || null,
+    shippingPolicyTitle: titles?.shop?.shippingPolicy?.title || null,
     paymentMethods: paymentMethodLabels(
       shop?.paymentSettings?.acceptedCardBrands,
       shop?.paymentSettings?.supportedDigitalWallets,
@@ -147,6 +168,8 @@ export function toStoreTrust(
 export const EMPTY_STORE_TRUST: StoreTrust = {
   returnDays: null,
   refundPolicyUrl: null,
+  refundPolicyTitle: null,
+  shippingPolicyTitle: null,
   paymentMethods: [],
   logoUrl: null,
   returnCountries: [],

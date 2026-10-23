@@ -11,8 +11,8 @@ Every finding, its slice, and what is still needed before it can be called **clo
 | F05 | P0 | R05 | Merged to dev (#369) | preview cart-cookie check | Claude + owner (preview) |
 | F06 | P0 | R06 | Merged to dev (#370) | visual comparison of sanitized content | Claude + owner (preview) |
 | F07 | P0 | R06 | Merged to dev (#370) | visual comparison of sanitized content | Claude + owner (preview) |
-| F08 | P0 | R07 | Merged to dev (#371) | shipping/duties/returns wording authority; discount eligibility policy (F49) | Business owner |
-| F09 | P0 | R07 | Merged to dev (#371) | shipping/duties/returns wording authority; discount eligibility policy (F49) | Business owner |
+| F08 | P0 | R07 | Policy relay implemented (owner decision 2026-10-23) | preview check that the PDP shows the live policy text | Claude + owner (preview) |
+| F09 | P0 | R07 | Policy relay implemented (owner decision 2026-10-23) | preview check that the PDP shows the live policy text | Claude + owner (preview) |
 | F10 | P0 | R08 | Merged to dev (#372) | Klaviyo list/catalog/Back-in-Stock setup + live acceptance | Business owner |
 | F11 | P0 | R08 | Merged to dev (#372) | Klaviyo list/catalog/Back-in-Stock setup + live acceptance | Business owner |
 | F12 | P1 | R09 | Merged to dev (#373) | deployed header check | Claude + owner (preview) |
