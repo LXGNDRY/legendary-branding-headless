@@ -18,7 +18,7 @@ import ProductCard, {
 import {CacheShort} from '~/lib/cache';
 import JsonLd from '~/components/ui/JsonLd';
 import {collectionPageSchema, breadcrumbSchema} from '~/components/seo/SeoSchema';
-import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
+import {ROUTES, canonicalLocaleUrl, withImageTransform} from '~/lib/site';
 
 const COLLECTION_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
@@ -123,12 +123,12 @@ interface CollectionData {
   };
 }
 
-export const meta: MetaFunction<typeof loader> = ({data}) => {
+export const meta: MetaFunction<typeof loader> = ({data, matches}) => {
   const collection = data?.collection;
   const title = collection?.seo?.title?.trim() || `${collection?.title ?? 'Collection'} | LEGENDARY BRANDING`;
   const description = collection?.seo?.description?.trim() || collection?.description || `Shop ${collection?.title ?? 'this collection'}.`;
   const faceted = Boolean(data?.activeFilters || (data?.sort && data.sort !== 'featured'));
-  const canonical = canonicalUrl(ROUTES.collection(collection?.handle ?? 'all-products')) + (faceted ? '' : data?.canonicalSearch ?? '');
+  const canonical = canonicalLocaleUrl(ROUTES.collection(collection?.handle ?? 'all-products'), matches) + (faceted ? '' : data?.canonicalSearch ?? '');
   const ogImage = withImageTransform(collection?.image?.url, {width: 1200, height: 630});
 
   return [

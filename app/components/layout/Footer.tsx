@@ -1,4 +1,6 @@
-import {Link} from 'react-router';
+import LocaleLink from '~/components/ui/LocaleLink';
+// LocaleLink preserves the active URL locale on client-side navigation.
+const Link = LocaleLink;
 import {OPEN_COOKIE_PREFERENCES_EVENT} from '~/lib/consent';
 import {SOCIAL_PROFILES} from '~/lib/site';
 import NewsletterForm from '~/components/ui/NewsletterForm';

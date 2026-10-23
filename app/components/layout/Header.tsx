@@ -1,4 +1,8 @@
-import {Link, useLocation} from 'react-router';
+import {useLocation} from 'react-router';
+import LocaleLink from '~/components/ui/LocaleLink';
+// LocaleLink wraps react-router's Link and preserves the active URL locale on
+// client-side navigation. Alias as `Link` to keep JSX below unchanged.
+const Link = LocaleLink;
 import LogoutForm from '~/components/ui/LogoutForm';
 import {useState, useEffect, useRef} from 'react';
 import {useWishlist} from '~/components/ui/Wishlist';

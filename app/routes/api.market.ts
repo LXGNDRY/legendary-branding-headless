@@ -11,6 +11,7 @@ import {
 import {requireSameOrigin} from '~/lib/security';
 import {enforceRatePolicy} from '~/lib/rate-limit';
 import {captureError} from '~/lib/monitoring';
+import {localizePath, parseLocalizedPath, toSupportedLanguage} from '~/lib/locale';
 
 export async function action({request, context}: ActionFunctionArgs) {
   if (request.method !== 'POST') {
@@ -90,5 +91,25 @@ export async function action({request, context}: ActionFunctionArgs) {
   // a different Markets price/currency than the one the customer selected.
   headers.append('Set-Cookie', await context.session.commit());
 
-  return Response.json({success: true, country, language, cart}, {headers});
+  // SEO-07: compute the equivalent locale URL for the page the shopper came
+  // from so the client-side can navigate to /de/products/foo instead of
+  // reloading /products/foo (which would render in EN and drop the choice
+  // Google indexed). Falls back to the home URL for the selected language.
+  const target = toSupportedLanguage(language);
+  let redirectTo: string | null = null;
+  if (target) {
+    try {
+      const referer = request.headers.get('referer');
+      const originUrl = new URL(request.url);
+      const refererUrl = referer ? new URL(referer) : null;
+      const samePathname =
+        refererUrl && refererUrl.origin === originUrl.origin ? refererUrl.pathname : '/';
+      const {path: bare} = parseLocalizedPath(samePathname);
+      redirectTo = localizePath(bare, target);
+    } catch {
+      redirectTo = localizePath('/', target);
+    }
+  }
+
+  return Response.json({success: true, country, language, cart, redirectTo}, {headers});
 }

@@ -36,6 +36,24 @@ Owner-approved domain split: non-www serves Hydrogen; www remains Shopify Online
 - Product return policy (JSON-LD) names only the active market's country (the policy text states no regions) and is omitted when unknown;
   it is never defaulted to US.
 
+## Locale URLs (SEO-07)
+
+- Shopify has 8 languages enabled: `EN` (default), `DE`, `ES`, `FR`, `HI`, `ID`, `IT`, `PT_BR`. English stays at the root
+  (`/products/foo`); every other language sits under its lowercase-hyphen slug (`/de/products/foo`, `/pt-br/journal/x`).
+- `app/routes.ts` registers every flat route under each non-default slug (one shared handler per URL variant). The context
+  (`app/lib/context.ts`) reads the language from the request URL via `parseLocalizedPath` and threads it into
+  `storefront.i18n.language`, so every `@inContext` Storefront query returns the right translation.
+- `app/root.tsx` emits a `<link rel="alternate" hreflang="...">` for all 8 locales plus `x-default` on every page; the
+  `<html lang>` attribute reflects the URL's locale (`en`, `de`, `es`, `fr`, `hi`, `id`, `it`, `pt-BR`).
+- Per-route meta uses `canonicalLocaleUrl(path, matches)` instead of `canonicalUrl(path)` so each page's canonical includes
+  the active prefix. The alternate list in `<head>` and the per-URL `xhtml:link` entries in `sitemap.xml` stay reciprocal.
+- `[sitemap.xml].tsx` fans every entry out into 8 `<url>` blocks (one per language), each advertising the full alternate set.
+- Internal links use `~/components/ui/LocaleLink` (aliased as `Link` in `Header`, `Footer`, `ProductCard`, `Button`) so
+  client-side navigation preserves the current locale. Non-prefixed `<Link>` calls elsewhere degrade to the EN URL on client
+  nav; server-rendered first-paint and search-engine landings always resolve to the right locale.
+- The language switcher (`MarketSelector`) posts to `api.market` and navigates to the equivalent locale URL for the current
+  page instead of reloading in place.
+
 ## Not done / merchant-managed values
 
 Contact email, social profiles, blog handle and menu handles are named constants in `site.ts` / route files rather than a

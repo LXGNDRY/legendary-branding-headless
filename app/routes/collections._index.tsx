@@ -7,7 +7,7 @@ import {CacheShort} from '~/lib/cache';
 import {fetchAllPages} from '~/lib/pagination';
 import JsonLd from '~/components/ui/JsonLd';
 import {breadcrumbSchema} from '~/components/seo/SeoSchema';
-import {ROUTES, canonicalUrl} from '~/lib/site';
+import {ROUTES, canonicalLocaleUrl} from '~/lib/site';
 
 type CollectionNode = {
   id: string;
@@ -52,14 +52,17 @@ const COLLECTIONS_QUERY = `#graphql
   }
 ` as const;
 
-export const meta: MetaFunction = () => [
-  {title: 'Collections | LEGENDARY BRANDING'},
-  {name: 'description', content: 'Shop all Legendary Branding collections.'},
-  {tagName: 'link', rel: 'canonical', href: canonicalUrl(ROUTES.collections)},
-  {property: 'og:title', content: 'Collections | LEGENDARY BRANDING'},
-  {property: 'og:description', content: 'Shop all Legendary Branding collections.'},
-  {property: 'og:url', content: canonicalUrl(ROUTES.collections)},
-];
+export const meta: MetaFunction = ({matches}) => {
+  const canonical = canonicalLocaleUrl(ROUTES.collections, matches);
+  return [
+    {title: 'Collections | LEGENDARY BRANDING'},
+    {name: 'description', content: 'Shop all Legendary Branding collections.'},
+    {tagName: 'link', rel: 'canonical', href: canonical},
+    {property: 'og:title', content: 'Collections | LEGENDARY BRANDING'},
+    {property: 'og:description', content: 'Shop all Legendary Branding collections.'},
+    {property: 'og:url', content: canonical},
+  ];
+};
 
 export async function loader({context}: LoaderFunctionArgs) {
   const {storefront} = context;

@@ -7,6 +7,7 @@
  * no access to the request environment, and a mistyped variable would silently move every canonical off the
  * live domain. It is separate from PUBLIC_CHECKOUT_DOMAIN, which is where checkout lives, not where pages are indexed.
  */
+import {localizePath, toSupportedLanguage} from './locale';
 
 /** Where pages are indexed. Previews and the raw Oxygen URL point their canonicals here and stay noindex. */
 export const SITE_ORIGIN = 'https://legendary-branding.com';
@@ -82,6 +83,34 @@ export function absoluteUrl(pathOrUrl: string): string {
 export function canonicalUrl(path: string): string {
   const url = absoluteUrl(path);
   return path === '/' ? `${SITE_ORIGIN}/` : url;
+}
+
+/**
+ * Locale-aware canonical: honors the active URL language so a `/de/products/foo` page
+ * emits `https://legendary-branding.com/de/products/foo`, not the EN root. Reads the
+ * language from the root route's loader (`matches[0].data.localization.language.isoCode`).
+ * Falls back to the unprefixed canonical when the language can't be resolved.
+ *
+ * Deliberately defined here (not in locale.ts) so route meta code already importing
+ * `canonicalUrl` can swap to this helper with a single-line change.
+ */
+export function canonicalLocaleUrl(path: string, matches: unknown): string {
+  const bare = canonicalUrl(path);
+  const list = Array.isArray(matches) ? matches : [];
+  const root = list.find((m): m is {data?: {localization?: {language?: {isoCode?: string}}}} =>
+    typeof m === 'object' && m !== null && (m as {id?: string}).id === 'root',
+  );
+  const isoCode = root?.data?.localization?.language?.isoCode;
+  if (typeof isoCode !== 'string' || isoCode === 'EN') return bare;
+  const language = toSupportedLanguage(isoCode);
+  if (!language || language === 'EN') return bare;
+  try {
+    const bareUrl = new URL(bare);
+    const localized = localizePath(bareUrl.pathname === '' ? '/' : bareUrl.pathname, language);
+    return `${SITE_ORIGIN}${localized}`;
+  } catch {
+    return bare;
+  }
 }
 
 /**

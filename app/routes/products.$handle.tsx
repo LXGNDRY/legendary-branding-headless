@@ -48,7 +48,7 @@ import {withBudget} from '~/lib/trust';
 import ProductReviewList from '~/components/sections/ProductReviewList';
 import TrustSignals, {useStoreTrust} from '~/components/ui/TrustSignals';
 import {useTranslation, type TranslationKey} from '~/lib/i18n';
-import {ROUTES, canonicalUrl, withImageTransform} from '~/lib/site';
+import {ROUTES, canonicalLocaleUrl, withImageTransform} from '~/lib/site';
 
 type MoneyData = {amount: string; currencyCode: CurrencyCode};
 
@@ -222,7 +222,7 @@ const PRODUCT_COMMERCE_QUERY = `#graphql
   }
 ` as const;
 
-export const meta: MetaFunction<typeof loader> = ({data, location}) => {
+export const meta: MetaFunction<typeof loader> = ({data, location, matches}) => {
   const product = data?.product;
   const title = product?.seo?.title?.trim() || `${product?.title ?? 'Product'} | LEGENDARY BRANDING`;
   const description = product?.seo?.description?.trim() || (product?.descriptionHtml
@@ -232,7 +232,7 @@ export const meta: MetaFunction<typeof loader> = ({data, location}) => {
   const ogSquare = withImageTransform(ogImage, {width: 1200, height: 1200});
   const ogWide = withImageTransform(ogImage, {width: 1200, height: 630});
   // NOTE: from the handle, not the URL path, so a trailing slash or different casing can't create a second canonical.
-  const canonical = canonicalUrl(ROUTES.product(product?.handle ?? location.pathname.replace(/^\/products\//, '').replace(/\/+$/, '')));
+  const canonical = canonicalLocaleUrl(ROUTES.product(product?.handle ?? location.pathname.replace(/^\/products\//, '').replace(/\/+$/, '')), matches);
   return [
     {title},
     {name: 'description', content: description},
