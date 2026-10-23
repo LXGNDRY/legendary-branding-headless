@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {afterEach, vi} from 'vitest';
-import {parseReturnWindowDays, paymentMethodLabels, toStoreTrust, withBudget} from './trust';
+import {parseReturnWindowDays, paymentMethodLabels, STORE_POLICY_TITLES_QUERY, STORE_TRUST_QUERY, toStoreTrust, withBudget} from './trust';
 
 describe('trust', () => {
   it('reads the return window from the refund policy text', () => {
@@ -27,10 +27,25 @@ describe('trust', () => {
     expect(toStoreTrust(null)).toEqual({
       returnDays: null,
       refundPolicyUrl: null,
+      refundPolicyTitle: null,
+      shippingPolicyTitle: null,
       paymentMethods: [],
       logoUrl: null,
       returnCountries: [],
     });
+  });
+
+  it('takes policy link titles from the separate active-language lookup, not the English trust query', () => {
+    const trust = toStoreTrust(
+      {shop: {refundPolicy: {body: 'You have 30 days to request a return.', url: 'https://x/refund'}}},
+      ['US'],
+      {shop: {refundPolicy: {title: 'Politique de remboursement'}, shippingPolicy: {title: "Politique d'expédition"}}},
+    );
+    expect(trust.refundPolicyTitle).toBe('Politique de remboursement');
+    expect(trust.shippingPolicyTitle).toBe("Politique d'expédition");
+    expect(trust.returnDays).toBe(30);
+    expect(STORE_TRUST_QUERY).not.toMatch(/title/);
+    expect(STORE_POLICY_TITLES_QUERY).toMatch(/\$language: LanguageCode/);
   });
 
   it('ignores other durations in the policy', () => {

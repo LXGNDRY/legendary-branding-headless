@@ -40,14 +40,16 @@ test.describe('Golden commerce journey', () => {
     await expect(chartOrGuidance.first()).toBeVisible();
     await sizeGuide.getByRole('button', {name: 'Close size guide'}).click();
 
-    await page.getByRole('button', {name: 'Shipping & Returns'}).click();
-    // Dollar amounts/thresholds intentionally live only on the shipping
-    // policy page (single source of truth, see products.$handle.tsx) --
-    // the PDP accordion links out to it rather than duplicating the figures.
-    await expect(page.getByText(/Shipping, duties and taxes are calculated at checkout/).first()).toBeVisible();
-    // No unconditional shipping or duties guarantees until the owner approves structured facts.
+    // Shipping, duties and returns wording is relayed from the store's own policies (never hardcoded): the policy
+    // accordion must show real policy text and link to the full policy page.
+    const shippingAccordion = page.locator('button[aria-expanded]', {hasText: /shipping/i}).first();
+    await shippingAccordion.click();
+    const policyText = shippingAccordion.locator('xpath=following-sibling::div[1]');
+    await expect(policyText).toBeVisible();
+    expect(((await policyText.textContent()) ?? '').trim().length).toBeGreaterThan(40);
+    await expect(policyText.getByRole('link').last()).toHaveAttribute('href', '/policies/shipping-policy');
+    // No unconditional shipping or duties guarantees invented in code.
     await expect(page.getByText(/free (standard )?shipping on every order|duties (are )?included/i)).toHaveCount(0);
-    await expect(page.getByRole('link', {name: 'shipping policy'})).toBeVisible();
   });
 
   test('international market selection updates and persists for the session', async ({page}) => {

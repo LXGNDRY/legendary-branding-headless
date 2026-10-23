@@ -1721,6 +1721,18 @@ export type StoreTrustQuery = {
   };
 };
 
+export type StorePolicyTitlesQueryVariables = Exact<{
+  country?: StorefrontAPI.CountryCode | null | undefined;
+  language?: StorefrontAPI.LanguageCode | null | undefined;
+}>;
+
+export type StorePolicyTitlesQuery = {
+  shop: {
+    refundPolicy: {title: string} | null;
+    shippingPolicy: {title: string} | null;
+  };
+};
+
 export type SitemapProductsQueryVariables = Exact<{
   first: number;
   after?: string | null | undefined;
@@ -2507,6 +2519,10 @@ export type ProductQueryVariables = Exact<{
 }>;
 
 export type ProductQuery = {
+  shop: {
+    shippingPolicy: {title: string; body: string} | null;
+    refundPolicy: {title: string; body: string} | null;
+  };
   product: {
     id: string;
     title: string;
@@ -2771,6 +2787,10 @@ interface GeneratedQueryTypes {
     return: StoreTrustQuery;
     variables: StoreTrustQueryVariables;
   };
+  '#graphql\n  query StorePolicyTitles($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { title }\n      shippingPolicy { title }\n    }\n  }\n': {
+    return: StorePolicyTitlesQuery;
+    variables: StorePolicyTitlesQueryVariables;
+  };
   '#graphql\n  query SitemapProducts($first: Int!, $after: String) {\n    products(first: $first, after: $after) { nodes { handle updatedAt } pageInfo { hasNextPage endCursor } }\n  }\n': {
     return: SitemapProductsQuery;
     variables: SitemapProductsQueryVariables;
@@ -2843,7 +2863,7 @@ interface GeneratedQueryTypes {
     return: PolicyQuery;
     variables: PolicyQueryVariables;
   };
-  '#graphql\n  query Product(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      title\n      handle\n      descriptionHtml\n      tags\n      vendor\n      productType\n      metafields(identifiers: [\n        {namespace: "custom", key: "material"}\n        {namespace: "custom", key: "fit"}\n        {namespace: "custom", key: "care"}\n        {namespace: "custom", key: "size_chart"}\n        {namespace: "judgeme", key: "badge"}\n        {namespace: "judgeme", key: "widget"}\n        {namespace: "reviews", key: "rating"}\n        {namespace: "reviews", key: "rating_count"}\n      ]) {\n        key\n        value\n        type\n        reference {\n          ... on MediaImage {\n            image { url altText width height }\n          }\n        }\n      }\n      # NOTE: the gallery is intentionally capped at the first 10 images; a selected variant\'s own image is added separately.\n      images(first: 10) {\n        nodes { id url altText width height }\n      }\n    }\n  }\n': {
+  '#graphql\n  query Product(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    shop {\n      shippingPolicy { title body }\n      refundPolicy { title body }\n    }\n    product(handle: $handle) {\n      id\n      title\n      handle\n      descriptionHtml\n      tags\n      vendor\n      productType\n      metafields(identifiers: [\n        {namespace: "custom", key: "material"}\n        {namespace: "custom", key: "fit"}\n        {namespace: "custom", key: "care"}\n        {namespace: "custom", key: "size_chart"}\n        {namespace: "judgeme", key: "badge"}\n        {namespace: "judgeme", key: "widget"}\n        {namespace: "reviews", key: "rating"}\n        {namespace: "reviews", key: "rating_count"}\n      ]) {\n        key\n        value\n        type\n        reference {\n          ... on MediaImage {\n            image { url altText width height }\n          }\n        }\n      }\n      # NOTE: the gallery is intentionally capped at the first 10 images; a selected variant\'s own image is added separately.\n      images(first: 10) {\n        nodes { id url altText width height }\n      }\n    }\n  }\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };

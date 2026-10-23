@@ -128,6 +128,10 @@ const PRODUCT_QUERY = `#graphql
     $country: CountryCode
     $language: LanguageCode
   ) @inContext(country: $country, language: $language) {
+    shop {
+      shippingPolicy { title body }
+      refundPolicy { title body }
+    }
     product(handle: $handle) {
       id
       title
@@ -251,7 +255,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const selectedOptions = getSelectedProductOptions(request);
   const market = {country: context.storefront.i18n.country, language: context.storefront.i18n.language};
 
-  const [{product: content}, commerce] = await Promise.all([
+  const [{product: content, shop}, commerce] = await Promise.all([
     context.storefront.query(PRODUCT_QUERY, {variables: {handle, ...market}, cache: CacheLong()}),
     (async () => {
       const extras: {
@@ -321,6 +325,11 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
     relatedProducts: relatedProducts as {products?: {nodes?: unknown[]}} | null,
     reviews,
     reviewSummary,
+    // NOTE: shipping, duties and returns text is relayed from the store's own policies, never written in code.
+    policies: {
+      shipping: shop?.shippingPolicy ?? null,
+      returns: shop?.refundPolicy ?? null,
+    },
   };
 }
 
@@ -538,7 +547,7 @@ function Accordion({label, children}: {label: string; children: React.ReactNode}
 
 export default function ProductPage() {
   const t = useTranslation();
-  const {product, relatedProducts, reviews, reviewSummary} = useLoaderData<typeof loader>();
+  const {product, relatedProducts, reviews, reviewSummary, policies} = useLoaderData<typeof loader>();
   // Real active Shopify discounts, fetched once in the root loader (see
   // app/root.tsx) rather than re-fetched per PDP. Streamed, not awaited --
   // the root loader never blocks on this optional Admin API call, so this
@@ -946,30 +955,6 @@ export default function ProductPage() {
                 </p>
               )}
 
-              <section
-                aria-label="Delivery and checkout information"
-                className="border-y border-[var(--color-border-muted)] py-3.5"
-              >
-                <div className="flex items-start gap-3">
-                  <svg
-                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-text-primary)]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    aria-hidden="true"
-                  >
-                    <path d="M3 6h11v11H3zM14 9h4l3 3v5h-7z" />
-                    <circle cx="7" cy="19" r="1.5" />
-                    <circle cx="18" cy="19" r="1.5" />
-                  </svg>
-                  <div className="min-w-0 text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                    <p className="font-medium text-[var(--color-text-primary)]">{t('shipping.worldwideDelivery')}</p>
-                    <p>{t('shipping.calculated')}</p>
-                    <p className="mt-0.5 text-[var(--color-text-tertiary)]">{t('shipping.dutiesTaxes')}</p>
-                  </div>
-                </div>
-              </section>
 
               {/* Quantity + Add to cart */}
               <div className="space-y-3 pt-2">
@@ -1000,11 +985,6 @@ export default function ProductPage() {
                 )}
               </div>
 
-              <p className="flex items-center justify-center gap-3 text-[0.7rem] uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">
-                <Link to="/policies/shipping-policy" className="transition-colors hover:text-[var(--color-text-primary)]">Shipping details</Link>
-                <span aria-hidden="true" className="h-3 w-px bg-[var(--color-border-medium)]" />
-                <Link to="/policies/refund-policy" className="transition-colors hover:text-[var(--color-text-primary)]">Returns</Link>
-              </p>
 
               {/* Accordions */}
               <div className="border-t border-[var(--color-border-muted)] pt-4">
@@ -1013,12 +993,19 @@ export default function ProductPage() {
                     <SafeHtml className="prose prose-sm max-w-none [&_p]:text-[var(--color-text-secondary)] [&_ul]:text-[var(--color-text-secondary)]" html={product.descriptionHtml} />
                   </Accordion>
                 )}
-                <Accordion label="Shipping & Returns">
-                  <div className="space-y-3">
-                    <p>Shipping, duties and taxes are calculated at checkout. For rates and delivery timelines, see our <Link to="/policies/shipping-policy" className="underline underline-offset-2">shipping policy</Link>.</p>
-                    <p>For return eligibility, timing, and instructions, review our <Link to="/policies/refund-policy" className="underline underline-offset-2">return policy</Link>.</p>
-                  </div>
-                </Accordion>
+                {([['shipping-policy', policies.shipping], ['refund-policy', policies.returns]] as const).map(([handle, policy]) =>
+                  policy?.body ? (
+                    <Accordion key={handle} label={policy.title}>
+                      <SafeHtml
+                        className="prose prose-sm max-h-72 max-w-none overflow-y-auto [&_p]:text-[var(--color-text-secondary)] [&_ul]:text-[var(--color-text-secondary)]"
+                        html={policy.body}
+                      />
+                      <Link to={`/policies/${handle}`} className="mt-3 inline-block underline underline-offset-2">
+                        {policy.title}
+                      </Link>
+                    </Accordion>
+                  ) : null,
+                )}
                 {product.metafields?.some((m) => m?.key === 'care' && m.value) && (
                   <Accordion label="Care Guide">
                     <p>{product.metafields.find((m) => m?.key === 'care')?.value}</p>

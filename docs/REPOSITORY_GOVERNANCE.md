@@ -10,7 +10,7 @@ feature/fix/chore branch -> dev -> main
 - Only `dev` may open a release pull request into `main`.
 - Direct feature pull requests into `main` are rejected by `PR Governance`.
 - A green workflow is evidence, not approval.
-- Every pull request requires explicit owner approval.
+- Merges into `dev` happen when CI is fully green and review threads are handled; merges into `main` happen only on the owner's explicit call.
 
 ## Required GitHub rulesets
 
@@ -63,8 +63,10 @@ check names the workflow emits today. Applying them is an owner/admin action (Se
 Import); agents never change repository settings and never weaken a rule to merge remediation.
 
 Decisions the owner must make before importing:
-- **Review requirement:** `require_code_owner_review` + one approval means no PR (including agent PRs) merges without
-  an owner approval. Drop it on `dev` only if agent merges on green CI are meant to continue.
+- **Review requirement (decided 2026-10-23):** the owner merges to `main` by explicit instruction, and agents merge to
+  `dev` on green CI. The ruleset files therefore require a pull request and the exact status checks but no approving
+  review; the `main` approval is a process rule (the owner's call), because merges are currently performed under the
+  owner's own GitHub account, which cannot approve its own pull requests.
 - **Bypass list:** empty by design (no administrator bypass). Add the owner only for audited emergency recovery.
 - **Up-to-date branch:** strict status checks force a branch update before each merge, which serializes PRs.
 

@@ -406,10 +406,6 @@ export default function CartPage() {
                   />
                 )}
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--color-text-secondary)] tracking-widest uppercase text-xs">Shipping</span>
-                <span className="text-[var(--color-text-secondary)]">Calculated at checkout</span>
-              </div>
               {cart && (
                 <CartDiscountSection
                   cart={cart}
@@ -460,9 +456,6 @@ export default function CartPage() {
               </Button>
             )}
 
-            <p className="mt-4 text-center text-[11px] text-[var(--color-text-secondary)] tracking-wide">
-              Taxes and shipping calculated at checkout
-            </p>
             <TrustSignals className="mt-4" />
           </div>
         </div>

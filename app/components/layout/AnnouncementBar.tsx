@@ -11,9 +11,7 @@ type Announcement =
 
 interface AnnouncementBarProps {
   items?: Announcement[];
-  /** Real active discounts from Shopify Admin -- when non-empty, these
-      replace the static placeholder items so customers see what's actually
-      on sale right now instead of generic marketing copy. See
+  /** Real active discounts from Shopify Admin -- the only source of announcement text. See
       ~/lib/discounts.ts for what counts as safe to advertise publicly. */
   discounts?: ActiveDiscount[];
 }
@@ -23,13 +21,6 @@ function discountToAnnouncement(discount: ActiveDiscount): Announcement {
     discount.kind === 'code' ? `${discount.summary} — use code ${discount.code}` : discount.summary;
   return {text, link: '/collections/all-products'};
 }
-
-const DEFAULT_ITEMS: Announcement[] = [
-  {key: 'announcement.shipping', link: '/collections/all-products'},
-  {key: 'announcement.heavyweight'},
-  {key: 'announcement.newDrops', link: '/collections/all-products'},
-  {key: 'announcement.worldwide'},
-];
 
 /**
  * ONYX — Announcement Bar
@@ -67,15 +58,15 @@ function AnnouncementItem({item}: {item: Announcement}) {
 
 export default function AnnouncementBar({items, discounts}: AnnouncementBarProps) {
   const hasLiveDiscounts = !items && !!discounts && discounts.length > 0;
-  const resolvedItems = items ?? (hasLiveDiscounts ? discounts!.map(discountToAnnouncement) : DEFAULT_ITEMS);
+  const resolvedItems = items ?? (hasLiveDiscounts ? discounts!.map(discountToAnnouncement) : []);
+  // NOTE: no static marketing copy -- with no live Shopify discount there is nothing to announce, so the bar is not rendered.
+  if (resolvedItems.length === 0) return null;
   return (
     <div className="bg-[var(--color-bg-level-2)] text-[var(--color-text-primary)] overflow-hidden border-b border-[var(--color-border-muted)] py-2">
-      {/* A real active discount, unlike the static marketing copy below, has
-          no other sitewide surface a screen-reader user could discover it
-          from (the static items' destinations are "also reachable via
-          primary nav" -- a live discount generally isn't) -- so it gets one
-          accessible, non-animated, visually-hidden announcement here,
-          outside the aria-hidden scrolling marquee. */}
+      {/* A live discount has no other sitewide surface a screen-reader user
+          could discover it from, so it gets one accessible, non-animated,
+          visually-hidden announcement here, outside the aria-hidden
+          scrolling marquee. */}
       {hasLiveDiscounts && (
         <p className="sr-only">
           {discounts!.map((d) => (d.kind === 'code' ? `${d.summary} — use code ${d.code}` : d.summary)).join('. ')}

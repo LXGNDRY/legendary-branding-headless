@@ -46,7 +46,8 @@ describe('DiscountsPopup vs Klaviyo', () => {
     renderPopup();
     await act(async () => vi.advanceTimersByTime(5_000));
     expect(dialog()).not.toBeNull();
-    expect(screen.getByText(/eligibility and final savings are confirmed at checkout/i)).toBeTruthy();
+    // NOTE: offer terms come from Shopify's own discount summary; the popup adds no eligibility or checkout claims of its own.
+    expect(screen.queryByText(/eligibility|confirmed at checkout/i)).toBeNull();
   });
 
   it('waits out the Klaviyo grace window, then shows if Klaviyo stayed closed', async () => {
