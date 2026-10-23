@@ -14,6 +14,9 @@ const FORBIDDEN: [string, RegExp][] = [
   ['unconditional free shipping', /free\s+(standard\s+|worldwide\s+)?shipping\s+(on|for)\s+(every|all)\s+orders?/i],
   ['free shipping, every order', /shipping,?\s+every\s+order/i],
   ['duties included', /duties\s+(are\s+)?included|included\s+in\s+the\s+displayed\s+price/i],
+  // Owner decision (2026-10-23): shipping, duties and returns wording is relayed from the store's policies, not written in code.
+  ['hardcoded shipping/duties/taxes handling', /(shipping|duties|taxes)[^.<>"'`\n]{0,40}(calculated|shown|displayed|added)\s+(at|during)\s+checkout/i],
+  ['hardcoded worldwide shipping', /(ships?|shipping|delivery)\s+worldwide|worldwide\s+(shipping|delivery)/i],
   ['free shipping translations', /Kostenloser\s+(weltweiter\s+)?(Standard)?[Vv]ersand|Envío\s+(estándar\s+)?gratis|Livraison\s+(standard\s+)?gratuite|मुफ्त\s+(स्टैंडर्ड\s+)?शिपिंग|Gratis\s+ongkir|Spedizione\s+(standard\s+)?gratuita|Frete\s+(padrão\s+)?grátis|Zölle\s+inbegriffen|Aranceles\s+incluidos|Droits\s+inclus|ड्यूटी\s+शामिल|Bea\s+masuk\s+sudah\s+termasuk|Dazi\s+inclusi|Impostos\s+de\s+importação\s+incluídos/i],
 ];
 

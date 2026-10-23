@@ -1712,7 +1712,8 @@ export type StoreTrustQueryVariables = Exact<{
 
 export type StoreTrustQuery = {
   shop: {
-    refundPolicy: {body: string; url: unknown} | null;
+    refundPolicy: {body: string; title: string; url: unknown} | null;
+    shippingPolicy: {title: string} | null;
     paymentSettings: {
       acceptedCardBrands: Array<StorefrontAPI.CardBrand>;
       supportedDigitalWallets: Array<StorefrontAPI.DigitalWallet>;
@@ -2507,6 +2508,10 @@ export type ProductQueryVariables = Exact<{
 }>;
 
 export type ProductQuery = {
+  shop: {
+    shippingPolicy: {title: string; body: string} | null;
+    refundPolicy: {title: string; body: string} | null;
+  };
   product: {
     id: string;
     title: string;
@@ -2767,7 +2772,7 @@ interface GeneratedQueryTypes {
     return: NavAllCollectionsQuery;
     variables: NavAllCollectionsQueryVariables;
   };
-  '#graphql\n  query StoreTrust($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { body url }\n      paymentSettings { acceptedCardBrands supportedDigitalWallets }\n      brand { logo { image { url } } }\n    }\n  }\n': {
+  '#graphql\n  query StoreTrust($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    shop {\n      refundPolicy { body title url }\n      shippingPolicy { title }\n      paymentSettings { acceptedCardBrands supportedDigitalWallets }\n      brand { logo { image { url } } }\n    }\n  }\n': {
     return: StoreTrustQuery;
     variables: StoreTrustQueryVariables;
   };
@@ -2843,7 +2848,7 @@ interface GeneratedQueryTypes {
     return: PolicyQuery;
     variables: PolicyQueryVariables;
   };
-  '#graphql\n  query Product(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) {\n      id\n      title\n      handle\n      descriptionHtml\n      tags\n      vendor\n      productType\n      metafields(identifiers: [\n        {namespace: "custom", key: "material"}\n        {namespace: "custom", key: "fit"}\n        {namespace: "custom", key: "care"}\n        {namespace: "custom", key: "size_chart"}\n        {namespace: "judgeme", key: "badge"}\n        {namespace: "judgeme", key: "widget"}\n        {namespace: "reviews", key: "rating"}\n        {namespace: "reviews", key: "rating_count"}\n      ]) {\n        key\n        value\n        type\n        reference {\n          ... on MediaImage {\n            image { url altText width height }\n          }\n        }\n      }\n      # NOTE: the gallery is intentionally capped at the first 10 images; a selected variant\'s own image is added separately.\n      images(first: 10) {\n        nodes { id url altText width height }\n      }\n    }\n  }\n': {
+  '#graphql\n  query Product(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    shop {\n      shippingPolicy { title body }\n      refundPolicy { title body }\n    }\n    product(handle: $handle) {\n      id\n      title\n      handle\n      descriptionHtml\n      tags\n      vendor\n      productType\n      metafields(identifiers: [\n        {namespace: "custom", key: "material"}\n        {namespace: "custom", key: "fit"}\n        {namespace: "custom", key: "care"}\n        {namespace: "custom", key: "size_chart"}\n        {namespace: "judgeme", key: "badge"}\n        {namespace: "judgeme", key: "widget"}\n        {namespace: "reviews", key: "rating"}\n        {namespace: "reviews", key: "rating_count"}\n      ]) {\n        key\n        value\n        type\n        reference {\n          ... on MediaImage {\n            image { url altText width height }\n          }\n        }\n      }\n      # NOTE: the gallery is intentionally capped at the first 10 images; a selected variant\'s own image is added separately.\n      images(first: 10) {\n        nodes { id url altText width height }\n      }\n    }\n  }\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };

@@ -45,19 +45,27 @@ A separate platform is handling Liquid theme conversion (`Theme-Files-edits-here
   git push -u origin dev
   ```
 - Every PR must be ready for review (not draft) and include a clear description of what changed and why.
-- Agents may merge a `dev` → `main` release PR into `main` when **either**:
-  - the PR's CI is fully green (Quality Gate + full E2E matrix) and `mergeable_state` is `clean` — no owner sign-off required in this case, or
-  - the owner explicitly instructs it in conversation (e.g. "merge PR #X into main"), even if CI hasn't finished.
-  In either case, still never force-push and never bypass a failing check to get there.
+- **`dev` → `main` is merged only on the owner's explicit call** (e.g. "merge PR #X into main"). Agents prepare and open the release PR, report CI status, and wait; green CI alone never authorizes a production merge. Merges of `claude/*` PRs into `dev` are made when CI is fully green and all review threads are handled.
+- In every case: never force-push and never bypass a failing check.
 
 ---
 
-## Known deviations awaiting owner decision
+## Owner decisions on record
 
-These are documented here instead of silently rewritten; the owner's prohibitions above still stand.
-
-| Topic | Current state | Decision owed |
+| Date | Decision | Effect |
 |---|---|---|
+| 2026-10-23 | `dev` → `main` is merged only on the owner's call | CI green is necessary, never sufficient, for a production merge |
+| 2026-10-23 | Hardcoded copy is not used unless necessary | New UI text must come from Shopify content or be structural (labels, ARIA); see "Copy still in code" below |
+| 2026-10-23 | Shipping, duties, returns and discount terms are not hardcoded and relay the store's policies | The PDP shows the Shopify shipping/refund policy text (sanitized) and policy pages are linked by their Shopify titles; discount text comes only from live Shopify discounts; `commerce-claims.test.ts` blocks reintroduction |
+| 2026-10-23 | The chat bot is removed | No chat widget, route, env var or provider dependency |
+
+## Copy still in code (open, per the copy rule)
+
+Marketing and product wording that is not yet sourced from Shopify content: homepage hero text and section headings, the PDP "true to size" and fabric-tier text (`app/locales`, `products.$handle.tsx`), category/lookbook headings, `StatStrip`/`BrandMarquee` content (components kept but no longer rendered on the homepage). Moving these to Shopify content (metaobjects/pages) needs a content-model decision from the owner.
+
+Discount offers shown on the storefront use the Admin API (`app/lib/discounts.ts`), which sits outside "Storefront API exclusively"; owner decision pending on keeping, replacing or removing that feed.
+
+---|---|---|
 | "Never hardcode copy" | Substantial static UI/marketing copy exists in components (see `docs/SECTIONS.md`, recovery plan R07/R21) | Which copy moves to Shopify content vs. stays in code |
 | Admin API discounts vs. "Storefront API exclusively" | Discount availability logic reaches beyond the Storefront-only boundary (recovery plan F49/R07) | Keep, replace, or restrict |
 | Agent merge into `main` | This file allows green-CI agent merges; `docs/REPOSITORY_GOVERNANCE.md` says every PR requires owner approval | Pick one rule, then apply `.github/rulesets/*.json` |
@@ -199,7 +207,7 @@ agent branch (claude/*)
         └─► merge        # owner or agent merges when CI green
               └─► Oxygen preview deploy (automatic via CI on push to dev)
                     └─► owner reviews preview URL
-                          └─► PR: dev → main    # owner or agent merges when CI green (or owner says so)
+                          └─► PR: dev → main    # merged only when the owner says so
                                 └─► Oxygen production deploy (automatic via CI on push to main)
 ```
 

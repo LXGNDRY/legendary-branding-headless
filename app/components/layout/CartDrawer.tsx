@@ -42,17 +42,6 @@ function PlusIcon() {
   );
 }
 
-function TruckIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M1 5h8v5H1V5z" />
-      <path d="M9 7h3l2 2v1H9V7z" />
-      <circle cx="3" cy="12" r="1.2" />
-      <circle cx="11" cy="12" r="1.2" />
-    </svg>
-  );
-}
-
 function CartLineItem({line}: {line: CartLineData}) {
   const t = useTranslation();
   const {merchandise, quantity, cost, discountAllocations} = line;
@@ -353,18 +342,6 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
           </button>
         </div>
 
-        {/* NOTE: no shipping price or free-shipping promise here until the owner approves structured shipping facts; checkout is the authority. */}
-        {lines.length > 0 && subtotal && (
-          <div className="px-6 py-4 border-b border-[var(--color-border-muted)] shrink-0 bg-[var(--color-bg-level-0)]">
-            <div className="flex items-center gap-2.5">
-              <TruckIcon />
-              <span className="text-[11px] tracking-wide font-medium text-[var(--color-text-secondary)]">
-                Shipping and taxes calculated at checkout
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* Cart lines */}
         <div className="flex-1 overflow-y-auto px-6">
           {lines.length === 0 ? (
@@ -474,10 +451,6 @@ export default function CartDrawer({cart, open, onClose}: CartDrawerProps) {
                 />
               </div>
             )}
-            <p className="text-[11px] text-[var(--color-text-tertiary)] tracking-wide">
-              Taxes and shipping calculated at checkout
-            </p>
-
             {/* Checkout */}
             {currentCart.checkoutUrl ? (
               <Button

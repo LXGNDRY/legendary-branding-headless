@@ -27,6 +27,8 @@ describe('trust', () => {
     expect(toStoreTrust(null)).toEqual({
       returnDays: null,
       refundPolicyUrl: null,
+      refundPolicyTitle: null,
+      shippingPolicyTitle: null,
       paymentMethods: [],
       logoUrl: null,
       returnCountries: [],

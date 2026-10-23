@@ -71,6 +71,14 @@ describe('products.$handle loader', () => {
     expect(result.relatedProducts).toEqual({products: {nodes: []}});
   });
 
+  it('relays the store shipping and refund policies from Shopify, null when unpublished', async () => {
+    const shop = {shippingPolicy: {title: 'Shipping policy', body: '<p>S</p>'}, refundPolicy: null};
+    const {result} = await run('test-product', {...responses, Product: {product: content, shop}});
+    expect(result.policies).toEqual({shipping: shop.shippingPolicy, returns: null});
+    const {result: none} = await run('test-product', responses);
+    expect(none.policies).toEqual({shipping: null, returns: null});
+  });
+
   it('queries content and commerce separately with the handle and market', async () => {
     const {calls} = await run('my-product', responses);
     expect(calls.map((c) => c.operationName).sort()).toEqual(['Product', 'ProductCommerce']);

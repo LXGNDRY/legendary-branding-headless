@@ -4,10 +4,10 @@ Single list of homepage/content sections under `app/components/sections/`. "Acti
 
 | Section | Status | Used by |
 |---|---|---|
-| HeroSplit, StatStrip, CategoryGrid, NewArrivalsGrid, EditorialBand, VerifiedReviews, ReviewQuotes, NewsletterBand, BrandMarquee, CurrentOffers | Active | `routes/_index.tsx` |
+| HeroSplit, CategoryGrid, NewArrivalsGrid, EditorialBand, VerifiedReviews, ReviewQuotes, NewsletterBand, CurrentOffers | Active | `routes/_index.tsx` |
 | ContentBlocks | Active | `routes/pages.$handle.tsx` |
 | ProductReviewList | Active | `routes/products.$handle.tsx` |
-| BeforeAfter, BrandStory, CollectionGrid, DropTimer, FitCheck, Lookbook, StreetHero | Dormant | none — safe to reuse; owner decides keep or delete |
+| StatStrip, BrandMarquee (removed from the homepage 2026-10-23: their content was hardcoded shipping/spec claims), BeforeAfter, BrandStory, CollectionGrid, DropTimer, FitCheck, Lookbook, StreetHero | Dormant | none — safe to reuse; owner decides keep or delete |
 
 Rules
 - Content is visible without JS: `useReveal` / `useRevealChildren` only hide below-the-fold elements after hydration, when `IntersectionObserver` exists and reduced motion is off.

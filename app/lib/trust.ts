@@ -7,6 +7,9 @@ export interface StoreTrust {
   /** Return window in days, parsed from the published refund policy; null when it doesn't state one. */
   returnDays: number | null;
   refundPolicyUrl: string | null;
+  /** Policy titles as published in Shopify (localized by Shopify) -- used as link labels so no policy wording is written in code. */
+  refundPolicyTitle: string | null;
+  shippingPolicyTitle: string | null;
   /** Human-readable payment method names, cards first then wallets. */
   paymentMethods: string[];
   logoUrl: string | null;
@@ -112,7 +115,8 @@ export const STORE_TRUST_QUERY = `#graphql
   query StoreTrust($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
     shop {
-      refundPolicy { body url }
+      refundPolicy { body title url }
+      shippingPolicy { title }
       paymentSettings { acceptedCardBrands supportedDigitalWallets }
       brand { logo { image { url } } }
     }
@@ -121,7 +125,8 @@ export const STORE_TRUST_QUERY = `#graphql
 
 interface StoreTrustQueryResult {
   shop?: {
-    refundPolicy?: {body?: string | null; url?: unknown} | null;
+    refundPolicy?: {body?: string | null; title?: string | null; url?: unknown} | null;
+    shippingPolicy?: {title?: string | null} | null;
     paymentSettings?: {acceptedCardBrands?: string[] | null; supportedDigitalWallets?: string[] | null} | null;
     brand?: {logo?: {image?: {url?: unknown} | null} | null} | null;
   } | null;
@@ -135,6 +140,8 @@ export function toStoreTrust(
   return {
     returnDays: parseReturnWindowDays(shop?.refundPolicy?.body),
     refundPolicyUrl: shop?.refundPolicy?.url ? String(shop.refundPolicy.url) : null,
+    refundPolicyTitle: shop?.refundPolicy?.title || null,
+    shippingPolicyTitle: shop?.shippingPolicy?.title || null,
     paymentMethods: paymentMethodLabels(
       shop?.paymentSettings?.acceptedCardBrands,
       shop?.paymentSettings?.supportedDigitalWallets,
@@ -147,6 +154,8 @@ export function toStoreTrust(
 export const EMPTY_STORE_TRUST: StoreTrust = {
   returnDays: null,
   refundPolicyUrl: null,
+  refundPolicyTitle: null,
+  shippingPolicyTitle: null,
   paymentMethods: [],
   logoUrl: null,
   returnCountries: [],

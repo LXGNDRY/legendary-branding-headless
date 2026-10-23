@@ -98,6 +98,10 @@ function data(over: Record<string, unknown> = {}, selected: unknown = variant('g
     },
     reviews: {reviews: [], truncated: false},
     reviewSummary: null,
+    policies: {
+      shipping: {title: 'Shipping policy', body: '<p>Orders ship from our studio.</p><script>alert(1)</script>'},
+      returns: null as {title: string; body: string} | null,
+    },
   };
 }
 
@@ -152,6 +156,21 @@ describe('ProductPage', () => {
     const blocks = Array.from(document.querySelectorAll('script[type="application/ld+json"]')).map((s) => s.textContent ?? '');
     expect(blocks.some((b) => b.includes('"Product"'))).toBe(true);
     expect(blocks.some((b) => b.includes('BreadcrumbList'))).toBe(true);
+  });
+
+  it('relays the store shipping policy text (sanitized) instead of hardcoded shipping/duties copy', async () => {
+    renderPage(data());
+    fireEvent.click(await screen.findByRole('button', {name: 'Shipping policy'}));
+    expect(screen.getByText('Orders ship from our studio.')).toBeInTheDocument();
+    expect(document.querySelector('script:not([type="application/ld+json"])')).toBeNull();
+    expect(screen.getByRole('link', {name: 'Shipping policy'})).toHaveAttribute('href', '/policies/shipping-policy');
+    expect(document.body.textContent).not.toMatch(/calculated at checkout|worldwide/i);
+  });
+
+  it('shows no policy accordion for a policy the store has not published', async () => {
+    renderPage(data());
+    await screen.findByRole('heading', {level: 1});
+    expect(screen.queryByRole('button', {name: /refund|return/i})).toBeNull();
   });
 
   it('lists related products but never the current one', async () => {
