@@ -86,7 +86,9 @@ describe('buildRobotsTxt', () => {
 });
 
 describe('isIndexableHost', () => {
-  it('only blocks Oxygen deployment hosts', () => {
+  it('blocks deployment and Shopify preview aliases, including case and ports', () => {
+    expect(isIndexableHost('ABC.MYSHOPIFY.DEV:443')).toBe(false);
+    expect(isIndexableHost('abc.shopifypreview.com')).toBe(false);
     expect(isIndexableHost('01abc-ce137ca1306df9eea6fa.myshopify.dev')).toBe(false);
     expect(isIndexableHost('www.legendary-branding.com')).toBe(true);
     expect(isIndexableHost('legendary-branding.com')).toBe(true);

@@ -59,17 +59,31 @@ const POLICY_PAGE_ALIASES: Record<string, string> = {
 type Node = {handle: string; updatedAt?: string};
 type Connection = {nodes: Node[]; pageInfo: {hasNextPage: boolean; endCursor?: string | null}};
 
+function sitemapUnavailable() {
+  return new Response('Sitemap temporarily unavailable', {
+    status: 503,
+    headers: {'Cache-Control': 'no-store', 'Retry-After': '300'},
+  });
+}
+
 async function paginate(queryPage: (after: string | null) => Promise<Connection | null | undefined>) {
-  const nodes: Node[] = [];
+  const nodes = new Map<string, Node>();
+  const seen = new Set<string>();
   let after: string | null = null;
   for (let page = 0; page < 100; page += 1) {
     const connection = await queryPage(after);
-    if (!connection) break;
-    nodes.push(...connection.nodes);
-    if (!connection.pageInfo.hasNextPage || !connection.pageInfo.endCursor) break;
-    after = connection.pageInfo.endCursor;
+    // NOTE: a missing optional blog is valid only before pagination begins.
+    if (!connection && after === null) return [];
+    if (!connection) throw sitemapUnavailable();
+    for (const node of connection.nodes) nodes.set(node.handle, node);
+    if (!connection.pageInfo.hasNextPage) return [...nodes.values()];
+    const next = connection.pageInfo.endCursor;
+    if (!next || seen.has(next)) throw sitemapUnavailable();
+    seen.add(next);
+    after = next;
   }
-  return nodes;
+  throw sitemapUnavailable();
+
 }
 
 export async function loader({context}: LoaderFunctionArgs) {
