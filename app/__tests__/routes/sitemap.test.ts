@@ -32,7 +32,7 @@ function run(country: string, language: string, options: {pages?: string[]; poli
   });
   mock.storefront.i18n = {country, language} as typeof mock.storefront.i18n;
   // @ts-expect-error - minimal Hydrogen app context
-  return loader({request: new Request(options.requestUrl ?? 'https://www.legendary-branding.com/sitemap.xml'), context: mock.createContext(), params: {}}).then(async (res: Response) => ({
+  return loader({request: new Request(options.requestUrl ?? 'https://legendary-branding.com/sitemap.xml'), context: mock.createContext(), params: {}}).then(async (res: Response) => ({
     res,
     body: await res.text(),
     calls: mock.getCalls(),
@@ -63,7 +63,7 @@ describe('sitemap.xml', () => {
     const {body} = await run('US', 'EN', {requestUrl: 'https://legendary-abc.o2.myshopify.dev/sitemap.xml'});
     const locs = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
     expect(locs.length).toBeGreaterThan(5);
-    expect(locs.every((loc) => loc.startsWith('https://www.legendary-branding.com/') || loc === 'https://www.legendary-branding.com')).toBe(true);
+    expect(locs.every((loc) => loc.startsWith('https://legendary-branding.com/') || loc === 'https://legendary-branding.com')).toBe(true);
   });
 
   it('lists only policy URLs the route would serve: a built-in policy body or a Page body, plus contact', async () => {

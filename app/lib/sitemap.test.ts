@@ -7,13 +7,13 @@ describe('sitemap helpers', () => {
   });
 
   it('writes only loc when no reliable lastmod is given', () => {
-    const entry = urlEntry('https://www.legendary-branding.com', '/products/x');
-    expect(entry).toContain('<loc>https://www.legendary-branding.com/products/x</loc>');
+    const entry = urlEntry('https://legendary-branding.com', '/products/x');
+    expect(entry).toContain('<loc>https://legendary-branding.com/products/x</loc>');
     expect(entry).not.toContain('lastmod');
   });
 
   it('adds lastmod when given, and never the fields Google ignores', () => {
-    const entry = urlEntry('https://www.legendary-branding.com', '/pages/about', '2026-10-01T00:00:00Z');
+    const entry = urlEntry('https://legendary-branding.com', '/pages/about', '2026-10-01T00:00:00Z');
     expect(entry).toContain('<lastmod>2026-10-01T00:00:00Z</lastmod>');
     expect(entry).not.toMatch(/priority|changefreq/);
   });

@@ -1,9 +1,9 @@
 # Hydrogen technical SEO correction plan
 
-Status: PLANNED — no storefront implementation or Shopify configuration changes made.
+Status: EXECUTING — code slices target dev only; no production promotion or Shopify configuration changes authorized by this plan.
 Date: 2026-10-23 (America/Chicago).
 Repository baseline reviewed: `ec9d2c6669483d1938e51efca409caa4da1aebfa` on `dev`.
-Owner decision: the domain arrangement below is intentional. Preserve it.
+Owner decision: the domain arrangement below is intentional. Preserve it. The owner assigned execution to Codex in verified slices to dev. Execution evidence: [SEO_EXECUTION.md](SEO_EXECUTION.md).
 Execution: read `CLAUDE.md` and this plan before implementation. This is a focused follow-up to the recovery plan, not a claim that its other tasks are closed.
 
 ## 1. Target contract

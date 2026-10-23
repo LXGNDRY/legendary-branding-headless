@@ -10,7 +10,7 @@ import {
   isIndexableHost,
 } from './robots';
 
-const ORIGIN = 'https://www.legendary-branding.com';
+const ORIGIN = 'https://legendary-branding.com';
 const lines = (text: string) => text.split('\n');
 const directive = /^(User-agent|Allow|Disallow|Sitemap): \S/;
 const blocks = (text: string) => text.split('\n\n').filter((block) => block.includes('User-agent:'));
@@ -99,7 +99,7 @@ describe('robots.txt route', () => {
     loader({request: new Request(url), context: {env: {PUBLIC_CHECKOUT_DOMAIN: domain}}} as never);
 
   it('serves the rules as text/plain, cached for an hour so fixes propagate quickly', async () => {
-    const response = await run('https://www.legendary-branding.com/robots.txt', 'legendary-branding.com');
+    const response = await run('https://legendary-branding.com/robots.txt', 'legendary-branding.com');
     expect(response.headers.get('Content-Type')).toContain('text/plain');
     expect(response.headers.get('Cache-Control')).toContain('max-age=3600');
     expect(await response.text()).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
@@ -107,8 +107,8 @@ describe('robots.txt route', () => {
 
   it('points the Sitemap line at the canonical origin on any host, ignoring the checkout domain variable', async () => {
     for (const [url, domain] of [
-      ['https://www.legendary-branding.com/robots.txt', undefined],
-      ['https://www.legendary-branding.com/robots.txt', 'checkout.other-domain.com'],
+      ['https://legendary-branding.com/robots.txt', undefined],
+      ['https://legendary-branding.com/robots.txt', 'checkout.other-domain.com'],
       ['https://localhost:3000/robots.txt', 'legendary-branding.com'],
     ] as const) {
       expect(await (await run(url, domain)).text()).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
@@ -131,7 +131,7 @@ describe('applyHostRobotsHeader', () => {
   });
 
   it('leaves the live host alone', () => {
-    expect(applyHostRobotsHeader(html(), 'https://www.legendary-branding.com/').headers.get('X-Robots-Tag')).toBeNull();
+    expect(applyHostRobotsHeader(html(), 'https://legendary-branding.com/').headers.get('X-Robots-Tag')).toBeNull();
   });
 
   it('works on a response with immutable headers', () => {

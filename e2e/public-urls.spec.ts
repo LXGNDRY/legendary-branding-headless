@@ -4,10 +4,14 @@ import {test, expect} from '@playwright/test';
  * Public URL contract: canonical, sitemap and robots agree on one origin, previews are noindex, and every
  * footer policy/help link resolves to content (a required policy with no content answers 503 and fails here).
  */
-const LIVE_ORIGIN = 'https://www.legendary-branding.com';
+const LIVE_ORIGIN = 'https://legendary-branding.com';
 
 test('home canonical and og:url use the live origin', async ({page}) => {
-  await page.goto('/', {waitUntil: 'domcontentloaded'});
+  const response = await page.goto('/', {waitUntil: 'domcontentloaded'});
+  expect(response?.status()).toBe(200);
+  const html = await response!.text();
+  expect(html).toContain(`rel="canonical" href="${LIVE_ORIGIN}/"`);
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${LIVE_ORIGIN}/`);
   await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', `${LIVE_ORIGIN}/`);
 });

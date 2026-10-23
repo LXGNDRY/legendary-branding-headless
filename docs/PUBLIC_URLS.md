@@ -5,7 +5,9 @@ Code: `app/lib/site.ts` (origin, routes, policy handles, URL helpers), `app/rout
 
 ## One origin
 
-- `SITE_ORIGIN` (`https://www.legendary-branding.com`) drives every canonical link, `og:url`, JSON-LD id/url, the sitemap `<loc>` values
+Owner-approved domain split: non-www serves Hydrogen; www remains Shopify Online Store/checkout and its redirect theme forwards ordinary storefront visits to non-www. The Online Store primary domain is not the SEO origin.
+
+- `SITE_ORIGIN` (`https://legendary-branding.com`) drives every canonical link, `og:url`, JSON-LD id/url, the sitemap `<loc>` values
   and the robots.txt Sitemap line. Nothing else in app source spells the domain (a test enforces it).
 - It is a constant, not an env var: canonicals are built in route `meta` functions with no access to the environment, and a mistyped
   variable would silently move every canonical off the live domain. `PUBLIC_CHECKOUT_DOMAIN` is only where checkout lives.

@@ -9,7 +9,7 @@
  */
 
 /** Where pages are indexed. Previews and the raw Oxygen URL point their canonicals here and stay noindex. */
-export const SITE_ORIGIN = 'https://www.legendary-branding.com';
+export const SITE_ORIGIN = 'https://legendary-branding.com';
 
 export const SUPPORT_EMAIL = 'lb@legendary-branding.com';
 
@@ -57,7 +57,7 @@ export function isPolicyHandle(handle: string): handle is PolicyHandle {
 
 /**
  * Absolute URL on the canonical origin. Accepts a site path ("/products/x") or an absolute https URL
- * (returned as written); anything else (protocol-relative, javascript:, control characters) falls back to the
+ * (normalized from the public host or its www Online Store alias); anything else (protocol-relative, javascript:, control characters) falls back to the
  * origin root rather than producing a malformed or untrusted URL. The query string and fragment are dropped:
  * canonicals never carry them.
  */
@@ -66,7 +66,9 @@ export function absoluteUrl(pathOrUrl: string): string {
   if (/^https:\/\//i.test(pathOrUrl)) {
     try {
       const url = new URL(pathOrUrl);
-      return url.username || url.password ? SITE_ORIGIN : `${url.origin}${url.pathname}`;
+      const publicHost = new URL(SITE_ORIGIN).hostname;
+      if (url.username || url.password || url.port || ![publicHost, `www.${publicHost}`].includes(url.hostname)) return SITE_ORIGIN;
+      return `${SITE_ORIGIN}${url.pathname}`;
     } catch {
       return SITE_ORIGIN;
     }
