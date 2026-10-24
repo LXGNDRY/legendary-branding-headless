@@ -1,310 +1,67 @@
-import {type LoaderFunctionArgs, type MetaFunction} from 'react-router';
-import {Suspense} from 'react';
-import {useLoaderData, useRouteLoaderData, Await} from 'react-router';
-import ProductCard, {
-  PRODUCT_CARD_FRAGMENT,
-  type ProductCardFragment,
-} from '~/components/ui/ProductCard';
-import Button from '~/components/ui/Button';
-import HeroSplit from '~/components/sections/HeroSplit';
-import CategoryGrid from '~/components/sections/CategoryGrid';
-import NewArrivalsGrid from '~/components/sections/NewArrivalsGrid';
-import EditorialBand from '~/components/sections/EditorialBand';
-import VerifiedReviews from '~/components/sections/VerifiedReviews';
-import ReviewQuotes from '~/components/sections/ReviewQuotes';
-import NewsletterBand from '~/components/sections/NewsletterBand';
-import CurrentOffers from '~/components/sections/CurrentOffers';
+import {type LoaderFunctionArgs, type MetaFunction, useLoaderData} from 'react-router';
+import {Image} from '@shopify/hydrogen';
+import LocaleLink from '~/components/ui/LocaleLink';
+import ProductCard, {PRODUCT_CARD_FRAGMENT, type ProductCardFragment} from '~/components/ui/ProductCard';
 import {CacheLong, CacheShort} from '~/lib/cache';
-import type {ActiveDiscount} from '~/lib/discounts';
-import {fetchJudgemeQuotes, parseJudgemeBadge} from '~/lib/judgeme';
-import {
-  MAIN_MENU_QUERY,
-  NAV_COLLECTIONS_QUERY,
-  resolveMenuCollections,
-  type MenuItemNode,
-} from '~/lib/nav';
+import {MAIN_MENU_QUERY, NAV_COLLECTIONS_QUERY, resolveMenuCollections, type MenuItemNode} from '~/lib/nav';
 import {ROUTES, canonicalLocaleUrl} from '~/lib/site';
 
 const HOMEPAGE_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
-  query Homepage($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    newDrops: collection(handle: "all-products") {
-      products(first: 8, sortKey: CREATED, reverse: true) {
-        nodes {
-          ...ProductCard
-        }
-      }
-    }
-    recentlyAdded: collection(handle: "all-products") {
-      products(first: 20, sortKey: CREATED, reverse: true) {
-        nodes {
-          ...ProductCard
-        }
-      }
-    }
-    marqueLegendaire: collection(handle: "marque-legendaire-luxury-streetwear") {
-      title
-      products(first: 4, sortKey: BEST_SELLING) {
-        nodes {
-          ...ProductCard
-        }
-      }
-    }
+  query Homepage($country: CountryCode, $language: LanguageCode) @inContext(country: $country, language: $language) {
+    newDrops: collection(handle: "all-products") { title handle products(first: 8, sortKey: CREATED, reverse: true) { nodes { ...ProductCard } } }
+    recentlyAdded: collection(handle: "all-products") { products(first: 20, sortKey: CREATED, reverse: true) { nodes { ...ProductCard } } }
+    marqueLegendaire: collection(handle: "marque-legendaire-luxury-streetwear") { title handle image { url altText width height } products(first: 4, sortKey: BEST_SELLING) { nodes { ...ProductCard } } }
   }
 ` as const;
 
-export const meta: MetaFunction = ({matches}) => {
-  const description = 'Premium editorial streetwear. Bold, minimal, fast.';
-  const canonical = canonicalLocaleUrl(ROUTES.home, matches);
-  return [
-    {title: 'LEGENDARY BRANDING | Premium Editorial Streetwear'},
-    {name: 'description', content: description},
-    {tagName: 'link', rel: 'canonical', href: canonical},
-    {property: 'og:type', content: 'website'},
-    {property: 'og:title', content: 'LEGENDARY BRANDING'},
-    {property: 'og:description', content: description},
-    {property: 'og:url', content: canonical},
-    {name: 'twitter:card', content: 'summary_large_image'},
-    {name: 'twitter:title', content: 'LEGENDARY BRANDING'},
-    {name: 'twitter:description', content: description},
-  ];
-};
+export const meta: MetaFunction = ({matches}) => [
+  {title: 'LEGENDARY BRANDING | Wear the Weight'},
+  {name: 'description', content: 'Heavyweight streetwear built with intention.'},
+  {tagName: 'link', rel: 'canonical', href: canonicalLocaleUrl(ROUTES.home, matches)},
+  {property: 'og:type', content: 'website'},
+  {property: 'og:title', content: 'LEGENDARY BRANDING | Wear the Weight'},
+  {property: 'og:description', content: 'Heavyweight streetwear built with intention.'},
+  {property: 'og:url', content: canonicalLocaleUrl(ROUTES.home, matches)},
+  {name: 'twitter:card', content: 'summary_large_image'},
+];
 
 export async function loader({context}: LoaderFunctionArgs) {
   const {storefront} = context;
-  const variables = {
-    country: storefront.i18n.country,
-    language: storefront.i18n.language,
-  };
-
+  const variables = {country: storefront.i18n.country, language: storefront.i18n.language};
   const [{newDrops, recentlyAdded, marqueLegendaire}, menuResult] = await Promise.all([
-    // CacheShort, not CacheLong -- these are live product listings (New
-    // Drops, Recently Added, Marque Légendaire), and CacheLong's 24h
-    // stale-while-revalidate meant a newly added or restocked product could
-    // take up to a day to actually surface on the homepage even though the
-    // underlying query is already fully dynamic. ~/lib/cache.ts's own
-    // docstring already named the homepage as a CacheShort use case; this
-    // query just hadn't been updated to match it.
     storefront.query(HOMEPAGE_QUERY, {variables, cache: CacheShort()}),
-    // Nav structure changes far less often than the product catalog, so the
-    // menu query keeps the longer TTL.
     storefront.query(MAIN_MENU_QUERY, {variables, cache: CacheLong()}),
   ]);
-
-  // "Shop by Category" tiles: sourced from Shopify's own main-menu collection
-  // order (see ~/lib/nav) rather than an arbitrary sortKey, so this section
-  // always matches the merchant's actual navigation -- New Drops and Marque
-  // Légendaire already get their own dedicated homepage sections above/below,
-  // so they're excluded here to avoid repeating the same collection twice.
-  const menuItems = (menuResult.menu?.items ?? []) as MenuItemNode[];
-  const collectionIds = menuItems
-    .filter((item) => item.type === 'COLLECTION' && item.resourceId)
-    .map((item) => item.resourceId!);
-
-  const menuCollections = collectionIds.length
-    ? resolveMenuCollections(
-        menuItems,
-        (
-          await storefront.query(NAV_COLLECTIONS_QUERY, {
-            variables: {ids: collectionIds, ...variables},
-            cache: CacheLong(),
-          })
-        ).nodes,
-      )
-    : [];
-
-  const categoryItems = menuCollections.filter(
-    (c) => c.handle !== 'all-products' && c.handle !== 'marque-legendaire-luxury-streetwear',
-  );
-
-  // Fetches a larger candidate window (20) than the 4 actually displayed --
-  // Codex-caught: the newest products often haven't accumulated reviews yet,
-  // so filtering straight down to a badge-only product within a 4-product
-  // window could leave the "Rated by the Culture" row with fewer than 4
-  // cards, or empty it entirely, even though older products in the
-  // collection do have ratings.
-  const ratedProducts = ((recentlyAdded?.products?.nodes ?? []) as ProductCardFragment[])
-    .map((product) => {
-      const parsed = parseJudgemeBadge(product.reviewBadge?.value);
-      return parsed
-        ? {
-            id: product.id,
-            handle: product.handle,
-            title: product.title,
-            image: product.featuredImage,
-            rating: parsed.rating,
-            reviewCount: parsed.count,
-          }
-        : null;
-    })
-    .filter((p): p is NonNullable<typeof p> => p !== null)
-    .slice(0, 4);
-
-  // NOTE: covers only the (up to four) products shown, weighted by review count; the section copy says so.
-  const aggregateCount = ratedProducts.reduce((sum, p) => sum + p.reviewCount, 0);
-  const aggregateRating =
-    aggregateCount > 0
-      ? ratedProducts.reduce((sum, p) => sum + p.rating * p.reviewCount, 0) / aggregateCount
-      : 0;
-
-  // Real review quote cards -- optional, server-only, and NOT awaited here:
-  // this is a third-party fetch (up to a 5s timeout) for a non-critical
-  // section, so it streams in after the initial response instead of
-  // blocking the whole homepage on Judge.me's availability. Degrades to an
-  // empty list (no section rendered) rather than failing the page when the
-  // token is unset or the API call fails.
-  const quotes = context.env.PRIVATE_JUDGEME_API_TOKEN
-    ? fetchJudgemeQuotes({
-        apiToken: context.env.PRIVATE_JUDGEME_API_TOKEN,
-        shopDomain: context.env.PUBLIC_STORE_DOMAIN,
-      })
-    : Promise.resolve([]);
-
-  return {
-    categoryItems,
-    newDrops,
-    // recentlyAdded itself is deliberately not returned -- only
-    // ratedProducts (the derived, sliced-to-4 list) is used by the
-    // component. Returning the full 20-product candidate window would
-    // serialize ~16 unused ProductCard records (images, prices, tags,
-    // variants) into the initial hydration payload and every
-    // client-navigation response for no benefit (Codex-caught).
-    marqueLegendaire,
-    ratedProducts,
-    aggregateRating,
-    aggregateCount,
-    quotes,
-  };
+  const items = (menuResult.menu?.items ?? []) as MenuItemNode[];
+  const ids = items.filter((item) => item.type === 'COLLECTION' && item.resourceId).map((item) => item.resourceId!);
+  const collections = ids.length ? resolveMenuCollections(items, (await storefront.query(NAV_COLLECTIONS_QUERY, {variables: {ids, ...variables}, cache: CacheLong()})).nodes) : [];
+  const categoryItems = collections.filter((collection) => collection.handle !== 'all-products' && collection.handle !== 'marque-legendaire-luxury-streetwear');
+  const ratedProducts = (recentlyAdded?.products?.nodes ?? []) as ProductCardFragment[];
+  return {newDrops, signature: marqueLegendaire, collections: categoryItems, categoryItems, ratedProducts};
 }
 
+function Arrow() { return <span aria-hidden="true">↗</span>; }
+
 export default function Homepage() {
-  const {
-    categoryItems,
-    newDrops,
-    marqueLegendaire,
-    ratedProducts,
-    aggregateRating,
-    aggregateCount,
-    quotes,
-  } = useLoaderData<typeof loader>();
-
-  const newDropProducts = (newDrops?.products?.nodes ?? []) as ProductCardFragment[];
-  const marqueLegendaireProducts = (marqueLegendaire?.products?.nodes ?? []) as ProductCardFragment[];
-
-  // Real active Shopify discounts, fetched once in the root loader (see
-  // app/root.tsx) rather than re-fetched per route. Streamed, not awaited --
-  // the root loader never blocks on this optional Admin API call, so this
-  // is a Promise resolved below via Suspense/Await, not a plain array.
-  // Degrades to no section rendered when PRIVATE_SHOPIFY_ADMIN_API_TOKEN is
-  // unset or the fetch fails, same as every other optional integration.
-  const activeDiscountsPromise = (useRouteLoaderData('root') as {activeDiscounts?: Promise<ActiveDiscount[]>} | undefined)
-    ?.activeDiscounts;
-
-  return (
-    <div>
-      {/* 1 — Split hero */}
-      <HeroSplit
-        eyebrow="220GSM+ · Made To Order · DTG Prints"
-        heading={`LEGENDARY\nBRANDING`}
-        subtext={`Heavyweight Apparel Co.\nPremium Essentials Built To Last`}
-        primaryLabel="Shop Now"
-        primaryHref="/collections/all-products"
-        secondaryLabel="Lookbook"
-        secondaryHref="/journal"
-        rightProduct={newDropProducts[0] ?? null}
-      />
-
-      {/* 3.5 — Current offers (real active Shopify discounts, when any exist) */}
-      {activeDiscountsPromise && (
-        <Suspense fallback={null}>
-          <Await resolve={activeDiscountsPromise} errorElement={null}>
-            {(activeDiscounts) => <CurrentOffers discounts={activeDiscounts} />}
-          </Await>
-        </Suspense>
-      )}
-
-      {/* 4 — Featured categories */}
-      <CategoryGrid
-        eyebrow="Explore"
-        heading="Shop by Category"
-        items={categoryItems}
-      />
-
-      {/* 5 — New arrivals asymmetric grid */}
-      <NewArrivalsGrid
-        eyebrow="Just Dropped"
-        heading="New Arrivals"
-        products={newDropProducts}
-        viewAllHref="/collections/all-products"
-      />
-
-      {/* 6 — Editorial dark band */}
-      <EditorialBand
-        theme="dark"
-        eyebrow="Our Craft"
-        heading="Built different. Made to last."
-        body="Every piece starts with fabric weight most brands won't touch: 220GSM+ premium-weight cotton, structured for the streets. Made to order. No shortcuts, no restocks."
-        primaryLabel="Shop the collection"
-        primaryHref="/collections/all-products"
-        secondaryLabel="Our story"
-        secondaryHref="/policies/about"
-      />
-
-      {/* 7 — Marque Légendaire collection */}
-      {marqueLegendaireProducts.length > 0 && (
-        <section className="h-section bg-[var(--color-background)]">
-          <div className="h-container">
-            <div className="flex items-end justify-between mb-10">
-              <div>
-                <p className="h-eyebrow mb-3">Luxury Streetwear</p>
-                <h2 className="font-serif font-normal text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.1] text-[var(--color-foreground)]">
-                  Marque Légendaire
-                </h2>
-              </div>
-              <Button as="link" to="/collections/marque-legendaire-luxury-streetwear" variant="ghost">
-                View All
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {marqueLegendaireProducts.slice(0, 4).map((product, i) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  loading={i < 2 ? 'eager' : 'lazy'}
-                  hoverFlip
-                  showQuickAdd
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 8 — Verified reviews (real Judge.me aggregate, no invented quotes) */}
-      <VerifiedReviews
-        eyebrow="Customer Reviews"
-        heading="Rated by the Culture"
-        aggregateRating={aggregateRating}
-        aggregateCount={aggregateCount}
-        products={ratedProducts}
-      />
-
-      {/* 9 — Real review quote cards (Judge.me API, optional) */}
-      <Suspense fallback={null}>
-        <Await resolve={quotes}>
-          {(resolvedQuotes) => (
-            <ReviewQuotes eyebrow="In Their Words" heading="The Culture Speaks" quotes={resolvedQuotes} />
-          )}
-        </Await>
-      </Suspense>
-
-      {/* 10 — Newsletter */}
-      <NewsletterBand
-        eyebrow="Stay in the loop"
-        heading="Get early access to drops."
-        subtext="New arrivals, restocks, and editorial content, straight to your inbox."
-      />
-    </div>
-  );
+  const {newDrops, signature, collections} = useLoaderData<typeof loader>();
+  const products = (newDrops?.products?.nodes ?? []) as ProductCardFragment[];
+  const signatureProducts = (signature?.products?.nodes ?? []) as ProductCardFragment[];
+  const heroProduct = products[0];
+  return <div className="lb-home">
+    <section className="lb-hero">
+      {heroProduct?.featuredImage && <Image data={heroProduct.featuredImage} width={2400} sizes="100vw" loading="eager" className="lb-hero-image" />}
+      <div className="lb-hero-content"><p className="lb-label lb-label-light">Legendary Branding / Current drop</p><h1>Wear the<br />weight.</h1><p className="lb-hero-copy">Heavyweight streetwear for people who make their own reference points.</p><div className="lb-actions"><LocaleLink className="lb-button lb-button-red" to="/collections/all-products">Enter the drop <Arrow /></LocaleLink><LocaleLink className="lb-button lb-button-light" to="/collections">Shop all pieces</LocaleLink></div></div>
+      <div className="lb-spec"><strong>220<br />GSM+</strong><span>Made to order<br />Built for repeat wear</span></div>
+    </section>
+    <div className="lb-ticker" aria-label="Legendary values"><div>HEAVYWEIGHT FABRIC <b>✦</b> BOXED SILHOUETTES <b>✦</b> MADE TO ORDER <b>✦</b> LIMITED GRAPHICS <b>✦</b> BUILT FOR REPEAT WEAR <b>✦</b></div></div>
+    <section className="lb-section"><header className="lb-section-head"><div><p className="lb-label">Choose your entry point</p><h2>Start here.</h2></div><p>Pick a direction, then find the piece that stays in rotation.</p></header><div className="lb-pathways">{collections.slice(0, 3).map((collection, index) => <LocaleLink to={collection.url} key={collection.id} className="lb-path">{collection.image && <Image data={collection.image} width={900} sizes="(min-width: 800px) 33vw, 100vw" loading="lazy" />}<span>0{index + 1} / Collection</span><h3>{collection.title}</h3><p>Explore the pieces built for this part of the rotation.</p><Arrow /></LocaleLink>)}</div></section>
+    <section className="lb-trust" aria-label="Brand values"><div><b>Heavyweight</b>Substance in every piece</div><div><b>Limited runs</b>Designed to stay specific</div><div><b>Built for rotation</b>Made to be worn often</div><div><b>Secure checkout</b>Shop Pay, Apple Pay, and major cards</div></section>
+    {products.length > 0 && <section className="lb-section lb-products-band"><header className="lb-section-head"><div><p className="lb-label">Shop the live catalog</p><h2>In rotation.</h2></div><p>Heavyweight tees, graphic hoodies, and essentials sourced from the live Shopify catalog.</p></header><div className="lb-product-grid">{products.slice(0, 4).map((product, index) => <ProductCard key={product.id} product={product} loading={index === 0 ? 'eager' : 'lazy'} showQuickAdd />)}</div></section>}
+    <section className="lb-dark-band"><div><p className="lb-label lb-label-red">Fabric system / Know your GSM</p><h2>The difference<br />is in the weight.</h2></div><p>Fabric weight changes the way a piece feels, falls, and holds its shape. We build for structure, presence, and repeat wear.</p></section>
+    {signatureProducts.length > 0 && <section className="lb-section lb-signature"><header className="lb-section-head"><div><p className="lb-label">The signature collection</p><h2>{signature?.title ?? 'Marque Légendaire'}</h2></div><LocaleLink className="lb-button" to={`/collections/${signature?.handle}`}>Enter collection <Arrow /></LocaleLink></header><div className="lb-product-grid">{signatureProducts.map((product) => <ProductCard key={product.id} product={product} showQuickAdd />)}</div></section>}
+    <section className="lb-statement"><p className="lb-label">Legendary point of view</p><h2>Clothes with<br />a point of view.</h2></section>
+    <section className="lb-section lb-values"><header className="lb-section-head"><div><p className="lb-label">Our position</p><h2>What we<br />stand for.</h2></div><p>The brand is not just the garment. It is the standard behind it.</p></header><div className="lb-value-grid"><article><span>01 / Substance</span><h3>Make it<br />feel real.</h3><p>Texture, weight, construction, and the feeling of a piece in your hands.</p></article><article><span>02 / Expression</span><h3>Make it<br />mean something.</h3><p>Graphic language gives every garment a voice.</p></article><article><span>03 / Longevity</span><h3>Make it<br />stay.</h3><p>Designed for repeat wear and a wardrobe that grows more personal over time.</p></article></div></section>
+    <section className="lb-final"><div><p className="lb-label lb-label-light">Final call</p><h2>Find your<br />piece.</h2></div><div><p>Enter the latest drop or build your rotation from the signature collection.</p><LocaleLink className="lb-button lb-button-red" to="/collections/all-products">Shop new arrivals <Arrow /></LocaleLink></div></section>
+  </div>;
 }
