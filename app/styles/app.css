@@ -65,7 +65,7 @@
 }
 
 /**
- * LEGENDARY BRANDING — Onyx Design System
+ * LEGENDARY BRANDING — Editorial Design System
  * Dark theme editorial luxury streetwear.
  *
  * Surfaces: layered deep charcoal to near-black
@@ -84,30 +84,30 @@
  */
 @theme {
   /* ── Typography ─────────────────────────────────────────────────────── */
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --font-sans: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
   --font-display: var(--font-serif);
   --font-body: var(--font-sans);
   --font-mono: 'Menlo', 'Consolas', monospace;
 
   /* ── Surface / Background layers (dark theme foundation) ────────────── */
-  --color-bg-level-0: #0A0A0A;   /* page bg — deepest near-black */
-  --color-bg-level-1: #111111;   /* section surface */
-  --color-bg-level-2: #181818;   /* card / product surface */
-  --color-bg-level-3: #1F1F1F;   /* interactive surface (hover) */
-  --color-bg-level-4: #252525;   /* modal / drawer surface */
+  --color-bg-level-0: #E9E6DF;   /* paper */
+  --color-bg-level-1: #F3F0E9;   /* soft paper */
+  --color-bg-level-2: #D2CEC4;   /* card / image fallback */
+  --color-bg-level-3: #C1BBB1;   /* interactive surface */
+  --color-bg-level-4: #111111;   /* ink / modal surface */
 
   /* ── Text / Foreground ──────────────────────────────────────────────── */
-  --color-text-primary: #F5F5F3;     /* primary text — warm off-white */
-  --color-text-secondary: #A3A29E;   /* secondary text — muted gray */
-  --color-text-tertiary: #868481;    /* tertiary / metadata -- WCAG AA (4.5:1+) against all bg-level-0/1/2 */
-  --color-text-inverse: #0A0A0A;     /* text on accent / light surfaces */
+  --color-text-primary: #111111;
+  --color-text-secondary: #67645D;
+  --color-text-tertiary: #77736B;
+  --color-text-inverse: #FFFFFF;
   --color-text-disabled: #3D3C38;
 
   /* ── Accent (brand red) ─────────────────────────────────────────────── */
-  --color-accent: #E63936;        /* primary accent */
-  --color-accent-hover: #C92E2B;  /* hover state */
-  --color-accent-pressed: #A82421; /* active/pressed */
+  --color-accent: #EE3D32;
+  --color-accent-hover: #D8322B;
+  --color-accent-pressed: #B92621;
   --color-accent-subtle: rgba(230, 57, 54, 0.12); /* subtle tint */
 
   /* ── Borders ────────────────────────────────────────────────────────── */
@@ -771,3 +771,4 @@
     font-size: 16px;
   }
 }
+
