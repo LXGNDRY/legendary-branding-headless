@@ -168,6 +168,49 @@ export default function CollectionsIndex() {
         ))}
       </div>
       </Container>
+
+      <section className="grid gap-10 bg-[var(--color-accent)] px-[var(--spacing-page-x)] py-20 text-white md:grid-cols-2 md:gap-20 md:py-28">
+        <div>
+          <p className="h-eyebrow text-white/70">The Legendary standard</p>
+          <h2 className="mt-5 max-w-xl text-[clamp(3rem,7vw,7rem)] font-normal leading-[.88] tracking-[-.07em] text-white">
+            Choose the<br />
+            point of view.
+          </h2>
+        </div>
+        <div className="max-w-xl self-end text-lg leading-relaxed text-white/90">
+          <p>Every collection is a different entry point into the same idea: heavyweight pieces, considered graphics, and silhouettes built to stay in rotation.</p>
+          <p className="mt-6">Start with the shape that feels like you, then build from there.</p>
+        </div>
+      </section>
+
+      <section className="bg-[var(--color-bg-level-2)] px-[var(--spacing-page-x)] py-20 md:py-28">
+        <div className="mx-auto max-w-[var(--container-max-width)]">
+          <p className="h-eyebrow">Find your entry point</p>
+          <div className="mt-8 grid gap-3 md:grid-cols-3">
+            {liveCollections.slice(0, 3).map((collection, index) => (
+              <Link key={collection.id} to={`/collections/${collection.handle}`} className={`group min-h-64 bg-[var(--color-bg-level-1)] p-6 transition-transform duration-300 hover:-translate-y-1 ${index === 1 ? 'bg-[var(--color-accent)] text-white' : ''}`}>
+                <span className={`font-mono text-[10px] uppercase tracking-[.12em] ${index === 1 ? 'text-white/70' : 'text-[var(--color-text-tertiary)]'}`}>0{index + 1} / Collection</span>
+                <h3 className={`mt-16 text-3xl font-normal leading-[.9] tracking-[-.05em] ${index === 1 ? 'text-white' : 'text-[var(--color-text-primary)]'}`}>{collection.title}</h3>
+                <span className={`mt-6 inline-block font-mono text-xs uppercase tracking-[.08em] ${index === 1 ? 'text-white' : 'text-[var(--color-text-secondary)]'}`}>Explore ↗</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[var(--color-bg-level-1)] px-[var(--spacing-page-x)] py-20 md:py-28">
+        <div className="mx-auto max-w-3xl border-t border-[var(--color-border-medium)]">
+          <details open className="border-b border-[var(--color-border-medium)] py-5">
+            <summary className="flex cursor-pointer list-none justify-between font-serif text-xl">How do I choose a collection?<span className="font-mono text-2xl text-[var(--color-accent)]">+</span></summary>
+            <p className="max-w-2xl pt-4 text-[var(--color-text-secondary)]">Use the collection description and product details to compare weight, silhouette, graphic language, and intended use before you shop.</p>
+          </details>
+          <details className="border-b border-[var(--color-border-medium)] py-5">
+            <summary className="flex cursor-pointer list-none justify-between font-serif text-xl">Are the collections live?<span className="font-mono text-2xl text-[var(--color-accent)]">+</span></summary>
+            <p className="max-w-2xl pt-4 text-[var(--color-text-secondary)]">Yes. This page is sourced from customer-facing Shopify collections with products available in the storefront.</p>
+          </details>
+        </div>
+      </section>
     </div>
   );
 }
+
