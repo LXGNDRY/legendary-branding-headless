@@ -1812,6 +1812,8 @@ export type HomepageQueryVariables = Exact<{
 
 export type HomepageQuery = {
   newDrops: {
+    title: string;
+    handle: string;
     products: {
       nodes: Array<{
         id: string;
@@ -1921,6 +1923,13 @@ export type HomepageQuery = {
   } | null;
   marqueLegendaire: {
     title: string;
+    handle: string;
+    image: {
+      url: unknown;
+      altText: string | null;
+      width: number | null;
+      height: number | null;
+    } | null;
     products: {
       nodes: Array<{
         id: string;
@@ -2767,7 +2776,7 @@ interface GeneratedQueryTypes {
     return: SitemapPoliciesQuery;
     variables: SitemapPoliciesQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment ProductCard on Product {\n    id\n    title\n    handle\n    availableForSale\n    vendor\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n    images(first: 2) {\n      nodes {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n      maxVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    compareAtPriceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    tags\n    # Used by the product card\'s "Quick Add" button to add a variant to the\n    # cart without navigating to the PDP. Falls back to the first available\n    # variant when no options are pre-selected — correct for the common case\n    # of single-variant products or a "just add the default" quick action.\n    selectedOrFirstAvailableVariant(\n      selectedOptions: []\n      ignoreUnknownOptions: true\n      caseInsensitiveMatch: true\n    ) {\n      id\n      availableForSale\n      price {\n        amount\n        currencyCode\n      }\n      compareAtPrice {\n        amount\n        currencyCode\n      }\n    }\n    # Judge.me\'s synced rating/review-count badge -- real data, not\n    # fabricated. Absent until a product has its first review; the card\n    # simply omits the star row in that case (see StarRating).\n    reviewBadge: metafield(namespace: "judgeme", key: "badge") {\n      value\n    }\n  }\n\n  query Homepage($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    newDrops: collection(handle: "all-products") {\n      products(first: 8, sortKey: CREATED, reverse: true) {\n        nodes {\n          ...ProductCard\n        }\n      }\n    }\n    recentlyAdded: collection(handle: "all-products") {\n      products(first: 20, sortKey: CREATED, reverse: true) {\n        nodes {\n          ...ProductCard\n        }\n      }\n    }\n    marqueLegendaire: collection(handle: "marque-legendaire-luxury-streetwear") {\n      title\n      products(first: 4, sortKey: BEST_SELLING) {\n        nodes {\n          ...ProductCard\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment ProductCard on Product {\n    id\n    title\n    handle\n    availableForSale\n    vendor\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n    images(first: 2) {\n      nodes {\n        id\n        url\n        altText\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n      maxVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    compareAtPriceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    tags\n    # Used by the product card\'s "Quick Add" button to add a variant to the\n    # cart without navigating to the PDP. Falls back to the first available\n    # variant when no options are pre-selected — correct for the common case\n    # of single-variant products or a "just add the default" quick action.\n    selectedOrFirstAvailableVariant(\n      selectedOptions: []\n      ignoreUnknownOptions: true\n      caseInsensitiveMatch: true\n    ) {\n      id\n      availableForSale\n      price {\n        amount\n        currencyCode\n      }\n      compareAtPrice {\n        amount\n        currencyCode\n      }\n    }\n    # Judge.me\'s synced rating/review-count badge -- real data, not\n    # fabricated. Absent until a product has its first review; the card\n    # simply omits the star row in that case (see StarRating).\n    reviewBadge: metafield(namespace: "judgeme", key: "badge") {\n      value\n    }\n  }\n\n  query Homepage($country: CountryCode, $language: LanguageCode) @inContext(country: $country, language: $language) {\n    newDrops: collection(handle: "all-products") { title handle products(first: 8, sortKey: CREATED, reverse: true) { nodes { ...ProductCard } } }\n    recentlyAdded: collection(handle: "all-products") { products(first: 20, sortKey: CREATED, reverse: true) { nodes { ...ProductCard } } }\n    marqueLegendaire: collection(handle: "marque-legendaire-luxury-streetwear") { title handle image { url altText width height } products(first: 4, sortKey: BEST_SELLING) { nodes { ...ProductCard } } }\n  }\n': {
     return: HomepageQuery;
     variables: HomepageQueryVariables;
   };

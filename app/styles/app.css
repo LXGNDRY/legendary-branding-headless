@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /**
@@ -65,8 +66,8 @@
 }
 
 /**
- * LEGENDARY BRANDING — Onyx Design System
- * Dark theme editorial luxury streetwear.
+ * LEGENDARY BRANDING — Weight of Culture Design System
+ * Editorial streetwear: paper, ink, concrete, and signal red.
  *
  * Surfaces: layered deep charcoal to near-black
  * Typography: Instrument Serif (display) + Inter (body)
@@ -84,38 +85,38 @@
  */
 @theme {
   /* ── Typography ─────────────────────────────────────────────────────── */
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
-  --font-sans: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  --font-display: var(--font-serif);
+  --font-serif: 'Space Grotesk', Arial, sans-serif;
+  --font-sans: 'DM Sans', Arial, sans-serif;
+  --font-display: 'Space Grotesk', Arial, sans-serif;
   --font-body: var(--font-sans);
-  --font-mono: 'Menlo', 'Consolas', monospace;
+  --font-mono: 'DM Mono', 'Menlo', monospace;
 
   /* ── Surface / Background layers (dark theme foundation) ────────────── */
-  --color-bg-level-0: #0A0A0A;   /* page bg — deepest near-black */
-  --color-bg-level-1: #111111;   /* section surface */
-  --color-bg-level-2: #181818;   /* card / product surface */
-  --color-bg-level-3: #1F1F1F;   /* interactive surface (hover) */
-  --color-bg-level-4: #252525;   /* modal / drawer surface */
+  --color-bg-level-0: #0A0A0A;
+  --color-bg-level-1: #111111;
+  --color-bg-level-2: #181818;
+  --color-bg-level-3: #1F1F1F;
+  --color-bg-level-4: #ffffff;
 
   /* ── Text / Foreground ──────────────────────────────────────────────── */
-  --color-text-primary: #F5F5F3;     /* primary text — warm off-white */
-  --color-text-secondary: #A3A29E;   /* secondary text — muted gray */
-  --color-text-tertiary: #868481;    /* tertiary / metadata -- WCAG AA (4.5:1+) against all bg-level-0/1/2 */
-  --color-text-inverse: #0A0A0A;     /* text on accent / light surfaces */
-  --color-text-disabled: #3D3C38;
+  --color-text-primary: #F5F5F3;
+  --color-text-secondary: #A3A29E;
+  --color-text-tertiary: #868481;
+  --color-text-inverse: #0A0A0A;
+  --color-text-disabled: #6b6b6b;
 
   /* ── Accent (brand red) ─────────────────────────────────────────────── */
-  --color-accent: #E63936;        /* primary accent */
-  --color-accent-hover: #C92E2B;  /* hover state */
-  --color-accent-pressed: #A82421; /* active/pressed */
-  --color-accent-subtle: rgba(230, 57, 54, 0.12); /* subtle tint */
+  --color-accent: #E63936;
+  --color-accent-hover: #cf2f26;
+  --color-accent-pressed: #a9251e;
+  --color-accent-subtle: rgba(230, 57, 54, 0.12);
 
   /* ── Borders ────────────────────────────────────────────────────────── */
-  --color-border-subtle: #1F1F1F;    /* very subtle separators */
-  --color-border-muted: #2A2A2A;     /* card borders */
-  --color-border-medium: #3A3A3A;    /* interactive borders */
-  --color-border-strong: #555555;    /* strong separators */
-  --color-border-accent: #E63936;
+  --color-border-subtle: rgba(17, 17, 17, 0.12);
+  --color-border-muted: rgba(17, 17, 17, 0.22);
+  --color-border-medium: rgba(17, 17, 17, 0.38);
+  --color-border-strong: rgba(17, 17, 17, 0.56);
+  --color-border-accent: #ee3d32;
 
   /* ── Semantic states ────────────────────────────────────────────────── */
   --color-success: #2ECC71;
@@ -126,15 +127,15 @@
   --color-warning-subtle: rgba(243, 156, 18, 0.12);
 
   /* ── Sale / commerce ────────────────────────────────────────────────── */
-  --color-sale: #E63936;
+  --color-sale: #ee3d32;
   --color-sale-text: #FF6B67;
 
   /* ── Shadow system (subtle, depth-based) ───────────────────────────── */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 40px rgba(230, 57, 54, 0.15);
+  --shadow-sm: 0 1px 2px rgba(17, 17, 17, 0.12);
+  --shadow-md: 0 6px 18px rgba(17, 17, 17, 0.16);
+  --shadow-lg: 12px 12px 0 rgba(17, 17, 17, 0.3);
+  --shadow-xl: 20px 28px 60px rgba(17, 17, 17, 0.28);
+  --shadow-glow: 0 0 40px rgba(238, 61, 50, 0.15);
 
   /* ── Legacy / semantic aliases (preserve existing code references) ──── */
   --color-background: var(--color-bg-level-0);
@@ -146,15 +147,15 @@
   --color-surface-elevated: var(--color-bg-level-2);
   --color-surface-dark: var(--color-bg-level-3);
 
-  --color-offwhite: #F5F5F3;
-  --color-offblack: #0A0A0A;
-  --color-accent-hover: #C92E2B;
+  --color-offwhite: #f3f0e9;
+  --color-offblack: #111111;
+  --color-accent-hover: #cf2f26;
   --color-canvas: var(--color-bg-level-0);
   --color-ink: var(--color-text-primary);
   --color-muted: var(--color-text-secondary);
   --color-subtle: var(--color-text-tertiary);
   --color-border: var(--color-border-muted);
-  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-shadow: rgba(17, 17, 17, 0.2);
 
   /* ── Type scale ──────────────────────────────────────────────────────── */
   --text-display-1: clamp(3rem, 7vw, 6.5rem);
@@ -771,3 +772,24 @@
     font-size: 16px;
   }
 }
+
+/* ── Legendary / Weight of Culture storefront ───────────────────────── */
+.lb-home { background: #e9e6df; color: #111; font-family: 'DM Sans', Arial, sans-serif; }
+.lb-label { margin: 0; font: 500 11px/1.4 'DM Mono', monospace; letter-spacing: .12em; text-transform: uppercase; color: #67645d; }
+.lb-label-light { color: #d1cec7; }.lb-label-red { color: #ee3d32; }
+.lb-hero { min-height: min(92vh, 980px); position: relative; display: flex; align-items: flex-end; overflow: hidden; padding: 150px 4vw 7vw; background: #141414; color: #f4f1e9; isolation: isolate; }
+.lb-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(0,0,0,.83), rgba(0,0,0,.12) 70%); }
+.lb-hero-image { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .82; filter: saturate(.82) contrast(1.04); }
+.lb-hero-content { max-width: 920px; }.lb-hero h1,.lb-section h2,.lb-dark-band h2,.lb-statement h2,.lb-final h2 { margin: 22px 0 28px; font-family: 'Space Grotesk', Arial, sans-serif; font-weight: 600; letter-spacing: -.1em; line-height: .82; text-transform: uppercase; }
+.lb-hero h1 { font-size: clamp(4.5rem, 12vw, 12rem); }.lb-hero-copy { max-width: 430px; color: #d1cec7; font-size: 18px; line-height: 1.4; }
+.lb-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }.lb-button { display: inline-flex; align-items: center; gap: 8px; border: 1px solid currentColor; padding: 14px 20px; color: inherit; font: 500 11px 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; transition: .2s ease; }
+.lb-button:hover { transform: translateY(-2px); background: #ee3d32; border-color: #ee3d32; color: #fff; }.lb-button-red { background: #ee3d32; border-color: #ee3d32; color: #fff; }.lb-button-light { color: #fff; }
+.lb-spec { position: absolute; right: 7vw; bottom: 8vw; width: 210px; padding: 18px; transform: rotate(-4deg); background: #ee3d32; color: #fff; box-shadow: 12px 12px 0 rgba(0,0,0,.35); }.lb-spec strong { display: block; font: 700 45px/.9 'Space Grotesk', Arial, sans-serif; letter-spacing: -.08em; }.lb-spec span { display: block; margin-top: 12px; font: 500 10px/1.5 'DM Mono', monospace; letter-spacing: .05em; text-transform: uppercase; }
+.lb-ticker { overflow: hidden; white-space: nowrap; background: #111; color: #f5f2eb; }.lb-ticker div { display: inline-block; padding: 16px 0; font: 500 11px 'DM Mono', monospace; letter-spacing: .12em; animation: lb-marquee 24s linear infinite; }.lb-ticker b { color: #ee3d32; font-weight: 500; } @keyframes lb-marquee { to { transform: translateX(-30%); } }
+.lb-section { padding: 110px 4vw; }.lb-section-head { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 44px; }.lb-section-head h2,.lb-dark-band h2 { font-size: clamp(3rem, 7vw, 7.2rem); }.lb-section-head > p,.lb-dark-band > p { max-width: 420px; color: #67645d; line-height: 1.5; }
+.lb-pathways { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }.lb-path { position: relative; min-height: 390px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 22px; background: #d2cec4; color: #111; isolation: isolate; }.lb-path::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgba(0,0,0,.72), transparent 65%); }.lb-path img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }.lb-path:hover img { transform: scale(1.04); }.lb-path > span:first-of-type,.lb-path > span:last-child { position: absolute; font: 500 10px 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: #fff; }.lb-path > span:first-of-type { top: 22px; left: 22px; }.lb-path > span:last-child { right: 22px; bottom: 22px; font-size: 26px; }.lb-path h3 { margin: 0 0 12px; color: #fff; font: 600 clamp(2rem,4vw,4.6rem)/.84 'Space Grotesk',Arial,sans-serif; letter-spacing: -.08em; text-transform: uppercase; }.lb-path p { max-width: 260px; margin: 0; color: #fff; line-height: 1.45; }
+.lb-trust { display: grid; grid-template-columns: repeat(4,1fr); border-top: 1px solid rgba(17,17,17,.22); border-bottom: 1px solid rgba(17,17,17,.22); background: #f3f0e9; }.lb-trust div { padding: 18px 22px; border-right: 1px solid rgba(17,17,17,.22); font: 500 10px/1.45 'DM Mono',monospace; letter-spacing: .06em; text-transform: uppercase; }.lb-trust b { display: block; margin-bottom: 7px; font: 600 17px 'Space Grotesk',Arial,sans-serif; letter-spacing: -.05em; text-transform: none; }
+.lb-products-band { background: #d2cec4; }.lb-product-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }.lb-product-grid article { background: #e9e6df; padding: 0 0 14px; }.lb-product-grid article > div:last-child { padding: 0 14px; }.lb-product-grid [class*='rounded'] { border-radius: 8px !important; }
+.lb-dark-band,.lb-final { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; padding: 110px 4vw; background: #111; color: #eeeae1; }.lb-dark-band > p,.lb-final p { align-self: end; color: #aaa59b; font-size: 18px; }.lb-signature { background: #f3f0e9; }.lb-statement { display: flex; min-height: 520px; align-items: center; justify-content: center; overflow: hidden; padding: 70px 4vw; text-align: center; background: #ee3d32; color: #fff; }.lb-statement h2 { font-size: clamp(4rem,11vw,12rem); }.lb-statement .lb-label { color: #fff; }
+.lb-values { background: #d2cec4; }.lb-value-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }.lb-value-grid article { display: flex; min-height: 330px; flex-direction: column; justify-content: space-between; border: 1px solid rgba(17,17,17,.22); padding: 22px; }.lb-value-grid article:nth-child(2) { border-color: #ee3d32; background: #ee3d32; color: #fff; }.lb-value-grid span { font: 500 10px 'DM Mono',monospace; text-transform: uppercase; }.lb-value-grid h3 { margin: 0; font: 600 clamp(2rem,4vw,4rem)/.85 'Space Grotesk',Arial,sans-serif; letter-spacing: -.08em; text-transform: uppercase; }.lb-value-grid p { max-width: 270px; color: #67645d; line-height: 1.5; }.lb-value-grid article:nth-child(2) p { color: #fff; }.lb-final { align-items: end; }.lb-final h2 { margin-bottom: 0; font-size: clamp(4rem,10vw,10rem); }.lb-final > div:last-child { max-width: 330px; }.lb-final .lb-button { margin-top: 24px; }
+@media (max-width: 800px) { .lb-hero { min-height: 84vh; padding: 130px 6vw 70px; }.lb-spec { right: 6vw; bottom: 28px; transform: scale(.76) rotate(-4deg); transform-origin: bottom right; }.lb-section,.lb-dark-band,.lb-final { padding: 75px 6vw; }.lb-section-head { display: block; }.lb-section-head > p { margin-top: 20px; }.lb-pathways,.lb-product-grid,.lb-value-grid,.lb-dark-band,.lb-final { grid-template-columns: 1fr; }.lb-path { min-height: 300px; }.lb-trust { grid-template-columns: 1fr 1fr; }.lb-trust div:nth-child(2n) { border-right: 0; }.lb-trust div:nth-child(-n+2) { border-bottom: 1px solid rgba(17,17,17,.22); } }
