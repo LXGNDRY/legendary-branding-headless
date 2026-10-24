@@ -250,6 +250,7 @@ export default function ProductCard({
               height={1067}
               sizes="150px"
               loading={loading}
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-500 ease-[var(--ease-expo)] group-hover:scale-105"
             />
           ) : (
@@ -339,6 +340,7 @@ export default function ProductCard({
               height={900}
               sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
               loading={loading}
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-[550ms] ease-[var(--ease-expo)] group-hover:scale-[1.03]"
             />
           ) : (
@@ -354,6 +356,7 @@ export default function ProductCard({
               height={900}
               sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
               loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-[350ms] ease-[var(--ease-expo)] group-hover:opacity-100"
             />
           )}

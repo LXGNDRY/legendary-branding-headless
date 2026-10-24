@@ -98,6 +98,7 @@ export default function ProductGallery({
           height={1000}
           sizes="(min-width: 768px) 50vw, 100vw"
           loading="eager"
+          decoding="async"
           fetchPriority="high"
           className="w-full object-cover transition-opacity duration-300"
           key={active.url}
@@ -145,6 +146,7 @@ export default function ProductGallery({
                 height={200}
                 sizes="(min-width: 1024px) 8vw, 72px"
                 loading="lazy"
+                decoding="async"
                 className="w-full object-cover"
               />
             </button>

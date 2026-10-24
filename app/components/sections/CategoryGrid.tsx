@@ -52,6 +52,7 @@ export default function CategoryGrid({eyebrow = 'Shop', heading = 'Collections',
                   className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-600 ease-[var(--ease-expo)] group-hover:scale-[1.05]"
                   sizes="(max-width: 640px) 100vw, 33vw"
                   loading="lazy"
+                  decoding="async"
                 />
               ) : (
                 <div className="absolute inset-0 bg-[var(--color-bg-level-3)]" />

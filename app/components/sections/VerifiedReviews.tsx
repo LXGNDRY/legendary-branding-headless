@@ -76,6 +76,7 @@ export default function VerifiedReviews({
                     className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 ease-[var(--ease-expo)] group-hover:scale-[1.04]"
                     sizes="(max-width: 768px) 50vw, 25vw"
                     loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <div className="absolute inset-0 bg-[var(--color-bg-level-3)]" />
